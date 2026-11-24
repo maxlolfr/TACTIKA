@@ -5,7 +5,7 @@
 - V2.0 en cours : marche animée, poses, ambiance par zone, interface bois et parchemin, logo et camp. Moteur encore en canvas maison (passage à Phaser à décider).
 - Démo privée (artifact Claude) : https://claude.ai/artifact/QpgTozh4PNXivLsHXEGCQ7
 - Page des prompts d'images : https://claude.ai/artifact/6UyUv9LBEPf3nggUffkfBH
-- Sons ElevenLabs générés (flow 97rZARFgripawZTlXj1N) mais pas encore récupérés : il faut les télécharger depuis l'app et les envoyer. Noms attendus : slash smash guard bow arrowhit heal poison buff hit bite slime death step click turn coin levelup victory defeat camp battle boss.
+- **Sons intégrés (25/11/2026)** : les 22 fichiers ElevenLabs (flow 97rZARFgripawZTlXj1N) sont dans `assets/audio/`. Récupérés par le workflow `.github/workflows/audio.yml` (le proxy de Claude bloque elevenlabsusercontent.com) : mettre `nom lien-signé` dans `tools/audio-urls.txt` et pousser ; le workflow télécharge, compresse (bruitages mono 64k, musiques 96k) et supprime la liste.
 
 ## Images
 - **Refonte (décision de Max, 25/11/2026)** : planches V1 de ChatGPT = références artistiques, non intégrées. Nouvelles planches : 1024×1024, grille 2×2 de cases 512×512, fond magenta #FF00FF uni. Outil de découpe : `tools/cut3.py` (voir son en-tête ; essai à blanc par défaut, `--atlas` pour écrire). Prompts : `Game-studio-ai/docs/studio/tactika/PROMPTS-SPRITES-V2.md`.
