@@ -1,0 +1,52 @@
+// Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
+import {G,hooks} from './game.js';
+import {wait,tween} from './util.js';
+import {pathTo,face,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
+import {addFx,addProj,say,pose,shake,TH} from './render.js';
+import {sfx} from './audio.js';
+
+// Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
+export function play(events){for(const e of events){switch(e.type){
+ case 'fx':addFx(e.x,e.y,e.i,e.w);break;
+ case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');sfx(e.src==='poison'?'poison':'hit',.7);
+  if(e.killed){t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
+ case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
+ case 'status':say(e.t,e.text,e.color);break;
+ case 'shake':shake(e.ms)}}}
+
+export async function cast(u,sp,c){
+ payCost(u,sp,c);
+ pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self')?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);
+ if(sp.proj){addProj(u,c);await wait(260);sfx('arrowhit',.8)}
+ else if(sp.r[1]===1&&sp.t==='enemy'){const dx=(c.x-u.x)*.35,dy=(c.y-u.y)*.35;await tween(110,t=>{u.gx=u.x+dx*t;u.gy=u.y+dy*t});tween(160,t=>{u.gx=u.x+dx*(1-t);u.gy=u.y+dy*(1-t)})}
+ else await wait(180);
+ play(applySpell(G.s,u,sp,c));
+ await wait(420);G.busy=false;
+}
+export async function moveTo(u,k,prev){const path=pathTo(u,k,prev);
+ G.busy=true;hooks.render();u.walk=1;let st=0;for(const[x,y]of path){const fx0=u.gx,fy0=u.gy;
+  face(u,x,y);st++;
+  await tween(220,t=>{u.gx=fx0+(x-fx0)*t;u.gy=fy0+(y-fy0)*t;u.wf=st*2+(t<.5?0:1);u.hop=Math.sin(t*Math.PI)*TH*.06});u.x=x;u.y=y;u.gx=x;u.gy=y;u.hop=0;u.pm--;sfx('step',.5,u.team==='m'?.8:1.1)}u.walk=0;
+ G.busy=false}
+
+// Termine le combat si un camp est éliminé. Renvoie true quand le combat est fini.
+export function end(){if(G.phase!=='fight')return true;const o=outcome(G.s);if(!o)return false;
+ G.phase=o;if(o==='win')G.s.units.forEach(u=>{if(u.team==='h'&&!u.dead)pose(u,'v',9e9)});
+ setTimeout(()=>hooks.result(o==='win'),900);if(G.endTurnResolve)G.endTurnResolve();return true}
+
+async function ai(u){
+ for(let g=0;g<6&&!u.dead&&G.phase==='fight';g++){
+  const a=aiStep(G.s,u);if(!a)return;
+  if(a.type==='cast'){await cast(u,a.sp,a.target);if(end())return;continue}
+  await moveTo(u,a.to,a.prev);await wait(120)}
+}
+export async function runFight(){const S=G.s;
+ while(G.phase==='fight'){
+  G.turn=(G.turn+1)%S.order.length;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  beginTurn(u);hooks.renderTL();hooks.render();
+  if(u.poison){play(poisonTick(S,u));await wait(600);if(end())return;if(u.dead)continue}
+  if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
+  else{await wait(300);await ai(u)}
+  endTurn(u);
+  G.sel=null;if(end())return}
+}

@@ -12,7 +12,7 @@ Jeu tactique au tour par tour façon Dofus, en HTML5, pensé pour le mobile (iPh
 - Son : moteur Web Audio, sons de secours synthétisés en attendant les fichiers ElevenLabs (`assets/audio/<nom>.mp3`).
 
 ## Fichiers
-- `index.html` : tout le jeu (prototype).
+- `index.html` + `style.css` : page du jeu ; `src/` : code en modules ES (données, règles pures, tours, rendu, interface, audio, sauvegarde) ; `tests/` : tests Node des règles (`npm test`) ; `legacy/` : ancienne version en un seul fichier.
 - `assets/` : planches détourées en WebP + `atlas.json` (cadres et points d'ancrage des pieds).
 - `tools/cut.py` : détourage des planches générées (fond magenta/vert/noir → transparence, découpe, atlas).
 
