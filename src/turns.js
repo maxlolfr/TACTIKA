@@ -8,7 +8,7 @@ import {sfx} from './audio.js';
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w);break;
- case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');sfx(e.src==='poison'?'poison':'hit',.7);
+ case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit)sfx('critical',.9);
   if(e.killed){t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);break;

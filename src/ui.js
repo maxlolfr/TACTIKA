@@ -47,14 +47,14 @@ export function startFight(zi,i){
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();const{hs,es}=genMap(S,G.F.seed,G.F.th);mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.phase='fight';
- layout();renderTL();render();music(G.F.boss?'boss':'battle');runFight();
+ layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);runFight();
 }
 function party(){const d=document.createElement('div');d.className='party';HER.forEach((h,i)=>{const s=heroStats(save,i),c=document.createElement('div');c.className='hc';
  const cv2=document.createElement('canvas');cv2.width=240;cv2.height=192;const g=cv2.getContext('2d'),f=AT[h.k][1],k=176/f[3];drawF(g,h.k,1,120,184,k);c.appendChild(cv2);
  c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
  const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('camp');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.0 · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.1 · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);
