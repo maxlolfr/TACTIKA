@@ -1,14 +1,16 @@
 # Notes du projet Tactika
 
 ## État (24/11/2026)
-- Prototype 1 jouable : combat iso, 5 zones, boss, carte du monde illustrée, son synthétisé.
+- V2.0 en cours : marche animée, poses, ambiance par zone, interface bois et parchemin, logo et camp. Moteur encore en canvas maison (passage à Phaser à décider).
 - Démo privée (artifact Claude) : https://claude.ai/artifact/QpgTozh4PNXivLsHXEGCQ7
 - Page des prompts d'images : https://claude.ai/artifact/6UyUv9LBEPf3nggUffkfBH
 - Sons ElevenLabs générés (flow 97rZARFgripawZTlXj1N) mais pas encore récupérés : il faut les télécharger depuis l'app et les envoyer. Noms attendus : slash smash guard bow arrowhit heal poison buff hit bite slime death step click turn coin levelup victory defeat camp battle boss.
 
 ## Images
-- Reçues et bonnes, pas encore intégrées : logo, décor du camp, kit d'interface, particules, déplacements des 12 monstres.
-- À refaire avec ChatGPT : marche de face, marche de dos et poses spéciales pour chacun des 3 héros (une direction par image, miroir en code).
+- V2.0 intégrées : marche face/dos + poses (KO, victoire, sort, défense) des 3 héros (ChatGPT, 2x2), déplacements des 12 monstres, logo, décor du camp, kit d'interface (`ui`), particules (`parts`).
+- Découpe : `tools/cut.py` (planches V1) puis `tools/cut2.py` (planches V2, ajoute à `assets/atlas.json`).
+- Directions : face = bas-gauche, dos = haut-gauche ; bas-droite et haut-droite = miroir.
+- Index utiles : ui 3/4 emplacement de sort (normal/choisi), 5/7 bouton or (normal/appuyé), 10 bouton bois, 11 barre bois, 12 étoile PA, 13 botte PM, 14 pièce ; parts 0 luciole, 2 feuille, 3 neige, 4 braise, 6 feu follet, 8 viseur, 10 flèche.
 
 ## Décisions
 - Nom : Tactika. Dépôt séparé (plus rien dans Stepquest).
