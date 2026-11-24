@@ -13,9 +13,12 @@ from scipy import ndimage
 p=argparse.ArgumentParser();p.add_argument('sheet');p.add_argument('name');p.add_argument('--cols',type=int,default=2);p.add_argument('--rows',type=int,default=2)
 p.add_argument('--scale',type=float,default=.5);p.add_argument('--atlas',action='store_true');p.add_argument('--out',default=os.path.join(os.path.dirname(__file__),'..','assets'))
 a=p.parse_args()
+# l'échelle est relative à une case de 512 px de haut : la taille de la planche reçue n'a donc pas d'importance
 img=np.array(Image.open(a.sheet).convert('RGB')).astype(float);H,W,_=img.shape
 edge=np.concatenate([img[:4].reshape(-1,3),img[-4:].reshape(-1,3),img[:,:4].reshape(-1,3),img[:,-4:].reshape(-1,3)]);M=np.median(edge,0)
 warn=[]
+k512=512/(H/a.rows)
+if abs(k512-1)>.02: warn.append(f'cases de {W//a.cols}x{H//a.rows} px au lieu de 512x512 : mises à l\'échelle (x{k512:.2f})')
 if np.abs(M-[255,0,255]).sum()>60: warn.append(f'fond {M.astype(int).tolist()} différent de #FF00FF')
 d=np.abs(img-M).sum(2);al=np.clip((d-80)/110,0,1)
 rgb=np.clip((img-(1-al[...,None])*M)/np.maximum(al[...,None],1e-3),0,255)
@@ -35,8 +38,8 @@ for r in range(a.rows):
     if ya==0 or xa==0 or yb==sub.shape[0] or xb==sub.shape[1]: warn.append(f'case {r*a.cols+c+1} touche le bord')
     m=mask[ya:yb,xa:xb];A=sub[ya:yb,xa:xb]*m*255
     im=Image.fromarray(np.dstack([rgb[y0:y1,x0:x1][ya:yb,xa:xb],A]).astype(np.uint8))
-    w,h=max(1,round(im.width*a.scale)),max(1,round(im.height*a.scale));im=im.resize((w,h),Image.LANCZOS)
-    low=m[-max(4,m.shape[0]//10):];fx=np.nonzero(low)[1];ax=(fx.mean() if len(fx) else m.shape[1]/2)*a.scale
+    sc=a.scale*k512;w,h=max(1,round(im.width*sc)),max(1,round(im.height*sc));im=im.resize((w,h),Image.LANCZOS)
+    low=m[-max(4,m.shape[0]//10):];fx=np.nonzero(low)[1];ax=(fx.mean() if len(fx) else m.shape[1]/2)*sc
     frames.append((im,[0,0,w,h,round(float(ax),1),float(h)],(y0+yb)-0,(x0+xa)))
 AW=max(1024,max(f[0].width for f in frames));x=y=sh=0
 for im,fr,_,_ in frames:
