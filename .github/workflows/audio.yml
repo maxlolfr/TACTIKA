@@ -1,6 +1,7 @@
 name: Récupération des sons ElevenLabs
 on:
   push:
+    branches: [main]
     paths: [tools/audio-urls.txt]
   workflow_dispatch:
 permissions:
@@ -18,7 +19,7 @@ jobs:
             [ -z "$name" ] && continue
             curl -sSfL "$url" -o "/tmp/$name.mp3"
             case "$name" in
-              camp|battle|boss) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
+              camp|battle|boss|main_theme|forest|elite_battle) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
               victory|defeat) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
               *) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 1 -b:a 64k "assets/audio/$name.mp3" ;;
             esac
@@ -28,6 +29,6 @@ jobs:
         run: |
           git rm -q tools/audio-urls.txt
           git add assets/audio
-          git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "Sons ElevenLabs ajoutés (22 fichiers)"
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "Sons ElevenLabs ajoutés"
           git push origin HEAD:main
           git push --force origin HEAD:gh-pages

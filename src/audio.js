@@ -1,5 +1,7 @@
 // Audio : Web Audio, fichiers ElevenLabs dans assets/audio/<nom>.mp3, sons synthétisés de secours.
-export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat'],MUSICS=['camp','battle','boss'];
+export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle'];
+// tant qu'un nouveau fichier manque, on joue son équivalent existant
+const FALL={main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal'};
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
@@ -17,11 +19,11 @@ export function setSon(k){AU.on[k]=AU.on[k]?0:1;try{localStorage.setItem('landeS
 export function sonBtns(){document.querySelectorAll('.son-m').forEach(b=>b.style.opacity=AU.on.m?1:.35);document.querySelectorAll('.son-s').forEach(b=>b.style.opacity=AU.on.s?1:.35)}
 export function music(n,force){AU.want=n;const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
  if(AU.src){const o=AU.src;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000);AU.src=null}
- AU.cur=n;const b=AU.buf[n];if(!b)return;const s=c.createBufferSource(),g=c.createGain();s.buffer=b;s.loop=true;s.g=g;g.gain.value=0;g.gain.setTargetAtTime(1,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
+ AU.cur=n;const b=AU.buf[n]||AU.buf[FALL[n]];if(!b)return;const s=c.createBufferSource(),g=c.createGain();s.buffer=b;s.loop=true;s.g=g;g.gain.value=0;g.gain.setTargetAtTime(1,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
 export function duck(ms){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime;g.setTargetAtTime(.25,t,.08);g.setTargetAtTime(1,t+ms/1000,.6)}
-export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
+export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
  if(b){const s=c.createBufferSource();s.buffer=b;s.playbackRate.value=rate*(.94+Math.random()*.12);s.connect(g);s.start();return}
- synth(n,g,c.currentTime)}
+ synth(FALL[n]||n,g,c.currentTime)}
 // sons de secours synthétisés (remplacés automatiquement par les mp3 ElevenLabs)
 function synth(n,out,t){const c=AU.c;
  const osc=(type,f0,f1,d,v=.3,at=0)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f0,t+at);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+at+d);g.gain.setValueAtTime(v,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+d);o.connect(g);g.connect(out);o.start(t+at);o.stop(t+at+d+.02)};
