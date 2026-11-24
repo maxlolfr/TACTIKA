@@ -1,0 +1,2 @@
+battle https://elevenlabsusercontent.com/database/workspace/f3a9fad25c834145a8b2d47712822f58/content_generation/te3eduWrEMGjo6nzUR85/3XWumvTCRMSCRA1kd8RN/content.mp3?Expires=1795550400&KeyName=assets-cdn-key-1&Signature=6TUuvb990YzNgBOhoT1Nwko65Ag=
+boss https://elevenlabsusercontent.com/database/workspace/f3a9fad25c834145a8b2d47712822f58/content_generation/d7WNITTf69g2Lwy861v1/VDzHNGyR85nu1nR6XBVQ/content.mp3?Expires=1795550400&KeyName=assets-cdn-key-1&Signature=mFveRHeUFD05LShELMMUA4EteIU=
