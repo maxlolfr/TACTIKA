@@ -1,0 +1,33 @@
+name: Récupération des sons ElevenLabs
+on:
+  push:
+    paths: [tools/audio-urls.txt]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Télécharger et compresser
+        run: |
+          sudo apt-get -qq install -y ffmpeg >/dev/null
+          mkdir -p assets/audio
+          while read -r name url; do
+            [ -z "$name" ] && continue
+            curl -sSfL "$url" -o "/tmp/$name.mp3"
+            case "$name" in
+              camp|battle|boss) ffmpeg -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
+              victory|defeat) ffmpeg -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
+              *) ffmpeg -loglevel error -y -i "/tmp/$name.mp3" -ac 1 -b:a 64k "assets/audio/$name.mp3" ;;
+            esac
+            echo "$name $(du -h assets/audio/$name.mp3 | cut -f1)"
+          done < tools/audio-urls.txt
+      - name: Enregistrer
+        run: |
+          git rm -q tools/audio-urls.txt
+          git add assets/audio
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "Sons ElevenLabs ajoutés (22 fichiers)"
+          git push origin HEAD:main
+          git push --force origin HEAD:gh-pages
