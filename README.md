@@ -2,7 +2,7 @@
 
 Jeu tactique au tour par tour façon Dofus, en HTML5, pensé pour le mobile (iPhone en portrait).
 
-**Jouer :** https://maxlolfr.github.io/tactika/
+**Jouer :** https://maxlolfr.github.io/TACTIKA/
 
 ## Le jeu (prototype 1)
 - 3 héros : Kael (guerrier), Fenn (archer), Aelis (soigneuse), 3 sorts chacun.
