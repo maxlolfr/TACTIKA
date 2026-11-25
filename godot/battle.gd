@@ -1,11 +1,26 @@
 extends Node3D
 
 const DIRS = [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN]
+const TEXTURES = {
+	"fennX": preload("res://assets/fennX.webp"),
+	"kaelW": preload("res://assets/kaelW.webp"),
+	"aelisX": preload("res://assets/aelisX.webp"),
+	"monA": preload("res://assets/monA.webp"),
+}
+const SOUNDS = {
+	"aelis_heal": preload("res://assets/audio/aelis_heal.mp3"),
+	"bow": preload("res://assets/audio/bow.mp3"),
+	"defeat": preload("res://assets/audio/defeat.mp3"),
+	"hit": preload("res://assets/audio/hit.mp3"),
+	"poison": preload("res://assets/audio/poison.mp3"),
+	"slash": preload("res://assets/audio/slash.mp3"),
+	"step": preload("res://assets/audio/step.mp3"),
+	"victory": preload("res://assets/audio/victory.mp3"),
+}
 var tiles = {}
 var units = []
 var blocks = [Vector2i(3,3), Vector2i(5,3), Vector2i(2,5)]
 var atlas = {}
-var textures = {}
 var current = 0
 var mode = 0
 var busy = false
@@ -38,7 +53,8 @@ func _ready():
 	camera.position = Vector3(12,14,12)
 	camera.look_at(Vector3(3.5,0,3.5))
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 13.5
+	camera.keep_aspect = Camera3D.KEEP_WIDTH
+	camera.size = 12.4
 	camera.current = true
 	for x in range(8):
 		for y in range(8):
@@ -55,11 +71,9 @@ func _ready():
 	build_ui()
 	music = AudioStreamPlayer.new()
 	add_child(music)
-	var track = "res://assets/audio/battle.mp3"
-	if ResourceLoader.exists(track):
-		music.stream = load(track)
-		music.volume_db = -12
-		music.finished.connect(music.play)
+	music.stream = preload("res://assets/audio/battle.mp3")
+	music.volume_db = -12
+	music.finished.connect(music.play)
 	refresh()
 
 func cube(pos: Vector3, dimensions: Vector3, color: Color) -> MeshInstance3D:
@@ -84,13 +98,12 @@ func add_unit(n: String,p: Vector2i,hp: int,hero: bool,sheet: String,frame: int,
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	sprite.centered = false
 	sprite.pixel_size = 0.006
-	var path = "res://assets/"+sheet+".webp"
-	if ResourceLoader.exists(path) and atlas.has(sheet):
+	if atlas.has(sheet):
 		var f = atlas[sheet][frame]
-		sprite.texture = load(path)
+		sprite.texture = TEXTURES[sheet]
 		sprite.region_enabled = true
 		sprite.region_rect = Rect2(f[0],f[1],f[2],f[3])
-		sprite.offset = Vector2(-f[4],0)
+		sprite.offset = Vector2(-f[4],f[5]-f[3])
 		sprite.position.y = 0.05
 	var label = Label3D.new()
 	root.add_child(label)
@@ -107,26 +120,41 @@ func build_ui():
 	layer.add_child(panel)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	panel.offset_top = -180
+	panel.offset_left = 12
+	panel.offset_right = -12
+	panel.offset_bottom = -12
 	var box = VBoxContainer.new()
 	panel.add_child(box)
 	status = Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status.add_theme_font_size_override("font_size",22)
+	status.add_theme_font_size_override("font_size",25)
 	box.add_child(status)
-	for item in ["Déplacement","Attaque / Épine","Soin (Aelis)","Fin du tour"]:
+	var actions = GridContainer.new()
+	actions.columns = 2
+	box.add_child(actions)
+	for item in ["Déplacement","Attaque","Soin","Fin du tour"]:
 		var b = Button.new()
 		b.text = item
-		b.custom_minimum_size.y = 32
-		box.add_child(b)
+		b.custom_minimum_size.y = 66
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.add_theme_font_size_override("font_size",24)
+		actions.add_child(b)
 		buttons.append(b)
 	buttons[0].pressed.connect(func(): choose(0))
 	buttons[1].pressed.connect(func(): choose(1))
 	buttons[2].pressed.connect(func(): choose(2))
-	buttons[3].pressed.connect(advance)
+	buttons[3].pressed.connect(func():
+		if finished:
+			get_tree().reload_current_scene()
+		else:
+			start_music()
+			advance()
+	)
 
 func choose(m: int):
 	if busy or finished:
 		return
+	start_music()
 	mode = m
 	refresh()
 
@@ -191,6 +219,9 @@ func refresh():
 	for b in buttons:
 		b.disabled = busy or finished or not u.hero
 	buttons[2].disabled = buttons[2].disabled or u.name!="Aelis"
+	buttons[3].text = "Rejouer" if finished else "Fin du tour"
+	if finished:
+		buttons[3].disabled = false
 
 func _unhandled_input(event):
 	if busy or finished or not units[current].hero:
@@ -202,8 +233,7 @@ func _unhandled_input(event):
 		if hit==null:
 			return
 		var p = Vector2i(roundi(hit.x),roundi(hit.z))
-		if not music.playing and music.stream:
-			music.play()
+		start_music()
 		var u = units[current]
 		if mode==0:
 			var paths = reachable(u)
@@ -222,13 +252,14 @@ func _unhandled_input(event):
 		if not finished:
 			refresh()
 
+func start_music():
+	if not music.playing:
+		music.play()
+
 func sound(n: String):
-	var path = "res://assets/audio/"+n+".mp3"
-	if not ResourceLoader.exists(path):
-		return
 	var a = AudioStreamPlayer.new()
 	add_child(a)
-	a.stream = load(path)
+	a.stream = SOUNDS[n]
 	a.finished.connect(a.queue_free)
 	a.play()
 

@@ -12,6 +12,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
       - name: Install pinned Godot and export templates
         run: |
           VERSION=4.4.1
@@ -24,18 +28,22 @@ jobs:
           mkdir -p "$HOME/.local/share/godot/export_templates/${VERSION}.stable"
           cp /tmp/templates/templates/* "$HOME/.local/share/godot/export_templates/${VERSION}.stable/"
       - name: Reuse original assets
-        run: cp -R assets godot/assets
+        run: bash godot/prepare-assets.sh
       - name: Import and validate
         run: |
           godot --headless --path godot --editor --import 2>&1 | tee /tmp/import.log
-          ! grep -E 'SCRIPT ERROR|Parse Error' /tmp/import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/import.log; then exit 1; fi
           godot --headless --path godot --quit-after 30 2>&1 | tee /tmp/smoke.log
-          ! grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/smoke.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/smoke.log; then exit 1; fi
+          godot --headless --path godot --script res://tests/battle_test.gd 2>&1 | tee /tmp/battle-test.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/battle-test.log; then exit 1; fi
         shell: bash
       - name: Export Web
         run: |
           mkdir -p godot/build
-          godot --headless --path godot --export-release Web build/index.html
+          touch godot/build/.gdignore
+          godot --headless --path godot --export-release Web build/index.html 2>&1 | tee /tmp/export.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/export.log; then exit 1; fi
           test -s godot/build/index.html
           test -s godot/build/index.wasm
       - uses: actions/upload-artifact@v4
