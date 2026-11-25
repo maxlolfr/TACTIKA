@@ -1,7 +1,7 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,TIL,DECO_W,CMAX,R} from './data.js';
+import {DEC,TIL,DECO_W,CMAX,R,ZONES} from './data.js';
 import {K,mulberry,pick,cell,occ} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -20,11 +20,11 @@ export function skin(){const st=document.createElement('style');st.textContent=`
  .btn.dark{background-image:url(${uiURL(10)});color:#f3ead8;text-shadow:0 1px 2px #000}
  .btn.dark{padding:12px 28px}#top .btn{background:#2a1b10dd;border:1px solid #7a5a32;border-radius:10px;padding:6px 9px;color:#f3ead8}
  #panel{background:url(${uiURL(11)}) center/100% 100% no-repeat,#2a1b10;border-top:0}
- #camp{background:linear-gradient(#0c0a0899,#0c0a08cc 70%),url(assets/camp.webp) center/cover}`;document.head.appendChild(st)}
+ #camp{background:linear-gradient(#0c0a0844,#0c0a08bb 75%),url(assets/camp.webp) center/cover}`;document.head.appendChild(st)}
 export function icon(s,i,px,top){const cv=document.createElement('canvas'),d=2;cv.width=cv.height=px*d;const c=cv.getContext('2d'),f=AT[s][i];
  const sh=top?f[3]*top:f[3];const k=Math.min(px*d/f[2],px*d/sh);c.drawImage(IMG[s],f[0],f[1],f[2],sh,(px*d-f[2]*k)/2,(px*d-sh*k)/2,f[2]*k,sh*k);return cv}
 // Hauteur de référence du sprite de chaque unité (sert à les mettre à l'échelle).
-export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[u.k][0][3]:AT[u.s][u.row*3][3]}
+export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[HN[u.k].i[0]][HN[u.k].i[1]][3]:AT[u.s][u.row*3][3]}
 
 // ---------- géométrie ----------
 export let W,H,dpr,TW,TH,ox,oy;
@@ -38,17 +38,21 @@ export function layout(){
  if(G.s.map.size)buildGround();
 }
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
-function buildGround(){const S=G.s,theme=S.theme;
+const BGZ=['prairie','bois','mont','chateau'],BG={};
+function bgOf(){const id=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(id))return null;
+ if(!(id in BG)){BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===id)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
+function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
+ if(bg){const k=Math.max(W/bg.width,H/bg.height);g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,0,W,H)}
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,cm=Math.ceil(W/TW)+2,rr=mulberry(G.F.seed*13);outer=[];
  const tl=(t,sx,sy)=>{const[ts,ti]=TIL(t),f=AT[ts][ti],s=TW*1.04/f[2];g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],sx-TW*.52,sy-TH*.52,f[2]*s,f[3]*s)};
  for(let r=r0;r<=r1;r++)for(let c=-cm;c<=cm;c++){if((r+c)&1)continue;const x=(r+c)/2,y=(r-c)/2,[sx,sy]=scr(x,y),m=cell(S,x,y);
-  if(m)tl(m.t,sx,sy);else{const t=theme.g[Math.floor(rr()*theme.g.length)];tl(t===4||t===8?theme.g[0]:t,sx,sy);diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
+  if(m){if(bg){g.globalAlpha=.62;tl(m.t,sx,sy);g.globalAlpha=1}else tl(m.t,sx,sy)}else if(!bg){const t=theme.g[Math.floor(rr()*theme.g.length)];tl(t===4||t===8?theme.g[0]:t,sx,sy);diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
    const dist=Math.max(Math.abs(c)-CMAX,-r,r-R);if(dist>=2&&rr()<.1)outer.push({x,y,d:pick(rr,theme.out||(dist>2&&rr()<.12?[10,9,11]:[0,1,1,2,0,4,7]))})}}
  for(const m of S.map.values())if(m.flower){const[sx,sy]=scr(m.x,m.y);const f=AT.deco[5];drawF(g,'deco',5,sx,sy+TH*.1,TW*.7/f[2])}
  // liseré du plateau
- g.strokeStyle='rgba(255,240,200,.08)';g.lineWidth=1;for(const m of S.map.values()){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.98);g.stroke()}
+ g.strokeStyle=bg?'rgba(255,240,200,.28)':'rgba(255,240,200,.08)';g.lineWidth=1;for(const m of S.map.values()){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.98);g.stroke()}
 }
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
 export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
@@ -59,16 +63,19 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
  return g}
 
 // ---------- image d'une unité ----------
-const HP2={warrior:'kael',archer:'fenn',healer:'aelis'};
-const refOf=s=>{const f=AT[s];return f.slice(0,4).reduce((a,x)=>a+x[3],0)/Math.min(4,f.length)};
+// Héros V2 (planches ChatGPT) : planche de marche W, planche de poses X
+const HN={warrior:{F:['kaelW',[0,1,2,3]],B:['kaelW',[4,5,6,7]],i:['kaelW',0],iB:['kaelW',4],a:['kaelX',1],c:['kaelX',3],b:['kaelX',2],v:['kaelX',3],ko:null},
+ archer:{F:['fennX',[0,1,2,1]],i:['fennX',0],a:['fennX',3],c:['fennX',5],b:['fennX',0],v:['fennX',6],ko:['fennX',7]},
+ healer:{F:['aelisX',[0,1,2,3]],i:['aelisX',0],a:['aelisX',4],c:['aelisX',5],b:['aelisX',4],v:['aelisX',6],ko:['aelisX',7]}};
+export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
-function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2;
- if(u.team==='h'){const b=HP2[u.k];
-  if(u.dead)return[b+'P',0,right,refOf(b+'F')];
-  if(u.walk)return[b+(u.dir===1||u.dir===0?'F':'B'),u.wf%4,right,refOf(b+'F')];
-  if(p==='v'||p==='c'||p==='b')return[b+'P',{v:1,c:2,b:3}[p],right,refOf(b+'F')];
-  if(p==='i'&&u.shield>0)return[b+'P',3,right,refOf(b+'F')];
-  return[u.k,{i:0,a:4,h:8}[p]+u.dir,false,u.ref]}
+function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2,back=u.dir===2||u.dir===3;
+ if(u.team==='h'){const h=HN[u.k],rf=AT[h.i[0]][h.i[1]][3];
+  if(u.dead)return h.ko?[...h.ko,right,rf]:[...h.i,right,rf];
+  if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],right,rf]}
+  if(h[p]&&p!=='i')return[...h[p],right,rf];
+  if(u.shield>0)return[...h.b,right,rf];
+  return[...(back&&h.iB?h.iB:h.i),right,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
  return[u.s,u.row*3+{i:0,a:1,h:2}[p],right,u.ref]}
 
