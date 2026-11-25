@@ -4,19 +4,19 @@ import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx} from './render.js';
+import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
 
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
- const[s,idx]=u.team==='h'?[u.k,1]:[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'');tl.appendChild(c)}}
+ const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'');tl.appendChild(c)}}
 function render(){
  const u=G.cur,{sel,F}=G;
  $('title').textContent=F?`${ZONES[F.zi].n} · ${F.boss?'Boss':F.i+1+'/3'}`:'';
  if(!u){return}
  const me=u.team==='h'&&G.phase==='fight';
- $('who').innerHTML='';const ic=icon(u.team==='h'?u.k:u.s,u.team==='h'?1:u.row*3,30,u.team==='h'?.62:0);$('who').append(ic,`${u.n}`);
+ $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),30,u.team==='h'?.62:0);$('who').append(ic,`${u.n}`);
  const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=`${u.hp}/${u.max} PV`;$('who').append(hb,ht);
  $('pts').innerHTML=`<span class="pa"><img src="${uiURL(12)}"> ${u.pa} PA</span><span class="pm"><img src="${uiURL(13)}"> ${u.pm} PM</span>`+(me?'':`<span style="color:#e08a7a">Tour ennemi…</span>`);
  const S=$('spells');S.innerHTML='';
@@ -50,11 +50,11 @@ export function startFight(zi,i){
  layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);runFight();
 }
 function party(){const d=document.createElement('div');d.className='party';HER.forEach((h,i)=>{const s=heroStats(save,i),c=document.createElement('div');c.className='hc';
- const cv2=document.createElement('canvas');cv2.width=240;cv2.height=192;const g=cv2.getContext('2d'),f=AT[h.k][1],k=176/f[3];drawF(g,h.k,1,120,184,k);c.appendChild(cv2);
+ const cv2=document.createElement('canvas');cv2.width=240;cv2.height=192;const g=cv2.getContext('2d'),[hs,hi]=heroFrame(h.k),f=AT[hs][hi],k=176/f[3];drawF(g,hs,hi,120,184,k);c.appendChild(cv2);
  c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
  const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.1 · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.2 · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);
