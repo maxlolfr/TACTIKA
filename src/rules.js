@@ -43,18 +43,19 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 
 // ---------- unités ----------
 // hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
-export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
+export function mkUnits(s,F,hs,es,hstats,reference=null){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
  HER.forEach((h,i)=>{const st=hstats[i];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:3,pa:6,pm:3,init:h.init+rng(),
   sp:h.sp,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,cnt=Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
- const spots=[...es].sort(()=>rng()-.5);
- for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
+ const roster=reference?.filter(u=>!u.hero);
+ const spots=roster??[...es].sort(()=>rng()-.5);
+ for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:roster?roster[i].kind:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
   const hp=Math.round(m.hp*sc*(boss?B.hp:1)),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)));
   s.units.push({id:'m'+i,team:'m',k:t,s:m.s,row:m.row,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
    atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,fx:m.fx??0,proj:m.r?1:0}})}
- s.order=[...s.units].sort((a,b)=>b.init-a.init);
+ s.order=reference?reference.map(ref=>s.units.find(u=>u.x===ref.x&&u.y===ref.y)):[...s.units].sort((a,b)=>b.init-a.init);
 }
 export function face(u,x,y){const dx=x-u.x,dy=y-u.y;if(!dx&&!dy)return;u.dir=Math.abs(dx)>=Math.abs(dy)?(dx>0?0:3):(dy>0?1:2)}
 

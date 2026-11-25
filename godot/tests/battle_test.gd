@@ -15,20 +15,21 @@ func run():
 	root.add_child(battle)
 	current_scene = battle
 	await process_frame
-	expect(battle.tiles.size() == 64 and battle.units.size() == 6, "Arena and units load")
+	expect(battle.tiles.size() == 93 and battle.units.size() == 6, "Arena and units load")
 	expect(battle.music.stream != null, "Battle music is loaded")
 	for unit in battle.units:
 		expect(unit.sprite.texture != null, "%s sprite is loaded" % unit.name)
-	for corner in [Vector2i(0, 0), Vector2i(0, 7), Vector2i(7, 0), Vector2i(7, 7)]:
-		var screen_position = battle.camera.unproject_position(Vector3(corner.x, 0, corner.y))
-		expect(root.get_visible_rect().has_point(screen_position), "Board corner %s fits on screen" % corner)
+	expect(battle.blocks.size() == 7, "Prairie obstacles match the source map")
+	for tile in battle.tiles:
+		var screen_position = battle.camera.unproject_position(Vector3(tile.x, 0, tile.y))
+		expect(root.get_visible_rect().has_point(screen_position), "Prairie tile %s fits on screen" % tile)
 
 	var fenn = battle.units[0]
 	var kael = battle.units[1]
-	var aelis = battle.units[2]
-	var gel = battle.units[3]
+	var aelis = battle.units[4]
+	var boar = battle.units[2]
 	var paths = battle.reachable(fenn)
-	expect(not paths.has(kael.p), "Movement excludes occupied tiles")
+	expect(not paths.has(kael.p) and not paths.has(Vector2i(4, 8)), "Movement excludes units and scenery")
 	expect(not battle.visible_between(Vector2i(3, 2), Vector2i(3, 4)), "An obstacle blocks line of sight")
 	var destination := Vector2i(7, 6)
 	var step := InputEventMouseButton.new()
@@ -40,20 +41,34 @@ func run():
 
 	battle.advance()
 	expect(battle.current == 1 and kael.pa == 6, "Ending a turn selects Kael")
-	battle.advance()
-	expect(battle.current == 2 and not battle.buttons[2].disabled, "Aelis can select healing")
+	var enemy_start: Vector2i = boar.p
+	await battle.advance()
+	expect(battle.current == 4 and not battle.buttons[2].disabled, "Aelis plays after two boars")
+	expect(boar.p != enemy_start, "Enemy AI moves around scenery towards the heroes")
 	kael.hp -= 10
 	battle.choose(2)
 	step.position = battle.camera.unproject_position(Vector3(kael.p.x, 0, kael.p.y))
 	await battle._unhandled_input(step)
 	expect(kael.hp == kael.max and aelis.pa == 3, "Healing caps HP and spends 3 PA")
-	var enemy_start: Vector2i = gel.p
 	await battle.advance()
 	expect(battle.current == 0 and fenn.pm == 3 and not battle.busy, "Enemy turns return control to Fenn")
-	expect(gel.p != enemy_start, "Enemy AI moves towards the heroes")
 
-	for index in range(3, 6):
-		battle.units[index].hp = 0
+	battle.choose(1)
+	var ranged_target = {}
+	for unit in battle.units:
+		if not unit.hero and battle.valid_target(fenn, unit.p):
+			ranged_target = unit
+			break
+	expect(not ranged_target.is_empty(), "Fenn can pick a target after enemies advance")
+	if not ranged_target.is_empty():
+		var previous_hp = ranged_target.hp
+		step.position = battle.camera.unproject_position(ranged_target.node.position)
+		await battle._unhandled_input(step)
+		expect(fenn.pa == 3 and ranged_target.hp == previous_hp - 10, "Fenn's attack spends PA and deals damage")
+
+	for unit in battle.units:
+		if not unit.hero:
+			unit.hp = 0
 	expect(battle.check_end() and battle.status.text == "Victoire !", "Defeated enemies end the battle")
 	expect(not battle.buttons[3].disabled and battle.buttons[3].text == "Rejouer", "The result offers a rematch")
 	battle.buttons[3].pressed.emit()

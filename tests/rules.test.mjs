@@ -1,6 +1,8 @@
 // Tests des règles de combat (Node, sans navigateur) : npm test
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
  hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep} from '../src/rules.js';
@@ -39,6 +41,16 @@ test('unités : 3 héros, monstres proportionnels au niveau, boss renforcé', ()
  const boss=s3.units.find(u=>u.id==='m0');assert.equal(boss.n,'Roi Gelée');assert.ok(boss.hp>MON.slime.hp*3);
  assert.equal(s3.order.length,6);
  for(let i=1;i<s3.order.length;i++)assert.ok(s3.order[i-1].init>=s3.order[i].init,'ordre par initiative');
+});
+
+test('Prairie : les deux aperçus partagent le terrain et la formation de départ', () => {
+ const script=fileURLToPath(new URL('../godot/export-prairie.mjs',import.meta.url));
+ const reference=JSON.parse(execFileSync(process.execPath,[script],{encoding:'utf8'}));
+ const s=newBattle(),{hs,es}=genMap(s,reference.seed,ZONES[0].th[0]);
+ mkUnits(s,FIGHT,hs,es,HS,reference.units);
+ assert.deepEqual([...s.map.values()],reference.cells);
+ const roster=s.order.map(({n,k,x,y,hp,maxPM})=>[n,k,x,y,hp,maxPM]);
+ assert.deepEqual(roster,reference.units.map(({name,kind,x,y,hp,pm})=>[name,kind,x,y,hp,pm]));
 });
 
 test('PM : reach respecte la limite, les obstacles, l\'eau et les unités', () => {
