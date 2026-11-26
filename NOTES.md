@@ -58,5 +58,5 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - Ralentissement (`sp.slow`) : drapeau `t.slow`, consommé par `beginTurn` (PM max − 1, non cumulable).
 - Sauvegarde : `save.sp=[id|null ×3]`, validée par `cleanSp` (anciennes sauvegardes : aucune spécialisation). Toujours v2.
 - Écran du maître d'armes (bâtiment 2 du camp, « Nouveau ! » si niveau ≥ 3 et un héros sans spécialisation).
-- Nouveaux héros ChatGPT : planches `kael9/fenn9/aelis9` (poses repos, coup, touché, sort, spécial, KO, genou à terre sous 30 % PV, victoire). Marche et dos : anciennes planches en attendant la commande H-04. Icônes encadrées `tal` (4×4).
+- Nouveaux héros ChatGPT : planches `kael9/fenn9/aelis9` (poses repos, coup, touché, sort, spécial, KO, genou à terre sous 30 % PV, victoire). Marche et dos : `kaelM` pour Kael (H-04 reçue le 26/11) ; anciennes planches pour Fenn et Aelis en attendant H-04. Icônes encadrées `tal` (4×4).
 - 35 tests.
