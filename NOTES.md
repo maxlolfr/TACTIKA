@@ -51,3 +51,12 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - Nouveau sprite `roiG` (planche ChatGPT 3×3 sur fond noir, détourée) : repos, attaque, touché, invocation (pose `s`), KO (reste 1,8 s).
 - `rules.summon()` : appelé par `hurt()` une seule fois quand un boss avec `summon` passe à 50 % de PV ou moins sans mourir. 2 Petites gelées (12 PV, 2 PM, 3–5 dégâts, 0 XP) sur les cases libres atteignables les plus proches (moins s'il n'y a pas la place). Elles sont ajoutées à la fin de `s.order` : elles jouent après tout le monde, sans décaler l'index du tour en cours.
 - Victoire : il faut aussi battre les gelées invoquées. 31 tests.
+
+## V2.5a — Spécialisations, palier 1 (26/11/2026)
+- `src/talents.js` : 9 spécialisations (3 par héros), paliers aux niveaux 3/7/11 ; `DONE=1` = seul le premier palier est codé, les autres sont affichés « à venir ». `talentFx(save,i)` donne les modificateurs (dmgMul, hpMul, healMul, maxPM, sp:{id:{champs remplacés}}).
+- `heroStats` renvoie `tal` ; `mkUnits` crée `u.S` (copie modifiée des sorts du héros : SP n'est jamais modifié), `u.dmgMul`, `u.healMul`, `maxPM`. L'interface lit `u.S[id]` (descriptions et portées réelles).
+- Ralentissement (`sp.slow`) : drapeau `t.slow`, consommé par `beginTurn` (PM max − 1, non cumulable).
+- Sauvegarde : `save.sp=[id|null ×3]`, validée par `cleanSp` (anciennes sauvegardes : aucune spécialisation). Toujours v2.
+- Écran du maître d'armes (bâtiment 2 du camp, « Nouveau ! » si niveau ≥ 3 et un héros sans spécialisation).
+- Nouveaux héros ChatGPT : planches `kael9/fenn9/aelis9` (poses repos, coup, touché, sort, spécial, KO, genou à terre sous 30 % PV, victoire). Marche et dos : anciennes planches en attendant la commande H-04. Icônes encadrées `tal` (4×4).
+- 35 tests.

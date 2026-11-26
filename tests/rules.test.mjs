@@ -2,6 +2,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
+import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
  hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal} from '../src/rules.js';
 
@@ -264,4 +265,34 @@ test('Roi Gelée : pas d\'invocation s\'il meurt d\'un coup, places limitées pa
  const s2=arena(),b2=unit(s2,'m',0,0,{hp:100,max:100,summon:ZONES[0].boss.summon});unit(s2,'h',1,0);unit(s2,'h',1,1);unit(s2,'h',0,2);s2.order=[];
  const e=hurt(s2,b2,60);assert.equal(e.spawn.length,1);assert.deepEqual([e.spawn[0].x,e.spawn[0].y],[0,1]);
  assert.equal(outcome(s2),null);for(const u of s2.units.filter(u=>u.team==='m'))u.dead=true;assert.equal(outcome(s2),'win');
+});
+
+// ---------- V2.5a : spécialisations, palier 1 ----------
+const SV=(sp,lvl=3)=>({lvl,items:[],up:{},sp});
+function team(sp,lvl=3){const s=arena(),hs=[{x:1,y:1},{x:2,y:1},{x:3,y:1}],es=[{x:9,y:9},{x:10,y:9},{x:9,y:10}];
+ mkUnits(s,FIGHT,hs,es,HER.map((_,i)=>heroStats(SV(sp,lvl),i)));return s}
+test('talents : rien avant le niveau 3, sauvegarde validée', () => {
+ const s=team(['berserk','eclaireur','druide'],2),[k,f,a]=s.units;
+ assert.equal(k.dmgMul,1);assert.equal(f.maxPM,3);assert.deepEqual(a.S.venom.poison,SP.venom.poison);
+ assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null]);
+ assert.equal(SPECS.flat().length,9);
+});
+test('talents Kael : Fureur ×1,15, Robustesse PV ×1,15, Onde de choc 3 cases', () => {
+ const s=team(['berserk',null,null]),k=s.units[0],t=unit(s,'m',5,5,{hp:99,max:99});k.dmgB=0;k.mult=1;s.rng=()=>.5;
+ applySpell(s,k,{...SP.slash,dmg:[20,20]},t);assert.equal(t.hp,99-23);
+ const base=heroStats(SV([null,null,null]),0).hp;assert.equal(heroStats(SV(['gardien',null,null]),0).hp,Math.round(base*1.15));
+ assert.equal(team(['briseur',null,null]).units[0].S.smash.push,3);assert.equal(SP.smash.push,2);
+});
+test('talents Fenn : portée 7, Tir entravant non cumulable, Agilité 4 PM', () => {
+ assert.deepEqual(team([null,'tireur',null]).units[1].S.shot.r,[2,7]);assert.deepEqual(SP.shot.r,[2,6]);
+ const s=team([null,'chasseur',null]),f=s.units[1],t=unit(s,'m',5,5,{maxPM:3});s.rng=()=>.5;
+ applySpell(s,f,f.S.shot,t);applySpell(s,f,f.S.shot,t);beginTurn(t);assert.equal(t.pm,2);beginTurn(t);assert.equal(t.pm,3);
+ const e=team([null,'eclaireur',null]).units[1];assert.equal(e.maxPM,4);assert.equal(e.pm,4);
+});
+test('talents Aelis : soin ×1,2, poison 6, Aura +40 %', () => {
+ const s=team([null,null,'guerisseuse']),a=s.units[2],k=s.units[0];a.healB=0;a.mult=1;k.hp=1;s.rng=()=>.5;
+ applySpell(s,a,{...a.S.heal,heal:[15,15]},k);assert.equal(k.hp,1+18);
+ assert.deepEqual(team([null,null,'druide']).units[2].S.venom.poison,[6,2]);
+ const s2=team([null,null,'enchant']),a2=s2.units[2],k2=s2.units[0],t=unit(s2,'m',5,5,{hp:99,max:99});s2.rng=()=>.5;k2.dmgB=0;k2.mult=1;
+ applySpell(s2,a2,a2.S.aura,k2);applySpell(s2,k2,{...SP.slash,dmg:[20,20]},t);assert.equal(t.hp,99-28);
 });

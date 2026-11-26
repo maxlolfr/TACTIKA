@@ -7,6 +7,7 @@ import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
+import {SPECS,TIER,DONE,specOf} from './talents.js';
 
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
@@ -25,7 +26,7 @@ function render(){renderTL();
  if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).sort((a,b)=>b[1]-a[1]).forEach(([o,ok])=>{const w=document.createElement('button');w.className='tb'+(ok?' ok':'');w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>`);w.onclick=()=>{if(ok)act({x:o.x,y:o.y})};tg.appendChild(w)});
  $('pts').append(tg);
  const S=$('spells');S.innerHTML='';
- if(u.team==='h')for(const id of u.sp){const sp=SP[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
+ if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
   b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));b.insertAdjacentHTML('beforeend',`<b>${sp.pa}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]}</em>`:''));
   b.disabled=!me||G.busy||u.pa<sp.pa||u.cd[sp.n]>0;b.onclick=()=>{if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
  $('end').disabled=!me||G.busy;
@@ -33,7 +34,7 @@ function render(){renderTL();
 }
 const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')};
 function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
- if(u.sp.some(id=>{const sp=SP[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&selCells(S,u,sp).some(c=>c.ok)}))return;
+ if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&selCells(S,u,sp).some(c=>c.ok)}))return;
  $('hint').textContent='Plus rien à faire : tour suivant…';setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},700)}
 
 // ---------- saisie ----------
@@ -60,10 +61,10 @@ function party(){const d=document.createElement('div');d.className='party';HER.f
  c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
  const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
 // bâtiments du camp (planche bld : 0 forge, 1 marchand, 2 maître d'armes, 3 taverne) ; fonctions en V2.4b et après
-const BLD=[['La Forge','Améliore les équipements de tes héros.'],['Le Marchand','Achat et vente d’équipements. Bientôt.'],['Le Maître d’armes','Talents et spécialisations. Bientôt.'],['La Taverne','Contrats et défis du jour. Bientôt.']];
+const BLD=[['La Forge','Améliore les équipements de tes héros.'],['Le Marchand','Achat et vente d’équipements. Bientôt.'],['Le Maître d’armes','Spécialisations des héros.'],['La Taverne','Contrats et défis du jour. Bientôt.']];
 function town(){const d=document.createElement('div');d.className='town';const note=document.createElement('div');note.className='bnote';
- BLD.forEach(([n,t],i)=>{const b=document.createElement('button');b.className='bld'+(i?'':' next');b.append(icon('bld',i,120));b.insertAdjacentHTML('beforeend',`<b>${n}</b><small>${i?'Bientôt':'Améliorer'}</small>`);
-  b.onclick=i?null:forge;if(i)b.onclick=()=>{d.querySelectorAll('.bld').forEach(x=>x.classList.toggle('on',x===b));note.innerHTML=`<b>${n}</b> — ${t}`};d.appendChild(b)});
+ BLD.forEach(([n,t],i)=>{const b=document.createElement('button');const live=i===0||i===2,news=i===2&&save.lvl>=3&&save.sp.includes(null);b.className='bld'+(live?' next':'');b.append(icon('bld',i,120));b.insertAdjacentHTML('beforeend',`<b>${n}</b><small>${i===0?'Améliorer':i===2?(news?'<span style="color:#7dff8a">Nouveau !</span>':'Spécialisations'):'Bientôt'}</small>`);
+  b.onclick=i===0?forge:i===2?armes:null;if(!live)b.onclick=()=>{d.querySelectorAll('.bld').forEach(x=>x.classList.toggle('on',x===b));note.innerHTML=`<b>${n}</b> — ${t}`};d.appendChild(b)});
  d.appendChild(note);return d}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
@@ -80,9 +81,19 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
     sfx('smash',.6);setTimeout(()=>sfx('coin',.7),180);r.classList.add('forged');addPop(r,'+1');setTimeout(forge,650)};
    r.append(b);F.append(r)}});
  const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{F.classList.remove('on');camp()};F.append(back)}
+// ---------- maître d'armes (V2.5a) ----------
+function armes(){$('camp').classList.remove('on');const A=$('armes');A.classList.add('on');A.innerHTML='';
+ A.insertAdjacentHTML('beforeend',`<h1>Le Maître d’armes</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux 3, 7 et 11.</div>`);
+ HER.forEach((h,i)=>{const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
+  const row=document.createElement('div');row.className='specs';
+  for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon('tal',x.ic,56));
+   c.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b> <small>${x.d}</small>`+x.t.map(([tn,td],k)=>{const lv=TIER[k],ok=save.lvl>=lv&&k<DONE;return`<p class="${ok?'':'off'}"><em>${save.lvl<lv?'🔒 niv '+lv:k>=DONE?'à venir':on?'✓ actif':'niv '+lv}</em> <b>${tn}</b> : ${td}</p>`}).join('')+'</div>');
+   const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('buff',.7);armes()};c.append(b);row.append(c)}
+  A.append(row)});
+ const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.4c · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.5a · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);

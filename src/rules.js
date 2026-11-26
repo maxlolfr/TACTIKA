@@ -1,7 +1,8 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP} from './data.js';
+import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -46,7 +47,7 @@ export const upCost=(save,j)=>FORGE_COST[upLvl(save,j)]??null;
 export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j)||c==null||save.gold<c)return 0;
  save.gold-=c;(save.up||(save.up={}))[j]=upLvl(save,j)+1;return save.up[j]}
 export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
- const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);return{hp:Math.round(h.hp*m)+sum('hp'),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1)}}
+ const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}
 
@@ -54,8 +55,8 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 // hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- HER.forEach((h,i)=>{const st=hstats[i];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:3,pa:6,pm:3,init:h.init+rng(),
-  sp:h.sp,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
+ HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3;s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+  sp:h.sp,S:Object.fromEntries(h.sp.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,cnt=Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
@@ -104,12 +105,13 @@ export function applySpell(s,u,sp,c){
   if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  if(sp.dmg){const cr=rng()<.12,h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*buff*cb*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.dmg){const cr=rng()<.12,h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*buff*cb*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
-  if(sp.heal){const v=Math.round((ri(rng,...sp.heal)+(u.healB||0))*(u.mult||1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
+  if(sp.heal){const v=Math.round((ri(rng,...sp.heal)+(u.healB||0))*(u.mult||1)*(u.healMul||1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
+  if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
   if(sp.poison&&!t.dead)t.poison={d:sp.poison[0],turns:sp.poison[1]};
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
-  if(sp.buff){t.buff={pct:sp.buff,turns:2};ev.push({type:'status',t,text:'+30 %',color:'#ffd65a'})}
+  if(sp.buff){t.buff={pct:sp.buff,turns:2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:'+2 PM',color:'#7fd0ff'})}}
  if(sp.shake)ev.push({type:'shake',ms:250});
  return ev}
@@ -127,7 +129,7 @@ export function push(s,t,p){const ev=[{type:'push',t,to:p.to}];t.x=p.to.x;t.y=p.
 
 // ---------- tours ----------
 // Début de tour : PA/PM remis au maximum, recharges et bouclier diminuent d'un tour.
-export function beginTurn(u){delete u.hitBy;u.pa=u.maxPA;u.pm=u.maxPM;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x,y:u.y,i:5,w:.9},hurt(s,u,u.poison.d,'poison')];if(--u.poison.turns<=0)delete u.poison;return ev.filter(Boolean)}
 // Fin de tour : le bonus de dégâts diminue d'un tour.
@@ -153,7 +155,7 @@ export function aiStep(s,u){
   const can=u.pa>=sp.pa&&heroes.some(h=>okTarget(s,u,sp,h,from));const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0):100+(fd.get(k)??99)*10+d;if(sc<bs){bs=sc;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
-export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.maxPM;let r=null;
+export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
  for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){r={target:a.target,dmg:a.sp.dmg,from:{x:u.x,y:u.y}};break}
   const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
  Object.assign(u,keep);return r}
