@@ -28,4 +28,6 @@ for name,f,order in [('knightB','a45b52e6-image.png',STD),('knightR','6e76b5cd-i
     a=N;Image.fromarray(a.astype(np.uint8)).save(f'{S}/{name}.png')
     H=a.shape[0];scale=290/(512*.86)*(a.shape[0]/H0)
     print(subprocess.run(['python3','tools/cut3.py',f'{S}/{name}.png',name,'--cols','3','--rows','3','--scale',str(round(scale,3)),'--atlas'],capture_output=True,text=True,check=True).stdout)
-    A=json.load(open('assets/atlas.json'));A[name]=[A[name][i] for i in order];json.dump(A,open('assets/atlas.json','w'),separators=(',',':'))
+    A=json.load(open('assets/atlas.json'));A[name]=[A[name][i] for i in order];if name=='knightN':
+        for i in (0,5,9):A[name][i][4]=257.0  # repos : ancre au milieu des pieds, sans compter l'épée
+    json.dump(A,open('assets/atlas.json','w'),separators=(',',':'))

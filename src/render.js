@@ -58,8 +58,9 @@ export function layout(){
 const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
 const BGZ=['prairie','bois','plage','mont','chateau'],BG={};
-function bgOf(){const id=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(id))return null;
- if(!(id in BG)){BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===id)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
+// chaque zone a deux peintures : <zone>.webp (verticale) et <zone>-l.webp (écran plus large que haut)
+function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=W>H?z+'-l':z;
+ if(!(id in BG)){BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===z)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
@@ -109,6 +110,8 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
   return back?[...h.iB,flip,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,flip,rf]:[...h.i,flip,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
  // planches de boss (ChatGPT) : regard à droite, 6 cases repos, attaque, touché, spécial, KO, repos 2
+ // marche en 4 images sur une planche à part <nom>m (chevaliers, V3.6)
+ if(BS.includes(u.s)&&u.walk&&AT[u.s+'m'])return[u.s+'m',u.wf%4,!right,u.ref];
  if(BS.includes(u.s)&&u.walk&&AT[u.s].length>=10)return[u.s,6+u.wf%4,!right,u.ref];
  if(BS.includes(u.s))return u.dead?[u.s,4,!right,u.ref]:[u.s,{i:0,a:1,h:2,s:3}[p],!right,u.ref];
  return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
