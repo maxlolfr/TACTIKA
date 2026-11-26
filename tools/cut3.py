@@ -11,6 +11,8 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 p=argparse.ArgumentParser();p.add_argument('sheet');p.add_argument('name');p.add_argument('--cols',type=int,default=2);p.add_argument('--rows',type=int,default=2)
+p.add_argument('--protect',action='store_true',help='garde les violets du personnage : seul le magenta pur (et son bord) est effacé')
+p.add_argument('--blobs',action='store_true',help='un membre qui dépasse de sa case n\'est pas coupé : chaque forme va à la case de son centre')
 p.add_argument('--quality',type=int,default=82);p.add_argument('--scale',type=float,default=.5);p.add_argument('--atlas',action='store_true');p.add_argument('--out',default=os.path.join(os.path.dirname(__file__),'..','assets'))
 a=p.parse_args()
 # l'échelle est relative à une case de 512 px de haut : la taille de la planche reçue n'a donc pas d'importance
@@ -21,12 +23,22 @@ k512=512/(H/a.rows)
 if abs(k512-1)>.02: warn.append(f'cases de {W//a.cols}x{H//a.rows} px au lieu de 512x512 : mises à l\'échelle (x{k512:.2f})')
 if np.abs(M-[255,0,255]).sum()>60: warn.append(f'fond {M.astype(int).tolist()} différent de #FF00FF')
 d=np.abs(img-M).sum(2);al=np.clip((d-80)/110,0,1)
+if a.protect:
+  lb,_n=ndimage.label(d<80);areas=np.bincount(lb.ravel());pure=(lb>0)&(areas[lb]>=40)
+  al=np.where(ndimage.binary_dilation(pure,iterations=3),al,1.0)
+if a.blobs:
+  glab,gn=ndimage.label(ndimage.binary_closing(al>.5,iterations=2))
+  cm=ndimage.center_of_mass(np.ones_like(al),glab,range(1,gn+1))
+  owner=np.array([-1]+[min(a.rows-1,int(cy*a.rows//H))*a.cols+min(a.cols-1,int(cx*a.cols//W)) for cy,cx in cm])[glab]
 rgb=np.clip((img-(1-al[...,None])*M)/np.maximum(al[...,None],1e-3),0,255)
 frames=[]
 for r in range(a.rows):
   for c in range(a.cols):
     y0,y1,x0,x1=H*r//a.rows,H*(r+1)//a.rows,W*c//a.cols,W*(c+1)//a.cols
-    sub=al[y0:y1,x0:x1]
+    if a.blobs:
+      pad=W//a.cols//4;x0,x1=max(0,x0-pad),min(W,x1+pad)
+      sub=np.where(ndimage.binary_dilation(owner==r*a.cols+c,iterations=4),al,0)[y0:y1,x0:x1]
+    else: sub=al[y0:y1,x0:x1]
     lab,n=ndimage.label(ndimage.binary_closing(sub>.5,iterations=2))
     if n==0: warn.append(f'case {r*a.cols+c+1} vide');continue
     sz=ndimage.sum(sub>.5,lab,range(1,n+1));sl=ndimage.find_objects(lab);big=sz.max();mask=np.zeros(sub.shape,bool)
