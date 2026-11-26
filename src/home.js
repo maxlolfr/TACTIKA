@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.8b';
+export const VERSION='4.8c';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -143,7 +143,7 @@ function build(){
  dock.append(cmdPanel(ch),chap,go);
  const nav=el('nav','v-nav');
  for(const[id,n,ic]of[['camp','Camp',['ficon',13]],['heros','Héros',['ui',21]],['inventaire','Inventaire',['ui',26]],['quetes','Quêtes',['ui',20]]]){
-  const b=el('button');b.dataset.tab=id;b.append(icon(...ic,34),el('span',null,n));const q=id==='quetes'?claimable():id==='heros'&&talentNews()?'!':0;if(q)b.append(el('u','v-badge',q));b.onclick=()=>show(id);nav.append(b)}
+  const b=el('button');b.dataset.tab=id;b.append(icon(...ic,34),el('span',null,n));const q=id==='quetes'?claimable():id==='heros'&&talentNews()?'!':0;if(q)b.append(el('u','v-badge',q));b.onclick=()=>fresh(id);nav.append(b)}
  dock.append(nav);C.append(dock);
  const P=el('section','v-panel');P.id='vpanel';C.append(P);
 }
@@ -194,11 +194,19 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
 }
 
 // ---------- panneaux ----------
-let hero=0;
-export function show(t){tab=t;const P=$('vpanel');root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
+// V4.7b : `from` = panneau d'où l'on vient (bouton ‹) ; `resume` = panneau à rouvrir au retour de l'Académie, la Forge ou le Marchand
+let hero=0,back=null,resume=null,slotOpen=null,inv={who:-1,sl:'',sel:null};
+export function show(t,from){const P=$('vpanel'),same=t===tab&&P.querySelector('.v-body'),scroll=same?same.scrollTop:0;
+ if(from!==undefined)back=from;else if(t!==tab)back=null;tab=t;root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
  P.innerHTML='';P.classList.toggle('on',t!=='camp');root.classList.toggle('paneled',t!=='camp');if(t==='camp')return;
- const head=el('div','v-head',`<h2>${{heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther',entrainement:'Entraînement'}[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);P.append(head);
- const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe,entrainement})[t](body)}
+ const titles={heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther',entrainement:'Entraînement'};
+ const head=el('div','v-head',`<h2>${titles[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);
+ if(back){const to=back,r=el('button','v-x v-ret','‹');r.setAttribute('aria-label','Retour : '+titles[to]);r.onclick=()=>show(to,null);head.append(r)}P.append(head);
+ const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe,entrainement})[t](body);body.scrollTop=scroll}
+// ouvrir un écran plein (Académie, Forge, Marchand) depuis un panneau : son bouton Retour y ramène
+const visit=fn=>()=>{resume=tab;fn()};
+// clic dans la barre du bas : on repart de zéro (aucun filtre, aucun emplacement ouvert)
+function fresh(t){slotOpen=null;inv={who:-1,sl:'',sel:null};show(t,null)}
 const entrainement=P=>P.append(el('div','v-card','<b>Bientôt disponible</b><p class="v-how">Le terrain d’entraînement ouvrira avec les caractéristiques des héros, dans la version 4.7.</p>'));
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
@@ -209,24 +217,42 @@ function itemRow(j,who,again){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-r
  row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}<br>${on?'<b class="v-diff up">équipé</b>':'en réserve, sans effet · si équipé : '+diffHTML(j)}</small>`));
  if(!on)row.append(wood('Équiper',()=>{equip(save,j);store();again()},'sm'));return row}
 function heros(P){
- const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{hero=i;show('heros')};tabs.append(b)});P.append(tabs);
+ const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero)slotOpen=null;hero=i;show('heros')};tabs.append(b)});P.append(tabs);
+ const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
- card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd></dl>`));P.append(card);
- const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',A.armes,'sm'));P.append(tl);
- P.append(el('h4',null,'Équipement'),el('p','v-empty','Quatre emplacements : seul l’objet équipé compte.'));
- const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],c=el('div','v-eq'+(j==null?' vide':''));if(j!=null){c.append(icon('items',ITEMS[j].ic,40));c.append(el('span',null,`<i>${SLOTS[sl]}</i><b>${ITEMS[j].n}</b><small>${bonus(j)}</small>`))}else c.append(el('span',null,`<i>${SLOTS[sl]}</i><b>Vide</b>`));G.append(c)}P.append(G);
- const spare=save.items.filter(j=>ITEMS[j].who===hero&&!isOn(save,j));if(spare.length){P.append(el('h4',null,'En réserve'));for(const j of spare)P.append(itemRow(j,0,()=>show('heros')))}
- P.append(el('h4',null,'Sorts'));
- for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));P.append(row)}
+ card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd></dl>`));L.append(card);
+ L.append(el('h4',null,'Équipement'),el('p','v-empty','Touche un emplacement pour changer d’objet.'));
+ const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],spare=save.items.filter(q=>ITEMS[q].who===hero&&ITEMS[q].sl===sl&&q!==j).length;
+  const b=el('button','v-eq'+(j==null?' vide':'')+(slotOpen===sl?' sel':''));b.dataset.sl=sl;b.setAttribute('aria-expanded',slotOpen===sl);if(j!=null)b.append(icon('items',ITEMS[j].ic,40));
+  b.append(el('span',null,`<i>${SLOTS[sl]}</i><b>${j!=null?ITEMS[j].n:'Vide'}</b>${j!=null?`<small>${bonus(j)}</small>`:''}`));if(spare){const u=el('u',null,'⇄ '+spare);u.title=spare+' en réserve';b.append(u)}
+  b.onclick=()=>{slotOpen=slotOpen===sl?null:sl;show('heros');$('vpanel').querySelector('.v-pick')?.scrollIntoView({block:'nearest'})};G.append(b)}L.append(G);
+ if(slotOpen){const own=save.items.filter(j=>ITEMS[j].who===hero&&ITEMS[j].sl===slotOpen).sort((a,b)=>isOn(save,b)-isOn(save,a)),box=el('div','v-pick');
+  if(!own.length)box.append(el('p','v-empty',`${h.n} n’a aucun objet pour cet emplacement. On en gagne en combat ou chez le Marchand.`));
+  for(const j of own)box.append(itemRow(j,0,()=>show('heros')));
+  const act=el('div','v-actions');act.append(own.length?wood('Voir dans l’inventaire',()=>{inv={who:hero,sl:slotOpen,sel:g[slotOpen]};show('inventaire','heros')},'dk sm'):wood('Le Marchand',visit(A.shop),'sm'));box.append(act);L.append(box)}
+ const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',visit(A.armes),'sm'));R.append(tl);
+ R.append(el('h4',null,'Sorts'));
+ for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));R.append(row)}
 }
+// V4.7b : filtres par héros et par emplacement ; en filtrant, seuls les objets correspondants restent
 function inventaire(P){
- const grid=el('div','v-grid');ITEMS.forEach((o,j)=>{const has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off'));b.append(icon('items',o.ic,54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');
-  if(has){b.style.borderColor=RARE[rarOf(save,j)].c;if(upLvl(save,j))b.append(el('u',null,'+'+upLvl(save,j)))}
-  b.onclick=()=>{grid.querySelectorAll('.v-slot').forEach(x=>x.classList.toggle('sel',x===b));info.innerHTML='';info.append(has?itemRow(j,1,()=>{show('inventaire');$('vpanel').querySelectorAll('.v-slot')[j]?.click()}):el('p','v-empty',`Objet à découvrir pour ${HER[o.who].n}.`))};grid.append(b)});
- const info=el('div','v-card','<p class="v-empty">Touche un objet pour voir son effet.</p>');
- P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),grid,info);
- const r=el('div','v-actions');r.append(wood('La Forge',A.forge),wood('Le Marchand',A.shop,'dk'));P.append(r)}
+ const chips=(label,list,cur,set)=>{const r=el('div','v-chips');r.setAttribute('role','group');r.setAttribute('aria-label',label);for(const[v,n]of list){const b=el('button',v===cur?'on':'',n);b.setAttribute('aria-pressed',v===cur);b.onclick=()=>{set(v);inv.sel=null;show('inventaire')};r.append(b)}return r};
+ const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);
+ P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),cols);
+ L.append(chips('Filtrer par héros',[[-1,'Tous'],...HER.map((h,i)=>[i,h.n])],inv.who,v=>inv.who=v),chips('Filtrer par emplacement',[['','Tout'],...Object.entries(SLOTS)],inv.sl,v=>inv.sl=v));
+ const ids=ITEMS.map((o,j)=>j).filter(j=>(inv.who<0||ITEMS[j].who===inv.who)&&(!inv.sl||ITEMS[j].sl===inv.sl));
+ if(!ids.includes(inv.sel))inv.sel=null;
+ const grid=el('div','v-grid');for(const j of ids){const o=ITEMS[j],has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off')+(inv.sel===j?' sel':''));b.dataset.item=j;b.append(icon('items',o.ic,54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');
+  if(has){b.style.borderColor=RARE[rarOf(save,j)].c;if(upLvl(save,j))b.append(el('u',null,'+'+upLvl(save,j)));if(isOn(save,j))b.append(el('s',null,'✓'))}
+  b.onclick=()=>{inv.sel=j;show('inventaire')};grid.append(b)}
+ L.append(ids.length?grid:el('p','v-empty','Aucun objet ne correspond à ces filtres.'));
+ const info=el('div','v-card'),j=inv.sel;
+ if(j==null)info.innerHTML='<p class="v-empty">Touche un objet pour voir son effet. ✓ = équipé.</p>';
+ else{const o=ITEMS[j];info.append(save.items.includes(j)?itemRow(j,1,()=>show('inventaire')):el('p','v-empty',`Objet à découvrir pour ${HER[o.who].n} (${SLOTS[o.sl]}).`));
+  info.append(wood('Voir la fiche de '+HER[o.who].n,()=>{hero=o.who;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
+ R.append(info);
+ const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
 function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
@@ -236,7 +262,7 @@ function reglages(P){
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
 }
 
-export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;build();root.classList.add('on');fitHome();show('camp');sonBtns();store()}
+export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;build();root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});
 // la barre du navigateur intégré peut apparaître ou disparaître sans événement resize au retour d'un combat
 if(window.ResizeObserver)new ResizeObserver(()=>fitHome()).observe($('camp'));
