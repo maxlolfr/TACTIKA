@@ -2,13 +2,13 @@
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$} from './util.js';
 import {HER,ITEMS,ZONES,POTION,RARE,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.5c';
+export const VERSION='4.5d';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village. Toutes les positions sont en pixels de l'image de la scène.
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -132,8 +132,9 @@ export function show(t){tab=t;const P=$('vpanel');root.querySelectorAll('.v-nav 
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
-function itemRow(j,who){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row');row.append(icon('items',o.ic,42));
- row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`));return row}
+function itemRow(j,who){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),on=o.w&&weaponOf(save,o.who)===j;row.append(icon('items',o.ic,42));
+ row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.w?(on?' · <b style="color:#7dff8a">arme active</b>':' · arme rangée (sans effet)'):''}</small>`));
+ if(o.w&&!on&&!who)row.append(wood('Équiper',()=>{equip(save,j);store();show('heros')},'sm'));return row}
 function heros(P){
  const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
@@ -142,7 +143,7 @@ function heros(P){
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Talents',A.armes,'sm'));P.append(tl);
  P.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));P.append(row)}
- P.append(el('h4',null,'Équipement'));
+ P.append(el('h4',null,'Équipement'),el('p','v-empty','Une seule arme active par héros ; les autres objets s’additionnent.'));
  const own=save.items.filter(j=>ITEMS[j].who===hero);own.forEach(j=>P.append(itemRow(j)));
  if(!own.length)P.append(el('p','v-empty','Aucun objet pour l’instant : gagne des combats ou passe chez le marchand.'));
 }

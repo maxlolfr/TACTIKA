@@ -55,10 +55,11 @@ export const ZONES=[
    {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2}}]}];
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
+// V4.5d : w = arme. Une seule arme active par héros (save.wpn[i], choisie à la Caserne) ; les autres objets s'additionnent toujours
 export const ITEMS=[
- {ic:0,n:'Épée courte',pr:60,who:0,dmg:2},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8},{ic:5,n:'Heaume',pr:70,who:0,hp:6},
- {ic:2,n:'Arc long',pr:60,who:1,dmg:2},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4},
- {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2},{ic:9,n:'Amulette',pr:70,who:2,hp:6}];
+ {ic:0,n:'Épée courte',pr:60,who:0,dmg:2,w:1},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3,w:1},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8},{ic:5,n:'Heaume',pr:70,who:0,hp:6},
+ {ic:2,n:'Arc long',pr:60,who:1,dmg:2,w:1},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4},
+ {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3,w:1},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2},{ic:9,n:'Amulette',pr:70,who:2,hp:6}];
 // V4.0 : ts = planche de sol propre au thème (sol_<zone>, tiles5), g = cases de cette planche ; l'eau (4) et la roche (8) restent dans tiles4
 // tuiles : 0 herbe 1 fleurs 2 terre 3 sable 4 eau 5 pavés 6 sous-bois 7 dalles
 // décors : 0 chêne 1 sapin 2 buisson 3 caillou 4 rocher 5 fleurs 6 souche 7 barrière 8 caisse 9 puits 10 chaumière 11 panneau
