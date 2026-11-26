@@ -33,14 +33,22 @@ export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[HN[u.k
 // ---------- géométrie ----------
 export let W,H,dpr,TW,TH,ox,oy;
 const ISO=.62; // hauteur d'une case / largeur (0,5 = isométrie classique) : vue un peu plus plongeante, les sols sont étirés, pas les personnages
-export function scr(x,y){return[ox+(x-y)*TW/2,oy+(x+y)*TH/2]}
+// V : plateau pivoté d'un quart de tour (téléphone couché) : héros à gauche, ennemis à droite, cases plus grandes
+export let V=false;
+export const depth=(x,y)=>V?x-y:x+y; // profondeur à l'écran (ordre de dessin)
+const lat=(x,y)=>V?-x-y:x-y;        // position horizontale à l'écran
+export function scr(x,y){return[ox+lat(x,y)*TW/2,oy+depth(x,y)*TH/2]}
 let ground=null,outer=[];
 export function layout(){
- W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
- // V3.0c : en paysage le panneau est à droite (style.css), le plateau occupe la place à sa gauche
- const P=$('panel').getBoundingClientRect(),side=P.top<H/2,top=$('top').getBoundingClientRect().bottom,bot=side?H-8:P.top,avail=bot-top,aw=side?P.left:W;
- TW=Math.min(aw/6.3,avail/(9*ISO+1.4),130);TH=TW*ISO;ox=aw/2;
- const bh=(R/2+1)*TH+1.1*TW;oy=top+(avail-bh)/2+1.1*TW+TH/2;
+ const box=cv.getBoundingClientRect();W=box.width||innerWidth;H=box.height||innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
+ const side=matchMedia('(orientation:landscape)').matches,P=$('panel').getBoundingClientRect(),pad=(id,k)=>parseFloat(getComputedStyle($(id))[k])||0;
+ const top=$('top').getBoundingClientRect().bottom;
+ // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
+ const x0=side?pad('top','paddingLeft')-10:0,x1=side?P.left:W,bot=side?H-Math.max(4,pad('panel','paddingBottom')-8):P.top,avail=bot-top;
+ const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+1.4),130);
+ V=side&&fit(true)>fit(false)*1.05;TW=fit(V);TH=TW*ISO;
+ const rows=V?CMAX+1:R/2+1,bh=rows*TH+1.1*TW,mid=R/4; // case centrale (mid,mid)
+ ox=(x0+x1)/2-lat(mid,mid)*TW/2;oy=top+(avail-bh)/2+1.1*TW+rows*TH/2-depth(mid,mid)*TH/2;
  if(G.s.map.size)buildGround();
 }
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
@@ -51,19 +59,23 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
  if(bg){const k=Math.max(W/bg.width,H/bg.height);g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
- const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,cm=Math.ceil(W/TW)+2,rr=mulberry(G.F.seed*13);outer=[];
+ // périphérie assombrie : le regard va au plateau
+ {const[cx,cy]=scr(R/4,R/4),rad=Math.max(W,H)*.75,v=g.createRadialGradient(cx,cy,TW*2.5,cx,cy,rad);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=v;g.fillRect(0,0,W,H)}
+ const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
  const tl=(t,sx,sy)=>{const[ts,ti]=TIL(t),f=AT[ts][ti],s=TW*1.04/f[2];g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],sx-TW*.52,sy-TH*.52,f[2]*s,f[3]*s*ISO*2)};
- for(let r=r0;r<=r1;r++)for(let c=-cm;c<=cm;c++){if((r+c)&1)continue;const x=(r+c)/2,y=(r-c)/2,[sx,sy]=scr(x,y),m=cell(S,x,y);
+ for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){if((r+c)&1)continue;const a=(r+c)/2,b=(r-c)/2,x=V?b:a,y=V?-a:b,[sx,sy]=scr(x,y),m=cell(S,x,y);
   if(m){tl(m.t,sx,sy);if((x+y)&1){diamond(g,sx,sy);g.fillStyle='rgba(0,0,0,.08)';g.fill()}}else if(!bg){const t=theme.g[Math.floor(rr()*theme.g.length)];tl(t===4||t===8?theme.g[0]:t,sx,sy);diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
-   const dist=Math.max(Math.abs(c)-CMAX,-r,r-R);if(dist>=2&&rr()<.1)outer.push({x,y,d:pick(rr,theme.out||(dist>2&&rr()<.12?[10,9,11]:[0,1,1,2,0,4,7]))})}}
+   const dist=Math.max(Math.abs(x-y)-CMAX,-x-y,x+y-R);if(dist>=2&&rr()<.1)outer.push({x,y,d:pick(rr,theme.out||(dist>2&&rr()<.12?[10,9,11]:[0,1,1,2,0,4,7]))})}}
  for(const m of S.map.values())if(m.flower){const[sx,sy]=scr(m.x,m.y);const f=AT.deco[5];drawF(g,'deco',5,sx,sy+TH*.1,TW*.7/f[2])}
  // liseré du plateau
  for(const m of S.map.values()){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.98);g.strokeStyle='rgba(20,28,10,.5)';g.lineWidth=1.5;g.stroke();diamond(g,sx,sy,.9);g.strokeStyle='rgba(255,240,200,.14)';g.lineWidth=1;g.stroke()}
+ // case infranchissable avec un décor : fond sombre et ombre au pied (l'eau et la roche ont déjà leur tuile)
+ for(const m of S.map.values())if(m.block&&m.d!=null){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.94);g.fillStyle='rgba(12,14,6,.42)';g.fill();g.beginPath();g.ellipse(sx,sy+TH*.12,TW*.34,TH*.26,0,0,7);g.fillStyle='rgba(0,0,0,.4)';g.fill()}
 }
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
 export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
- const a=(px-ox)/(TW/2),b=(py-oy)/(TH/2),g={x:Math.round((a+b)/2),y:Math.round((b-a)/2)},k=K(g.x,g.y);
- const now=S.units.filter(u=>!u.dead).sort((a,b)=>(b.gx+b.gy)-(a.gx+a.gy)),box=(u,w)=>{const[sx,sy]=scr(u.gx,u.gy),top=sy-u.h*TW-(u.fly?TH*.7:0);return Math.abs(px-sx)<TW*w&&py<sy+TH*.4&&py>top-TW*.3?Math.abs(px-sx):null}; // jusqu'à la barre de vie
+ const a=(px-ox)/(TW/2),b=(py-oy)/(TH/2),va=Math.round((a+b)/2),vb=Math.round((b-a)/2),g=V?{x:vb,y:0-va}:{x:va,y:vb},k=K(g.x,g.y);
+ const now=S.units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy)),box=(u,w)=>{const[sx,sy]=scr(u.gx,u.gy),top=sy-u.h*TW-(u.fly?TH*.7:0);return Math.abs(px-sx)<TW*w&&py<sy+TH*.4&&py>top-TW*.3?Math.abs(px-sx):null}; // jusqu'à la barre de vie
  // sort choisi : toucher le dessin d'une cible valable la vise, même si un autre personnage est devant
  if(sel){const t=now.map(u=>({u,d:box(u,.42)})).filter(o=>o.d!=null&&sel.cells.some(s=>s.ok&&s.x===o.u.x&&s.y===o.u.y)).sort((a,b)=>a.d-b.d)[0];if(t)return{x:t.u.x,y:t.u.y}}
  if(sel?sel.cells.some(s=>s.ok&&s.x===g.x&&s.y===g.y):reachC&&reachC.dist.get(k)>0)return g;
@@ -79,7 +91,7 @@ const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]
  healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0])};
 export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
-function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2,back=u.dir===2||u.dir===3;
+function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',d=V?[1,3,0,2][u.dir]:u.dir,right=d===0||d===2,back=d===2||d===3;
  if(u.team==='h'){const h=HN[u.k],rf=AT[h.i[0]][h.i[1]][3];
   if(u.dead)return h.ko?[...h.ko,right,rf]:[...h.i,right,rf];
   if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],right,AT[w[0]][w[1][0]][3]]}
@@ -122,25 +134,25 @@ export function draw(now){
  // surbrillances
  if(cur&&cur.team==='h'&&!busy&&phase==='fight'){
   if(G.mark&&Date.now()<G.mark.until){const[mx,my]=scr(G.mark.x,G.mark.y);diamond(ctx,mx,my,.92);ctx.fillStyle='rgba(255,60,60,.45)';ctx.fill();ctx.strokeStyle='#ff5a5a';ctx.lineWidth=3;ctx.stroke()}
-  if(sel){for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?'rgba(255,140,40,.62)':c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill()}}
+  if(sel){for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?'rgba(255,140,40,.62)':c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
   else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle='rgba(220,240,255,.7)';ctx.lineWidth=1.5;ctx.stroke()}}
  if(sel&&cur&&!busy)for(const c of sel.cells)if(c.ok&&occ(S,c.x,c.y)){const[sx,sy]=scr(c.x,c.y),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.7+.3*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
  // cible visée par un monstre : losange rouge
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // objets triés par profondeur
- const L=[];for(const m of S.map.values())if(m.block)L.push({z:m.x+m.y,m});for(const o of outer)L.push({z:o.x+o.y,m:o});
- for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:u.gx+u.gy+.01,u});
+ const L=[];for(const m of S.map.values())if(m.block)L.push({z:depth(m.x,m.y),m});for(const o of outer)L.push({z:depth(o.x,o.y),m:o});
+ for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:depth(u.gx,u.gy)+.01,u});
  L.sort((a,b)=>a.z-b.z);
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
- const hides=u=>!tg.includes(u)&&tg.some(t=>u.gx+u.gy>t.gx+t.gy&&u.gx+u.gy-t.gx-t.gy<=3&&Math.abs((u.gx-u.gy)-(t.gx-t.gy))<=1.2);
+ const hides=u=>!tg.includes(u)&&tg.some(t=>{const dz=depth(u.gx,u.gy)-depth(t.gx,t.gy);return dz>0&&dz<=3&&Math.abs(lat(u.gx,u.gy)-lat(t.gx,t.gy))<=1.2});
  for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,'sico',12,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
  const ghost=new Set();
- for(const o of L){if(o.m){if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di];const z=o.m.x+o.m.y,c0=o.m.x-o.m.y;for(const u of units)if(!u.dead&&u.gx+u.gy<z&&u.gx+u.gy>=z-3&&Math.abs(u.gx-u.gy-c0)<=1.5)ghost.add(u);
+ for(const o of L){if(o.m){if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=u.h*TW/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
-  const bob=Math.sin(now/300+u.id.charCodeAt(1)*2)*(u.fly?TH*.12:1),lift=u.fly?TH*.7:0,jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
+  const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,lift=u.fly?TH*.7:0,jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
   const glow=tg.includes(u);if(glow){ctx.save();ctx.shadowColor='#ffb040';ctx.shadowBlur=TW*(.18+.08*Math.sin(now/160))}
   drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}

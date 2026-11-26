@@ -22,7 +22,7 @@ export function genMap(s,seed,th){
   const rng=s.rng=mulberry(seed+tries*31);s.theme=THEMES[th];const theme=s.theme;s.map=new Map();
   for(let r=0;r<=R;r++)for(let c=-CMAX;c<=CMAX;c++){if((r+c)&1)continue;const x=(r+c)/2,y=(r-c)/2;s.map.set(K(x,y),{x,y,t:pick(rng,theme.g)})}
   const all=[...s.map.values()];
-  const hs=[[14,-2],[14,0],[14,2]].map(([r,c])=>({x:(r+c)/2,y:(r-c)/2}));
+  const hs=[[13,-3],[14,0],[13,3]].map(([r,c])=>({x:(r+c)/2,y:(r-c)/2}));
   const es=[[2,-4],[2,-2],[2,0],[2,2],[2,4],[3,-3],[3,-1],[3,1],[3,3],[4,0],[4,-2],[4,2]].map(([r,c])=>({x:(r+c)/2,y:(r-c)/2}));
   const safe=p=>[...hs,...es].some(q=>Math.abs(q.x-p.x)+Math.abs(q.y-p.y)<=1);
   for(let w=0;w<theme.water;w++){let p=pick(rng,all);for(let k=0;k<5;k++){const c=cell(s,p.x,p.y);if(c&&!safe(c)){c.water=1;c.t=4}const d=pick(rng,DIRS);p={x:p.x+d[0],y:p.y+d[1]}}}

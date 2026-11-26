@@ -90,3 +90,11 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Mode paysage (`style.css`, `min-aspect-ratio:5/4`) : panneau de combat à droite (`--side`), barre du haut à gauche, zones sûres ; version compacte sous 520 px de haut. `layout()` détecte le panneau latéral et centre le plateau dans la place restante.
 - Sol : tuiles opaques (plus de 62 %), fond assombri (.34), damier léger, bords sombres nets + liseré clair.
 - Ancrage : ombre plus nette et anneau d'équipe (bleu héros, rouge monstres) au pied. Décor toujours opaque ; une unité cachée derrière est redessinée en silhouette (35 %, 60 % si héros actif ou cible).
+
+## V3.0d (26/11/2026) — paysage complété (par-dessus la V3.0c de la PR #35)
+- CSS `@media (orientation:landscape)` : panneau de combat en colonne à droite (`--side` 208-310 px), frise en haut du plateau, zones sûres (env left/right/bottom). Camp en deux colonnes (`.col`, transparentes en portrait), forge/marchand/taverne en deux colonnes, carte plus large et défilante, fiche de zone en grille, résultat compact.
+- `layout()` (render.js) : mesure le canvas réel, et en paysage **pivote le plateau d'un quart de tour** (`V`) si les cases y gagnent (téléphones : 25 → 64 px sur 844×390 ; ordinateur et pliable déplié restent droits). Les règles ne changent pas : seuls `scr`, `depth`, `lat`, `tapCell`, le sol et le sens des sprites tiennent compte de la vue.
+- Recalcul à la rotation (resize + orientationchange, 2e passe à 350 ms). Départ des héros un peu étalé : [13,-3] [14,0] [13,3] (ligne, colonne écran en portrait).
+- Essais Playwright : 844×390, 932×430, 667×375, 890×790, 1280×800, 412×900, 790×890 ; touchers justes sur toutes les cases atteignables avant et après rotation.
+- Limite : Chrome de test, pas de vraie encoche iOS ni de Safari : à confirmer sur iPhone.
+- Sol, compléments : périphérie assombrie en dégradé, cases avec décor bloquant assombries avec ombre, cibles valables cerclées de clair, seuls les monstres volants oscillent.
