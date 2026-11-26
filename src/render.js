@@ -130,6 +130,7 @@ export function draw(now){
  L.sort((a,b)=>a.z-b.z);
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
  const hides=u=>!tg.includes(u)&&tg.some(t=>u.gx+u.gy>t.gx+t.gy&&u.gx+u.gy-t.gx-t.gy<=3&&Math.abs((u.gx-u.gy)-(t.gx-t.gy))<=1.2);
+ for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,'sico',12,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
  for(const o of L){if(o.m){if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di];const z=o.m.x+o.m.y,c0=o.m.x-o.m.y,hide=units.some(u=>!u.dead&&u.gx+u.gy<z&&u.gx+u.gy>=z-3&&Math.abs(u.gx-u.gy-c0)<=1.5);
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*TW/f[2],false,hide?.45:1);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=u.h*TW/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
