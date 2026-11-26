@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.8e (27/11/2026) : Académie, Forge, Marchand, Taverne (lot 4.7e, partie ergonomie)
+- « Retour » (`.ov-back`) reste à l'écran quand la liste défile ; lignes sans débordement horizontal. Colonnes en large déjà présentes, gardées.
+- Non refait : ces écrans restent des écrans pleins (pas de passage dans les panneaux du village) ; la Taverne et l'onglet Quêtes partagent déjà la même fonction `quests`.
+
 ## V4.8d (27/11/2026) : caractéristiques et Entraînement (lot 4.7c)
 - Force (Kael, Fenn) ou Intelligence (Aelis, dégâts et soins) : +1 % par point ; Vitalité : +2 % PV ; Agilité : +0,5 % critique, +0,4 % esquive (plafonds 35 % et 25 %). 10 premiers points entiers, 10 suivants à moitié, puis quart. Valeurs dans `ATTR` (data.js).
 - 1 point par niveau et par héros. `save.attr` ne garde que les points placés : absent = tout libre, jeu identique ; répartition invalide = points rendus (`cleanAttr`, idempotent). Redistribution gratuite.
