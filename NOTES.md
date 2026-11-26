@@ -73,3 +73,9 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - Renaissance : cible `t:'dead'` (`koAt`, `reviveSpot` : case du KO ou voisine libre, sinon sort impossible), 25 % des PV, recharge 99 (affichée « — »). `u.wasKO` : l'étoile « aucun héros KO » reste perdue même après résurrection.
 - Sons `trap` et `dodge` ajoutés à `SNDS` (fichiers déjà présents). 41 tests.
 - Monstres au nouveau style (26/11) : `slimeN`, `boarN` dans `BS`, 10 cases dans l'atlas (repos, attaque, touché, spécial, KO, repos 2, 4 pas de marche). Badges de forge `badge` (bronze, argent, or, cadenas = jamais amélioré).
+
+## V2.6a → V2.6d (26/11/2026)
+- **V2.6a Marchand** : 3 objets non possédés par jour (`shopStock`), achat au prix `pr` (data.js), revente 50 % (+50 % de la forge), potions (30 or, 3 max) : sort `potion` ajouté aux héros si `save.pot>0`, 4 PA, 40 % PV, 1 par héros et par combat, stock commun `S.pot`. Barre de sorts qui rétrécit (5 sorts).
+- **V2.6b Taverne** : `contracts(save,day)` 3 contrats tirés une fois par jour (`save.ct`), `ctUpdate` en fin de victoire, `claim`. Défi du jour `dailyFight` (zone la plus avancée, niveau +4, double or, objet garanti, potion), `save.dd`.
+- **V2.6c Boss** : `bs` dans ZONES (howl, shell, quake, rage), `bossTurn` au début du tour du boss (turns.js), `bossNext` affiché dans la fiche ennemi.
+- **V2.6d** : raretés (`RARE`, `save.rr`, `rollRare`, ×1 / ×1,5 / ×2), objectifs alternatifs dans les zones 2 à 5 : combat 2 = chef (♛, barre dorée, 1,8× PV), combat 3 = survie 4 tours (`s.goal`, `outcome`).
