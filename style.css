@@ -232,3 +232,6 @@ body.camp #exc{display:none}
 @media (orientation:landscape){#unzoom{right:calc(var(--side) + env(safe-area-inset-right) + 8px)}}
 @media (orientation:portrait){body:has(#exc.on) #unzoom{display:none}} /* la carte de visée prend cette place */
 #exc .pz{color:#e2c8ff;font-weight:800}#exc .pz.danger{color:#ff9a8a}
+
+/* V4.6 : conseils après une défaite */
+.rtips{margin:6px auto 0;padding:0 0 0 18px;max-width:440px;text-align:left;font:700 14px/1.4 system-ui;color:#f3e3c3}

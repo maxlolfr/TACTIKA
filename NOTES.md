@@ -254,3 +254,10 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Toute mission « survie » (Bois, Côte, Monts, Château combat 3, Cavernes 7) a des vagues : `defWave(Z,i)` (6 tours, 3 + 1/2/1 élite/2, plafond 6) sauf données propres (`ZONES[].waves`). Une seule élite, l'élite de la zone (chevalier) ou son monstre le plus robuste, au tour 4 ; plus d'élite au départ.
 - 3e étoile (`star3`, `STAR3_TXT`) : survie = toutes les vagues ; boss à attaque signature déclenchée (Séisme, Rayon) = ne jamais la subir ; sinon tous les héros debout à 50 % de PV ou plus. La règle des « 5 tours » disparaît. Anciens records gardés.
 - XP, rareté, forge : non touchées (lot 3C non nécessaire avant les tests de Max). Golem ancien : déjà un mur avant V4.5 (robot 1/3 en std), à revoir après tests. 51 combats simulés, 77 tests.
+
+## V4.6 (27/11/2026) — quartier général, partie code (aucune nouvelle image)
+- **Panneau de commandement** (`cmdPanel`, home.js) : prochaine mission (zone, étape, type, ennemis, niveau de mission et de l'équipe), équipe (PV, arme active), à faire (spécialisation, forge, contrats, défi du jour, potions), dernier combat perdu, accès au Cristal. Colonne à droite en paysage **et sur les écrans larges presque carrés** (`min-width:760px` et ratio ≥ 4/5 : Honor Magic V5 déplié, tablettes) ; en portrait étroit, tiroir ouvert en touchant le bandeau « Chapitre ».
+- **Cristal de l'Éther** (provisoire) : portrait = cristal dessiné en CSS sur la place pavée ; paysage = zone cliquable sur le cristal déjà peint de la fontaine. Ouvre **Expéditions** : revanches des boss vaincus, missions gagnées à rejouer (récompenses de rejeu inchangées).
+- **Défaite utile** : tour, héros KO, ennemis restants, renforts attendus, conseils factuels (niveau, forge, spécialisation, potions, rejeu), boutons Réessayer / Préparer au camp / Carte. `LAST` (ui.js).
+- **Animations rapides** (Réglages, `save.fast`) : `SPEED.k` = 0,5 dans util.js.
+- L'Entraînement (6e bâtiment) attend les caractéristiques (V4.7) : pas de bâtiment vide. 77 tests.
