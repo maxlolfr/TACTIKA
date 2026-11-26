@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V3.7.1 (26/11/2026) — petits défauts
+- Les bulles d'attaque montent au-dessus des barres de vie et des autres bulles.
+- « Chef squelette a » devient « Chef squelette A ». 54 tests.
+
 ## V3.7 (26/11/2026) — qualité maximale et intérieurs
 - Demande de Max : garder la qualité maximale. Les décors Gemini sont désormais à leur taille d'origine, WebP qualité 92 (`tools/prep_bg.py`) ; marche des chevaliers en qualité 95. Les images plus anciennes (Prairie et Bois verticaux, Côte et Château horizontaux, village vertical, maître d'armes) sont inchangées.
 - Forge, Marchand et Taverne ont leur intérieur peint (G-08 à G-10), voile éclairci.

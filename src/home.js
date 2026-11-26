@@ -8,7 +8,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='3.7';
+export const VERSION='3.7.1';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village. Toutes les positions sont en pixels de l'image de la scène.
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
