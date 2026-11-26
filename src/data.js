@@ -7,6 +7,7 @@ export const SP={
  volley:{snd:'bow',n:'Volée',ic:4,pa:4,r:[2,5],t:'cell',los:1,zone:1,dmg:[7,10],proj:1,fx:0,cd:2,d:'Touche la case visée et les 4 autour'},
  trap:{snd:'trap',n:'Piège',ic:3,pa:3,r:[1,3],t:'cell',free:1,los:1,cd:3,trap:1,fx:0,d:'Piège sur une case libre : 10 dégâts et −1 PM au premier ennemi qui y entre, 3 tours'},
  revive:{snd:'aelis_heal',n:'Renaissance',ic:5,pa:6,r:[1,4],t:'dead',cd:99,revive:1,fx:4,d:'Relève un héros KO avec 25 % de ses PV, 1 fois par combat'},
+ potion:{snd:'aelis_heal',n:'Potion',ic:5,pa:4,r:[0,0],t:'self',potion:1,fx:4,cd:99,d:'Boit une potion du marchand : soigne 40 % des PV max, 1 fois par héros et par combat'},
  boots:{snd:'buff',n:'Bottes ailées',ic:14,pa:2,r:[0,0],t:'self',pmBonus:2,fx:7,cd:3,d:'+2 PM pour ce tour'},
  heal:{snd:'aelis_heal',n:'Soin',ic:5,pa:3,r:[0,4],t:'ally',heal:[13,17],fx:4,cd:1,d:'Soigne un allié (ou toi)'},
  venom:{snd:'poison',n:'Épine',ic:7,pa:3,r:[1,5],t:'enemy',los:1,dmg:[5,7],poison:[4,2],fx:5,d:'Dégâts + poison pendant 2 tours'},
@@ -36,9 +37,9 @@ export const ZONES=[
  {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5}},
  {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35}}];
 export const ITEMS=[
- {ic:0,n:'Épée courte',who:0,dmg:2},{ic:1,n:'Hache de guerre',who:0,dmg:3},{ic:4,n:'Bouclier rond',who:0,hp:8},{ic:5,n:'Heaume',who:0,hp:6},
- {ic:2,n:'Arc long',who:1,dmg:2},{ic:6,n:'Armure de cuir',who:1,hp:6},{ic:7,n:'Bottes de cuir',who:1,hp:4},
- {ic:3,n:'Bâton de saule',who:2,heal:3},{ic:8,n:'Anneau de rubis',who:2,dmg:2},{ic:9,n:'Amulette',who:2,hp:6}];
+ {ic:0,n:'Épée courte',pr:60,who:0,dmg:2},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8},{ic:5,n:'Heaume',pr:70,who:0,hp:6},
+ {ic:2,n:'Arc long',pr:60,who:1,dmg:2},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4},
+ {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2},{ic:9,n:'Amulette',pr:70,who:2,hp:6}];
 // tuiles : 0 herbe 1 fleurs 2 terre 3 sable 4 eau 5 pavés 6 sous-bois 7 dalles
 // décors : 0 chêne 1 sapin 2 buisson 3 caillou 4 rocher 5 fleurs 6 souche 7 barrière 8 caisse 9 puits 10 chaumière 11 panneau
 export const THEMES=[
@@ -55,5 +56,7 @@ export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles
 // V2.4b forge : coût de chaque niveau (1 à 3) ; chaque niveau ajoute +50 % du bonus de base de l'objet
+// marchand (V2.6a) : potion de soin, 3 objets différents proposés chaque jour, revente à 50 %
+export const POTION={cost:30,max:3}, SHOP_N=3, SELL_K=.5;
 export const FORGE_COST=[25,60,120], FORGE_STEP=.5;
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
