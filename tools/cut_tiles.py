@@ -1,0 +1,31 @@
+# Détoure la planche 4x4 de tuiles en relief (fond sombre uni) -> assets/tiles3.webp + entrée "tiles3" de l'atlas.
+# usage : python3 tools/cut_tiles.py planche.png [--sheet apercu.png]
+import sys,json,numpy as np
+from PIL import Image
+from scipy import ndimage
+a=np.array(Image.open(sys.argv[1]).convert('RGB')).astype(float);H,W,_=a.shape
+bg=np.median(np.concatenate([a[:10].reshape(-1,3),a[:,:10].reshape(-1,3)]),0)
+d=np.abs(a-bg).sum(2)
+# fond = zone proche de la couleur de fond ET reliée au bord (les ombres internes des tuiles restent)
+lab,_=ndimage.label(d<34);edge=set(np.unique(np.concatenate([lab[0],lab[-1],lab[:,0],lab[:,-1]])))-{0}
+solid=ndimage.binary_opening(~np.isin(lab,list(edge)),iterations=2)
+lab,n=ndimage.label(solid);sizes=ndimage.sum(solid,lab,range(1,n+1))
+boxes=[(i+1,ndimage.find_objects((lab==i+1).astype(int))[0]) for i in np.argsort(sizes)[::-1][:16]]
+boxes.sort(key=lambda b:(round((b[1][0].start+b[1][0].stop)/2/(H/4)-.5),b[1][1].start))
+cut=[];geo=[];TW=240
+for i,(ys,xs) in boxes:
+    m=ndimage.binary_fill_holes(lab[ys,xs]==i);al=ndimage.gaussian_filter(ndimage.binary_erosion(m).astype(float),.7)
+    im=Image.fromarray(np.dstack([a[ys,xs],al*255]).astype(np.uint8))
+    # face du dessus : coins gauche/droit = lignes les plus hautes des colonnes extrêmes
+    cols=[np.nonzero(m[:,x])[0] for x in (list(range(3,9))+list(range(m.shape[1]-9,m.shape[1]-3)))]
+    cy=float(np.median([c[0] for c in cols]))+3
+    k=TW/m.shape[1];im=im.resize((TW,round(m.shape[0]*k)),Image.LANCZOS)
+    cut.append(im);geo.append(round(cy*k))
+AW=TW*4+8*3;rowh=max(c.height for c in cut)+8;at=Image.new('RGBA',(AW,rowh*4));fr=[]
+for n,(c,cy) in enumerate(zip(cut,geo)):
+    x,y=(n%4)*(TW+8),(n//4)*rowh;at.paste(c,(x,y));fr.append([x,y,c.width,c.height,TW//2,cy])
+at.save('assets/tiles3.webp',quality=86,method=6)
+A=json.load(open('assets/atlas.json'));A['tiles3']=fr;json.dump(A,open('assets/atlas.json','w'),separators=(',',':'))
+print(len(fr),at.size,[(f[3],f[5]) for f in fr])
+if '--sheet' in sys.argv:
+    s=Image.new('RGBA',at.size,(255,0,255,255));s.alpha_composite(at);s.save(sys.argv[-1])
