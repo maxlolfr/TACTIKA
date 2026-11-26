@@ -45,6 +45,15 @@
 .v-badge{position:absolute;right:-10px;top:-12px;min-width:22px;height:22px;padding:0 5px;border-radius:11px;display:flex;align-items:center;justify-content:center;text-decoration:none;
  font:400 14px/1 var(--f-title);color:#fff;background:radial-gradient(circle at 35% 30%,#ff8a5c,#d3261b 70%);border:2px solid #ffe9b0;box-shadow:0 2px 5px #0009;animation:badge 1.3s ease-in-out infinite}
 @keyframes badge{50%{transform:scale(1.18) translateY(-2px)}}
+/* PNJ (V4.8a) : toucher son corps = toucher son bâtiment ; 4 cases : repos, geste 1, geste 2, salut */
+.v-npc{position:absolute;z-index:1;pointer-events:none;display:block}.v-npc.flip{scale:-1 1}
+.v-npc::after{content:'';position:absolute;left:28%;right:28%;top:6%;bottom:0;pointer-events:auto;cursor:pointer}
+.v-npc::before{content:'';position:absolute;left:26%;right:26%;bottom:-3%;height:11%;border-radius:50%;background:radial-gradient(closest-side,#1a0c04aa,#0000)}
+.v-npc>i{position:absolute;inset:0;background:0 0/400% 100% no-repeat;transform-origin:50% 100%;animation:breathe 3.2s ease-in-out infinite,npc 9s step-end infinite}
+@keyframes npc{0%{background-position-x:0}68%{background-position-x:33.333%}75%{background-position-x:66.667%}84%{background-position-x:33.333%}89%{background-position-x:0}}
+.v-bld.hit .v-npc>i{animation:none;background-position-x:100%}
+/* le calque du cristal est large : seuls son centre et sa plaque répondent au toucher, sinon il couvre Borin et Ezran */
+.v-stage>.v-cry{pointer-events:none}.v-cry::after{content:'';position:absolute;left:24%;right:24%;top:0;bottom:0;pointer-events:auto}.v-cry .v-plate{pointer-events:auto;z-index:1}
 /* barre du haut */
 .v-top{position:absolute;z-index:6;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 8px);display:flex;align-items:center;gap:6px}
 .v-lvl{flex:1;min-width:0;display:flex;align-items:center;background:none;border:0;padding:0;cursor:pointer}
