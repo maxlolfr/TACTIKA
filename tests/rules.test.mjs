@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -315,4 +315,36 @@ test('talents niv 7 : Volée ralentit, Bottes +3, Soin portée 5, poison 3 tours
  assert.deepEqual(team([null,null,'guerisseuse'],7).units[2].S.heal.r,[0,5]);
  assert.deepEqual(team([null,null,'druide'],7).units[2].S.venom.poison,[6,3]);
  const s3=team([null,null,'enchant'],7),a=s3.units[2];applySpell(s3,a,a.S.aura,s3.units[0]);assert.deepEqual(s3.units[0].buff,{pct:.4,turns:3});
+});
+
+// ---------- V2.5c : palier 3 (niveau 11) ----------
+test('niv 11 Kael : Exécution sous 30 %, Dernier rempart une fois, Fracas affaiblissant', () => {
+ const s=team(['berserk',null,null],11),k=s.units[0];k.dmgB=0;k.mult=1;s.rng=()=>.5;
+ const a=unit(s,'m',5,5,{hp:29,max:100}),b=unit(s,'m',6,6,{hp:30,max:100});
+ applySpell(s,k,{...SP.slash,dmg:[10,10]},a);assert.equal(a.hp,29-Math.round(10*1.15*1.25));
+ applySpell(s,k,{...SP.slash,dmg:[10,10]},b);assert.equal(b.hp,30-Math.round(10*1.15));
+ const s2=team(['gardien',null,null],11),g=s2.units[0];const e=hurt(s2,g,9999);assert.equal(g.hp,1);assert.ok(e.saved&&!g.dead);hurt(s2,g,5);assert.ok(g.dead);
+ assert.equal(team(['briseur',null,null],11).units[0].S.smash.slow,1);
+});
+test('niv 11 Fenn : Flèche perforante, Piège, Insaisissable', () => {
+ const s=team([null,'tireur',null],11),f=s.units[1];f.dmgB=0;f.mult=1;s.rng=()=>.5;const t=unit(s,'m',5,5,{hp:99,max:99,armor:.2});
+ applySpell(s,f,{...f.S.shot,dmg:[20,20]},t);assert.equal(t.hp,99-18);
+ const s2=team([null,'chasseur',null],11),c=s2.units[1];assert.ok(c.sp.includes('trap'));
+ const free={x:c.x,y:c.y+2};assert.ok(okTarget(s2,c,c.S.trap,free));
+ applySpell(s2,c,c.S.trap,{x:c.x+2,y:c.y+2});applySpell(s2,c,c.S.trap,free);assert.deepEqual(c.trap,{x:c.x,y:c.y+2,left:3}); // un seul piège
+ const m=unit(s2,'m',c.x,c.y+2,{hp:50,max:50,maxPM:3});const ev=stepOn(s2,m);assert.equal(m.hp,40);assert.ok(!c.trap);beginTurn(m);assert.equal(m.pm,2);assert.equal(stepOn(s2,m).length,0);
+ const k=s2.units[0];applySpell(s2,c,c.S.trap,{x:c.x+3,y:c.y});k.x=c.x+3;assert.equal(stepOn(s2,k).length,0); // un allié ne le déclenche pas
+ beginTurn(c);beginTurn(c);assert.ok(c.trap);beginTurn(c);assert.ok(!c.trap); // 3 tours de Fenn
+ const s3=team([null,'eclaireur',null],11),e=s3.units[1];assert.equal(e.dodge,.15);const mo=unit(s3,'m',e.x+1,e.y);s3.rng=()=>.1;const hp=e.hp;
+ const r=applySpell(s3,mo,{...SP.slash,t:'enemy'},e);assert.equal(e.hp,hp);assert.ok(r.some(x=>x.text==='Esquive !'));
+});
+test('niv 11 Aelis : Renaissance, étoile « aucun KO », Contagion, Bénédiction collective', () => {
+ const s=team([null,null,'guerisseuse'],11),[k,f,a]=s.units;assert.ok(a.sp.includes('revive'));
+ hurt(s,k,9999);assert.ok(k.dead);assert.ok(okTarget(s,a,a.S.revive,k));assert.ok(!okTarget(s,a,a.S.revive,f));
+ applySpell(s,a,a.S.revive,{x:k.x,y:k.y});assert.ok(!k.dead);assert.equal(k.hp,Math.round(k.max*.25));
+ assert.equal(starList(s,false)[1],false); // KO pendant le combat, même relevé
+ const s2=team([null,null,'druide'],11),d=s2.units[2],m=unit(s2,'m',5,5,{hp:50,max:50}),n=unit(s2,'m',6,5,{hp:50,max:50}),o=unit(s2,'m',8,8,{hp:50,max:50});s2.rng=()=>.5;
+ applySpell(s2,d,d.S.venom,m);assert.ok(m.poison.spread);hurt(s2,m,999);assert.deepEqual(n.poison,{d:6,turns:2});assert.ok(!o.poison);
+ hurt(s2,n,999); // poison transmis : pas de nouvelle contagion
+ const s3=team([null,null,'enchant'],11),e=s3.units[2];applySpell(s3,e,e.S.aura,s3.units[0]);assert.ok(s3.units.filter(h=>h.team==='h').every(h=>h.buff&&h.buff.pct===.4));
 });

@@ -66,3 +66,9 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 ## V2.5b — Spécialisations, palier 2 (26/11/2026)
 - `DONE=2`. Nouveaux champs d'unité : `crit` (0,12 ou 0,22), `guardK` (part des dégâts gardée sous Rempart : 0,5 ou 0,35), `pushDmg` (5 ou 7, transmis par `pushPlan` dans `p.k`, affiché dans l'aperçu de poussée).
 - Sorts modifiés via `sp` : Volée `slow`, Bottes `pmBonus:3`, Soin portée 5, Épine `poison:[6,3]`, Aura `buffT:3`, descriptions mises à jour. 38 tests.
+
+## V2.5c — Spécialisations, palier 3 (26/11/2026)
+- `DONE=3` : les 27 talents fonctionnent. Champs d'unité : `exec`, `lastStand` (consommé dans `hurt`, événement `saved`), `dodge` (esquive des sorts à dégâts directs dans `applySpell`), `sp.pierce` (6e paramètre `pen` de `hurt`), `sp.spread` (poison contagieux : à la mort, 6×2 aux voisins, sans nouvelle contagion), `sp.all` (Aura sur tous les héros), `tf.add` (sorts ajoutés : `trap`, `revive`, définis dans `SP`).
+- Piège : `u.trap={x,y,left:3}` sur Fenn (un seul, décompté dans `beginTurn`), déclenché par `stepOn` après chaque pas (`moveTo` s'arrête dessus) et dans `push` sur les cases traversées. Dessiné au sol (icône chaîne).
+- Renaissance : cible `t:'dead'` (`koAt`, `reviveSpot` : case du KO ou voisine libre, sinon sort impossible), 25 % des PV, recharge 99 (affichée « — »). `u.wasKO` : l'étoile « aucun héros KO » reste perdue même après résurrection.
+- Sons `trap` et `dodge` ajoutés à `SNDS` (fichiers déjà présents). 41 tests.
