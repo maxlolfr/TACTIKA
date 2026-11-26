@@ -97,3 +97,4 @@ body.camp #top,body.camp #panel{visibility:hidden}
 @keyframes forged{0%{box-shadow:0 0 0 #ffd65a00}30%{box-shadow:0 0 22px #ffd65a;transform:translateX(-3px)}50%{transform:translateX(3px)}100%{box-shadow:0 0 0 #ffd65a00}}
 .fpop{position:absolute;right:70px;top:4px;color:#7dff8a;font-weight:900;font-size:22px;text-shadow:0 2px 0 #000;animation:fpop .65s forwards}
 @keyframes fpop{to{transform:translateY(-26px);opacity:0}}
+#tl canvas.tg{box-shadow:0 0 0 3px #ffa040,0 0 10px #ffa040;cursor:pointer}
