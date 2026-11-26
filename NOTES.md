@@ -163,3 +163,6 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Rendu : cristaux C6-09 (`crystals`, dessin par le code en secours), cases amplifiées (tirets + chevron), aperçu du prisme (hachures + « ◆ -N »), sol `tiles5` via `theme.ts`, fond provisoire = Monts teinté.
 - Chargement par région : `zoneAssets(F)` ; un seul fond en mémoire ; `icon()` paresseux.
 - Aussi : 10 décors refaits (5 zones × 2 sens), bandeaux de contrats `assets/q/`, `tools/cut_flood.py`, `TILE_W` pour `cut_tiles.py`. 62 tests.
+
+## V4.0.1 (26/11/2026) — un sol HD par région
+`sol_prairie` (Prairie et Village), `sol_bois`, `sol_plage`, `sol_mont`, `sol_chateau` (planches ChatGPT 2×2, 512 px par tuile, WebP 90), `tiles5` pour les Cavernes. `THEMES[].ts` + `g` = cases de la planche ; l'eau et la roche restent dans `tiles4`. Les sols sont chargés à l'entrée de leur zone et libérés ensuite. Écartées : tuile avec gros rocher (Prairie), dalle sculptée (Château). `cut_tiles.py` : `TILE_W`, `TILE_N`, `TILE_Q`.

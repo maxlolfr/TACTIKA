@@ -57,15 +57,16 @@ export const ITEMS=[
  {ic:0,n:'Épée courte',pr:60,who:0,dmg:2},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8},{ic:5,n:'Heaume',pr:70,who:0,hp:6},
  {ic:2,n:'Arc long',pr:60,who:1,dmg:2},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4},
  {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2},{ic:9,n:'Amulette',pr:70,who:2,hp:6}];
+// V4.0 : ts = planche de sol propre au thème (sol_<zone>, tiles5), g = cases de cette planche ; l'eau (4) et la roche (8) restent dans tiles4
 // tuiles : 0 herbe 1 fleurs 2 terre 3 sable 4 eau 5 pavés 6 sous-bois 7 dalles
 // décors : 0 chêne 1 sapin 2 buisson 3 caillou 4 rocher 5 fleurs 6 souche 7 barrière 8 caisse 9 puits 10 chaumière 11 panneau
 export const THEMES=[
- {n:'Prairie',g:[0,0,0,1,1,2],obs:[0,0,2,3,4,6],water:1},
- {n:'Bois sombre',g:[6,6,6,0,1],obs:[1,1,1,0,2,6,4],water:0},
- {n:'Village',g:[5,5,7,0,0],obs:[8,8,2,3,0,9],water:0},
- {n:'Plage',g:[3,3,3,3,2],obs:[3,4,2,8],water:3},
- {n:'Monts gris',g:[9,9,10,10,9],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]},
- {n:'Château en ruine',g:[12,12,13,11,15,14],obs:[12,13,14,15,16,17,18,22],noflower:1,out:[12,13,22,16,14]},
+ {n:'Prairie',ts:'sol_prairie',g:[0,0,2,2,5,5,1,3,4,7],obs:[0,0,2,3,4,6],water:1},
+ {n:'Bois sombre',ts:'sol_bois',g:[0,0,2,3,3,1],obs:[1,1,1,0,2,6,4],water:0},
+ {n:'Village',ts:'sol_prairie',g:[1,1,7,7,3,0],obs:[8,8,2,3,0,9],water:0},
+ {n:'Plage',ts:'sol_plage',g:[0,1,2,3],obs:[3,4,2,8],water:3},
+ {n:'Monts gris',ts:'sol_mont',g:[0,1,2,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]},
+ {n:'Château en ruine',ts:'sol_chateau',g:[0,1,1,3],obs:[12,13,14,15,16,17,18,22],noflower:1,out:[12,13,22,16,14]},
  {n:'Cavernes de cristal',ts:'tiles5',g:[0,0,8,8,11,11,3,4],obs:[20,21,19,4,3],noflower:1,out:[20,21,19,4],cave:1}];
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
 export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95];

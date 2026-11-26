@@ -1,7 +1,7 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,DECO_W,CMAX,R,ZONES,MON} from './data.js';
+import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES} from './data.js';
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -16,9 +16,10 @@ function load(n){return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,k
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
  for(const k of[...Object.values(MON).map(m=>m.s),...ZONES.map(z=>z.boss.s)])for(const n of[k,k+'m',k+'w'])if(AT[n])MS.add(n);
+ for(const t of THEMES)if(t.ts)MS.add(t.ts); // sols par région : chargés aussi à l'entrée de la zone
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)).map(load));
 }
-export function zoneAssets(F){const want=new Set();for(const k of[...F.pool,...(F.en||[]),F.elite,F.boss&&F.boss.k].filter(Boolean))want.add(MON[k].s);if(F.boss&&F.boss.s)want.add(F.boss.s);
+export function zoneAssets(F){const want=new Set([THEMES[F.th].ts].filter(Boolean));for(const k of[...F.pool,...(F.en||[]),F.elite,F.boss&&F.boss.k].filter(Boolean))want.add(MON[k].s);if(F.boss&&F.boss.s)want.add(F.boss.s);
  for(const n of[...want])for(const v of[n+'m',n+'w'])if(AT[v])want.add(v);
  for(const n of MS)if(!want.has(n))delete IMG[n];return Promise.all([...want].map(load))}
 
@@ -83,11 +84,11 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
  // tuiles calmes (planche TU-02 de Max, tiles4) : ancrées sur les coins gauche/droit de la face du dessus ; miroir et deux herbes au hasard contre la répétition
  // thème avec sa propre planche (ts, ex. tiles5 des Cavernes) : numéros de tuile = cases de la planche
- const ts=theme.ts||'tiles4',tl=(t,sx,sy,m)=>{const f=theme.ts?AT[ts][t]:AT.tiles4[t===0&&m?1:T4[t]],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m&&(theme.ts||t!==14&&t!==15))g.scale(-1,1);g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore()};
+ const tl=(t,sx,sy,m,old)=>{const ts=theme.ts&&!old?theme.ts:'tiles4',f=ts!=='tiles4'?AT[ts][t]:AT.tiles4[t===0&&m?1:T4[t]],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m&&(ts!=='tiles4'||t!==14&&t!==15))g.scale(-1,1);g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore()};
  const flipAt=(x,y)=>((x*7349+y*9151)>>>2)&1;
  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){if((r+c)&1)continue;const a=(r+c)/2,b=(r-c)/2,x=V?b:a,y=V?-a:b,[sx,sy]=scr(x,y),m=cell(S,x,y);
-  if(m){tl(m.t,sx,sy,flipAt(x,y));if(m.t<2&&!theme.ts){diamond(g,sx,sy);g.fillStyle='rgba(8,24,0,.12)';g.fill()} // herbe un peu calmée : les personnages ressortent
-  if((x+y)&1){diamond(g,sx,sy);g.fillStyle='rgba(0,0,0,.08)';g.fill()}}else if(!bg){const t=theme.g[Math.floor(rr()*theme.g.length)];tl(t===4||t===8?theme.g[0]:t,sx,sy,flipAt(x,y));diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
+  if(m){tl(m.t,sx,sy,flipAt(x,y),m.water||m.block&&m.d==null&&!m.cry&&m.t===8);if(m.t<2&&!theme.ts){diamond(g,sx,sy);g.fillStyle='rgba(8,24,0,.12)';g.fill()} // herbe un peu calmée : les personnages ressortent
+  if((x+y)&1){diamond(g,sx,sy);g.fillStyle='rgba(0,0,0,.08)';g.fill()}}else if(!bg){const t=theme.g[Math.floor(rr()*theme.g.length)];tl(theme.ts||t!==4&&t!==8?t:theme.g[0],sx,sy,flipAt(x,y));diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
    const dist=Math.max(Math.abs(x-y)-CMAX,-x-y,x+y-R);if(dist>=2&&rr()<.1)outer.push({x,y,d:pick(rr,theme.out||(dist>2&&rr()<.12?[10,9,11]:[0,1,1,2,0,4,7]))})}}
  for(const m of S.map.values())if(m.flower){const[sx,sy]=scr(m.x,m.y);const f=AT.deco[5];drawF(g,'deco',5,sx,sy+TH*.1,TW*.7/f[2])}
  // liseré du plateau
