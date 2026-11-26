@@ -8,7 +8,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.2';
+export const VERSION='4.3';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village. Toutes les positions sont en pixels de l'image de la scène.
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -44,7 +44,7 @@ const claimable=()=>contracts(save,today()).filter(t=>t.p>=t.n&&!t.c).length;
 const NEWS={forge:()=>forgeNews()?'↑':0,talents:()=>talentNews()?'!':0,taverne:()=>claimable()||(save.dd!==today()?'!':0),
  marchand:()=>0,caserne:()=>0};
 // chapitre en cours : première zone ouverte non terminée
-function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`Chapitre ${i+1} · ${z.n}`,s:prog(z.id)===L-1?`Boss : ${z.boss.n}`:`Combat ${prog(z.id)+1} sur ${L}`}}
+function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`Chapitre ${i+1} · ${z.n}`,s:`Étape ${prog(z.id)+1} sur ${L}`+(prog(z.id)===L-1?` · Boss : ${z.boss.n}`:'')}}
  return{i:-1,t:'Aventure terminée',s:'Rejoue les combats pour 3 ★'}}
 
 // ---------- scène peinte ----------

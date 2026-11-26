@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V4.3 (26/11/2026) — P2 du brief de Michel et étiquette des Cavernes
+- Déplacements : pastille blanche sur les cases accessibles (l'eau n'en a pas). Appui sur l'eau ou un obstacle : « Eau · infranchissable ».
+- Conseil selon l'état réel (PM, PA, recharges, cibles) ; le passage automatique est annoncé par une bannière (1,5 s). Remplace l'ancien message « aucune cible » après déplacement.
+- Résultat : « Combat suivant » / « Affronter le boss », « Taverne : récompense à réclamer » si un contrat est prêt, « Retour à la carte ». Récompenses enregistrées avant le choix.
+- « Étape 3 sur 4 » partout (accueil, combat, liste de la région) : le boss est la dernière étape.
+- Carte : les noms des zones au bord gauche passent sur deux lignes (vérifié en 360, 390, 844 et 1363 de large).
+- Camp en 1363×936 comparé : la peinture horizontale laisserait du vide en haut et en bas à la place du vide à droite ; composition inchangée. 69 tests.
+
 ## V4.2 (26/11/2026) — P1 du brief de Michel : lire avant de frapper
 - **Changement de commande** : avec un sort choisi, 1er appui (ou survol à la souris) = examiner, 2e appui au même endroit (ou même portrait) = lancer. Sorts sur soi : un seul appui. Retoucher le sort annule.
 - Cible examinée : silhouette redessinée par-dessus les personnages qui la masquent, case entourée, portrait entouré de blanc. Carte de visée : nom, PV, validité, motif de refus (trop près, hors de portée, allié ou obstacle qui bloque) ou trajet.
