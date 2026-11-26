@@ -4,10 +4,11 @@ import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
+import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
 import {SPECS,TIER,DONE,specOf} from './talents.js';
+import {renderHome} from './home.js';
 
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
@@ -82,16 +83,6 @@ function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-
  mk('Copier',()=>{t.select();try{navigator.clipboard.writeText(t.value);m.textContent='Copié !'}catch(e){document.execCommand('copy');m.textContent='Copié !'}});
  mk('Importer',()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(t.value.trim()))));if(!s||!Number.isFinite(s.lvl)||!Array.isArray(s.items))throw 0;localStorage.setItem('landeTactique1',JSON.stringify(s));location.reload()}catch(e){m.style.color='#ff8a7a';m.textContent='Code invalide : rien n’a été changé.'}});
  mk('Fermer',()=>D.close());D.showModal()}
-function party(){const d=document.createElement('div');d.className='party';HER.forEach((h,i)=>{const s=heroStats(save,i),c=document.createElement('div');c.className='hc';
- const cv2=document.createElement('canvas');cv2.width=240;cv2.height=192;const g=cv2.getContext('2d'),[hs,hi]=heroFrame(h.k),f=AT[hs][hi],k=176/f[3];drawF(g,hs,hi,120,184,k);c.appendChild(cv2);
- c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
- const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
-// bâtiments du camp (planche bld : 0 forge, 1 marchand, 2 maître d'armes, 3 taverne) ; fonctions en V2.4b et après
-const BLD=[['La Forge','Améliore les équipements de tes héros.'],['Le Marchand','Achat et vente d’équipements, potions.'],['Le Maître d’armes','Spécialisations des héros.'],['La Taverne','Contrats et défi du jour.']];
-function town(){const d=document.createElement('div');d.className='town';const note=document.createElement('div');note.className='bnote';
- BLD.forEach(([n,t],i)=>{const b=document.createElement('button');const live=1,news=i===2&&save.lvl>=3&&save.sp.includes(null)||i===3&&(contracts(save,today()).some(t=>t.p>=t.n&&!t.c)||save.dd!==today());store();b.className='bld'+(live?' next':'');b.append(icon('bld',i,120));b.insertAdjacentHTML('beforeend',`<b>${n}</b><small>${news?'<span style="color:#7dff8a">Nouveau !</span>':['Améliorer','Acheter','Spécialisations','Contrats'][i]}</small>`);
-  b.onclick=[forge,shop,armes,tav][i];if(!live)b.onclick=()=>{d.querySelectorAll('.bld').forEach(x=>x.classList.toggle('on',x===b));note.innerHTML=`<b>${n}</b> — ${t}`};d.appendChild(b)});
- d.appendChild(note);return d}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList.add('on');F.innerHTML='';
@@ -139,27 +130,25 @@ const ctTxt=t=>t.k==='win'?`Gagne ${t.n} combats`:t.k==='kill'?`Vaincs ${t.n} ${
 function tav(){$('camp').classList.remove('on');const T=$('tav');T.classList.add('on');T.innerHTML='';const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend',`<h1>La Taverne</h1><div class="sub">Trois contrats par jour, et un défi difficile une fois par jour.</div>`);
  const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);T.append(top);
+ quests(T,tav);
+ const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
+// contrats du jour et défi (taverne et onglet Quêtes) ; `again` redessine l'écran après une récompense
+function quests(T,again){const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
   r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
   const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓':'Réclamer';
-  b.onclick=()=>{const up=claim(save,d,i);if(!up)return tav();store();sfx('coin');if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(tav,400)};r.append(b);T.append(r)});
+  b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('coin');if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
- T.insertAdjacentHTML('beforeend',`<h3 class="fh">Défi du jour</h3><div class="loot frow" id="dd"><div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div></div>`);
- const b=document.createElement('button');b.className='btn'+(done?' dark':'');b.disabled=done;b.textContent=done?'✓':'Combattre';b.onclick=()=>{T.classList.remove('on');startFight(F.zi,-1,F)};T.querySelector('#dd').append(b);
- const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
+ T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';dd.innerHTML=`<div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`;
+ const b=document.createElement('button');b.className='btn'+(done?' dark':'');b.disabled=done;b.textContent=done?'✓':'Combattre';b.onclick=()=>{$('tav').classList.remove('on');startFight(F.zi,-1,F)};dd.append(b);T.append(dd)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
+const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
+const HOME={today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
+ // partir à l'aventure : la carte, ouverte sur le chapitre en cours
+ adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 3.0e · combats tactiques au tour par tour</div>`;
- const A=document.createElement('div'),B=document.createElement('div');A.className=B.className='col';A.append(...C.childNodes);C.append(A,B);
- A.appendChild(party());
- A.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
- const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);A.appendChild(st);
- const b=document.createElement('button');b.className='btn';b.style.cssText='font-size:18px;padding:14px 34px';b.textContent='Carte du monde';b.onclick=worldMap;A.appendChild(b);B.appendChild(town());
- B.insertAdjacentHTML('beforeend',`<div class="how"><b>Comment jouer</b> <button class="btn dark" id="rtuto" style="font-size:11px;padding:3px 9px;margin-left:6px">Revoir le tutoriel</button><br>Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.</div>`);
- const r=document.createElement('button');r.className='btn dark';r.style.cssText='font-size:12px;padding:7px 12px';r.textContent='Recommencer à zéro';
- r.onclick=()=>{if(r.dataset.arm){resetSave();camp()}else{r.dataset.arm=1;r.textContent='Touche encore pour effacer'}};B.appendChild(r);
- C.querySelector('#rtuto').onclick=()=>tuto();B.insertAdjacentHTML('beforeend',`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark son-m" data-act="son-m">♪ Musique</button><button class="btn dark son-s" data-act="son-s">🔊 Sons</button><button class="btn dark" id="svb">💾 Sauvegarde</button></div><div class="sig">maxlolfr · GitHub</div>`);C.classList.add('on');sonBtns();C.querySelector('#svb').onclick=saveDlg;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
 }
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');

@@ -23,8 +23,7 @@ export function logoURL(){const f=AT.logo[0],c=document.createElement('canvas');
 export function skin(){const st=document.createElement('style');st.textContent=`.btn{background:url(${uiURL(5)}) center/100% 100% no-repeat;box-shadow:none;border-radius:0;text-shadow:0 1px 0 #fff6;padding:14px 22px}.btn:active{background-image:url(${uiURL(7)})}
  .btn.dark{background-image:url(${uiURL(10)});color:#f3ead8;text-shadow:0 1px 2px #000}
  .btn.dark{padding:12px 28px}#top .btn{background:#2a1b10dd;border:1px solid #7a5a32;border-radius:10px;padding:6px 9px;color:#f3ead8}
- #panel{background:url(${uiURL(11)}) center/100% 100% no-repeat,#2a1b10;border-top:0}
- #camp{background:linear-gradient(#0c0a0844,#0c0a08bb 75%),url(assets/camp.webp) center/cover}`;document.head.appendChild(st)}
+ #panel{background:url(${uiURL(11)}) center/100% 100% no-repeat,#2a1b10;border-top:0}`;document.head.appendChild(st)}
 export function icon(s,i,px,top){const cv=document.createElement('canvas'),d=2;cv.width=cv.height=px*d;const c=cv.getContext('2d'),f=AT[s][i];
  const sh=top?f[3]*top:f[3];const k=Math.min(px*d/f[2],px*d/sh);c.drawImage(IMG[s],f[0],f[1],f[2],sh,(px*d-f[2]*k)/2,(px*d-sh*k)/2,f[2]*k,sh*k);return cv}
 // Hauteur de référence du sprite de chaque unité (sert à les mettre à l'échelle).
