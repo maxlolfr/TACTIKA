@@ -62,3 +62,7 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - 35 tests.
 - Boss (26/11) : planches ChatGPT `golemK`, `crabK`, `wolfK` (+ `roiG`, `knightK`), liste `BS` dans render.js : regard à droite (miroir inversé par rapport aux monstres), 6 cases repos/attaque/touché/spécial/KO/repos 2, KO affiché 1,8 s.
 - Fond du maître d'armes : `assets/bg/armes.webp` (BG-01).
+
+## V2.5b — Spécialisations, palier 2 (26/11/2026)
+- `DONE=2`. Nouveaux champs d'unité : `crit` (0,12 ou 0,22), `guardK` (part des dégâts gardée sous Rempart : 0,5 ou 0,35), `pushDmg` (5 ou 7, transmis par `pushPlan` dans `p.k`, affiché dans l'aperçu de poussée).
+- Sorts modifiés via `sp` : Volée `slow`, Bottes `pmBonus:3`, Soin portée 5, Épine `poison:[6,3]`, Aura `buffT:3`, descriptions mises à jour. 38 tests.

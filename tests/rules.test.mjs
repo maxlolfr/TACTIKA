@@ -190,7 +190,7 @@ test('poussée : Fracas repousse de 2 cases sur terrain libre', () => {
 });
 test('poussée : obstacle après 1 case = 5 dégâts, unité percutée = 5 aussi', () => {
  const s=arena(),k=unit(s,'h',2,5),m=unit(s,'m',3,5,{hp:99,max:99});cell(s,5,5).block=1;
- let p=pushPlan(s,k,m,2);assert.deepEqual(p,{to:{x:4,y:5},left:1,hit:null});
+ let p=pushPlan(s,k,m,2);assert.deepEqual(p,{to:{x:4,y:5},left:1,hit:null,k:5});
  push(s,m,p);assert.equal(m.hp,94);assert.deepEqual([m.x,m.y],[4,5]);
  const s2=arena(),k2=unit(s2,'h',2,5),a=unit(s2,'m',3,5,{hp:99,max:99}),b=unit(s2,'m',4,5,{hp:99,max:99});
  p=pushPlan(s2,k2,a,2);assert.equal(p.left,2);assert.equal(p.hit,b);push(s2,a,p);assert.equal(a.hp,89);assert.equal(b.hp,94);
@@ -295,4 +295,24 @@ test('talents Aelis : soin ×1,2, poison 6, Aura +40 %', () => {
  assert.deepEqual(team([null,null,'druide']).units[2].S.venom.poison,[6,2]);
  const s2=team([null,null,'enchant']),a2=s2.units[2],k2=s2.units[0],t=unit(s2,'m',5,5,{hp:99,max:99});s2.rng=()=>.5;k2.dmgB=0;k2.mult=1;
  applySpell(s2,a2,a2.S.aura,k2);applySpell(s2,k2,{...SP.slash,dmg:[20,20]},t);assert.equal(t.hp,99-28);
+});
+
+// ---------- V2.5b : palier 2 (niveau 7) ----------
+test('talents niv 7 : rien de plus au niveau 6, Rage et Précision 22 %', () => {
+ assert.equal(team(['berserk','tireur',null],6).units[0].crit,.12);
+ const s=team(['berserk','tireur',null],7),[k,f]=s.units;assert.equal(k.crit,.22);assert.equal(f.crit,.22);assert.equal(s.units[2].crit,.12);
+ const t=unit(s,'m',5,5,{hp:99,max:99});k.dmgB=0;k.mult=1;s.rng=()=>.2;applySpell(s,k,{...SP.slash,dmg:[20,20]},t);assert.equal(t.hp,99-Math.round(20*1.15*1.5));
+});
+test('talents niv 7 : Forteresse 65 %, Impact brutal 7', () => {
+ const s=team(['gardien',null,null],7),k=s.units[0];k.shield=1;const hp=k.hp;hurt(s,k,20);assert.equal(k.hp,hp-7);
+ const s2=team(['briseur',null,null],7),b=s2.units[0],t=unit(s2,'m',b.x+1,b.y,{hp:99,max:99});
+ for(let i=2;i<=4;i++)s2.map.delete(K(b.x+i,b.y)); // mur juste derrière la cible : poussée de 3 bloquée
+ const p=pushPlan(s2,b,t,3);assert.equal(p.left,3);push(s2,t,p);assert.equal(t.hp,99-21);
+});
+test('talents niv 7 : Volée ralentit, Bottes +3, Soin portée 5, poison 3 tours, Aura 3 tours', () => {
+ const s=team([null,'chasseur',null],7),f=s.units[1],t=unit(s,'m',6,6,{maxPM:3});s.rng=()=>.5;applySpell(s,f,f.S.volley,{x:6,y:5});beginTurn(t);assert.equal(t.pm,2);
+ const se=team([null,'eclaireur',null],7),e=se.units[1];assert.equal(e.S.boots.pmBonus,3);beginTurn(e);applySpell(se,e,e.S.boots,e);assert.equal(e.pm,7);
+ assert.deepEqual(team([null,null,'guerisseuse'],7).units[2].S.heal.r,[0,5]);
+ assert.deepEqual(team([null,null,'druide'],7).units[2].S.venom.poison,[6,3]);
+ const s3=team([null,null,'enchant'],7),a=s3.units[2];applySpell(s3,a,a.S.aura,s3.units[0]);assert.deepEqual(s3.units[0].buff,{pct:.4,turns:3});
 });
