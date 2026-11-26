@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V2.4b (26/11/2026) — forge
+- Forge au camp (bâtiment 0) : améliore chaque objet possédé, niveaux 1 à 3, coûts `FORGE_COST` = 25/60/120 or, +50 % du bonus de base par niveau (`FORGE_STEP`, ×2,5 au niveau 3). Règles pures `upgrade/upCost/upLvl/itemVal` (rules.js), utilisées par `heroStats`. Niveaux dans `save.up` (absent = 0 : anciennes sauvegardes intactes). Boutons bloqués pendant l'animation (pas de double achat). 29 tests.
+- Images B-01 (forge.png) attendues : marteau animé et badges à brancher à réception.
+
 ## V2.4a (26/11/2026) — corrections, camp, impacts
 - Direction : `Game-studio-ai/docs/studio/tactika/DIRECTION-PRODUCTION-V2.4.md` (priorités de Max, découpage V2.4a/b/c, pas d'équilibrage fin avant les tests de Max).
 - Corrections : détail des étoiles juste (`starList`), fuite pendant une animation (numéro de combat `G.fid` : une ancienne boucle de tours s'arrête, `cast` garde son propre état), `genMap` ne peut plus échouer (plateau dégagé en secours), sauvegarde versionnée (`v:2`) et vérifiée au chargement. Graine liée à l'or gardée (variété des cartes rejouées). 27 tests.
