@@ -56,7 +56,7 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
  HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3;s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
-  sp:h.sp,S:Object.fromEntries(h.sp.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
+  sp:h.sp,S:Object.fromEntries(h.sp.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,cnt=Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
@@ -86,7 +86,7 @@ export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){con
 
 // ---------- dégâts, sorts ----------
 // Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât. Renvoie un événement, ou null si la cible est déjà morte.
-export function hurt(s,t,amt,src,crit){if(t.dead)return null;if(t.shield>0)amt=Math.ceil(amt*.5);amt=Math.max(1,Math.round(amt*(1-(t.armor||0))));t.hp-=amt;
+export function hurt(s,t,amt,src,crit){if(t.dead)return null;if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));amt=Math.max(1,Math.round(amt*(1-(t.armor||0))));t.hp-=amt;
  let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp}
  const e={type:'hurt',t,amt,src,crit:!!crit,killed};if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
  return e}
@@ -105,14 +105,14 @@ export function applySpell(s,u,sp,c){
   if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  if(sp.dmg){const cr=rng()<.12,h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*buff*cb*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*buff*cb*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=Math.round((ri(rng,...sp.heal)+(u.healB||0))*(u.mult||1)*(u.healMul||1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
   if(sp.poison&&!t.dead)t.poison={d:sp.poison[0],turns:sp.poison[1]};
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
-  if(sp.buff){t.buff={pct:sp.buff,turns:2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
-  if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:'+2 PM',color:'#7fd0ff'})}}
+  if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
+  if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
  if(sp.shake)ev.push({type:'shake',ms:250});
  return ev}
 
@@ -121,10 +121,10 @@ export function applySpell(s,u,sp,c){
 export function pushPlan(s,from,t,n){const dx=Math.sign(t.x-from.x),dy=Math.sign(t.y-from.y);let x=t.x,y=t.y,left=n,hit=null;
  if(dx&&dy)return{to:{x,y},left:0,hit}; // pas de poussée en diagonale (n'arrive pas : Fracas est au corps à corps)
  while(left>0){const nx=x+dx,ny=y+dy;hit=occ(s,nx,ny)||null;if(!passable(s,nx,ny)||hit)break;x=nx;y=ny;left--}
- return{to:{x,y},left,hit:left?hit:null}}
+ return{to:{x,y},left,hit:left?hit:null,k:from.pushDmg||PUSH_DMG}}
 // Applique un trajet de pushPlan : déplace t, puis 5 dégâts par case non parcourue (à t et à l'unité percutée).
 export function push(s,t,p){const ev=[{type:'push',t,to:p.to}];t.x=p.to.x;t.y=p.to.y;
- if(p.left){ev.push({type:'collision',t});ev.push(hurt(s,t,PUSH_DMG*p.left,'collision'));if(p.hit)ev.push(hurt(s,p.hit,PUSH_DMG,'collision'))}
+ if(p.left){ev.push({type:'collision',t});ev.push(hurt(s,t,(p.k||PUSH_DMG)*p.left,'collision'));if(p.hit)ev.push(hurt(s,p.hit,p.k||PUSH_DMG,'collision'))}
  return ev.filter(Boolean)}
 
 // ---------- tours ----------
