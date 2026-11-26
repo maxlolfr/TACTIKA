@@ -242,3 +242,7 @@ body.camp #exc{display:none}
 .frow b{font-size:17px}.frow small{color:#eadcc0;font-size:14px}
 .frow .btn:disabled{opacity:1;filter:grayscale(.85) brightness(.85);color:#fff}
 .loot.qrow.qrow .btn:disabled{background-color:#2a2018}
+/* V4.7e : « Retour » toujours à l'écran (Académie, Forge, Marchand, Taverne) et lignes sans débordement */
+#forge,#shop,#tav,#armes{padding-bottom:calc(env(safe-area-inset-bottom) + 78px);overflow-x:hidden}
+#forge .frow,#shop .frow,#tav .frow{max-width:100%;box-sizing:border-box}
+.ov>.ov-back{position:fixed;left:50%;translate:-50% 0;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:9;min-width:180px;margin:0;box-shadow:0 0 0 4px #0d0906cc,0 6px 16px #000c}
