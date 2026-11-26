@@ -7,6 +7,7 @@ import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
+const BS=['roiG','golemK','crabK','wolfK'];
 const OLD=['aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
@@ -84,7 +85,8 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
   if(u.shield>0)return[...h.b,right,rf];
   return back?[...h.iB,right,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,right,rf]:[...h.i,right,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
- if(u.dead&&u.s==='roiG')return['roiG',4,right,u.ref];
+ // planches de boss (ChatGPT) : regard à droite, 6 cases repos, attaque, touché, spécial, KO, repos 2
+ if(BS.includes(u.s))return u.dead?[u.s,4,!right,u.ref]:[u.s,{i:0,a:1,h:2,s:3}[p],!right,u.ref];
  return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
 
 // ---------- effets visuels ----------
@@ -124,7 +126,7 @@ export function draw(now){
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:m.x+m.y,m});for(const o of outer)L.push({z:o.x+o.y,m:o});
- for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(u.s==='roiG'?1800:600))L.push({z:u.gx+u.gy+.01,u});
+ for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:u.gx+u.gy+.01,u});
  L.sort((a,b)=>a.z-b.z);
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
  const hides=u=>!tg.includes(u)&&tg.some(t=>u.gx+u.gy>t.gx+t.gy&&u.gx+u.gy-t.gx-t.gy<=3&&Math.abs((u.gx-u.gy)-(t.gx-t.gy))<=1.2);
