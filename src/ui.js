@@ -64,7 +64,7 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 // ---------- écrans ----------
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export function startFight(zi,i,F){
- const Z=ZONES[zi];G.F=F||{zi,i,lvl:Z.lvl+i,pool:Z.pool,boss:i===3?Z.boss:null,goal:zi&&i===1?'chief':zi&&i===2?'survive':null,seed:zi*1000+i*97+save.gold,th:Z.th[i%Z.th.length]};
+ const Z=ZONES[zi];G.F=F||{zi,i,lvl:Z.lvl+i,pool:Z.pool,boss:i===3?Z.boss:null,elite:Z.elite?.[i],goal:zi&&i===1?'chief':zi&&i===2?'survive':null,seed:zi*1000+i*97+save.gold,th:Z.th[i%Z.th.length]};
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);addRefs(S.units);S.rng=Math.random;

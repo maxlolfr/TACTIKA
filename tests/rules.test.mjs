@@ -443,3 +443,13 @@ test('V3.0e première mission : Fenn tire dès le tour 1, une 2e cible s’ouvre
   for(const u of s.units)assert.ok(passable(s,u.x,u.y))}
 });
 const okShot=(s,u,t,from)=>okTarget(s,u,SP.shot,t,from);
+
+test('V3.5 : un chevalier au plus par combat prévu, à la 2e place, et le boss ne change pas',()=>{
+ for(const[zi,Z]of ZONES.entries())for(let i=0;i<4;i++){const s=newBattle(),{hs,es}=genMap(s,zi*1000+i*97,Z.th[i%Z.th.length]);s.rng=mulberry(7);
+  const F={lvl:Z.lvl+i,pool:Z.pool,boss:i===3?Z.boss:null,elite:Z.elite?.[i]};mkUnits(s,F,hs,es,HER.map(h=>({hp:h.hp,dmg:0,heal:0,mult:1})));
+  const k=s.units.filter(u=>u.team==='m'&&/^knight[BRN]$/.test(u.k));
+  assert.equal(k.length,Z.elite?.[i]?1:0,Z.id+' '+i);if(k.length){assert.equal(k[0].id,'m1');assert.equal(k[0].k,Z.elite[i])}
+  if(i===3){const b=s.units.find(u=>u.id==='m0');assert.equal(b.n,Z.boss.n);assert.equal(b.s,Z.boss.s)}}
+ const[b,r,n]=['knightB','knightR','knightN'].map(k=>MON[k]);assert.ok(b.hp<r.hp&&r.hp<n.hp&&b.dmg[1]<r.dmg[1]&&r.dmg[1]<n.dmg[1]);
+ assert.equal(MON.knight.hp,60);
+});

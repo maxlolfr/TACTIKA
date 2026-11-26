@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V3.5 (26/11/2026) — trois chevaliers
+- Demande de Max avec ses 3 planches : bleu (facile), rouge (plus difficile), noir (très difficile, nommé « Chevalier sombre » pour ne pas le confondre avec le boss « Chevalier noir », inchangé).
+- `MON.knightB/R/N` : PV 36/48/62, dégâts 8–11 / 11–14 / 14–18 (avant montée selon le niveau). Chiffres de départ, non équilibrés.
+- `ZONES[].elite = {combat: chevalier}` : un seul par combat, à la 2e place. Côte dorée combat 3 (bleu) ; Monts gris 2 (bleu) et 3 (rouge) ; Château 1 (bleu), 2 (rouge), 3 (sombre). Défi du jour et contrats inchangés.
+- Découpe : `tools/cut_knights.py` (une seule image de course par planche : la marche alterne course et garde). 53 tests.
+
 ## V3.4 (26/11/2026) — village en paysage
 - Peinture horizontale de Max (VI-02) : `assets/village-paysage.webp` (1536×1024). `home.js` a deux scènes (`SCENES.p` et `SCENES.l`) avec leurs zones, lumières, héros. La scène horizontale sert quand le menu est en colonne et que la zone libre est plus large que haute (téléphone couché, ordinateur) ; sinon la verticale (téléphone droit, Honor déplié, tablette presque carrée).
 - Les morceaux de feuillage animés et le soulèvement des bâtiments au toucher reçoivent maintenant leur image (ils étaient vides depuis la V3.1).

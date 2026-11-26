@@ -85,7 +85,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,cnt=Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
  const spots=[...es].sort(()=>rng()-.5);
- for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
+ for(let i=0;i<cnt;i++){const B=i===0&&F.boss,r=B?null:pick(rng,pool),t=B?B.k:i===1&&F.elite?F.elite:r,m=MON[t],boss=!!B,p=spots[i];
   const hp=Math.round(m.hp*sc*(boss?B.hp:1)),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)));
   s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
