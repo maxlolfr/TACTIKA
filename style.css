@@ -60,3 +60,19 @@ html,body{margin:0;height:100%;overflow:hidden;background:#16220f;color:var(--in
 #zsheet{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--panel);border-top:2px solid var(--line);padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);display:none;flex-direction:column;gap:8px;text-align:center}#zsheet.on{display:flex}#zsheet h3{margin:0;color:var(--gold)}#zsheet small{color:#cbbd9c;margin-bottom:4px}
 body.camp #top,body.camp #panel{visibility:hidden}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9;background:#0c120a;color:#cbbd9c}
+/* V2.3 : étoiles et coffre de butin */
+.stars{font-size:46px;letter-spacing:6px;line-height:1;margin:2px 0 6px}
+.stars span{color:#3a2c1c;-webkit-text-stroke:1px #7a5a32;display:inline-block}
+.stars span.on{color:#ffd65a;text-shadow:0 0 14px #ffb30080;animation:starpop .45s backwards cubic-bezier(.3,1.6,.5,1)}
+@keyframes starpop{from{transform:scale(0) rotate(-90deg)}}
+.chest{position:relative;width:110px;height:96px;margin:14px auto 4px;cursor:pointer;animation:wob 1.1s infinite}
+.chest i,.chest b{position:absolute;left:5px;right:5px;background:linear-gradient(90deg,#0000 42%,#e7b43a 42% 58%,#0000 58%),linear-gradient(#a3622a,#6a3a16);border:3px solid #e7b43a;box-shadow:inset 0 0 0 3px #4a2a10}
+.chest i{bottom:14px;height:46px;border-radius:0 0 6px 6px}
+.chest b{bottom:58px;height:28px;border-radius:30px 30px 4px 4px;transform-origin:10% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.chest small{position:absolute;bottom:-6px;left:-30px;right:-30px;font-size:12px;opacity:.8}
+.chest.open{animation:none}.chest.open b{transform:translateY(-8px) rotate(-28deg)}.chest.open small{display:none}
+.chest.open::before{content:'';position:absolute;left:10px;right:10px;bottom:56px;height:40px;background:radial-gradient(ellipse at bottom,#ffe78acc,#0000 70%);animation:glow 1s infinite alternate}
+@keyframes wob{0%,70%,100%{transform:rotate(0)}76%{transform:rotate(-5deg)}84%{transform:rotate(5deg)}92%{transform:rotate(-3deg)}}
+@keyframes glow{to{opacity:.5}}
+.loot.pop{animation:lootpop .4s backwards cubic-bezier(.3,1.5,.5,1)}
+@keyframes lootpop{from{transform:translateY(-30px) scale(.6);opacity:0}}

@@ -1,7 +1,7 @@
 // Audio : Web Audio, fichiers ElevenLabs dans assets/audio/<nom>.mp3, sons synthétisés de secours.
-export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle'];
+export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal','push','collision','combo_2','combo_3'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle'];
 // tant qu'un nouveau fichier manque, on joue son équivalent existant
-const FALL={main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal'};
+const FALL={main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup'};
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
