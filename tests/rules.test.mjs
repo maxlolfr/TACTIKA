@@ -661,7 +661,7 @@ test('arme : une seule active par héros, choix du joueur, autres objets cumulé
  const sv={lvl:1,items:[0,1,2],up:{},rr:{},sp:[null,null,null]};
  assert.equal(weaponOf(sv,0),1);assert.equal(heroStats(sv,0).dmg,3); // hache seule (la plus forte), pas épée + hache
  assert.equal(equip(sv,0),1);assert.equal(heroStats(sv,0).dmg,2);assert.equal(heroStats(sv,0).hp,62+8); // bouclier toujours compté
- assert.equal(equip(sv,2),0);assert.equal(weaponOf(sv,1),null);sv.items=[1];assert.equal(weaponOf(sv,0),1); // arme vendue : repli
+ assert.equal(equip(sv,4),0);assert.equal(weaponOf(sv,1),null);sv.items=[1];assert.equal(weaponOf(sv,0),1); // arme vendue : repli
 });
 
 // ---------- V4.5e : Loup alpha ----------
@@ -671,3 +671,17 @@ test('Loup alpha : appel de la meute à 50 % PV, une fois, puis hurlement tous l
  const w=s.units.at(-1);assert.ok(w.n.startsWith('Loup de meute')&&w.xp===0&&w.k==='wolf');hurt(s,b,1);assert.equal(s.units.length,n+2);
  b.bt=0;assert.equal(bossNext(b),2);
 });
+
+// ---------- V4.7a : quatre emplacements ----------
+import {gear,isOn,compare} from '../src/rules.js';
+import {ITEMS as IT,SLOTS as SL} from '../src/data.js';
+const sv47=o=>({lvl:1,items:[],up:{},rr:{},sp:[null,null,null],...o});
+test('emplacements : chaque objet en a un, un seul objet équipé par emplacement', ()=>{
+ assert.ok(IT.every(o=>SL[o.sl]));const sv=sv47({items:[8,9]});
+ assert.equal(gear(sv,2).bijou,9);assert.equal(heroStats(sv,2).hp,40+6);assert.equal(heroStats(sv,2).dmg,0); // à égalité : l'amulette (PV)
+ assert.equal(equip(sv,8),1);assert.equal(heroStats(sv,2).dmg,2);assert.equal(heroStats(sv,2).hp,40);assert.equal(isOn(sv,9),false)});
+test('emplacements : comparaison sans modifier la sauvegarde', ()=>{const sv=sv47({items:[8,9]}),avant=JSON.stringify(sv);
+ assert.deepEqual(compare(sv,8),[['PV',46,40],['dégâts',0,2]]);assert.deepEqual(compare(sv,9),[]);assert.equal(JSON.stringify(sv),avant);
+ assert.deepEqual(compare(sv47(),3),[['PV',62,68]])}); // objet pas encore possédé (marchand)
+test('emplacements : ancienne sauvegarde (wpn) respectée, vente = repli', ()=>{const sv=sv47({items:[0,1,2],wpn:[0,null,null]});
+ assert.equal(gear(sv,0).arme,0);equip(sv,1);assert.equal(gear(sv,0).arme,1);sv.items=[0,2];assert.equal(gear(sv,0).arme,0);assert.equal(gear(sv,0).armure,null)});

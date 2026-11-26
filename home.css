@@ -156,3 +156,13 @@ button.v-cl{cursor:pointer}button.v-cl:hover,button.v-cl:focus-visible{backgroun
 .wide .v-top,.wide .v-dock,.wide .v-panel,.wide .v-logo,.wide .ov:not(#camp):not(#map),.wide #mapbar,.wide #zsheet,.wide .zone,.wide #top,.wide #panel,.wide #tuto,.wide #goal,.wide #sv,.wide #unzoom{zoom:var(--ui)}
 .wide .v-plate{zoom:calc(var(--ui)*.78)}
 .v-hero{z-index:1}.v-plate{z-index:3}
+
+/* V4.7a : quatre emplacements d'équipement et comparaison avant/après */
+.v-slots{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.v-eq{display:flex;align-items:center;gap:7px;min-width:0;min-height:58px;padding:6px 8px;text-align:left;border-radius:12px;background:linear-gradient(#fff3d6,#ecd3a3);color:#3a2010;border:2px solid #a8742f}
+.v-eq canvas{width:38px;height:38px;flex:none}.v-eq span{min-width:0;display:flex;flex-direction:column}
+.v-eq i{font:800 10px var(--f-text);font-style:normal;text-transform:uppercase;letter-spacing:.06em;color:#8a5a28}
+.v-eq b{font:400 14px/1.15 var(--f-title)}.v-eq small{font:700 12px var(--f-text);color:#6b4a2c}
+.v-eq.vide{background:#1f110a;border-style:dashed;color:#d9bd8c}.v-eq.vide i{color:#b3946a}
+.v-diff{white-space:nowrap;font-weight:800}.v-diff.up{color:#1f6b22!important}.v-diff.down{color:#a2261a!important}
+.v-row small b.v-diff{display:inline;font:800 12px var(--f-text)}
