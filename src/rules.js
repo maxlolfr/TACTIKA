@@ -31,6 +31,7 @@ export function genMap(s,seed,th){
   const seen=new Set([K(hs[1].x,hs[1].y)]),q=[hs[1]];
   while(q.length){const p=q.shift();for(const d of DIRS){const nx=p.x+d[0],ny=p.y+d[1],k=K(nx,ny);if(!seen.has(k)&&passable(s,nx,ny)){seen.add(k);q.push({x:nx,y:ny})}}}
   if([...hs,...es].every(p=>seen.has(K(p.x,p.y))))return{hs,es};
+  if(tries===39){for(const c of s.map.values()){delete c.block;delete c.water;delete c.d;if(c.t===4||c.t===8)c.t=theme.g[0]}return{hs,es}} // secours : plateau dégagé
  }
 }
 
@@ -120,7 +121,8 @@ export function endTurn(u){if(u.buff&&--u.buff.turns<=0)delete u.buff}
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);return h&&m?null:(h?'win':'lose')}
 
 // Étoiles d'un combat gagné : victoire, aucun héros KO, fini en 5 tours de table (boss : 7).
-export function stars(s,boss){return 1+(s.units.some(u=>u.team==='h'&&u.dead)?0:1)+(s.round<=STAR_ROUNDS[boss?'boss':'fight']?1:0)}
+export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&u.dead),s.round<=STAR_ROUNDS[boss?'boss':'fight']];
+export const stars=(s,boss)=>starList(s,boss).filter(Boolean).length;
 
 // ---------- IA ennemie ----------
 // Prochaine action d'un monstre : {type:'cast',sp,target} | {type:'move',to,prev} | null (rien à faire).
