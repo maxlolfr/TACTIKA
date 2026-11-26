@@ -2,14 +2,15 @@
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
 import {pathTo,face,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
-import {addFx,addProj,say,pose,shake,punch,burst,TH} from './render.js';
+import {addFx,addProj,say,pose,shake,punch,burst,addRefs,TH} from './render.js';
 import {sfx} from './audio.js';
 
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w);break;
  case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
-  if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
+  if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}
+  if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx('slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);break;
  case 'shake':shake(e.ms);break;

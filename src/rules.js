@@ -60,7 +60,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
   const hp=Math.round(m.hp*sc*(boss?B.hp:1)),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)));
-  s.units.push({id:'m'+i,team:'m',k:t,s:m.s,row:m.row,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
+  s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
    atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,fx:m.fx??0,proj:m.r?1:0}})}
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
@@ -87,7 +87,14 @@ export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){con
 // Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât. Renvoie un événement, ou null si la cible est déjà morte.
 export function hurt(s,t,amt,src,crit){if(t.dead)return null;if(t.shield>0)amt=Math.ceil(amt*.5);amt=Math.max(1,Math.round(amt*(1-(t.armor||0))));t.hp-=amt;
  let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp}
- return{type:'hurt',t,amt,src,crit:!!crit,killed}}
+ const e={type:'hurt',t,amt,src,crit:!!crit,killed};if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
+ return e}
+// Invocation unique d'un boss (Roi Gelée) : sur les cases libres les plus proches, sans XP, jouent en fin de tour de jeu.
+export function summon(s,b){const{k,n,hp,pm,dmg}=b.summon,m=MON[k],d=reach(s,b,4).dist,out=[];
+ for(const c of [...d.keys()].filter(c=>d.get(c)>0).sort((a,c)=>d.get(a)-d.get(c)).slice(0,n)){const[x,y]=c.split(',').map(Number);
+  const u={id:'m'+s.units.length,team:'m',k,s:m.s,row:m.row,n:'Petite gelée',x,y,gx:x,gy:y,hp,max:hp,maxPA:4,maxPM:pm,pa:4,pm,init:0,cd:{},armor:0,dir:1,h:m.h*.75,xp:0,minion:1,
+   atk:{snd:m.snd,n:'Attaque',pa:4,r:[1,1],t:'enemy',dmg:[...dmg],fx:m.fx??0,proj:0}};s.units.push(u);s.order.push(u);out.push(u)}
+ return out}
 // Paie le coût d'un sort (PA, recharge) et tourne l'unité vers la cible.
 export function payCost(u,sp,c){u.pa-=sp.pa;if(sp.cd)u.cd[sp.n]=sp.cd;face(u,c.x,c.y)}
 // Applique l'effet d'un sort sur la case c (après payCost). Renvoie la liste d'événements.
