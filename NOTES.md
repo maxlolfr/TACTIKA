@@ -231,3 +231,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - **Priorité 1 · chiffres.** Tir affiche sa plage de base de 8–12 malgré le butin et Aura. Un tir sous Aura a descendu le Sanglier de 27 à 11 PV. Afficher une plage effective à la cible, en tenant compte des modificateurs vérifiés et en distinguant les effets aléatoires.
 - **Priorité 2 · interface.** Prairie 3 : l’eau ressemble aux cases bleues accessibles. Faire varier forme/contour et expliquer l’échec d’un appui. Adapter le conseil à 0 PM, tester le camp sur différentes proportions et clarifier le compteur de combats avec le boss.
 - **Suite.** Finir Prairie 3, Roi Gelée et Bois sombre, puis couvrir chevaliers, Cavernes et Titan sur une progression avancée. Tactile et performances restent à mesurer sur appareil. Le [prompt complet pour Claude](TACTIKA-Claude-V4.0.5.prompt) détaille les reproductions, critères de réception et vérifications de non-régression.
+
+## V4.5a (27/11/2026, Opus) — survie à renforts (pilote Bois 3) + simulateur
+- `ZONES[].waves[i]` = {turns, cap, start, add:[[tour, n, espèce élite]]} ; `waveSetup/wavePlan/waveTick/waveEmpty` (rules.js). Annonce un tour avant (cases ⚠), arrivée en début de tour, insertion en fin d'ordre, plafond 6, case prise = attente, plateau vide = vague avancée. Élite : PV ×1,5, dégâts ×1,2, anneau doré. XP des renforts ÷2.
+- Victoire : tenir 6 tours (les survivants se replient) ou tout éliminer une fois les vagues finies (+25 % d'or). 3e étoile des missions à vagues = toutes les vagues éliminées.
+- `tools/sim.mjs pilote [graines] [missions]` : 3 profils (sous/std/opti), graines fixes, dégâts, soins, XP, compteur de combats. 71 tests.
