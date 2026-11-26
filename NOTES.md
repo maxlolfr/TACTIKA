@@ -171,3 +171,7 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Sons ElevenLabs (lot R6, 968 crédits) : `crystal_amp`, `prism_burst`, `beam_charge`, `beam_fire`, musique `cave` (stéréo, ajoutée au `case` de audio.yml). Secours dans `FALL` tant qu'un fichier manque.
 - Niveau 4 : `prismCover` met le dernier monstre à couvert derrière le prisme. Défi du jour des Cavernes avec 1 turquoise + 1 violet.
 - Mode test : `?fps` dans l'adresse affiche images/s et le plus long écart entre deux images. 63 tests.
+
+## V4.0.3 (26/11/2026) — lot sonore épique, sons rangés
+- Sons rangés : `assets/audio/musique/` et `assets/audio/bruitages/`, catalogue `assets/audio/SONS.md` ; `dir()` dans audio.js ; le workflow audio range tout seul (et fait `apt-get update`, cause de l'échec de la V4.0.2).
+- Nouveaux sons (ElevenLabs, 3 736 crédits) : golem_smash, spider_bite, bat_shriek, titan_roar (phases), titan_death, chest_open, loot_rare, boss_intro ; musiques titan_boss, coast (Côte), mountain (Monts), castle (Château). Plus les 5 sons de la V4.0.2 (968 crédits), téléchargés avec ce lot.
