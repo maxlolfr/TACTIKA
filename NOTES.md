@@ -103,3 +103,12 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Aperçu : 1er toucher sur une case bleue = trajet, fantôme, coût en PM, viseurs sur les ennemis visables de là (`targetsFrom`, pur et testé) ; 2e toucher sur la même case = déplacement (`G.plan`).
 - Première mission (Prairie combat 1, tant qu'elle n'est pas gagnée) : 3 Gelées, `guideSetup` garantit un Tir dès le tour 1 et une 2e cible ouvrable en bougeant (testé sur 300 graines) ; conseil par héros sous les sorts, bouton Tir qui pulse.
 - HUD : frise sur sa propre ligne en portrait, noms sous les sorts, textes plus courts, hauteur de panneau constante (le plateau passait jusqu'à 32 px dessous sur pliable en portrait). 52 tests.
+
+## V3.1 (26/11/2026) — accueil : village interactif
+- Fond `assets/village.webp` (peinture 941×1672 fournie par Max, 309 Ko). `src/home.js` + `home.css` ; positions en pixels de l'image, `fitHome` garde les 5 bâtiments visibles sans défilement.
+- Bâtiments → écrans existants : Caserne → onglet Héros, Talents → maître d'armes, Forge, Marchand, Taverne. Héros autour du feu (touchables).
+- Barre du haut (portrait, niveau, XP, or, potions, réglages), bandeau de chapitre + « Partir à l'aventure », navigation Camp / Héros / Inventaire / Quêtes. Réglages : musique, sons, sauvegarde, tutoriel, aide, remise à zéro, version.
+- Animations CSS (transform/opacity) : lanternes, fenêtres, feux, fumées, eau, feuillages, lucioles, enseignes qui réagissent au toucher, pastilles (forge améliorable, spécialisation libre, contrat ou défi). `prefers-reduced-motion` respecté.
+- Règles de combat et format de sauvegarde inchangés. Ancien accueil (cartes héros, grille) supprimé.
+- Polices Lilita One / Nunito via Google Fonts (non bloquant, repli système) — non vérifiées en essai (réseau fermé). 52 tests ; Playwright sur 10 formats (enseignes visibles et non recouvertes, chaque bâtiment ouvre son écran, aventure → combat).
+- Limite : en paysage la peinture verticale laisse des côtés flous ; une version paysage est commandée (VI-02).
