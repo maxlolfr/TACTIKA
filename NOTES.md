@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.8b (27/11/2026) : les héros se promènent au village
+- Kael va vers la Forge, Fenn vers le Marchand, Aelis fait un petit tour près du feu et du cristal ; pause, retour au poste, attente de 6 à 14 s. Décor seulement.
+- Aucune image nouvelle : marches du combat (`walkFrames`, de face en descendant, de dos en montant, miroir vers la gauche). Trajets : `SCENES.*.walk`.
+- Le toucher suit le héros et ouvre sa fiche. Pause quand un panneau est ouvert ; pas de promenade avec « réduire les animations ».
+
 ## V4.8a (27/11/2026) : six PNJ au village
 - Affichage seul, aucune règle touchée. Garrick (Caserne), Mira (Taverne), Borin (Forge), Ezran (Marchand), Darius (Entraînement), Elyndra (Académie).
 - `assets/pnj/<nom>.webp` : 4 cases (repos, 2 gestes, salut), préparées par `tools/prep_pnj.py` depuis les découpes du studio. Positions : `SCENES.*.pnj`, taille : `npc`.
