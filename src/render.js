@@ -7,7 +7,7 @@ import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
-const OLD=['fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
+const OLD=['aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)).map(n=>new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;ok()};i.onerror=()=>ko(n);i.src='assets/'+n+'.webp'})));
@@ -73,7 +73,7 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
 const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v:[n,8]});
 const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]),
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
- healer:P9('aelis9',['aelisX',[0,1,2,3]],['aelisB',[1,0,2,3]],['aelisB',0])};
+ healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0])};
 export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2,back=u.dir===2||u.dir===3;
