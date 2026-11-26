@@ -112,7 +112,7 @@ body.camp #top,body.camp #panel{visibility:hidden}
 /* ===== V3.0c : mode paysage ===== */
 .lootbox{display:contents}
 @media (orientation:landscape){
- :root{--side:clamp(208px,29vw,310px)}
+ :root{--side:clamp(178px,22vw,236px)}
  /* combat : panneau en colonne à droite, frise en haut du plateau */
  #top{right:calc(var(--side) + env(safe-area-inset-right));padding:calc(env(safe-area-inset-top) + 6px) 8px 6px calc(env(safe-area-inset-left) + 10px);gap:6px}
  #title{font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
@@ -184,3 +184,15 @@ body.camp #top,body.camp #panel{visibility:hidden}
 /* V4.0 : contrats et défi du jour avec bandeau illustré */
 .loot.qrow.qrow{background-color:#1a120a;background-size:cover;background-position:right center;min-height:92px;border-color:#a8864f}
 .loot.qrow.qrow b{color:#fff3d6;text-shadow:0 1px 3px #000}.loot.qrow.qrow small{color:#e8dcc0;text-shadow:0 1px 2px #000}
+
+/* ===== V4.0.5 : plateau plus grand ===== */
+#who .pa,#who .pm{display:inline-flex;align-items:center;gap:3px;font:800 13px system-ui;white-space:nowrap}#who .pa img,#who .pm img{width:18px;height:18px}
+#who .en{color:#e08a7a;font-size:12px;white-space:nowrap}
+#who{gap:6px}#hpb{min-width:40px}
+@media (orientation:portrait){
+ #pts{min-height:0;margin:0;height:0;position:relative}
+ #tgt{position:absolute;left:0;right:0;bottom:calc(100% + 16px);justify-content:center;flex-wrap:nowrap}
+ #tgt:empty{display:none}
+}
+@media (orientation:landscape){#who{column-gap:8px}}
+@media (orientation:landscape){#who .pa,#who .pm{font-size:12px}#who .pa img,#who .pm img{width:15px;height:15px}#hpt{font-size:12px}#hpb{flex:1 1 55%}}

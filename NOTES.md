@@ -178,3 +178,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V4.0.4 (26/11/2026) — effets du Titan
 Événements `beam` (traits de lumière de l'origine vers chaque case + colonnes, `addBeam`) et `wave` (onde de choc au changement de phase, `addWave`). Aura du Titan plus grande et pulsée pendant la charge (`s.beam.by`). Le prisme qui éclate projette aussi ses traits vers ses 4 voisines. L'ancien effet poison (têtes de mort) n'est plus utilisé pour le rayon ni le prisme.
+
+## V4.0.5 (26/11/2026) — plateau plus grand, plein écran
+- Portrait : PA/PM sur la ligne du nom, rangée des cibles flottante au-dessus du panneau (`#tgt` en absolu), marge au-dessus du plateau 1,4 → 1,05 case : cases +21 % sur iPhone (48 → 58 px).
+- Paysage : panneau latéral `--side` clamp(178px, 22vw, 236px), marge 1,22 → 1 case.
+- Application plein écran : `manifest.webmanifest` (display fullscreen), balises Apple, icônes `assets/icon-*.png`. Sur iPhone : Safari › Partager › « Sur l'écran d'accueil » supprime les barres de Safari.
