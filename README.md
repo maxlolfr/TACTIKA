@@ -9,6 +9,7 @@ Jeu tactique au tour par tour façon Dofus, en HTML5, pensé pour le mobile (iPh
 - Combats sur grille isométrique : 6 PA pour les sorts, 3 PM pour se déplacer, ligne de vue, critiques, poison, bouclier, bonus.
 - Carte du monde avec 5 zones (Prairie, Bois sombre, Côte dorée, Monts gris, Château en ruine), 3 combats + 1 boss par zone.
 - XP, niveaux, or, objets ; sauvegarde locale.
+- V2.3 : intentions ennemies affichées, poussée (Fracas), combos entre héros, 1 à 3 étoiles par combat, coffre de butin animé.
 - Son : moteur Web Audio, sons de secours synthétisés en attendant les fichiers ElevenLabs (`assets/audio/<nom>.mp3`).
 
 ## Fichiers

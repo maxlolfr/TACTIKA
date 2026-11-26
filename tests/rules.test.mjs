@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep} from '../src/rules.js';
+ hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,intent} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -179,4 +179,46 @@ test('combat simulé : une partie complète IA contre IA se termine sans erreur'
     else{const p=pathTo(u,a.to,a.prev);for(const[x,y]of p){u.x=x;u.y=y;u.pm--}}}
    endTurn(u)}}
   assert.ok(outcome(s),'combat fini (seed '+seed+')');}
+});
+
+// ---------- V2.3 ----------
+test('poussée : Fracas repousse de 2 cases sur terrain libre', () => {
+ const s=arena(),k=unit(s,'h',2,5),m=unit(s,'m',3,5,{hp:99,max:99});
+ const ev=applySpell(s,k,SP.smash,m);
+ assert.deepEqual([m.x,m.y],[5,5]);assert.ok(ev.some(e=>e.type==='push'));assert.ok(!ev.some(e=>e.type==='collision'));
+});
+test('poussée : obstacle après 1 case = 5 dégâts, unité percutée = 5 aussi', () => {
+ const s=arena(),k=unit(s,'h',2,5),m=unit(s,'m',3,5,{hp:99,max:99});cell(s,5,5).block=1;
+ let p=pushPlan(s,k,m,2);assert.deepEqual(p,{to:{x:4,y:5},left:1,hit:null});
+ push(s,m,p);assert.equal(m.hp,94);assert.deepEqual([m.x,m.y],[4,5]);
+ const s2=arena(),k2=unit(s2,'h',2,5),a=unit(s2,'m',3,5,{hp:99,max:99}),b=unit(s2,'m',4,5,{hp:99,max:99});
+ p=pushPlan(s2,k2,a,2);assert.equal(p.left,2);assert.equal(p.hit,b);push(s2,a,p);assert.equal(a.hp,89);assert.equal(b.hp,94);
+});
+test('poussée : bord de carte et eau bloquent, la cible déjà morte ne bouge pas', () => {
+ const s=arena(),k=unit(s,'h',9,5),m=unit(s,'m',10,5,{hp:99,max:99});
+ assert.equal(pushPlan(s,k,m,2).left,1);
+ cell(s,11,5).water=1;assert.equal(pushPlan(s,k,m,2).left,2);
+ const s2=arena(),k2=unit(s2,'h',2,5),m2=unit(s2,'m',3,5,{hp:1,max:1});applySpell(s2,k2,SP.smash,m2);
+ assert.ok(m2.dead);assert.deepEqual([m2.x,m2.y],[3,5]);
+});
+test('combos : 2e héros +15 %, 3e héros +30 %, remis à zéro quand le monstre joue', () => {
+ const s=arena();s.rng=()=>0.5; // dégâts fixes, jamais de critique
+ const a=unit(s,'h',2,5),b=unit(s,'h',4,4),c=unit(s,'h',4,6),m=unit(s,'m',3,5,{hp:999,max:999});
+ const hit=(u,sp)=>applySpell(s,u,sp,m).find(e=>e.type==='hurt').amt;
+ const base=hit(a,SP.slash);assert.equal(base,12);
+ const ev=applySpell(s,b,SP.slash,m);assert.equal(ev.find(e=>e.type==='hurt').amt,Math.round(12*1.15));assert.equal(ev.find(e=>e.type==='combo').n,2);
+ assert.equal(hit(c,SP.slash),Math.round(12*1.3));
+ assert.equal(hit(a,SP.slash),Math.round(12*1.3),'le même héros qui refrappe garde le bonus, sans nouvelle annonce');
+ beginTurn(m);assert.equal(hit(b,SP.slash),12);
+});
+test('étoiles : victoire, aucun KO, rapidité', () => {
+ const s=arena();unit(s,'h',0,0);const h2=unit(s,'h',1,0);
+ s.round=5;assert.equal(stars(s,false),3);s.round=6;assert.equal(stars(s,false),2);assert.equal(stars(s,true),3);
+ h2.dead=true;assert.equal(stars(s,true),2);s.round=9;assert.equal(stars(s,true),1);
+});
+test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer à l\'état', () => {
+ const s=arena(),h=unit(s,'h',2,2,{hp:30}),far=unit(s,'h',10,10),m=unit(s,'m',5,2,{maxPA:4,maxPM:3,pa:0,pm:0,atk:{pa:4,r:[1,1],t:'enemy',dmg:[7,10]}});
+ const it=intent(s,m);assert.equal(it.target,h);assert.deepEqual(it.dmg,[7,10]);assert.deepEqual(it.from,{x:3,y:2});
+ assert.deepEqual([m.x,m.y,m.pa,m.pm],[5,2,0,0]);
+ const m2=unit(s,'m',11,0,{maxPA:4,maxPM:1,pa:4,pm:1,atk:{pa:4,r:[1,1],t:'enemy',dmg:[1,2]}});assert.equal(intent(s,m2),null,'trop loin : aucune attaque');
 });

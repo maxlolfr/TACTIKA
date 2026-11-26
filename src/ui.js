@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -13,9 +13,10 @@ function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.lengt
  const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'');tl.appendChild(c)}}
 function render(){
  const u=G.cur,{sel,F}=G;
- $('title').textContent=F?`${ZONES[F.zi].n} · ${F.boss?'Boss':F.i+1+'/3'}`:'';
+ $('title').textContent=F?`${ZONES[F.zi].n} · ${F.boss?'Boss':F.i+1+'/3'} · tour ${G.s.round}`:'';
  if(!u){return}
  const me=u.team==='h'&&G.phase==='fight';
+ G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;
  $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),30,u.team==='h'?.62:0);$('who').append(ic,`${u.n}`);
  const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=`${u.hp}/${u.max} PV`;$('who').append(hb,ht);
  $('pts').innerHTML=`<span class="pa"><img src="${uiURL(12)}"> ${u.pa} PA</span><span class="pm"><img src="${uiURL(13)}"> ${u.pm} PM</span>`+(me?'':`<span style="color:#e08a7a">Tour ennemi…</span>`);
@@ -26,7 +27,7 @@ function render(){
  $('end').disabled=!me||G.busy;
  $('hint').textContent=!me?`${u.n} joue.`:sel?`${sel.sp.n} — ${sel.sp.d}. ${sel.sp.dmg?sel.sp.dmg.join('–')+' dégâts · ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins · ':''}portée ${sel.sp.r.join('–')}. Touche une case orange.`:`Touche une case bleue pour bouger, ou choisis un sort.`;
 }
-const info=o=>`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'');
+const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')};
 function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
  if(u.sp.some(id=>{const sp=SP[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&selCells(S,u,sp).some(c=>c.ok)}))return;
  $('hint').textContent='Plus rien à faire : tour suivant…';setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},700)}
@@ -54,12 +55,12 @@ function party(){const d=document.createElement('div');d.className='party';HER.f
  c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
  const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.2 · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.3 · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);
  const b=document.createElement('button');b.className='btn';b.style.cssText='font-size:18px;padding:14px 34px';b.textContent='Carte du monde';b.onclick=worldMap;C.appendChild(b);
- C.insertAdjacentHTML('beforeend',`<div class="how"><b>Comment jouer</b><br>Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.</div>`);
+ C.insertAdjacentHTML('beforeend',`<div class="how"><b>Comment jouer</b><br>Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.</div>`);
  const r=document.createElement('button');r.className='btn dark';r.style.cssText='font-size:12px;padding:7px 12px';r.textContent='Recommencer à zéro';
  r.onclick=()=>{if(r.dataset.arm){resetSave();camp()}else{r.dataset.arm=1;r.textContent='Touche encore pour effacer'}};C.appendChild(r);
  C.insertAdjacentHTML('beforeend',`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark son-m" data-act="son-m">♪ Musique</button><button class="btn dark son-s" data-act="son-s">🔊 Sons</button></div><div class="sig">maxlolfr · GitHub</div>`);C.classList.add('on');sonBtns();
@@ -70,24 +71,33 @@ function worldMap(){
  const svg=`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${ZONES.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;L.insertAdjacentHTML('beforeend',svg);
  ZONES.forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock');b.style.left=z.x+'%';b.style.top=z.y+'%';
   const B=z.boss?MON[z.boss.k]:null;if(B)b.appendChild(icon(B.s,B.row*3,46));else b.insertAdjacentHTML('beforeend','<span class="q">?</span>');
-  b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=4?'✓ Terminée':`${p}/4`}</small>`);
+  b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=4?'✓ Terminée':`${p}/4`}${p?' · '+starsOf(z.id).reduce((a,b)=>a+b,0)+'/12 ★':''}</small>`);
   b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
  $('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
 }
 function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet');S.innerHTML=`<h3>${z.n}</h3><small>Niveaux ${z.lvl}–${z.lvl+3}</small>`;
  for(let i=0;i<4;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
-  b.textContent=(i===3?`Boss · ${z.boss.n}`:`Combat ${i+1}`)+` · niv ${z.lvl+i}`+(done?' ✓':'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
+  b.textContent=(i===3?`Boss · ${z.boss.n}`:`Combat ${i+1}`)+` · niv ${z.lvl+i}`+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
+const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
 function result(win,fled){const F=G.F;
  const Rs=$('result');Rs.innerHTML='';G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?'victory':'defeat');
- if(win){const first=prog(ZONES[F.zi].id)===F.i,gold=Math.round((6*F.lvl+ri(Math.random,0,8))*(first?1:.5))+(F.boss&&first?40:0),xp=G.s.killedXp;save.gold+=gold;const up=gainXp(save,xp);
+ if(win){const zid=ZONES[F.zi].id,first=prog(zid)===F.i,st=stars(G.s,!!F.boss),best=starsOf(zid),new3=st===3&&(best[F.i]||0)<3;
+  const gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)),xp=G.s.killedXp;save.gold+=gold;const up=gainXp(save,xp);
   const free=ITEMS.map((_,i)=>i).filter(i=>!save.items.includes(i));let it=null;if(free.length&&Math.random()<(F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it)}
-  if(first)save.z[ZONES[F.zi].id]=F.i+1;store();setTimeout(()=>sfx('coin'),900);if(up)setTimeout(()=>sfx('levelup'),1500);
-  Rs.innerHTML=`<h1>Victoire !</h1><div class="sub">${ZONES[F.zi].n} · ${F.boss?F.boss.n+' vaincu !':'combat '+(F.i+1)+' gagné'}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
-  const L=(ic,html)=>{const d=document.createElement('div');d.className='loot';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);Rs.appendChild(d)};
-  L(icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.</span>`:''}`);
-  L(icon('items',15,48),`<b>+${gold} or</b>`);
-  if(it!==null)L(icon('items',ITEMS[it].ic,48),`<b>${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${ITEMS[it].dmg?`+${ITEMS[it].dmg} dégâts`:ITEMS[it].hp?`+${ITEMS[it].hp} PV`:`+${ITEMS[it].heal} soin`}`);
+  best[F.i]=Math.max(best[F.i]||0,st);if(first)save.z[zid]=F.i+1;store();
+  Rs.innerHTML=`<h1>Victoire !</h1><div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
+   <div class="sub">${['Victoire','Aucun héros KO',`En ${F.boss?7:5} tours ou moins`].map((t,i)=>(i<st?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.boss?F.boss.n+' vaincu !':'combat '+(F.i+1)+' gagné'}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+  [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('coin',.5,1.3),d*1000+200));
+  const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
+  if(it!==null)loot.push([icon('items',ITEMS[it].ic,48),`<b>${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${ITEMS[it].dmg?`+${ITEMS[it].dmg} dégâts`:ITEMS[it].hp?`+${ITEMS[it].hp} PV`:`+${ITEMS[it].heal} soin`}`]);
+  // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
+  const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<i></i><b></b><small>Touche le coffre</small>';Rs.appendChild(ch);
+  const box=document.createElement('div');Rs.appendChild(box);
+  const open=()=>{if(ch.classList.contains('open'))return;ch.classList.add('open');sfx('coin');
+   loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);box.appendChild(d);sfx(i===2?'levelup':'coin',.6)},300+i*380));
+   if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
+  ch.onclick=open;setTimeout(open,3000);
  }else Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">Tes héros se replient. Soigne-toi et réessaie, ou rejoue un combat déjà gagné pour monter de niveau.</div>`;
  const b=document.createElement('button');b.className='btn';b.style.marginTop='16px';b.textContent='Retour à la carte';b.onclick=()=>{Rs.classList.remove('on');worldMap()};Rs.appendChild(b);
  Rs.classList.add('on');

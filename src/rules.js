@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,PUSH_DMG,COMBO,STAR_ROUNDS} from './data.js';
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -10,7 +10,7 @@ export const ri=(rng,a,b)=>a+Math.floor(rng()*(b-a+1));
 export const pick=(rng,a)=>a[Math.floor(rng()*a.length)];
 
 // ---------- état et grille ----------
-export const newBattle=(rng=Math.random)=>({map:new Map(),units:[],order:[],theme:null,rng,killedXp:0});
+export const newBattle=(rng=Math.random)=>({map:new Map(),units:[],order:[],theme:null,rng,killedXp:0,round:1});
 export const cell=(s,x,y)=>s.map.get(K(x,y));
 export const occ=(s,x,y)=>s.units.find(u=>!u.dead&&u.x===x&&u.y===y);
 export const passable=(s,x,y)=>{const c=cell(s,x,y);return !!c&&!c.block&&!c.water};
@@ -87,7 +87,9 @@ export function applySpell(s,u,sp,c){
  for(const p of tg){const t=occ(s,p.x,p.y);
   if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
-  if(sp.dmg){const cr=rng()<.12,h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*buff*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
+  if(sp.dmg){const cr=rng()<.12,h=hurt(s,t,(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*buff*cb*(cr?1.5:1),0,cr);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=Math.round((ri(rng,...sp.heal)+(u.healB||0))*(u.mult||1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.poison&&!t.dead)t.poison={d:sp.poison[0],turns:sp.poison[1]};
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
@@ -96,15 +98,29 @@ export function applySpell(s,u,sp,c){
  if(sp.shake)ev.push({type:'shake',ms:250});
  return ev}
 
+// ---------- poussée ----------
+// Trajet d'une poussée de n cases depuis `from` : case d'arrivée, cases non parcourues, unité percutée.
+export function pushPlan(s,from,t,n){const dx=Math.sign(t.x-from.x),dy=Math.sign(t.y-from.y);let x=t.x,y=t.y,left=n,hit=null;
+ if(dx&&dy)return{to:{x,y},left:0,hit}; // pas de poussée en diagonale (n'arrive pas : Fracas est au corps à corps)
+ while(left>0){const nx=x+dx,ny=y+dy;hit=occ(s,nx,ny)||null;if(!passable(s,nx,ny)||hit)break;x=nx;y=ny;left--}
+ return{to:{x,y},left,hit:left?hit:null}}
+// Applique un trajet de pushPlan : déplace t, puis 5 dégâts par case non parcourue (à t et à l'unité percutée).
+export function push(s,t,p){const ev=[{type:'push',t,to:p.to}];t.x=p.to.x;t.y=p.to.y;
+ if(p.left){ev.push({type:'collision',t});ev.push(hurt(s,t,PUSH_DMG*p.left,'collision'));if(p.hit)ev.push(hurt(s,p.hit,PUSH_DMG,'collision'))}
+ return ev.filter(Boolean)}
+
 // ---------- tours ----------
 // Début de tour : PA/PM remis au maximum, recharges et bouclier diminuent d'un tour.
-export function beginTurn(u){u.pa=u.maxPA;u.pm=u.maxPM;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;u.pa=u.maxPA;u.pm=u.maxPM;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x,y:u.y,i:5,w:.9},hurt(s,u,u.poison.d,'poison')];if(--u.poison.turns<=0)delete u.poison;return ev.filter(Boolean)}
 // Fin de tour : le bonus de dégâts diminue d'un tour.
 export function endTurn(u){if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);return h&&m?null:(h?'win':'lose')}
+
+// Étoiles d'un combat gagné : victoire, aucun héros KO, fini en 5 tours de table (boss : 7).
+export function stars(s,boss){return 1+(s.units.some(u=>u.team==='h'&&u.dead)?0:1)+(s.round<=STAR_ROUNDS[boss?'boss':'fight']?1:0)}
 
 // ---------- IA ennemie ----------
 // Prochaine action d'un monstre : {type:'cast',sp,target} | {type:'move',to,prev} | null (rien à faire).
@@ -119,3 +135,8 @@ export function aiStep(s,u){
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),from={x,y};
   const can=u.pa>=sp.pa&&heroes.some(h=>okTarget(s,u,sp,h,from));const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0):100+(fd.get(k)??99)*10+d;if(sc<bs){bs=sc;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
+// Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
+export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.maxPM;let r=null;
+ for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){r={target:a.target,dmg:a.sp.dmg,from:{x:u.x,y:u.y}};break}
+  const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
+ Object.assign(u,keep);return r}

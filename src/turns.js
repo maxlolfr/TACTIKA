@@ -8,11 +8,14 @@ import {sfx} from './audio.js';
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w);break;
- case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit)sfx('critical',.9);
+ case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit)sfx('critical',.9);
   if(e.killed){t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);break;
- case 'shake':shake(e.ms)}}}
+ case 'shake':shake(e.ms);break;
+ case 'push':{const t=e.t,x0=t.gx,y0=t.gy;sfx('push',.8);tween(200,k=>{t.gx=x0+(e.to.x-x0)*k;t.gy=y0+(e.to.y-y0)*k});break}
+ case 'collision':setTimeout(()=>{sfx('collision',.9);shake(200)},200);break;
+ case 'combo':say(e.t,'Combo ×'+e.n,'#ff9cf2',true);sfx('combo_'+e.n,.9)}}}
 
 export async function cast(u,sp,c){
  payCost(u,sp,c);
@@ -42,7 +45,7 @@ async function ai(u){
 }
 export async function runFight(){const S=G.s;
  while(G.phase==='fight'){
-  G.turn=(G.turn+1)%S.order.length;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0)S.round++;G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);hooks.renderTL();hooks.render();
   if(u.poison){play(poisonTick(S,u));await wait(600);if(end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
