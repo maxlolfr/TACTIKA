@@ -61,8 +61,8 @@ const PROF={sous:{dl:-2,items:[],rr:0,up:0,sp:[null,null,null]},std:{dl:0,items:
 const PIL={bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
- for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){const lvl=Math.max(1,ZONES[zi].lvl+i+p.dl),R=[];
-  for(let g=1;g<=N;g++){const save={lvl,xp:0,gold:0,items:[...p.items],rr:Object.fromEntries(p.items.map(j=>[j,p.rr])),up:Object.fromEntries(p.items.map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
+ for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,ZONES[zi].lvl+i+p.dl),R=[];
+  for(let g=1;g<=N;g++){const save={lvl,xp:0,gold:0,wpn:[null,null,null],items:[...p.items],rr:Object.fromEntries(p.items.map(j=>[j,p.rr])),up:Object.fromEntries(p.items.map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
  console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}

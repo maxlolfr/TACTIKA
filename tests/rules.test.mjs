@@ -651,3 +651,12 @@ test('PA : 2e lancer du même sort dans le tour = +1 PA, remis à zéro au tour 
  beginTurn(h);assert.equal(costOf(h,sl),3);
  const m={team:'m',pa:4,cd:{},x:0,y:0};pay5(m,sl,{x:1,y:0});assert.equal(costOf(m,sl),3); // monstres : pas concernés
 });
+
+// ---------- V4.5d : une arme active ----------
+import {weaponOf,equip} from '../src/rules.js';
+test('arme : une seule active par héros, choix du joueur, autres objets cumulés', ()=>{
+ const sv={lvl:1,items:[0,1,2],up:{},rr:{},sp:[null,null,null]};
+ assert.equal(weaponOf(sv,0),1);assert.equal(heroStats(sv,0).dmg,3); // hache seule (la plus forte), pas épée + hache
+ assert.equal(equip(sv,0),1);assert.equal(heroStats(sv,0).dmg,2);assert.equal(heroStats(sv,0).hp,62+8); // bouclier toujours compté
+ assert.equal(equip(sv,2),0);assert.equal(weaponOf(sv,1),null);sv.items=[1];assert.equal(weaponOf(sv,0),1); // arme vendue : repli
+});

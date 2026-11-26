@@ -80,7 +80,12 @@ export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p
 // défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
 export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
  return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.fights?{a:1,p:1}:undefined}}
-export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
+// V4.5d : arme active du héros i (index dans ITEMS ou null). Choix du joueur s'il possède encore l'arme, sinon la plus forte possédée.
+const wVal=(save,j)=>{const o=ITEMS[j];return itemVal(o,o.dmg?'dmg':'heal',upLvl(save,j),rarOf(save,j))};
+export function weaponOf(save,i){const own=save.items.filter(j=>ITEMS[j].who===i&&ITEMS[j].w);if(!own.length)return null;const c=save.wpn&&save.wpn[i];
+ return own.includes(c)?c:own.sort((a,b)=>wVal(save,b)-wVal(save,a))[0]}
+export function equip(save,j){const o=ITEMS[j];if(!o||!o.w||!save.items.includes(j))return 0;(save.wpn||(save.wpn=[null,null,null]))[o.who]=j;return 1}
+export function heroStats(save,i){const h=HER[i],wp=weaponOf(save,i),it=save.items.filter(j=>ITEMS[j].who===i&&(!ITEMS[j].w||j===wp)),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}

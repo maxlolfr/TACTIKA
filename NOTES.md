@@ -243,3 +243,6 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V4.5c (27/11/2026) — relance du même sort : +1 PA (variante B)
 `PA_RULE.recast` (data.js), `costOf(u,sp)` (rules.js) partout : boutons (pastille orange quand le coût monte), aperçu, approche, robot. `u.casts` remis à zéro par `beginTurn`. Monstres non concernés. Comparatif 81 combats (graines 1–3) : B rallonge Bois 1 (std 3,3 → 4,0 tours) ; A (monstres 6 PA, attaque 3 PA) augmente les dégâts reçus sans rallonger et rend le Loup alpha ingagnable sous-équipé : écartée. `NO_B=1` / `VAR_A=1` dans sim.mjs pour refaire la comparaison. 75 tests.
+
+## V4.5d (27/11/2026) — une arme active par héros
+`ITEMS[].w` (épée, hache, arc, bâton), `weaponOf(save,i)` / `equip(save,j)`, `save.wpn` (facultatif, sauvegarde toujours v2). Sans choix : l'arme la plus forte possédée. Bouton « Équiper » dans la fiche du héros (Caserne). Autres objets toujours cumulés ; rareté et forge inchangées. Mesure (opti, 30 + 30 combats) : dégâts infligés −7 à −9 %, durée inchangée. 76 tests.
