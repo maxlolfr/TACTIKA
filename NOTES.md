@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V4.1 (26/11/2026) — retours de Max
+- Objectifs annoncés : carte au début des combats « survie » et « chef » (affichée à chaque fois), tours restants sous le titre, bannière à chaque nouveau tour de survie, objectif indiqué dans la liste des combats, « Objectif atteint » à la victoire. La survie est désormais gagnée dès le début du 5e tour (avant, un héros devait encore jouer).
+- Tir et Volée passent par-dessus les décors bas (`LOW` dans data.js, champ `lob` des sorts). Arbres, rochers, murs, piliers, cristaux et personnages bloquent toujours. Épine, Piège et les monstres ne changent pas.
+- PA reportés (héros) : +1 au tour suivant par tranche de 2 PA non dépensés, au plus +2 (donc 8 PA au maximum), sans cumul. `PA_CARRY` dans data.js, non équilibré.
+- Sort choisi + cible hors d'atteinte : 1er appui = aperçu du trajet, 2e appui = déplacement puis sort (`approach` dans rules.js). Portrait en pointillés quand la cible est atteignable ainsi.
+- Volants : ils flottaient très haut (0,7 case) et se recouvraient ; vol abaissé à 0,3 et chauves-souris réduites. 3 000 combats simulés : jamais deux unités sur la même case.
+- Maître d'armes : un héros à la fois, avec 3 onglets (les 3 étaient présents mais Fenn et Aelis étaient loin sous l'écran). 66 tests.
+
 ## V3.7.1 (26/11/2026) — petits défauts
 - Les bulles d'attaque montent au-dessus des barres de vie et des autres bulles.
 - « Chef squelette a » devient « Chef squelette A ». 54 tests.

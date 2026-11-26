@@ -51,8 +51,9 @@ async function ai(u,id){
 }
 export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne boucle s'arrête si un autre combat commence
  while(G.phase==='fight'&&G.fid===id){
-  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0)S.round++;G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;hooks.newRound()}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);hooks.renderTL();hooks.render();
+  if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
   else{const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}

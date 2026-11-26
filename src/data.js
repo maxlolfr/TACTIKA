@@ -3,8 +3,8 @@ export const SP={
  slash:{snd:'slash',n:'Taillade',ic:0,pa:3,r:[1,1],t:'enemy',dmg:[10,14],fx:0,d:'Coup d’épée au corps à corps'},
  smash:{snd:'kael_charge',n:'Fracas',ic:1,pa:4,r:[1,1],t:'enemy',dmg:[16,21],fx:7,cd:1,shake:1,push:2,d:'Gros coup qui repousse de 2 cases, 1 fois par tour'},
  guard:{snd:'guard',n:'Rempart',ic:2,pa:2,r:[0,0],t:'self',shield:1,fx:7,cd:3,d:'Dégâts reçus ÷2 jusqu’à ton prochain tour'},
- shot:{snd:'bow',n:'Tir',ic:3,pa:3,r:[2,6],t:'enemy',los:1,dmg:[8,12],proj:1,fx:0,d:'Flèche à distance, ligne de vue'},
- volley:{snd:'bow',n:'Volée',ic:4,pa:4,r:[2,5],t:'cell',los:1,zone:1,dmg:[7,10],proj:1,fx:0,cd:2,d:'Touche la case visée et les 4 autour'},
+ shot:{snd:'bow',n:'Tir',ic:3,pa:3,r:[2,6],t:'enemy',los:1,lob:1,dmg:[8,12],proj:1,fx:0,d:'Flèche à distance : passe par-dessus les décors bas'},
+ volley:{snd:'bow',n:'Volée',ic:4,pa:4,r:[2,5],t:'cell',los:1,lob:1,zone:1,dmg:[7,10],proj:1,fx:0,cd:2,d:'Touche la case visée et les 4 autour'},
  trap:{snd:'trap',n:'Piège',ic:3,pa:3,r:[1,3],t:'cell',free:1,los:1,cd:3,trap:1,fx:0,d:'Piège sur une case libre : 10 dégâts et −1 PM au premier ennemi qui y entre, 3 tours'},
  revive:{snd:'aelis_heal',n:'Renaissance',ic:5,pa:6,r:[1,4],t:'dead',cd:99,revive:1,fx:4,d:'Relève un héros KO avec 25 % de ses PV, 1 fois par combat'},
  potion:{snd:'aelis_heal',n:'Potion',ic:5,pa:4,r:[0,0],t:'self',potion:1,fx:4,cd:99,d:'Boit une potion du marchand : soigne 40 % des PV max, 1 fois par héros et par combat'},
@@ -19,7 +19,7 @@ export const HER=[
 export const MON={
  slime:{snd:'slime',n:'Gelée',s:'slimeN',row:0,hp:24,pm:2,init:8,dmg:[5,8],h:.62,xp:8},
  boar:{snd:'hit',n:'Sanglier',s:'boarN',row:0,hp:32,pm:4,init:11,dmg:[7,10],h:.8,xp:12},
- bat:{snd:'bite',n:'Chauve-souris',s:'batN',row:0,hp:18,pm:5,init:13,dmg:[4,7],h:.72,xp:9,fly:1},
+ bat:{snd:'bite',n:'Chauve-souris',s:'batN',row:0,hp:18,pm:5,init:13,dmg:[4,7],h:.52,xp:9,fly:1},
  shroom:{snd:'poison',n:'Champignon',s:'shroomN',row:0,hp:26,pm:2,init:7,dmg:[4,6],r:[1,4],los:1,poison:[3,2],fx:5,h:.95,xp:12},
  wolf:{snd:'bite',n:'Loup',s:'wolfN',row:0,hp:30,pm:5,init:12,dmg:[8,11],h:.8,xp:14},
  skel:{snd:'slash',n:'Squelette',s:'skelN',row:0,hp:40,pm:3,init:9,dmg:[9,13],armor:.2,h:1.2,xp:16},
@@ -36,7 +36,7 @@ export const MON={
  // V4.0 région 6 (spec Claude du 26/11, chiffres de départ) ; araignée et chauve-souris : planches provisoires
  crygolem:{snd:'golem_smash',n:'Golem cristallin',s:'crygolem',row:0,hp:56,pm:2,init:6,dmg:[11,15],armor:.25,h:1.05,xp:20},
  qspider:{snd:'spider_bite',n:'Araignée de quartz',s:'qspider',row:0,hp:28,pm:4,init:12,dmg:[6,9],r:[1,3],los:1,slow:1,fx:5,h:.8,xp:16},
- prisbat:{snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.75,xp:14,fly:1}};
+ prisbat:{snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6;
@@ -68,6 +68,8 @@ export const THEMES=[
  {n:'Monts gris',ts:'sol_mont',g:[0,1,2,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]},
  {n:'Château en ruine',ts:'sol_chateau',g:[0,1,1,3],obs:[12,13,14,15,16,17,18,22],noflower:1,out:[12,13,22,16,14]},
  {n:'Cavernes de cristal',ts:'tiles5',g:[0,0,8,8,11,11,3,4],obs:[20,21,19,4,3],noflower:1,out:[20,21,19,4],cave:1}];
+// V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
+export const LOW=new Set([2,3,5,6,7,8,16,17,23]);
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
 export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95];
 export const DEC=d=>d<12?['deco',d]:['deco2',d-12],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
@@ -82,4 +84,6 @@ export const RARE=[{n:'Commun',k:1,c:'#e8dcc0'},{n:'Rare',k:1.5,c:'#6fb6ff'},{n:
 export const FORGE_COST=[25,60,120], FORGE_STEP=.5;
 // cristaux (V4.0b) : amplificateur +30 % (dégâts directs et soins, lanceur sur une case voisine), prisme 70 % des dégâts moyens aux 4 voisines, éteint 2 tours de table
 export const AMP=.3, PRISM=.7, PRISM_OFF=2;
+// V4.1 : PA non dépensés par un héros : +1 au tour suivant par tranche de 2, au plus +2
+export const PA_CARRY={per:2,max:2};
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};

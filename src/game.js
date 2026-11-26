@@ -13,4 +13,4 @@ export const G={
  endTurnResolve:null,
  fid:0};            // numéro du combat en cours
 // Fonctions de l'interface appelées par la boucle de tours (renseignées par ui.js).
-export const hooks={render(){},renderTL(){},result(){}};
+export const hooks={render(){},renderTL(){},newRound(){},result(){}};
