@@ -82,7 +82,8 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
   if(u.shield>0)return[...h.b,right,rf];
   return[...(back&&h.iB?h.iB:h.i),right,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
- return[u.s,u.row*3+{i:0,a:1,h:2}[p],right,u.ref]}
+ if(u.dead&&u.s==='roiG')return['roiG',4,right,u.ref];
+ return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
 
 // ---------- effets visuels ----------
 let fx=[],texts=[],shakeT=0,parts=[],lastA=0;
@@ -121,7 +122,7 @@ export function draw(now){
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:m.x+m.y,m});for(const o of outer)L.push({z:o.x+o.y,m:o});
- for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<600)L.push({z:u.gx+u.gy+.01,u});
+ for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(u.s==='roiG'?1800:600))L.push({z:u.gx+u.gy+.01,u});
  L.sort((a,b)=>a.z-b.z);
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
  const hides=u=>!tg.includes(u)&&tg.some(t=>u.gx+u.gy>t.gx+t.gy&&u.gx+u.gy-t.gx-t.gy<=3&&Math.abs((u.gx-u.gy)-(t.gx-t.gy))<=1.2);

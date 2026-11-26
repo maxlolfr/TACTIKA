@@ -248,3 +248,20 @@ test('forge : refus sans or ou sans objet ; ancienne sauvegarde sans up', () => 
  assert.equal(heroStats(save,0).hp,Math.round(HER[0].hp)+8);assert.equal(upgrade(save,2),1);assert.equal(heroStats(save,0).hp,HER[0].hp+12);
  assert.equal(itemVal(ITEMS[7],'heal',3),8,'Bâton de saule 3 → 8 au niveau 3');
 });
+
+test('Roi Gelée : invoque 2 gelées une seule fois sous 50 % de PV, sans XP, en fin d\'ordre', () => {
+ const s=arena(),b=unit(s,'m',5,5,{hp:100,max:100,xp:40,summon:ZONES[0].boss.summon});s.order=[b];
+ hurt(s,b,40);assert.equal(s.units.length,1);
+ const e=hurt(s,b,15);assert.equal(e.spawn.length,2);assert.equal(s.units.length,3);
+ for(const m of e.spawn){assert.equal(m.hp,12);assert.equal(m.maxPM,2);assert.deepEqual(m.atk.dmg,[3,5]);assert.equal(m.xp,0);assert.equal(Math.abs(m.x-5)+Math.abs(m.y-5),1)}
+ assert.deepEqual(s.order.slice(1),e.spawn);
+ assert.ok(!hurt(s,b,10).spawn);assert.equal(s.units.length,3);
+ for(const m of e.spawn)hurt(s,m,99);assert.equal(s.killedXp,0);
+});
+test('Roi Gelée : pas d\'invocation s\'il meurt d\'un coup, places limitées par les cases libres', () => {
+ const s=arena(),b=unit(s,'m',0,0,{hp:100,max:100,summon:ZONES[0].boss.summon});unit(s,'h',1,0);s.order=[];
+ assert.ok(!hurt(s,b,200).spawn);
+ const s2=arena(),b2=unit(s2,'m',0,0,{hp:100,max:100,summon:ZONES[0].boss.summon});unit(s2,'h',1,0);unit(s2,'h',1,1);unit(s2,'h',0,2);s2.order=[];
+ const e=hurt(s2,b2,60);assert.equal(e.spawn.length,1);assert.deepEqual([e.spawn[0].x,e.spawn[0].y],[0,1]);
+ assert.equal(outcome(s2),null);for(const u of s2.units.filter(u=>u.team==='m'))u.dead=true;assert.equal(outcome(s2),'win');
+});

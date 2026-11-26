@@ -46,3 +46,8 @@
 
 ## V2 prévue
 Phaser + modules, moteur de combat testable, IA par score, intentions ennemies affichées, poussée, terrains, combos, boss à phases, étoiles, talents, village à reconstruire, donjon du jour.
+
+## V2.4c — Roi Gelée (26/11/2026)
+- Nouveau sprite `roiG` (planche ChatGPT 3×3 sur fond noir, détourée) : repos, attaque, touché, invocation (pose `s`), KO (reste 1,8 s).
+- `rules.summon()` : appelé par `hurt()` une seule fois quand un boss avec `summon` passe à 50 % de PV ou moins sans mourir. 2 Petites gelées (12 PV, 2 PM, 3–5 dégâts, 0 XP) sur les cases libres atteignables les plus proches (moins s'il n'y a pas la place). Elles sont ajoutées à la fin de `s.order` : elles jouent après tout le monde, sans décaler l'index du tour en cours.
+- Victoire : il faut aussi battre les gelées invoquées. 31 tests.

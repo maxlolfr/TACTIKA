@@ -28,7 +28,7 @@ export const MON={
  knight:{snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}};
 // zones de la carte : 3 combats + 1 boss chacune ; x,y en % de la carte
 export const ZONES=[
- {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',n:'Roi Gelée',hp:3.2,dmg:1.4,h:1.7}},
+ {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}}},
  {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45}},
  {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],boss:{k:'crab',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7}},
  {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],boss:{k:'golem',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5}},
