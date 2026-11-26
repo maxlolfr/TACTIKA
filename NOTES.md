@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.4.1 (26/11/2026) — contrôle des Cavernes
+- La carte de visée annonçait « tes héros sont épargnés » même quand la Volée déclenchait un prisme qui touche un héros. Elle liste maintenant tout ce que le prisme touche (bouclier et armure comptés) et signale « héros touché ! ».
+- Contour rouge de la Volée redessiné par-dessus les hachures violettes ; chiffres ◆ du prisme placés au-dessus de ceux du sort.
+- « Combat suivant » : l'ancien plateau n'est plus dessiné pendant le chargement (erreur d'image possible).
+
 ## V4.4 (26/11/2026) — zoom du plateau
 - Deux doigts : agrandir jusqu'à ×2,5 ; un doigt qui glisse sur un plateau agrandi : le déplacer ; molette et glisser à la souris ; bouton « Vue entière ».
 - **Un appui agit désormais au relâchement** (et pas à l'appui), sans glissement ni second doigt.

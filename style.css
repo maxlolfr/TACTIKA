@@ -230,3 +230,4 @@ body.camp #exc{display:none}
 #unzoom.on{display:block}body.camp #unzoom{display:none}
 @media (orientation:landscape){#unzoom{right:calc(var(--side) + env(safe-area-inset-right) + 8px)}}
 @media (orientation:portrait){body:has(#exc.on) #unzoom{display:none}} /* la carte de visée prend cette place */
+#exc .pz{color:#e2c8ff;font-weight:800}#exc .pz.danger{color:#ff9a8a}

@@ -2,7 +2,7 @@
 import {G} from './game.js';
 import {$} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES} from './data.js';
-import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast} from './rules.js';
+import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
@@ -229,7 +229,8 @@ export function draw(now){
  if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
  const pv=[];if(sel&&sel.sp.dmg&&cur&&!busy)for(const m of S.map.values())if(prismOn(S,m)&&(G.ex&&!G.ex.bad?m.x===G.ex.x&&m.y===G.ex.y||sel.sp.zone&&man(G.ex,m)<=1:sel.cells.some(c=>c.ok&&(c.x===m.x&&c.y===m.y||sel.sp.zone&&man(c,m)<=1)))){const d=prismDmg(S,cur,sel.sp);
-  for(const p of prismHits(S,m)){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#c98bff',.3);const o=occ(S,p.x,p.y);if(o)pv.push([o,d])}}
+  for(const p of prismHits(S,m)){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#c98bff',.3);const o=occ(S,p.x,p.y);if(o)pv.push([o,soak(o,d)])}}
+ if(E&&!E.bad&&sel.sp.zone)for(const p of zoneCells(S,E)){const[sx,sy]=scr(p.x,p.y);diamond(ctx,sx,sy,.66);ctx.strokeStyle='#ff2d1f';ctx.lineWidth=3;ctx.stroke()}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:depth(m.x,m.y),m});for(const o of outer)L.push({z:depth(o.x,o.y),m:o});
  for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:depth(u.gx,u.gy)+.01,u});
@@ -255,7 +256,7 @@ export function draw(now){
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-lift(u)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
   {const ss=[u.shield>0&&1,u.buff&&12,u.poison&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
- for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*.12;ctx.save();ctx.font=`900 ${Math.round(TW*.22)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
+ for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*(G.ex?.42:.12);ctx.save();ctx.font=`900 ${Math.round(TW*.22)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);
   for(const o of plan.foes){const[sx,sy]=scr(o.gx,o.gy),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.75+.25*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
