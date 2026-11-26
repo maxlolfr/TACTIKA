@@ -5,8 +5,8 @@
 - Poussée : Fracas de Kael repousse de 2 cases (`push` dans SP), `pushPlan()`/`push()` ; obstacle, eau, bord ou unité = 5 dégâts par case bloquée (`PUSH_DMG`), l'unité percutée prend 5. Flèche prévue quand Fracas est choisi.
 - Combos : `t.hitBy` (héros ayant frappé le monstre depuis son dernier tour), bonus `COMBO` = +15 % / +30 %, remis à zéro dans `beginTurn`.
 - Étoiles : `stars()` (victoire, aucun KO, ≤ `STAR_ROUNDS` tours de table) ; `s.round` compté dans turns.js ; meilleur score dans `save.st[zone][combat]` ; premier 3 ★ = +50 % d'or.
-- Coffre de butin en CSS (`.chest`) en attendant une image de ChatGPT ; s'ouvre au toucher ou seul après 3 s.
-- Chiffres = proposition de Claude validée par Max, spec dans `Game-studio-ai/docs/studio/tactika/mecaniques/V2.3-gameplay.md` (à revoir par ChatGPT). 25 tests.
+- Coffre de butin : `assets/chest_closed.png` et `chest_open.png` (planche ChatGPT 26/11, découpés et alignés sur la même base par `tools/cut_chest.py planche.png 0.5`). Les deux images sont superposées dans `.chest` (pas de chargement à l'ouverture) ; tremblement, rebond à l'ouverture, halo doré tournant, butin ligne par ligne ; sons buff + coin. S'ouvre au toucher ou seul après 3 s.
+- Chiffres = proposition de Claude validée par Max, spec dans `Game-studio-ai/docs/studio/tactika/mecaniques/V2.3-gameplay.md` (approuvée provisoirement par ChatGPT le 26/11). 25 tests. Intentions « engagées » : à étudier en V2.4 après les tests d'équilibrage.
 
 ## État (24/11/2026)
 - **Lot 1 fait** (branche `claude-b/tactika-v2-lot1`) : code en modules ES (`src/data,rules,save,audio,render,turns,ui,main.js` + `style.css`), règles testées (`npm test`, Node 22), ancienne version dans `legacy/`. Aucune règle ni visuel changé. Direction créative : voir `Game-studio-ai/docs/studio/tactika/`.
