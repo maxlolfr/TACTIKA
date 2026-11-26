@@ -90,6 +90,8 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
   s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
    atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,fx:m.fx??0,proj:m.r?1:0}})}
+ // repères stables A/B/C pour les monstres identiques
+ for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+c.n.toLowerCase();c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }
@@ -106,6 +108,17 @@ export function pathTo(u,k,prev){const path=[];while(k&&k!==K(u.x,u.y)){path.uns
 export function los(s,a,b,ign){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
  for(let i=1;i<n;i++){const t=i/n,x=Math.round(a.x+(b.x-a.x)*t+1e-4),y=Math.round(a.y+(b.y-a.y)*t-1e-4);
   if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(!c||c.block)return false;const o=occ(s,x,y);if(o&&o!==ign)return false}return true}
+// Première obstruction sur la ligne a→b (même règle que los) : {x,y,u} (u = unité qui bloque) ou null
+export function losBlock(s,a,b,ign){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
+ for(let i=1;i<n;i++){const t=i/n,x=Math.round(a.x+(b.x-a.x)*t+1e-4),y=Math.round(a.y+(b.y-a.y)*t-1e-4);
+  if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(!c||c.block)return{x,y,u:null};const o=occ(s,x,y);if(o&&o!==ign)return{x,y,u:o}}return null}
+// Pourquoi une cible n'est pas valable (même règles que okTarget) : {t:'texte court',at:{x,y}|undefined}, ou null si elle l'est
+export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
+ if(d>sp.r[1])return{t:`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:`Trop près, portée min. ${sp.r[0]}`};
+ if(sp.los&&d>1&&!los(s,from,c,u)){const b=losBlock(s,from,c,u);return{t:b?(b.u?`${b.u.n} bloque le tir`:'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
+ if(sp.t==='enemy')return{t:!o?'Personne ici':o.team===u.team?`${o.n} est un allié`:'Cible invalide'};
+ if(sp.t==='ally')return{t:!o?'Personne ici':'Ce n’est pas un allié'};
+ if(sp.t==='dead')return{t:'Aucun héros à relever ici'};if(sp.free)return{t:'Case occupée ou bloquée'};return okTarget(s,u,sp,c,from)?null:{t:'Cible invalide'}}
 export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u))return 0;const o=occ(s,c.x,c.y);
  if(sp.t==='self')return c.x===from.x&&c.y===from.y;if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
  if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return 0;return sp.t==='enemy'?o.team!==u.team:o.team===u.team}
@@ -124,7 +137,7 @@ export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;if(t.shield>0
 // Invocation unique d'un boss (Roi Gelée) : sur les cases libres les plus proches, sans XP, jouent en fin de tour de jeu.
 export function summon(s,b){const{k,n,hp,pm,dmg}=b.summon,m=MON[k],d=reach(s,b,4).dist,out=[];
  for(const c of [...d.keys()].filter(c=>d.get(c)>0).sort((a,c)=>d.get(a)-d.get(c)).slice(0,n)){const[x,y]=c.split(',').map(Number);
-  const u={id:'m'+s.units.length,team:'m',k,s:m.s,row:m.row,n:'Petite gelée',x,y,gx:x,gy:y,hp,max:hp,maxPA:4,maxPM:pm,pa:4,pm,init:0,cd:{},armor:0,dir:1,h:m.h*.75,xp:0,minion:1,
+  const u={id:'m'+s.units.length,team:'m',k,s:m.s,row:m.row,n:'Petite gelée '+String.fromCharCode(65+s.units.filter(o=>o.minion).length),x,y,gx:x,gy:y,hp,max:hp,maxPA:4,maxPM:pm,pa:4,pm,init:0,cd:{},armor:0,dir:1,h:m.h*.75,xp:0,minion:1,
    atk:{snd:m.snd,n:'Attaque',pa:4,r:[1,1],t:'enemy',dmg:[...dmg],fx:m.fx??0,proj:0}};s.units.push(u);s.order.push(u);out.push(u)}
  return out}
 // Paie le coût d'un sort (PA, recharge) et tourne l'unité vers la cible.

@@ -82,3 +82,6 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 
 ## V3.0a (26/11/2026)
 Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment jouer » au camp). Export/import de la sauvegarde en code texte (base64) via le bouton « 💾 Sauvegarde » du camp. Reste pour la V3.0 : FR/EN, tests externes, sortie mobile.
+
+## V3.0b (26/11/2026) — lot ciblage de l'audit
+`whyNot`/`losBlock` (rules.js) : raison d'une cible indisponible (portée max/min, obstacle, unité qui bloque) avec la même règle que `okTarget` ; case bloquante marquée en rouge 2 s (`G.mark`). Repères A/B/C stables sur les monstres identiques (nom, barre de vie, portrait). Portraits : ordre stable, cliquables même grisés (affichent la raison), `aria-label`. Après un déplacement sans cible : message. Taverne : bouton « Réclamer ». Restent de l'audit : aperçu de déplacement, comparaison d'inclinaison 0,62/0,68, première mission guidée, HUD, chargement par paquets.

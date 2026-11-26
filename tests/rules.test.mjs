@@ -405,3 +405,15 @@ test('objectifs : chef abattu = victoire, survie', ()=>{
  assert.equal(outcome({units:[h,m],goal:'survive',round:SURVIVE}),null);assert.equal(outcome({units:[h,m],goal:'survive',round:SURVIVE+1}),'win');
  assert.equal(outcome({units:[{team:'h',dead:1},m],goal:'survive',round:9}),'lose');
 });
+
+// ---------- V3.0b ciblage : raisons ----------
+import {whyNot,losBlock} from '../src/rules.js';
+test('whyNot : portée, obstacle, allié bloquant, cohérent avec okTarget', ()=>{
+ const s=newBattle(()=>.5);for(let x=0;x<8;x++)for(let y=0;y<3;y++)s.map.set(K(x,y),{x,y,block:0});
+ const f={team:'h',x:0,y:0,n:'Fenn',hp:9,max:9},al={team:'h',x:2,y:0,n:'Kael',hp:9,max:9},e={team:'m',x:5,y:0,n:'Gelée',hp:9,max:9},far={team:'m',x:7,y:2,n:'Gelée B',hp:9,max:9};
+ s.units=[f,al,e,far];const shot=SP.shot;
+ assert.equal(whyNot(s,f,shot,e).t,'Kael bloque le tir');{const b=losBlock(s,f,e,f);assert.ok(b.x===2&&b.y==0&&b.u===al)}
+ assert.match(whyNot(s,f,shot,far).t,/À 9 cases, portée max. 6/);assert.match(whyNot(s,f,shot,al).t,/Trop près|allié/);
+ s.map.get(K(3,0)).block=1;al.x=0;al.y=2;assert.equal(whyNot(s,f,shot,e).t,'Un obstacle bloque le tir');
+ s.map.get(K(3,0)).block=0;assert.equal(whyNot(s,f,shot,e),null);assert.ok(okTarget(s,f,shot,e));
+});

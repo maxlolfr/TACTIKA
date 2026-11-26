@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -23,7 +23,7 @@ function render(){renderTL();
  const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=`${u.hp}/${u.max} PV`;$('who').append(hb,ht);
  $('pts').innerHTML=`<span class="pa"><img src="${uiURL(12)}"> ${u.pa} PA</span><span class="pm"><img src="${uiURL(13)}"> ${u.pm} PM</span>`+(me?'':`<span style="color:#e08a7a">Tour ennemi…</span>`);
  const tg=document.createElement('div');tg.id='tgt';
- if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).sort((a,b)=>b[1]-a[1]).forEach(([o,ok])=>{const w=document.createElement('button');w.className='tb'+(ok?' ok':'');w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>`);w.onclick=()=>{if(ok)act({x:o.x,y:o.y})};tg.appendChild(w)});
+ if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button');w.className='tb'+(ok?' ok':'');w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',`${o.n}, ${o.hp} sur ${o.max} PV${ok?', cible possible':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
  $('pts').append(tg);
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
@@ -42,9 +42,12 @@ cv.addEventListener('pointerdown',e=>{if(G.phase==='fight'&&!G.busy)act(tapCell(
 // action sur une case (toucher du plateau, ou portrait de la frise des tours pour viser une unité cachée)
 async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  if(!u||u.team!=='h'){if(o)$('hint').textContent=info(o);return}
- if(G.sel){const hit=G.sel.cells.find(s=>s.x===c.x&&s.y===c.y&&s.ok);if(hit){const sp=G.sel.sp;G.sel=null;await cast(u,sp,c);if(end())return;G.reachC=reach(G.s,u,u.pm);render();autoEnd()}else $('hint').textContent=(o?info(o)+' · ':'')+'Hors de portée. Touche une cible entourée, ou retouche le sort pour l’annuler.';return}
- const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();autoEnd();return}
+ if(G.sel){const hit=G.sel.cells.find(s=>s.x===c.x&&s.y===c.y&&s.ok);if(hit){const sp=G.sel.sp;G.sel=null;await cast(u,sp,c);if(end())return;G.reachC=reach(G.s,u,u.pm);render();autoEnd()}else{const w=whyNot(G.s,u,G.sel.sp,c);$('hint').textContent=(o?info(o)+' · ':'')+(w?w.t+'. ':'Hors de portée. ')+'Touche une cible entourée, ou retouche le sort pour l’annuler.';G.mark=w&&w.at?{...w.at,until:Date.now()+2200}:null}return}
+ const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();noTarget(u);autoEnd();return}
  if(o)$('hint').textContent=info(o)}
+// après un déplacement : prévient s'il ne reste aucune cible pour les sorts offensifs
+function noTarget(u){const off=u.sp.map(id=>u.S[id]).filter(sp=>sp.dmg&&u.pa>=sp.pa&&!(u.cd[sp.n]>0));if(!off.length)return;
+ if(!off.some(sp=>selCells(G.s,u,sp).some(c=>c.ok)))$('hint').textContent='Aucune cible à portée depuis cette case. Déplace-toi encore ou passe le tour.'}
 $('end').onclick=()=>{if(G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}};
 let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-fleeArm<2500){G.phase='lose';G.fid++;if(G.endTurnResolve)G.endTurnResolve();result(false,true)}else{fleeArm=Date.now();$('flee').textContent='Sûr ?';setTimeout(()=>$('flee').textContent='Fuir',2500)}};
 
@@ -129,7 +132,7 @@ function tav(){$('camp').classList.remove('on');const T=$('tav');T.classList.add
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
   r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
-  const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓':'Prendre';
+  const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓':'Réclamer';
   b.onclick=()=>{const up=claim(save,d,i);if(!up)return tav();store();sfx('coin');if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(tav,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
  T.insertAdjacentHTML('beforeend',`<h3 class="fh">Défi du jour</h3><div class="loot frow" id="dd"><div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div></div>`);
@@ -137,7 +140,7 @@ function tav(){$('camp').classList.remove('on');const T=$('tav');T.classList.add
  const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 3.0a · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 3.0b · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);
