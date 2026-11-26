@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 p=argparse.ArgumentParser();p.add_argument('sheet');p.add_argument('name');p.add_argument('--cols',type=int,default=2);p.add_argument('--rows',type=int,default=2)
-p.add_argument('--scale',type=float,default=.5);p.add_argument('--atlas',action='store_true');p.add_argument('--out',default=os.path.join(os.path.dirname(__file__),'..','assets'))
+p.add_argument('--quality',type=int,default=82);p.add_argument('--scale',type=float,default=.5);p.add_argument('--atlas',action='store_true');p.add_argument('--out',default=os.path.join(os.path.dirname(__file__),'..','assets'))
 a=p.parse_args()
 # l'échelle est relative à une case de 512 px de haut : la taille de la planche reçue n'a donc pas d'importance
 img=np.array(Image.open(a.sheet).convert('RGB')).astype(float);H,W,_=img.shape
@@ -50,5 +50,5 @@ for im,fr,_,_ in frames:sheet.paste(im,(fr[0],fr[1]))
 cells=[f[1] for f in frames]
 print(json.dumps({'name':a.name,'frames':cells,'avertissements':warn},ensure_ascii=False))
 if a.atlas:
-  sheet.save(os.path.join(a.out,a.name+'.webp'),quality=82,method=6)
+  sheet.save(os.path.join(a.out,a.name+'.webp'),quality=a.quality,method=6)
   fp=os.path.join(a.out,'atlas.json');man=json.load(open(fp));man[a.name]=cells;json.dump(man,open(fp,'w'),separators=(',',':'))

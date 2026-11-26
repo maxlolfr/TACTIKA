@@ -64,7 +64,7 @@ function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;co
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
- if(bg){const k=Math.max(W/bg.width,H/bg.height);g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
+ if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
  // périphérie assombrie : le regard va au plateau
  {const[cx,cy]=scr(R/4,R/4),rad=Math.max(W,H)*.75,v=g.createRadialGradient(cx,cy,TW*2.5,cx,cy,rad);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=v;g.fillRect(0,0,W,H)}
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
