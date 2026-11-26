@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent} from '../src/rules.js';
+ hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -230,4 +230,21 @@ test('étoiles : le détail est juste (rapide mais avec un KO)', () => {
 });
 test('carte : jamais d\'échec, même sur 300 graines', () => {
  for(let seed=0;seed<300;seed++)assert.ok(genMap(newBattle(),seed*7919,seed%THEMES.length),'graine '+seed);
+});
+
+// ---------- V2.4b forge ----------
+test('forge : coûts 25/60/120, bonus +50 % par niveau, maximum 3', () => {
+ const save={lvl:1,xp:0,gold:300,items:[0,4],z:{}}; // Épée courte (+2 dég. Kael), Arc long (+2 dég. Fenn)
+ assert.equal(heroStats(save,0).dmg,2);assert.equal(upCost(save,0),25);
+ assert.equal(upgrade(save,0),1);assert.equal(save.gold,275);assert.equal(heroStats(save,0).dmg,3);
+ upgrade(save,0);upgrade(save,0);assert.equal(save.gold,95);assert.equal(heroStats(save,0).dmg,5);
+ assert.equal(upCost(save,0),null);assert.equal(upgrade(save,0),0,'déjà au maximum');assert.equal(save.gold,95);
+ assert.equal(heroStats(save,1).dmg,2,'Fenn non touché');
+});
+test('forge : refus sans or ou sans objet ; ancienne sauvegarde sans up', () => {
+ const save={lvl:1,gold:24,items:[2]};
+ assert.equal(upgrade(save,2),0);assert.equal(save.gold,24);
+ save.gold=100;assert.equal(upgrade(save,3),0,'objet non possédé');assert.equal(save.gold,100);
+ assert.equal(heroStats(save,0).hp,Math.round(HER[0].hp)+8);assert.equal(upgrade(save,2),1);assert.equal(heroStats(save,0).hp,HER[0].hp+12);
+ assert.equal(itemVal(ITEMS[7],'heal',3),8,'Bâton de saule 3 → 8 au niveau 3');
 });

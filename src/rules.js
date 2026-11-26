@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,PUSH_DMG,COMBO,STAR_ROUNDS} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP} from './data.js';
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -37,8 +37,16 @@ export function genMap(s,seed,th){
 
 // ---------- progression ----------
 export const xpNeed=l=>60*l;
-export function heroStats(save,i){const h=HER[i],it=save.items.map(j=>ITEMS[j]).filter(o=>o.who===i),m=1+.1*(save.lvl-1);
- const sum=k=>it.reduce((a,o)=>a+(o[k]||0),0);return{hp:Math.round(h.hp*m)+sum('hp'),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1)}}
+// ---------- forge ----------
+// Niveau d'amélioration d'un objet (0 à 3), valeur d'une caractéristique à un niveau donné, coût du niveau suivant (null = maximum).
+export const upLvl=(save,j)=>(save.up&&save.up[j])||0;
+export const itemVal=(o,k,l)=>o[k]?Math.round(o[k]*(1+FORGE_STEP*l)):0;
+export const upCost=(save,j)=>FORGE_COST[upLvl(save,j)]??null;
+// Améliore l'objet j si possédé, pas au maximum et assez d'or. Renvoie le nouveau niveau, ou 0 si refusé.
+export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j)||c==null||save.gold<c)return 0;
+ save.gold-=c;(save.up||(save.up={}))[j]=upLvl(save,j)+1;return save.up[j]}
+export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
+ const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);return{hp:Math.round(h.hp*m)+sum('hp'),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1)}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}
 
