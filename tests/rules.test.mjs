@@ -602,7 +602,7 @@ test('V4.2 Volée : centre autorisé qui touche indirectement, case vide visable
 });
 
 // ---------- V4.5a : survie à renforts ----------
-import {waveTick,waveEmpty,spawnCells} from '../src/rules.js';
+import {man,waveTick,waveEmpty,spawnCells} from '../src/rules.js';
 const waveFight=(seed=3)=>{const F=fightSpec(1,2,seed),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:6,items:[],sp:[null,null,null]},j)));return{F,s}};
 test('survie à renforts : départ, annonce, arrivée, plafond', ()=>{
  const{F,s}=waveFight(),mons=()=>s.units.filter(u=>u.team==='m'&&!u.dead);
@@ -620,4 +620,25 @@ test('survie à renforts : pas de victoire tant qu’il reste des vagues, retrai
  s.round=7;assert.equal(outcome(s),'win');assert.equal(stars(s,false),2); // tenu, mais vagues restantes : pas de 3e étoile
  const t=waveFight().s;t.units.forEach(u=>{if(u.team==='m')u.dead=true});t.wave.q=[];assert.equal(outcome(t),'win');assert.ok(t.cleared);assert.equal(stars(t,false),3);
  assert.equal(fightSpec(1,1,1).wave,undefined); // seul Bois 3 est concerné
+});
+
+// ---------- V4.5b : IA à rôles ----------
+const arena5=()=>{const s=newBattle(()=>.5);for(let x=0;x<9;x++)for(let y=0;y<9;y++)s.map.set(K(x,y),{x,y,t:0});s.round=1;return s};
+const unit5=(o)=>({cd:{},armor:0,maxPA:4,pa:4,pm:o.pm??0,maxPM:o.pm??0,hp:30,max:30,...o});
+const atk5=(r=[1,1])=>({n:'Attaque',pa:4,r,t:'enemy',dmg:[5,5],los:r[1]>1?1:0});
+test('IA : le contourneur préfère Fenn ou Aelis, la coordination achève la même cible', ()=>{
+ const s=arena5(),kael=unit5({id:'h0',team:'h',hi:0,x:3,y:4,hp:10}),fenn=unit5({id:'h1',team:'h',hi:1,x:5,y:4,hp:40}),w=unit5({id:'m0',team:'m',k:'wolf',x:4,y:4,atk:atk5()});
+ s.units=[kael,fenn,w];assert.equal(aiStep(s,w).target,fenn); // Kael plus faible, mais le loup vise l'archer
+ const sl=unit5({id:'m1',team:'m',k:'slime',x:4,y:4,atk:atk5()});s.units=[kael,fenn,sl];assert.equal(aiStep(s,sl).target,kael); // sans rôle : le plus faible
+ s.focus={id:'h1',r:1};assert.equal(aiStep(s,sl).target,fenn); // cible déjà frappée ce tour
+});
+test('IA : le tireur recule s’il est collé, une fois par tour', ()=>{
+ const s=arena5(),k=unit5({id:'h0',team:'h',hi:0,x:4,y:4}),m=unit5({id:'m0',team:'m',k:'shroom',x:4,y:5,pm:2,atk:atk5([1,4])});s.units=[k,m];
+ const a=aiStep(s,m);assert.equal(a.type,'move');const[x,y]=a.to.split(',').map(Number);assert.ok(man(k,{x,y})>=2);
+ m.x=x;m.y=y;m.pm=0;assert.equal(aiStep(s,m).type,'cast');
+ const r=intent(s,{...m,x:4,y:5,backed:undefined});assert.ok(r&&r.target===k); // l'intention annoncée ne consomme pas le recul
+});
+test('IA : le tank reste près des monstres fragiles', ()=>{
+ const s=arena5(),k=unit5({id:'h0',team:'h',hi:0,x:4,y:8}),g=unit5({id:'m0',team:'m',k:'golem',x:4,y:2,pm:2,atk:atk5()}),sh=unit5({id:'m1',team:'m',k:'shroom',x:4,y:0,atk:atk5([1,4])});
+ s.units=[k,g,sh];const a=aiStep(s,g);const[x,y]=a.to.split(',').map(Number);assert.ok(man({x,y},sh)<=4);
 });

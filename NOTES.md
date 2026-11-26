@@ -236,3 +236,7 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - `ZONES[].waves[i]` = {turns, cap, start, add:[[tour, n, espèce élite]]} ; `waveSetup/wavePlan/waveTick/waveEmpty` (rules.js). Annonce un tour avant (cases ⚠), arrivée en début de tour, insertion en fin d'ordre, plafond 6, case prise = attente, plateau vide = vague avancée. Élite : PV ×1,5, dégâts ×1,2, anneau doré. XP des renforts ÷2.
 - Victoire : tenir 6 tours (les survivants se replient) ou tout éliminer une fois les vagues finies (+25 % d'or). 3e étoile des missions à vagues = toutes les vagues éliminées.
 - `tools/sim.mjs pilote [graines] [missions]` : 3 profils (sous/std/opti), graines fixes, dégâts, soins, XP, compteur de combats. 71 tests.
+
+## V4.5b (27/11/2026, Opus) — IA à rôles (pilote Bois 1)
+- `MON[].ai` : `tank` (squelette, crabe, golems, chevaliers) reste à 2 cases au plus d'un monstre fragile et frappe en priorité le héros qui le menace ; `range` (champignon, fantôme, araignée, chauve-souris prismatique) recule une fois par tour s'il est collé, vers une case d'où il tire encore ; `flank` (sanglier, chauve-souris, loup, mouette) contourne vers Fenn ou Aelis s'ils sont joignables.
+- Coordination : `s.focus` = dernier héros frappé par un monstre ce tour ; les monstres suivants l'achèvent s'ils l'atteignent. Sans rôle (gelée) : comportement d'avant. `intent()` conserve le recul (annonce honnête). 74 tests.

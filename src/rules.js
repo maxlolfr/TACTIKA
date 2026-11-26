@@ -205,6 +205,7 @@ export function summon(s,b){const{k,n,hp,pm,dmg}=b.summon,m=MON[k],d=reach(s,b,4
 export function payCost(u,sp,c){u.pa-=sp.pa;if(sp.cd)u.cd[sp.n]=sp.cd;face(u,c.x,c.y)}
 // Applique l'effet d'un sort sur la case c (après payCost). Renvoie la liste d'événements.
 export function applySpell(s,u,sp,c){
+ if(u.team==='m'&&sp.dmg){const o=occ(s,c.x,c.y);if(o&&o.team!==u.team)s.focus={id:o.id,r:s.round}} // V4.5b : les autres monstres achèvent la même cible s'ils l'atteignent
  if(sp.trap){u.trap={x:c.x,y:c.y,left:3};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Piège posé',color:'#ffa040'}]}
  if(sp.revive)return revive(s,u,c);
  if(sp.potion){if(!(s.pot>0))return[];s.pot--;const g=Math.min(Math.round(u.max*.4),u.max-u.hp);u.hp+=g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.3},{type:'heal',t:u,amt:g}]}
@@ -295,20 +296,30 @@ export const stars=(s,boss)=>starList(s,boss).filter(Boolean).length;
 
 // ---------- IA ennemie ----------
 // Prochaine action d'un monstre : {type:'cast',sp,target} | {type:'move',to,prev} | null (rien à faire).
+// V4.5b : rôles (MON[].ai) et coordination. Mêmes règles que le joueur (PM, portée, ligne de vue) ; aucune information cachée.
+// Préférence de cible (plus petit = préféré) : cible déjà frappée par un monstre ce tour-ci (s.focus), puis rôle, puis PV restants.
+const fragile=(s,u)=>s.units.filter(o=>o.team===u.team&&!o.dead&&o!==u&&MON[o.k]?.ai!=='tank');
+function prefer(s,u,role,h){const near=role==='tank'?Math.min(99,...fragile(s,u).map(o=>man(o,h))):0;
+ return(s.focus&&s.focus.r===s.round&&s.focus.id===h.id?-1000:0)+(role==='flank'&&h.hi?-300:0)+near*20+h.hp}
 export function aiStep(s,u){
  const sp=u.atk,heroes=s.units.filter(h=>h.team==='h'&&!h.dead);if(!heroes.length)return null;
- const rc=u.pm>0?reach(s,u,u.pm):null,hits=from=>heroes.some(h=>okTarget(s,u,sp,h,from));
- if(u.pa>=sp.pa){const t=heroes.filter(h=>okTarget(s,u,sp,h)).sort((a,b)=>a.hp-b.hp)[0];
+ const role=MON[u.k]?.ai,rc=u.pm>0?reach(s,u,u.pm):null,hits=from=>heroes.some(h=>okTarget(s,u,sp,h,from)),gap=p=>Math.min(...heroes.map(h=>man(h,p)));
+ // distance : collé à un héros au début de son tour, il recule vers la case la plus sûre d'où il peut encore tirer
+ if(role==='range'&&rc&&u.pa>=sp.pa&&u.backed!==s.round&&gap(u)===1){let k=null,bs=-1;for(const[c,d]of rc.dist){const[x,y]=c.split(',').map(Number),p={x,y},g=gap(p);if(g>=2&&hits(p)&&g*10-d>bs){bs=g*10-d;k=c}}
+  if(k){u.backed=s.round;return{type:'move',to:k,prev:rc.prev}}}
+ if(u.pa>=sp.pa){const t=heroes.filter(h=>okTarget(s,u,sp,h)).sort((a,b)=>prefer(s,u,role,a)-prefer(s,u,role,b))[0];
   // cristal turquoise : s'il peut frapper depuis une case amplifiée à sa portée, il y va d'abord
   if(t&&ampAt(s,u)===1&&rc){const k=[...rc.dist.keys()].find(k=>{const[x,y]=k.split(',').map(Number);return ampAt(s,{x,y})>1&&hits({x,y})});if(k)return{type:'move',to:k,prev:rc.prev}}
   if(t)return{type:'cast',sp,target:t}}
  if(u.pm<=0)return null;
  let best=null,bs=1e9;
  // champ de distance vers les héros (les autres monstres sont ignorés)
- const fd=new Map(),q=[];for(const h of heroes){fd.set(K(h.x,h.y),0);q.push(h)}
+ // contournement : vise Fenn et Aelis s'ils sont joignables ; tank : reste à moins de 2 cases d'un allié fragile
+ const fr=role==='flank'?heroes.filter(h=>h.hi):[],tgt=fr.length?fr:heroes,fd=new Map(),q=[];for(const h of tgt){fd.set(K(h.x,h.y),0);q.push(h)}
+ const ally=role==='tank'?fragile(s,u):[],guard=p=>ally.length?Math.max(0,Math.min(...ally.map(o=>man(o,p)))-2)*4:0;
  while(q.length){const p=q.shift(),d=fd.get(K(p.x,p.y));for(const[dx,dy]of DIRS){const nx=p.x+dx,ny=p.y+dy,k=K(nx,ny);if(fd.has(k)||!passable(s,nx,ny))continue;fd.set(k,d+1);q.push({x:nx,y:ny})}}
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),from={x,y};
-  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0):100+(fd.get(k)??99)*10+d;if(sc<bs){bs=sc;best=k}}
+  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0)-(fr.some(h=>okTarget(s,u,sp,h,from))?5:0)+guard(from):100+(fd.get(k)??99)*10+d+guard(from);if(sc<bs){bs=sc;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
@@ -342,7 +353,7 @@ function beamTurn(s,u,ev){const ph=beamPhase(u);
  else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
-export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
+export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
  for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k)),amp:k>1,from:{x:u.x,y:u.y}};break}
   const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
  Object.assign(u,keep);return r}
