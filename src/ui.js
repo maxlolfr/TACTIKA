@@ -186,7 +186,7 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
 // ---------- maître d'armes (V2.5a) ----------
 let armH=-1;
 function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=Math.max(0,HER.findIndex((_,i)=>!specOf(save,i)));A.classList.add('on');A.innerHTML='';
- A.insertAdjacentHTML('beforeend',`<h1>Le Maître d’armes</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux 3, 7 et 11.</div>`);
+ A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux 3, 7 et 11.</div>`);
  const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
  HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';

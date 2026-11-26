@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.6.1 (27/11/2026) : nouveau village et lisibilité
+- Village vertical (six bâtiments, cristal peint) et horizontal (sans cristal), préparés avec `tools/prep_bg.py`. Coordonnées « logiques » dans `SCENES` (941×1686 et 1536×1030).
+- Entraînement : « bientôt » (V4.7). L'ancien bâtiment Talents devient l'Académie.
+- Cristal en paysage : `assets/cry/crystal1..5.webp`, état selon les régions terminées (`crystalState` : 0→1, 1→2, 2-3→3, 4-5→4, 6→5). Découpe : `tools/cut_village.py`.
+- Écran droit annoncé très large (≥ 700, tactile, ratio > 1,5 ; ex. « Version pour ordinateur » sur un téléphone) : classe `wide`, interface agrandie par `zoom` (`src/main.js`).
+- Forge, Marchand, Taverne : lignes plus opaques, textes plus grands, boutons indisponibles lisibles.
+
 ## V4.4.1 (26/11/2026) — contrôle des Cavernes
 - La carte de visée annonçait « tes héros sont épargnés » même quand la Volée déclenchait un prisme qui touche un héros. Elle liste maintenant tout ce que le prisme touche (bouclier et armure comptés) et signale « héros touché ! ».
 - Contour rouge de la Volée redessiné par-dessus les hachures violettes ; chiffres ◆ du prisme placés au-dessus de ceux du sort.

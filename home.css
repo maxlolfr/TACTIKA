@@ -141,16 +141,18 @@
 button.v-cl{cursor:pointer}button.v-cl:hover,button.v-cl:focus-visible{background:#ffd65a22;outline:2px solid #ffd65a88}
 .v-cl small{font-weight:600;color:#e8d6b8}
 .v-chap{cursor:pointer;font:inherit}
-/* Cristal de l'Éther provisoire */
-.v-cry{position:absolute;z-index:2;background:none;border:0;padding:0;cursor:pointer}
+/* Cristal de l'Éther : calque (paysage) ou zone sur le cristal peint (portrait) */
+.v-cry{position:absolute;z-index:2;background:none;border:0;padding:0;cursor:pointer;color:var(--cream)}
 .v-cry i{position:absolute;display:block;pointer-events:none}
-.v-cry-base{left:5%;right:5%;bottom:0;height:16%;border-radius:50%;background:radial-gradient(#8a7a66,#4a3d30 70%);box-shadow:0 4px 10px #0008}
-.v-cry-gem{left:28%;right:28%;top:6%;bottom:11%;clip-path:polygon(50% 0,100% 22%,86% 100%,14% 100%,0 22%);background:linear-gradient(90deg,#9ff8ee 0 50%,#2bbfcf 50% 100%),#5ff2e0;background:linear-gradient(100deg,#effffd 0,#8ff5ea 22%,#3fd6dc 48%,#1795ad 52%,#0c5f80 100%);box-shadow:inset 0 0 18px #fff8;animation:cryf 4s ease-in-out infinite}
-.v-cry-s1,.v-cry-s2{bottom:12%;width:20%;height:38%;clip-path:polygon(50% 0,100% 30%,80% 100%,20% 100%,0 30%);background:linear-gradient(100deg,#c9fbf5,#2bb6c8 55%,#0d6481)}
-.v-cry-s1{left:14%;transform:rotate(-18deg)}.v-cry-s2{right:14%;transform:rotate(16deg);height:30%}
-.v-cl>span{flex:1;min-width:0}.v-cry.painted .v-cry-glow{top:0;bottom:30%}
-.v-cry-glow{left:-30%;right:-30%;top:-10%;bottom:0;border-radius:50%;background:radial-gradient(#5ff2e055,#5ff2e000 65%);mix-blend-mode:screen;animation:cryg 3s ease-in-out infinite}
-.v-cry .v-plate{left:50%;top:100%;transform:translate(-50%,-30%)}
-.v-cry:hover .v-cry-gem,.v-cry:focus-visible .v-cry-gem{filter:brightness(1.25)}
-@keyframes cryf{50%{transform:translateY(-4%)}}@keyframes cryg{50%{opacity:.55}}
+.v-cry img{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 4px 5px #0007)}
+.v-cl>span{flex:1;min-width:0}
+.v-cry-glow{left:-18%;right:-18%;top:-5%;bottom:25%;border-radius:50%;background:radial-gradient(#5ff2e055,#5ff2e000 65%);mix-blend-mode:screen;animation:cryg 3s ease-in-out infinite}
+.v-cry .v-plate{left:50%;top:100%;transform:translate(-50%,-55%)}
+.v-cry:hover img,.v-cry:focus-visible img{filter:brightness(1.2)}
+@keyframes cryg{50%{opacity:.55}}
 .v-cmd>*{flex:none}
+
+/* V4.6.1 : écran droit annoncé « large » (navigateur en version pour ordinateur, plié) : --ui agrandit l'interface */
+.wide .v-top,.wide .v-dock,.wide .v-panel,.wide .v-logo,.wide .ov:not(#camp):not(#map),.wide #mapbar,.wide #zsheet,.wide .zone,.wide #top,.wide #panel,.wide #tuto,.wide #goal,.wide #sv,.wide #unzoom{zoom:var(--ui)}
+.wide .v-plate{zoom:calc(var(--ui)*.78)}
+.v-hero{z-index:1}.v-plate{z-index:3}

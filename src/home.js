@@ -2,40 +2,46 @@
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,ZONES,POTION,RARE,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip,fightSpec,zoneDone} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip,fightSpec,zoneDone,crystalState} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.6';
+export const VERSION='4.6.1';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
-// Deux peintures du village. Toutes les positions sont en pixels de l'image de la scène.
+// Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
 // lumières glow [x,y,rayon,genre] : l lanterne, w fenêtre, f feu, m magie ; camp : héros [x,y des pieds, héros, miroir]
 // box : partie utile à garder visible [largeur, hauteur, centre x, centre y]
+// cry : cristal. Vertical : zone [x,y,largeur,hauteur] sur le cristal peint. Horizontal : calque, [centre x, bas y]
 const INFO={caserne:{ic:['items',5],n:'Caserne',d:'Tes héros'},taverne:{ic:['items',17],n:'Taverne',d:'Contrats et défi'},
- forge:{ic:['ficon',0],n:'Forge',d:'Améliorer'},marchand:{ic:['items',15],n:'Marchand',d:'Acheter, vendre'},talents:{ic:['ui',12],n:'Talents',d:'Spécialisations'}};
+ forge:{ic:['ficon',0],n:'Forge',d:'Améliorer'},marchand:{ic:['items',15],n:'Marchand',d:'Acheter, vendre'},
+ entrainement:{ic:['spells',0],n:'Entraînement',d:'Bientôt'},talents:{ic:['ui',12],n:'Académie',d:'Talents'}};
 const place=P=>Object.entries(P).map(([id,[z,l]])=>({id,...INFO[id],z,l}));
 const SCENES={
  // verticale : téléphone droit et écrans presque carrés
- p:{src:'assets/village.webp',w:941,h:1672,box:[905,1085,470,758],hero:[130,158],
-  bld:place({caserne:[[40,215,405,415],[232,612]],taverne:[[520,300,415,330],[728,592]],forge:[[0,625,335,370],[178,992]],marchand:[[615,655,326,320],[765,965]],talents:[[590,998,320,285],[742,1272]]}),
-  glow:[[118,436,46,'l'],[241,433,46,'l'],[181,452,40,'w'],[592,380,44,'l'],[752,608,42,'l'],[706,405,40,'w'],[802,404,36,'w'],[690,500,48,'w'],[826,502,48,'w'],
-   [302,738,48,'l'],[271,853,40,'l'],[177,897,95,'f'],[160,692,50,'f'],[562,1001,46,'l'],[825,1195,48,'l'],[74,1207,40,'l'],[735,1081,38,'w'],[752,1165,46,'w'],[694,1150,52,'m'],[405,1172,115,'f']],
-  smoke:[[176,655,1],[815,300,.8]],water:[335,1450,95,150],
+ p:{src:'assets/village.webp',w:941,h:1686,box:[905,1390,470,862],hero:[130,158],
+  bld:place({caserne:[[40,180,385,370],[225,535]],taverne:[[535,290,390,300],[722,590]],forge:[[0,630,370,350],[178,985]],marchand:[[640,655,301,315],[752,978]],
+   entrainement:[[0,1020,405,390],[205,1215]],talents:[[590,1030,351,520],[755,1515]]}),
+  glow:[[98,415,42,'l'],[232,415,42,'l'],[165,432,40,'w'],[462,498,40,'l'],[590,335,42,'l'],[702,380,40,'w'],[806,378,40,'w'],[690,490,46,'w'],[832,492,46,'w'],
+   [308,850,85,'f'],[757,855,42,'l'],[852,737,34,'w'],[566,1248,48,'l'],[747,1338,42,'w'],[707,1408,52,'m'],[840,1448,42,'l'],[60,1488,42,'l'],[460,1455,110,'f']],
+  smoke:[[140,630,1],[808,265,.8]],water:[0,1605,100,75],
   // feuillages qui ondulent : on redessine un morceau de la peinture, à bords fondus
-  leaves:[[0,0,340,200],[790,1230,151,330],[0,1015,130,180],[0,470,120,150]],
-  camp:[[262,1190,0,false],[352,1116,1,false],[540,1196,2,true]],cry:[462,850,150]},
- // horizontale (V3.4) : paysage large
- l:{src:'assets/village-paysage.webp',w:1536,h:1024,box:[1470,715,795,490],hero:[118,144],
-  bld:place({forge:[[115,135,430,255],[335,392]],marchand:[[915,185,400,230],[1135,382]],caserne:[[60,395,425,215],[262,598]],taverne:[[1100,420,425,205],[1330,578]],talents:[[1095,628,315,200],[1250,812]]}),
-  glow:[[338,318,85,'f'],[298,305,36,'l'],[432,292,36,'l'],[180,322,46,'w'],[668,532,44,'l'],[884,536,44,'l'],[762,556,70,'w'],[222,522,34,'l'],[318,515,34,'l'],
-   [1240,497,40,'w'],[1345,522,42,'w'],[1438,520,40,'w'],[1135,700,62,'m'],[1238,748,52,'w'],[762,222,95,'m'],[578,798,55,'f'],[973,795,55,'f'],[213,755,40,'f']],
-  smoke:[[322,128,1.1],[1358,352,.8]],water:[880,168,56,82],
-  leaves:[[0,0,230,200],[0,835,190,180],[1400,835,136,180],[1425,60,111,170]],
-  camp:[[655,792,0,false],[766,742,1,false],[884,796,2,true]],cry:[766,330,100,1]}}; // paysage : le cristal est déjà peint sur la fontaine
+  leaves:[[0,0,300,170],[0,1270,100,190],[0,500,115,160],[850,500,91,170]],
+  camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[345,710,265,420]},
+ // horizontale : paysage large, sans cristal peint (le calque évolue avec les régions terminées)
+ l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[940,880,700,535],hero:[100,122],
+  bld:place({caserne:[[495,105,230,235],[608,340]],taverne:[[800,175,270,195],[940,368]],forge:[[470,390,235,215],[578,605]],marchand:[[850,405,225,200],[978,600]],
+   entrainement:[[225,625,420,255],[430,862]],talents:[[865,610,265,345],[1005,932]]}),
+  glow:[[532,255,30,'l'],[575,265,34,'w'],[648,258,30,'w'],[848,295,30,'l'],[915,235,34,'w'],[985,262,34,'w'],[935,292,40,'w'],[665,525,60,'f'],[952,528,34,'l'],
+   [828,765,38,'l'],[945,820,34,'w'],[918,862,45,'m'],[1090,858,32,'w'],[1005,893,30,'l'],[505,912,30,'l'],[1197,378,34,'w'],[1370,468,45,'m'],[762,892,75,'f']],
+  smoke:[[558,390,.9],[986,172,.7]],water:[400,975,130,55],
+  leaves:[[0,300,165,220],[0,840,200,190],[1400,770,136,200],[1380,0,156,190]],
+  camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697]}};
+// Cristal de l'Éther : [largeur, hauteur] des 5 images, et échelle vers la scène horizontale (le 5e est un peu réduit pour ne pas cacher le Marchand)
+const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]],cryK=n=>n===5?.26:.285;
 let tab='camp',A=null,root=null;
 const today=()=>A.today();
 // ---------- notifications ----------
@@ -43,7 +49,7 @@ const forgeNews=()=>save.items.some(j=>{const c=upCost(save,j);return c!=null&&s
 const talentNews=()=>save.lvl>=3&&save.sp.includes(null);
 const claimable=()=>contracts(save,today()).filter(t=>t.p>=t.n&&!t.c).length;
 const NEWS={forge:()=>forgeNews()?'↑':0,talents:()=>talentNews()?'!':0,taverne:()=>claimable()||(save.dd!==today()?'!':0),
- marchand:()=>0,caserne:()=>0};
+ marchand:()=>0,caserne:()=>0,entrainement:()=>0};
 // chapitre en cours : première zone ouverte non terminée
 function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`Chapitre ${i+1} · ${z.n}`,s:`Étape ${prog(z.id)+1} sur ${L}`+(prog(z.id)===L-1?` · Boss : ${z.boss.n}`:'')}}
  return{i:-1,t:'Aventure terminée',s:'Rejoue les combats pour 3 ★'}}
@@ -58,8 +64,10 @@ function scene(k){
  for(const[x,y,r,k]of Q.glow){const g=el('i','v-glow '+k);g.style.cssText=pc(x-r,y-r,r*2,r*2);g.style.animationDelay=-((x*7+y)%31)/10+'s';stage.append(g)}
  for(const[x,y,k]of Q.smoke)for(let i=0;i<4;i++){const s=el('i','v-smoke');s.style.cssText=pc(x-26*k,y-26*k,52*k,52*k);s.style.animationDelay=-i*1.1+'s';stage.append(s)}
  {const w=el('i','v-water');w.style.cssText=pc(...Q.water);stage.append(w)}
- // V4.6 : Cristal de l'Éther provisoire (dessiné par code, en attendant l'image QG-07) sur la place pavée → Expéditions
- {const[x,y,r,painted]=Q.cry,c=el('button','v-cry'+(painted?' painted':''));c.style.cssText=pc(x-r*.55,y-r*1.75,r*1.1,r*2);c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');c.innerHTML=painted?'<i class="v-cry-glow"></i>':'<i class="v-cry-base"></i><i class="v-cry-s1"></i><i class="v-cry-s2"></i><i class="v-cry-gem"></i><i class="v-cry-glow"></i>';
+ // Cristal de l'Éther → Expéditions
+ {const painted=k==='p',st=crystalState(save);let rect=Q.cry;if(!painted){const[w,h]=CRY[st-1].map(v=>v*cryK(st));rect=[Q.cry[0]-w/2,Q.cry[1]-h,w,h]}
+  const c=el('button','v-cry'+(painted?' painted':''));c.style.cssText=pc(...rect);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
+  c.innerHTML=(painted?'':`<img src="assets/cry/crystal${st}.webp" alt="">`)+'<i class="v-cry-glow"></i>';
   const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
  // héros autour du feu
  for(const[x,y,i,flip]of Q.camp){const[hw,hh]=Q.hero,b=el('button','v-hero');b.style.cssText=pc(x-hw/2,y-hh*.95,hw,hh);b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
@@ -125,9 +133,9 @@ function expe(P){
  ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions');
   for(let i=0;i<done;i++){const F=fightSpec(zi,i,0),b=wood(`${i+1}${F.goal==='survive'?' ⏳':F.goal==='chief'?' ♛':''} ${'★'.repeat((save.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
  if(!any)P.append(el('p','v-empty','Gagne ton premier combat pour ouvrir les expéditions.'))}
-function open(id){if(id==='caserne'){show('heros');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
+function open(id){if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
 
-// ---------- mise en place de la scène : les 5 bâtiments toujours visibles entre la barre du haut et le bas ----------
+// ---------- mise en place de la scène : les 6 bâtiments toujours visibles entre la barre du haut et le bas ----------
 export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'))return;
  const W=root.clientWidth,H=root.clientHeight,top=root.querySelector('.v-top').getBoundingClientRect().bottom,D=root.querySelector('.v-dock').getBoundingClientRect();
  // on regarde où le CSS a vraiment mis le menu : sur un écran presque carré (Honor déplié), comparer largeur et hauteur
@@ -135,7 +143,6 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
  const land=D.top<H*.3&&D.left>W*.3;
  // zone libre : au-dessus du bas en portrait, à gauche de la colonne en paysage
  const x1=land?D.left:W,y0=land?top-6:top+4,y1=land?H-16:D.top-6;
- // boîte utile de l'image : x 15..930, y 218..1300
  if(!W||!H)return;
  // menu en colonne et zone libre nettement plus large que haute : peinture horizontale ; sinon la verticale
  const k=land&&x1>(y1-y0)*1.2?'l':'p';
@@ -154,8 +161,9 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
 let hero=0;
 export function show(t){tab=t;const P=$('vpanel');root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
  P.innerHTML='';P.classList.toggle('on',t!=='camp');root.classList.toggle('paneled',t!=='camp');if(t==='camp')return;
- const head=el('div','v-head',`<h2>${{heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther'}[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);P.append(head);
- const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe})[t](body)}
+ const head=el('div','v-head',`<h2>${{heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther',entrainement:'Entraînement'}[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);P.append(head);
+ const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe,entrainement})[t](body)}
+const entrainement=P=>P.append(el('div','v-card','<b>Bientôt disponible</b><p class="v-how">Le terrain d’entraînement ouvrira avec les caractéristiques des héros, dans la version 4.7.</p>'));
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
@@ -167,7 +175,7 @@ function heros(P){
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
  card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd></dl>`));P.append(card);
- const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Talents',A.armes,'sm'));P.append(tl);
+ const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',A.armes,'sm'));P.append(tl);
  P.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));P.append(row)}
  P.append(el('h4',null,'Équipement'),el('p','v-empty','Une seule arme active par héros ; les autres objets s’additionnent.'));

@@ -235,3 +235,10 @@ body.camp #exc{display:none}
 
 /* V4.6 : conseils après une défaite */
 .rtips{margin:6px auto 0;padding:0 0 0 18px;max-width:440px;text-align:left;font:700 14px/1.4 system-ui;color:#f3e3c3}
+
+/* V4.6.1 : lisibilité des intérieurs (retour de Max, 27/11) : lignes opaques, textes plus grands, boutons indisponibles lisibles */
+#forge .sub,#shop .sub,#tav .sub,#armes .sub{color:#fff1cf;font-size:15px;max-width:440px;text-shadow:0 1px 3px #000,0 0 8px #000}
+.loot.frow{background-color:#1c1109ee;border-color:#8a6a3c}
+.frow b{font-size:17px}.frow small{color:#eadcc0;font-size:14px}
+.frow .btn:disabled{opacity:1;filter:grayscale(.85) brightness(.85);color:#fff}
+.loot.qrow.qrow .btn:disabled{background-color:#2a2018}
