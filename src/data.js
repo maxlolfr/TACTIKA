@@ -21,12 +21,12 @@ export const MON={
  bat:{snd:'bite',n:'Chauve-souris',s:'batN',row:0,hp:18,pm:5,init:13,dmg:[4,7],h:.72,xp:9,fly:1},
  shroom:{snd:'poison',n:'Champignon',s:'shroomN',row:0,hp:26,pm:2,init:7,dmg:[4,6],r:[1,4],los:1,poison:[3,2],fx:5,h:.95,xp:12},
  wolf:{snd:'bite',n:'Loup',s:'wolfN',row:0,hp:30,pm:5,init:12,dmg:[8,11],h:.8,xp:14},
- skel:{snd:'slash',n:'Squelette',s:'monB',row:1,hp:40,pm:3,init:9,dmg:[9,13],armor:.2,h:1.2,xp:16},
+ skel:{snd:'slash',n:'Squelette',s:'skelN',row:0,hp:40,pm:3,init:9,dmg:[9,13],armor:.2,h:1.2,xp:16},
  crab:{snd:'bite',n:'Crabe',s:'crabN',row:0,hp:34,pm:3,init:9,dmg:[8,11],armor:.15,h:.72,xp:14},
  gull:{snd:'bite',n:'Mouette',s:'gullN',row:0,hp:22,pm:5,init:14,dmg:[6,9],h:.78,xp:12,fly:1},
  golem:{snd:'smash',n:'Golem',s:'golemN',row:0,hp:52,pm:2,init:6,dmg:[11,15],armor:.25,h:1,xp:20},
  goblin:{snd:'slash',n:'Gobelin',s:'goblinN',row:0,hp:30,pm:4,init:13,dmg:[9,12],h:.95,xp:16},
- ghost:{snd:'poison',n:'Fantôme',s:'monD',row:1,hp:26,pm:4,init:11,dmg:[7,10],r:[1,3],los:1,fx:5,h:.95,xp:16,fly:1},
+ ghost:{snd:'poison',n:'Fantôme',s:'ghostN',row:0,hp:26,pm:4,init:11,dmg:[7,10],r:[1,3],los:1,fx:5,h:.95,xp:16,fly:1},
  knight:{snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}};
 // zones de la carte : 3 combats + 1 boss chacune ; x,y en % de la carte
 export const ZONES=[
