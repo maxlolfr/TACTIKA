@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V3.4 (26/11/2026) — village en paysage
+- Peinture horizontale de Max (VI-02) : `assets/village-paysage.webp` (1536×1024). `home.js` a deux scènes (`SCENES.p` et `SCENES.l`) avec leurs zones, lumières, héros. La scène horizontale sert quand le menu est en colonne et que la zone libre est plus large que haute (téléphone couché, ordinateur) ; sinon la verticale (téléphone droit, Honor déplié, tablette presque carrée).
+- Les morceaux de feuillage animés et le soulèvement des bâtiments au toucher reçoivent maintenant leur image (ils étaient vides depuis la V3.1).
+- Tente de soins, tente centrale et panneau d'affichage de la peinture : décor seulement.
+
 ## V3.3 (26/11/2026) — sols calmes partout
 - Planche TU-02 de Max découpée par `tools/cut_tiles.py planche.png tiles4` (accepte maintenant un fond magenta). Les 16 numéros de sol du jeu passent sur `tiles4` (table `T4`), Monts gris et Château compris. Deux herbes tirées au hasard. `tiles`, `tiles2`, `tiles3` ne sont plus chargées (`OLD`).
 - Inclut le correctif V3.2.2 ci-dessous, publié dans la même version.
