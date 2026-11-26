@@ -7,7 +7,7 @@ import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
-const BS=['roiG','golemK','crabK','wolfK'];
+const BS=['roiG','golemK','crabK','wolfK','knightK'];
 const OLD=['aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();

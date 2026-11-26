@@ -32,7 +32,7 @@ export const ZONES=[
  {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45}},
  {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7}},
  {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5}},
- {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],boss:{k:'knight',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35}}];
+ {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35}}];
 export const ITEMS=[
  {ic:0,n:'Épée courte',who:0,dmg:2},{ic:1,n:'Hache de guerre',who:0,dmg:3},{ic:4,n:'Bouclier rond',who:0,hp:8},{ic:5,n:'Heaume',who:0,hp:6},
  {ic:2,n:'Arc long',who:1,dmg:2},{ic:6,n:'Armure de cuir',who:1,hp:6},{ic:7,n:'Bottes de cuir',who:1,hp:4},

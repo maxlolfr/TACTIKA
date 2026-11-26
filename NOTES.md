@@ -60,4 +60,5 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - Écran du maître d'armes (bâtiment 2 du camp, « Nouveau ! » si niveau ≥ 3 et un héros sans spécialisation).
 - Nouveaux héros ChatGPT : planches `kael9/fenn9/aelis9` (poses repos, coup, touché, sort, spécial, KO, genou à terre sous 30 % PV, victoire). Marche et dos : `kaelM`, `fennM`, `aelisM` (H-04 reçues le 26/11) ; les anciennes planches de héros ne sont plus chargées. Icônes encadrées `tal` (4×4).
 - 35 tests.
-- Boss (26/11) : planches ChatGPT `golemK`, `crabK`, `wolfK` (+ `roiG`), liste `BS` dans render.js : regard à droite (miroir inversé par rapport aux monstres), 6 cases repos/attaque/touché/spécial/KO/repos 2, KO affiché 1,8 s.
+- Boss (26/11) : planches ChatGPT `golemK`, `crabK`, `wolfK` (+ `roiG`, `knightK`), liste `BS` dans render.js : regard à droite (miroir inversé par rapport aux monstres), 6 cases repos/attaque/touché/spécial/KO/repos 2, KO affiché 1,8 s.
+- Fond du maître d'armes : `assets/bg/armes.webp` (BG-01).

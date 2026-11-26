@@ -114,3 +114,4 @@ body.camp #top,body.camp #panel{visibility:hidden}
 .spec>canvas{width:56px;height:56px;flex:none}.spec>div{flex:1;min-width:0;font-size:13px}.spec>div>small{color:#cbbd9c}
 .spec p{margin:3px 0 0;font-size:12px;line-height:1.3}.spec p.off{opacity:.45}.spec p em{font-style:normal;color:#ffd65a;font-size:11px}
 .spec .btn{padding:8px 12px;font-size:13px;flex:none}
+#armes{background:linear-gradient(#0d0906cc,#0d0906e6),url(assets/bg/armes.webp) center/cover}
