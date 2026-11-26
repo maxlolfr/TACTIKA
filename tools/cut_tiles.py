@@ -1,5 +1,6 @@
-# Détoure la planche 4x4 de tuiles en relief (fond sombre uni) -> assets/tiles3.webp + entrée "tiles3" de l'atlas.
-# usage : python3 tools/cut_tiles.py planche.png [--sheet apercu.png]
+# Détoure une planche 4x4 de tuiles en relief (fond uni, sombre ou magenta) -> assets/<nom>.webp + entrée <nom> de l'atlas.
+# usage : python3 tools/cut_tiles.py planche.png nom [--sheet apercu.png]
+NAME=__import__("sys").argv[2]
 import sys,json,numpy as np
 from PIL import Image
 from scipy import ndimage
@@ -15,7 +16,11 @@ boxes.sort(key=lambda b:(round((b[1][0].start+b[1][0].stop)/2/(H/4)-.5),b[1][1].
 cut=[];geo=[];TW=240
 for i,(ys,xs) in boxes:
     m=ndimage.binary_fill_holes(lab[ys,xs]==i);al=ndimage.gaussian_filter(ndimage.binary_erosion(m).astype(float),.7)
-    im=Image.fromarray(np.dstack([a[ys,xs],al*255]).astype(np.uint8))
+    px=a[ys,xs].copy()
+    if bg[0]>180 and bg[2]>180 and bg[1]<90:
+        rim=m&~ndimage.binary_erosion(m,iterations=3);spill=np.clip(np.minimum(px[...,0],px[...,2])-px[...,1],0,None)*rim
+        px[...,0]-=spill;px[...,2]-=spill
+    im=Image.fromarray(np.dstack([px,al*255]).astype(np.uint8))
     # face du dessus : coins gauche/droit = lignes les plus hautes des colonnes extrêmes
     cols=[np.nonzero(m[:,x])[0] for x in (list(range(3,9))+list(range(m.shape[1]-9,m.shape[1]-3)))]
     cy=float(np.median([c[0] for c in cols]))+3
@@ -24,8 +29,8 @@ for i,(ys,xs) in boxes:
 AW=TW*4+8*3;rowh=max(c.height for c in cut)+8;at=Image.new('RGBA',(AW,rowh*4));fr=[]
 for n,(c,cy) in enumerate(zip(cut,geo)):
     x,y=(n%4)*(TW+8),(n//4)*rowh;at.paste(c,(x,y));fr.append([x,y,c.width,c.height,TW//2,cy])
-at.save('assets/tiles3.webp',quality=86,method=6)
-A=json.load(open('assets/atlas.json'));A['tiles3']=fr;json.dump(A,open('assets/atlas.json','w'),separators=(',',':'))
+at.save(f'assets/{NAME}.webp',quality=86,method=6)
+A=json.load(open('assets/atlas.json'));A[NAME]=fr;json.dump(A,open('assets/atlas.json','w'),separators=(',',':'))
 print(len(fr),at.size,[(f[3],f[5]) for f in fr])
 if '--sheet' in sys.argv:
     s=Image.new('RGBA',at.size,(255,0,255,255));s.alpha_composite(at);s.save(sys.argv[-1])

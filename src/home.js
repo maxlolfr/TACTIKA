@@ -8,7 +8,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='3.2.1';
+export const VERSION='3.3';
 const IW=941,IH=1672; // taille de assets/village.webp : toutes les positions ci-dessous sont en pixels de l'image
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 const pc=(x,y,w,h)=>`left:${x/IW*100}%;top:${y/IH*100}%`+(w?`;width:${w/IW*100}%;height:${h/IH*100}%`:'');
@@ -89,11 +89,15 @@ function open(id){if(id==='caserne'){show('heros');return}A[{forge:'forge',march
 
 // ---------- mise en place de la scène : les 5 bâtiments toujours visibles entre la barre du haut et le bas ----------
 export function fitHome(){const S=$('vstage');if(!S||!root.classList.contains('on'))return;
- const W=root.clientWidth,H=root.clientHeight,land=W>H,top=root.querySelector('.v-top').getBoundingClientRect().bottom,D=root.querySelector('.v-dock').getBoundingClientRect();
+ const W=root.clientWidth,H=root.clientHeight,top=root.querySelector('.v-top').getBoundingClientRect().bottom,D=root.querySelector('.v-dock').getBoundingClientRect();
+ // on regarde où le CSS a vraiment mis le menu : sur un écran presque carré (Honor déplié), comparer largeur et hauteur
+ // peut contredire le CSS, et le village prenait alors une taille négative (il disparaissait)
+ const land=D.top<H*.3&&D.left>W*.3;
  // zone libre : au-dessus du bas en portrait, à gauche de la colonne en paysage
  const x1=land?D.left:W,y0=land?top-6:top+4,y1=land?H-16:D.top-6;
  // boîte utile de l'image : x 15..930, y 218..1300
- const s=Math.min(x1/905,(y1-y0)/1085),left=x1/2-470*s;
+ if(!W||!H)return;
+ const s=Math.max(Math.min(x1/905,(y1-y0)/1085),Math.min(W/941,H/1672)*.6),left=x1/2-470*s; // jamais nul ni négatif
  let t=(y0+y1)/2-758*s;if(IH*s>=H)t=Math.min(0,Math.max(H-IH*s,t));else t=Math.max(0,Math.min(H-IH*s,t));
  S.style.cssText=`width:${IW*s}px;height:${IH*s}px;left:${left}px;top:${t}px`;S.style.setProperty('--s',s);
  for(const e of S.querySelectorAll('[data-crop]')){const[x,y]=e.dataset.crop.split(',');e.style.backgroundSize=`${IW*s}px ${IH*s}px`;e.style.backgroundPosition=`${-x*s}px ${-y*s}px`}
@@ -142,3 +146,5 @@ function reglages(P){
 
 export function renderHome(actions){A=actions;build();root.classList.add('on');fitHome();show('camp');sonBtns();store()}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});
+// la barre du navigateur intégré peut apparaître ou disparaître sans événement resize au retour d'un combat
+if(window.ResizeObserver)new ResizeObserver(()=>fitHome()).observe($('camp'));
