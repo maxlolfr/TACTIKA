@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
 import {pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
-import {addFx,addProj,say,pose,shake,punch,burst,addRefs,TH} from './render.js';
+import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,TH} from './render.js';
 import {sfx} from './audio.js';
 
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
@@ -16,6 +16,8 @@ export function play(events){for(const e of events){switch(e.type){
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);if(e.snd)sfx(e.snd,.8);break;
  case 'shake':shake(e.ms);break;
+ case 'beam':addBeam(e.from,e.cells);break;
+ case 'wave':addWave(e.t);punch(e.t,.07,320);break;
  case 'push':{const t=e.t,x0=t.gx,y0=t.gy;sfx('push',.8);tween(200,k=>{t.gx=x0+(e.to.x-x0)*k;t.gy=y0+(e.to.y-y0)*k});break}
  case 'collision':setTimeout(()=>{sfx('collision',.9);shake(200);punch(e.t,.04);burst(e.t,4);addFx(e.t.gx,e.t.gy,1,1.1,500,'fxi',-.2)},200);break;
  case 'combo':say(e.t,'Combo ×'+e.n,'#ff9cf2',true);addFx(e.t.gx,e.t.gy,14,.8,800,'ico',-.9);sfx('combo_'+e.n,.9)}}}

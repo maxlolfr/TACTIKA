@@ -159,6 +159,9 @@ let fx=[],texts=[],shakeT=0,parts=[],lastA=0;
 export function resetFx(){fx=[];texts=[];parts=[]}
 export const addFx=(x,y,i,w,dur=550,sh='fx',dy=0)=>fx.push({x,y,i,w,sh,dy,t0:performance.now(),dur});
 const dic=(c,s,i,x,y,w)=>{const f=AT[s][i],k=w/Math.max(f[2],f[3]);c.drawImage(IMG[s],f[0],f[1],f[2],f[3],x,y,f[2]*k,f[3]*k)};
+// V4.0.4 : effets du Titan — rayon prismatique (traits lumineux de l'origine vers chaque case, colonnes de lumière) et onde de choc
+export const addBeam=(o,cells)=>fx.push({beam:1,o,cells,t0:performance.now(),dur:750});
+export const addWave=u=>fx.push({wave:1,x:u.gx,y:u.gy,t0:performance.now(),dur:700});
 export const addProj=(a,b)=>fx.push({proj:1,a:{x:a.x,y:a.y},b,t0:performance.now(),dur:260});
 export const shake=ms=>{shakeT=performance.now()+ms};
 // impacts : zoom bref vers un point, éclats de particules (coup critique, KO, collision)
@@ -216,7 +219,8 @@ export function draw(now){
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,lift=u.fly?TH*.7:0,jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
-  if(u.bs==='beam'&&!u.dead){ctx.save();ctx.globalAlpha=.35+.15*Math.sin(now/300);ctx.fillStyle='#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48,TH*.36,0,0,7);ctx.fill();ctx.restore()}
+  if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
+   if(ch){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5+.3*Math.sin(now/70);const g=ctx.createRadialGradient(sx,sy-hgt(u)*.55,0,sx,sy-hgt(u)*.55,TW*.9);g.addColorStop(0,'rgba(230,190,255,.9)');g.addColorStop(1,'rgba(160,80,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy-hgt(u)*.55,TW*.9,0,7);ctx.fill()}ctx.restore()}
   const glow=tg.includes(u);if(glow){ctx.save();ctx.shadowColor='#ffb040';ctx.shadowBlur=TW*(.18+.08*Math.sin(now/160))}
   drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
@@ -250,6 +254,11 @@ export function draw(now){
  ambient(now);
  fx=fx.filter(e=>now-e.t0<e.dur);for(const e of fx){const t=(now-e.t0)/e.dur;
   if(e.burst){const[sx,sy]=scr(e.x,e.y),f=AT.parts[e.k],w=TW*.22*(1-t*.5),el=t*e.dur/16;ctx.save();ctx.globalAlpha=1-t;ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx+e.vx*el*2.2-w/2,sy-TW*.5+(e.vy*el+.045*el*el)*1.6-w/2,w,w*f[3]/f[2]);ctx.restore();continue}
+  if(e.beam){const[ox,oy]=scr(e.o.x,e.o.y),a=t<.15?t/.15:1-(t-.15)/.85,lift=TW*.55;ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';
+   for(const[w,c]of[[TW*.42,'rgba(150,70,255,.35)'],[TW*.2,'rgba(200,150,255,.7)'],[TW*.07,'rgba(255,255,255,.95)']]){ctx.globalAlpha=a;ctx.strokeStyle=c;ctx.lineWidth=w*(1+.15*Math.sin(now/30));ctx.beginPath();for(const p of e.cells){const[px,py]=scr(p.x,p.y);ctx.moveTo(ox,oy-lift);ctx.lineTo(px,py-TH*.2)}ctx.stroke()}
+   for(const p of e.cells){const[px,py]=scr(p.x,p.y),g=ctx.createLinearGradient(0,py-TW*1.6,0,py);g.addColorStop(0,'rgba(180,110,255,0)');g.addColorStop(1,'rgba(220,180,255,.8)');ctx.globalAlpha=a;ctx.fillStyle=g;ctx.fillRect(px-TW*.16,py-TW*1.6,TW*.32,TW*1.6)}
+   ctx.restore();continue}
+  if(e.wave){const[sx,sy]=scr(e.x,e.y),r=TW*(.3+3.2*t);ctx.save();ctx.globalAlpha=(1-t)*.9;for(const[k,c,w]of[[1,'#c98bff',TW*.16*(1-t)+2],[.82,'#ffffff',3]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.ellipse(sx,sy,r*k,r*k*ISO,0,0,7);ctx.stroke()}ctx.restore();continue}
   if(e.proj){const[ax,ay]=scr(e.a.x,e.a.y),[bx,by]=scr(e.b.x,e.b.y),x=ax+(bx-ax)*t,y=ay+(by-ay)*t-TW*.6-Math.sin(t*Math.PI)*TW*.4;
    const f=AT.fx[6];ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(by-ay-Math.PI*Math.cos(t*Math.PI)*TW*.4,bx-ax));ctx.drawImage(IMG.fx,f[0],f[1],f[2],f[3],-TW*.45,-TW*.45*f[3]/f[2],TW*.9,TW*.9*f[3]/f[2]);ctx.restore();continue}
   const[sx,sy]=scr(e.x,e.y),f=AT[e.sh||'fx'][e.i],s=(e.w||1.3)*TW/f[2]*(.7+.4*Math.min(1,t*3));

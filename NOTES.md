@@ -175,3 +175,6 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 ## V4.0.3 (26/11/2026) — lot sonore épique, sons rangés
 - Sons rangés : `assets/audio/musique/` et `assets/audio/bruitages/`, catalogue `assets/audio/SONS.md` ; `dir()` dans audio.js ; le workflow audio range tout seul (et fait `apt-get update`, cause de l'échec de la V4.0.2).
 - Nouveaux sons (ElevenLabs, 3 736 crédits) : golem_smash, spider_bite, bat_shriek, titan_roar (phases), titan_death, chest_open, loot_rare, boss_intro ; musiques titan_boss, coast (Côte), mountain (Monts), castle (Château). Plus les 5 sons de la V4.0.2 (968 crédits), téléchargés avec ce lot.
+
+## V4.0.4 (26/11/2026) — effets du Titan
+Événements `beam` (traits de lumière de l'origine vers chaque case + colonnes, `addBeam`) et `wave` (onde de choc au changement de phase, `addWave`). Aura du Titan plus grande et pulsée pendant la charge (`s.beam.by`). Le prisme qui éclate projette aussi ses traits vers ses 4 voisines. L'ancien effet poison (têtes de mort) n'est plus utilisé pour le rayon ni le prisme.
