@@ -28,14 +28,18 @@ export const MON={
  golem:{snd:'smash',n:'Golem',s:'golemN',row:0,hp:52,pm:2,init:6,dmg:[11,15],armor:.25,h:1,xp:20},
  goblin:{snd:'slash',n:'Gobelin',s:'goblinN',row:0,hp:30,pm:4,init:13,dmg:[9,12],h:.95,xp:16},
  ghost:{snd:'poison',n:'Fantôme',s:'ghostN',row:0,hp:26,pm:4,init:11,dmg:[7,10],r:[1,3],los:1,fx:5,h:.95,xp:16,fly:1},
- knight:{snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}};
+ knight:{snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}, // base du boss Chevalier noir
+ // V3.5 : trois chevaliers de Max, du plus facile au plus dur (chiffres de départ, non équilibrés)
+ knightB:{snd:'slash',n:'Chevalier bleu',s:'knightB',row:0,hp:36,pm:3,init:9,dmg:[8,11],armor:.15,h:1.15,xp:20},
+ knightR:{snd:'slash',n:'Chevalier rouge',s:'knightR',row:0,hp:48,pm:3,init:10,dmg:[11,14],armor:.2,h:1.2,xp:28},
+ knightN:{snd:'smash',n:'Chevalier sombre',s:'knightN',row:0,hp:62,pm:4,init:12,dmg:[14,18],armor:.25,h:1.28,xp:40}};
 // zones de la carte : 3 combats + 1 boss chacune ; x,y en % de la carte
 export const ZONES=[
  {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}}},
  {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl'}},
- {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'}},
- {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'}},
- {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35,bs:'rage'}}];
+ {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{2:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'}},
+ {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{1:'knightB',2:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'}},
+ {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],elite:{0:'knightB',1:'knightR',2:'knightN'},boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35,bs:'rage'}}];
 export const ITEMS=[
  {ic:0,n:'Épée courte',pr:60,who:0,dmg:2},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8},{ic:5,n:'Heaume',pr:70,who:0,hp:6},
  {ic:2,n:'Arc long',pr:60,who:1,dmg:2},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4},
