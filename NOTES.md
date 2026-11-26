@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.8c (27/11/2026) : menus héros, inventaire, équipement (lot 4.7b de la feuille de route)
+- Fiche héros : un emplacement se touche et montre les objets possédés avec la comparaison et « Équiper » ; ⇄ = nombre d'objets en réserve.
+- Inventaire : filtres héros et emplacement, ✓ sur les objets équipés, « Voir la fiche ».
+- Retour : ‹ revient au panneau d'origine ; le « Retour » de l'Académie, de la Forge et du Marchand rouvre le panneau d'où on venait (le camp si on venait du village).
+- Deux colonnes dès que le panneau fait 520 px (requête de conteneur). Aucune règle touchée.
+
 ## V4.8b (27/11/2026) : les héros se promènent au village
 - Kael va vers la Forge, Fenn vers le Marchand, Aelis fait un petit tour près du feu et du cristal ; pause, retour au poste, attente de 6 à 14 s. Décor seulement.
 - Aucune image nouvelle : marches du combat (`walkFrames`, de face en descendant, de dos en montant, miroir vers la gauche). Trajets : `SCENES.*.walk`.
