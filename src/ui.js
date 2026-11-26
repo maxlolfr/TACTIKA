@@ -2,9 +2,9 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,ampAt,prismOn,beamDmg,approach,okTarget,carryPA} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,ampAt,prismOn,beamDmg,approach,okTarget,carryPA} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets} from './render.js';
+import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets,say} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
 import {SPECS,TIER,DONE,specOf} from './talents.js';
@@ -22,7 +22,7 @@ let goalT=0;function goalBanner(t){const g=$('goal');g.textContent=t;g.classList
 function newRound(){if(G.s.goal==='survive')goalBanner('⏳ '+survTxt())}
 function render(){renderTL();
  const u=G.cur,{sel,F}=G;
- $('title').textContent=F?`${ZONES[F.zi].n}\n${F.daily?'Défi':F.boss?'Boss':F.i+1+'/'+(zlen(ZONES[F.zi])-1)} · tour ${G.s.round}${G.s.goal==='chief'?'\n♛ Abats le chef':G.s.goal==='survive'?`\n⏳ ${survTxt(true)}`:''}`:'';
+ $('title').textContent=F?`${ZONES[F.zi].n}\n${F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round}${G.s.goal==='chief'?'\n♛ Abats le chef':G.s.goal==='survive'?`\n⏳ ${survTxt(true)}`:''}`:'';
  if(!u){$('exc').className='';return}
  const me=u.team==='h'&&G.phase==='fight';
  G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;
@@ -42,7 +42,7 @@ function render(){renderTL();
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
  $('end').disabled=!me||G.busy;
  const beam=G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:'',amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
- $('hint').textContent=!me?`${u.n} joue.`:beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide?coach(u):`Case bleue : aperçu, puis retouche pour y aller. Ou choisis un sort.`);
+ $('hint').textContent=!me?`${u.n} joue.`:beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
  aimCard(u);
 }
 function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
@@ -50,9 +50,14 @@ function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case b
  if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
  return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
 const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')};
-function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
- if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(S.pot>0)||u.hp>=u.max))&&selCells(S,u,sp).some(c=>c.ok)}))return;
- $('hint').textContent='Plus rien à faire : tour suivant…';setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},700)}
+// sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
+const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
+const canMove=u=>u.pm>0&&!!G.reachC&&G.reachC.dist.size>1;
+function idle(u){const c=castable(u).map(sp=>sp.n).join(', ');
+ if(canMove(u))return c?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».';
+ return c?`Plus de déplacement. Encore possible : ${c}. Sinon « Fin du tour ».`:'Plus aucune action : touche « Fin du tour ».'}
+function autoEnd(){const u=G.cur;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0||castable(u).length)return;
+ $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
 
 // ---------- saisie ----------
 cv.addEventListener('pointerdown',e=>{if(G.phase==='fight'&&!G.busy)act(tapCell(e.clientX,e.clientY))});
@@ -87,8 +92,9 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
   if(!G.plan||G.plan.x!==c.x||G.plan.y!==c.y){const t=targetsFrom(G.s,u,c),cost=G.reachC.dist.get(k);G.plan={x:c.x,y:c.y,cost,foes:t.foes,path:pathTo(u,k,G.reachC.prev)};sfx('click',.5);
    $('hint').textContent=`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
-  G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();noTarget(u);autoEnd();return}
- if(G.plan){G.plan=null;render()}if(o)$('hint').textContent=info(o)}
+  G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();autoEnd();return}
+ if(G.plan){G.plan=null;render()}if(o){$('hint').textContent=info(o);return}
+ const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
 // ---------- carte de visée : qui, validité, effet réel ----------
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
 const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
@@ -113,9 +119,6 @@ function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.cla
  X.innerHTML=L.map(l=>`<div>${l}</div>`).join('');X.className='on'+(E.bad?' bad':'');
  X.style.top=matchMedia('(orientation:landscape)').matches?'':$('top').getBoundingClientRect().bottom+2+'px';
  $('hint').textContent=E.bad?'Choisis une autre cible, ou retouche le sort pour l’annuler.':'Retouche pour lancer · retouche le sort pour annuler.'}
-// après un déplacement : prévient s'il ne reste aucune cible pour les sorts offensifs
-function noTarget(u){const off=u.sp.map(id=>u.S[id]).filter(sp=>sp.dmg&&u.pa>=sp.pa&&!(u.cd[sp.n]>0));if(!off.length)return;
- if(!off.some(sp=>selCells(G.s,u,sp).some(c=>c.ok)))$('hint').textContent='Aucune cible à portée depuis cette case. Déplace-toi encore ou passe le tour.'}
 $('end').onclick=()=>{if(G.endTurnResolve&&!G.busy){G.plan=null;G.ex=null;G.sel=null;G.reachC=null;G.endTurnResolve()}};
 let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-fleeArm<2500){G.phase='lose';G.fid++;if(G.endTurnResolve)G.endTurnResolve();result(false,true)}else{fleeArm=Date.now();$('flee').textContent='Sûr ?';setTimeout(()=>$('flee').textContent='Fuir',2500)}};
 
@@ -131,7 +134,7 @@ export async function startFight(zi,i,F){
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
-const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche un ennemi (ou son portrait) pour voir l’effet, puis <b>retouche-le</b> pour lancer.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
+const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue à pastille</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche un ennemi (ou son portrait) pour voir l’effet, puis <b>retouche-le</b> pour lancer.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
 // messages guidés des Cavernes de cristal (niveaux 1 et 4)
 const TIPS={amp:['<b>Cristal turquoise — Amplificateur</b><br>Un héros qui lance un sort depuis une case voisine (contour en tirets ▲) fait <b>+30 %</b> de dégâts et de soins. Les monstres s’en servent aussi : la bulle rouge l’indique.','Le cristal bloque le passage et les tirs. Repousser un monstre contre lui fait une collision.'],
  prism:['<b>Cristal violet — Prisme</b><br>Vise-le avec un sort de dégâts : ses <b>4 cases voisines</b> reçoivent 70 % des dégâts moyens, <b>tes héros compris</b>. Les cases rayées et les chiffres ◆ s’affichent avant de lancer.','Ensuite il s’éteint 2 tours (gris, ⏸). Utile pour toucher un ennemi caché derrière un obstacle.']};
@@ -220,16 +223,16 @@ function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';
  const svg=`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${ZONES.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;L.insertAdjacentHTML('beforeend',svg);
- ZONES.forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock');b.style.left=z.x+'%';b.style.top=z.y+'%';
+ ZONES.forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
   const B=z.boss?MON[z.boss.k]:null;if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,46));else b.insertAdjacentHTML('beforeend','<span class="q">?</span>');
   b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?' · '+starsOf(z.id).reduce((a,b)=>a+b,0)+'/'+3*zlen(z)+' ★':''}</small>`);
   b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
  $('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
  const cz=L.querySelectorAll('.zone:not(.lock)');cz[cz.length-1]?.scrollIntoView({block:'center'});
 }
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>Niveaux ${lv(0)}–${lv(L-1)}</small>`;
+function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
-  b.textContent=(i===L-1?`Boss · ${z.boss.n}`:`Combat ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
+  b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
 function result(win,fled){const F=G.F;$('tuto').classList.remove('on');$('goal').classList.remove('on');
@@ -242,7 +245,7 @@ function result(win,fled){const F=G.F;$('tuto').classList.remove('on');$('goal')
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',`En ${F.boss?7:5} tours ou moins`].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':'combat '+(F.i+1)+' gagné'}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',`En ${F.boss?7:5} tours ou moins`].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('coin',.5,1.3),d*1000+200));
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon('items',ITEMS[it].ic,48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${effet(ITEMS[it],rarOf(save,it))}`]);
@@ -256,7 +259,13 @@ function result(win,fled){const F=G.F;$('tuto').classList.remove('on');$('goal')
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
  }else Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">Tes héros se replient. Soigne-toi et réessaie, ou rejoue un combat déjà gagné pour monter de niveau.</div>`;
- const b=document.createElement('button');b.className='btn';b.style.marginTop='16px';b.textContent='Retour à la carte';b.onclick=()=>{Rs.classList.remove('on');worldMap()};Rs.appendChild(b);
+ // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi
+ const acts=document.createElement('div');acts.className='ractions';let gone=false;
+ const act2=(t,f,dark)=>{const b=document.createElement('button');b.className='btn'+(dark?' dark':'');b.textContent=t;b.onclick=()=>{if(gone)return;gone=true;f()};acts.append(b)};
+ const nx=win&&!F.daily&&F.i+1<zlen(ZONES[F.zi])?F.i+1:null;
+ if(nx!==null)act2(nx===zlen(ZONES[F.zi])-1?'Affronter le boss':'Combat suivant',()=>{Rs.classList.remove('on');startFight(F.zi,nx)});
+ if(win&&contracts(save,today()).some(t=>t.p>=t.n&&!t.c))act2('Taverne : récompense à réclamer',()=>{camp();tav()},true);
+ act2('Retour à la carte',()=>{Rs.classList.remove('on');worldMap()},nx!==null);Rs.appendChild(acts);
  Rs.classList.add('on');
 }
 

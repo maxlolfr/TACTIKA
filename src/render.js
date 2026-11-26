@@ -130,6 +130,7 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
  if(sel&&sel.sp.t!=='self'){const o=occ(S,g.x,g.y);if(core&&o)return g;
   if(sel.sp.zone&&core&&S.map.has(k))return g; // sort de zone : le milieu d'une case libre reste visable
   const t=now.filter(u=>sel.sp.t==='ally'?u.team==='h':u.team==='m').map(u=>({u,d:box(u,.42),ok:sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)})).filter(o=>o.d!=null).sort((a,b)=>b.ok-a.ok||a.d-b.d)[0];if(t)return{x:t.u.x,y:t.u.y}}
+ if(!sel&&core){const c=cell(S,g.x,g.y);if(c&&(c.water||c.block)&&!occ(S,g.x,g.y))return g} // eau ou obstacle touché en plein milieu
  if(sel?sel.cells.some(s=>s.ok&&s.x===g.x&&s.y===g.y):reachC&&reachC.dist.get(k)>0)return g;
  for(const u of now){const[sx,sy]=scr(u.gx,u.gy),top=sy-hgt(u)-lift(u);if(Math.abs(px-sx)<TW*.32&&py<sy+TH*.3&&py>top)return{x:u.x,y:u.y}}
  return g}
@@ -196,7 +197,7 @@ export function draw(now){
  if(cur&&cur.team==='h'&&!busy&&phase==='fight'){
   if(G.mark&&Date.now()<G.mark.until){const[mx,my]=scr(G.mark.x,G.mark.y);diamond(ctx,mx,my,.92);ctx.fillStyle='rgba(255,60,60,.45)';ctx.fill();ctx.strokeStyle='#ff5a5a';ctx.lineWidth=3;ctx.stroke()}
   if(sel){const dim=sel.sp.zone&&G.ex&&!G.ex.bad;for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?(dim?'rgba(255,140,40,.3)':'rgba(255,140,40,.62)'):c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok&&!dim){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
-  else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle='rgba(220,240,255,.7)';ctx.lineWidth=1.5;ctx.stroke()}}
+  else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle='rgba(220,240,255,.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy,TW*.075,TW*.075*ISO,0,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(10,50,110,.9)';ctx.stroke()}}
  if(sel&&cur&&!busy)for(const c of sel.cells)if(c.ok&&occ(S,c.x,c.y)){const[sx,sy]=scr(c.x,c.y),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.7+.3*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
  // cible visée par un monstre : losange rouge
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
