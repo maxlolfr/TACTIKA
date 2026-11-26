@@ -16,27 +16,28 @@ export const HER=[
  {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard']},
  {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots']},
  {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura']}];
+// V4.5b : ai = rôle de combat. tank : s'interpose devant les monstres fragiles et frappe le héros qui les menace · range : garde ses distances, recule s'il est collé · flank : contourne pour viser Fenn ou Aelis
 export const MON={
  slime:{snd:'slime',n:'Gelée',s:'slimeN',row:0,hp:24,pm:2,init:8,dmg:[5,8],h:.62,xp:8},
- boar:{snd:'hit',n:'Sanglier',s:'boarN',row:0,hp:32,pm:4,init:11,dmg:[7,10],h:.8,xp:12},
- bat:{snd:'bite',n:'Chauve-souris',s:'batN',row:0,hp:18,pm:5,init:13,dmg:[4,7],h:.52,xp:9,fly:1},
- shroom:{snd:'poison',n:'Champignon',s:'shroomN',row:0,hp:26,pm:2,init:7,dmg:[4,6],r:[1,4],los:1,poison:[3,2],fx:5,h:.95,xp:12},
- wolf:{snd:'bite',n:'Loup',s:'wolfN',row:0,hp:30,pm:5,init:12,dmg:[8,11],h:.8,xp:14},
- skel:{snd:'slash',n:'Squelette',s:'skelN',row:0,hp:40,pm:3,init:9,dmg:[9,13],armor:.2,h:1.2,xp:16},
- crab:{snd:'bite',n:'Crabe',s:'crabN',row:0,hp:34,pm:3,init:9,dmg:[8,11],armor:.15,h:.72,xp:14},
- gull:{snd:'bite',n:'Mouette',s:'gullN',row:0,hp:22,pm:5,init:14,dmg:[6,9],h:.78,xp:12,fly:1},
- golem:{snd:'smash',n:'Golem',s:'golemN',row:0,hp:52,pm:2,init:6,dmg:[11,15],armor:.25,h:1,xp:20},
+ boar:{ai:'flank',snd:'hit',n:'Sanglier',s:'boarN',row:0,hp:32,pm:4,init:11,dmg:[7,10],h:.8,xp:12},
+ bat:{ai:'flank',snd:'bite',n:'Chauve-souris',s:'batN',row:0,hp:18,pm:5,init:13,dmg:[4,7],h:.52,xp:9,fly:1},
+ shroom:{ai:'range',snd:'poison',n:'Champignon',s:'shroomN',row:0,hp:26,pm:2,init:7,dmg:[4,6],r:[1,4],los:1,poison:[3,2],fx:5,h:.95,xp:12},
+ wolf:{ai:'flank',snd:'bite',n:'Loup',s:'wolfN',row:0,hp:30,pm:5,init:12,dmg:[8,11],h:.8,xp:14},
+ skel:{ai:'tank',snd:'slash',n:'Squelette',s:'skelN',row:0,hp:40,pm:3,init:9,dmg:[9,13],armor:.2,h:1.2,xp:16},
+ crab:{ai:'tank',snd:'bite',n:'Crabe',s:'crabN',row:0,hp:34,pm:3,init:9,dmg:[8,11],armor:.15,h:.72,xp:14},
+ gull:{ai:'flank',snd:'bite',n:'Mouette',s:'gullN',row:0,hp:22,pm:5,init:14,dmg:[6,9],h:.78,xp:12,fly:1},
+ golem:{ai:'tank',snd:'smash',n:'Golem',s:'golemN',row:0,hp:52,pm:2,init:6,dmg:[11,15],armor:.25,h:1,xp:20},
  goblin:{snd:'slash',n:'Gobelin',s:'goblinN',row:0,hp:30,pm:4,init:13,dmg:[9,12],h:.95,xp:16},
- ghost:{snd:'poison',n:'Fantôme',s:'ghostN',row:0,hp:26,pm:4,init:11,dmg:[7,10],r:[1,3],los:1,fx:5,h:.95,xp:16,fly:1},
- knight:{snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}, // base du boss Chevalier noir
+ ghost:{ai:'range',snd:'poison',n:'Fantôme',s:'ghostN',row:0,hp:26,pm:4,init:11,dmg:[7,10],r:[1,3],los:1,fx:5,h:.95,xp:16,fly:1},
+ knight:{ai:'tank',snd:'slash',n:'Chevalier',s:'monD',row:2,hp:60,pm:3,init:10,dmg:[13,17],armor:.25,h:1.25,xp:30}, // base du boss Chevalier noir
  // V3.5 : trois chevaliers de Max, du plus facile au plus dur (chiffres de départ, non équilibrés)
- knightB:{snd:'slash',n:'Chevalier bleu',s:'knightB',row:0,hp:36,pm:3,init:9,dmg:[8,11],armor:.15,h:1.15,xp:20},
- knightR:{snd:'slash',n:'Chevalier rouge',s:'knightR',row:0,hp:48,pm:3,init:10,dmg:[11,14],armor:.2,h:1.2,xp:28},
- knightN:{snd:'smash',n:'Chevalier sombre',s:'knightN',row:0,hp:62,pm:4,init:12,dmg:[14,18],armor:.25,h:1.28,xp:40},
+ knightB:{ai:'tank',snd:'slash',n:'Chevalier bleu',s:'knightB',row:0,hp:36,pm:3,init:9,dmg:[8,11],armor:.15,h:1.15,xp:20},
+ knightR:{ai:'tank',snd:'slash',n:'Chevalier rouge',s:'knightR',row:0,hp:48,pm:3,init:10,dmg:[11,14],armor:.2,h:1.2,xp:28},
+ knightN:{ai:'tank',snd:'smash',n:'Chevalier sombre',s:'knightN',row:0,hp:62,pm:4,init:12,dmg:[14,18],armor:.25,h:1.28,xp:40},
  // V4.0 région 6 (spec Claude du 26/11, chiffres de départ) ; araignée et chauve-souris : planches provisoires
- crygolem:{snd:'golem_smash',n:'Golem cristallin',s:'crygolem',row:0,hp:56,pm:2,init:6,dmg:[11,15],armor:.25,h:1.05,xp:20},
- qspider:{snd:'spider_bite',n:'Araignée de quartz',s:'qspider',row:0,hp:28,pm:4,init:12,dmg:[6,9],r:[1,3],los:1,slow:1,fx:5,h:.8,xp:16},
- prisbat:{snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1}};
+ crygolem:{ai:'tank',snd:'golem_smash',n:'Golem cristallin',s:'crygolem',row:0,hp:56,pm:2,init:6,dmg:[11,15],armor:.25,h:1.05,xp:20},
+ qspider:{ai:'range',snd:'spider_bite',n:'Araignée de quartz',s:'qspider',row:0,hp:28,pm:4,init:12,dmg:[6,9],r:[1,3],los:1,slow:1,fx:5,h:.8,xp:16},
+ prisbat:{ai:'range',snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6;
