@@ -4,6 +4,7 @@
 - Direction : `Game-studio-ai/docs/studio/tactika/DIRECTION-PRODUCTION-V2.4.md` (priorités de Max, découpage V2.4a/b/c, pas d'équilibrage fin avant les tests de Max).
 - Corrections : détail des étoiles juste (`starList`), fuite pendant une animation (numéro de combat `G.fid` : une ancienne boucle de tours s'arrête, `cast` garde son propre état), `genMap` ne peut plus échouer (plateau dégagé en secours), sauvegarde versionnée (`v:2`) et vérifiée au chargement. Graine liée à l'or gardée (variété des cartes rejouées). 27 tests.
 - Camp : 4 bâtiments (`assets/bld.webp`, planche ChatGPT découpée par `cut3.py --scale 0.6` : 0 forge, 1 marchand, 2 maître d'armes, 3 taverne), sous le bouton Carte ; forge active en V2.4b, autres « bientôt ».
+- Images ChatGPT (26/11) : KO de Kael `kaelK` (case 0, `--scale 0.55`, ancre au milieu), marche de dos `fennB` (`--scale 0.515`) et `aelisB` (`--scale 0.459`), cycle [1,0,2,3] ; ces deux noms remplacent d'anciennes planches inutilisées. Échelle choisie pour la même hauteur que la pose de face (KO : largeur = hauteur debout). Décors `bg/plage.webp` (nouveau) et `bg/chateau.webp` (remplacé).
 - Impacts : flash blanc sur l'unité touchée (`flashT`), zoom bref (`punch`) sur critique, KO et collision, éclats de particules (`burst`) au KO et à la collision, chiffres qui grossissent à l'apparition.
 
 ## V2.3 gameplay (26/11/2026)
