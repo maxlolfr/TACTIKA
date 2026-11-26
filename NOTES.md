@@ -240,3 +240,6 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 ## V4.5b (27/11/2026, Opus) — IA à rôles (pilote Bois 1)
 - `MON[].ai` : `tank` (squelette, crabe, golems, chevaliers) reste à 2 cases au plus d'un monstre fragile et frappe en priorité le héros qui le menace ; `range` (champignon, fantôme, araignée, chauve-souris prismatique) recule une fois par tour s'il est collé, vers une case d'où il tire encore ; `flank` (sanglier, chauve-souris, loup, mouette) contourne vers Fenn ou Aelis s'ils sont joignables.
 - Coordination : `s.focus` = dernier héros frappé par un monstre ce tour ; les monstres suivants l'achèvent s'ils l'atteignent. Sans rôle (gelée) : comportement d'avant. `intent()` conserve le recul (annonce honnête). 74 tests.
+
+## V4.5c (27/11/2026) — relance du même sort : +1 PA (variante B)
+`PA_RULE.recast` (data.js), `costOf(u,sp)` (rules.js) partout : boutons (pastille orange quand le coût monte), aperçu, approche, robot. `u.casts` remis à zéro par `beginTurn`. Monstres non concernés. Comparatif 81 combats (graines 1–3) : B rallonge Bois 1 (std 3,3 → 4,0 tours) ; A (monstres 6 PA, attaque 3 PA) augmente les dégâts reçus sans rallonger et rend le Loup alpha ingagnable sous-équipé : écartée. `NO_B=1` / `VAR_A=1` dans sim.mjs pour refaire la comparaison. 75 tests.

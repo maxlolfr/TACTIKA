@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -140,14 +140,14 @@ export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){con
 
 // V4.1 : cible hors d'atteinte → meilleure case (dans les PM) d'où lancer le sort sur c, ou null.
 // Le moins de PM possible, puis une case amplifiée, puis la plus éloignée de la cible.
-export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,c,from)){if(u.pa<sp.pa||u.cd[sp.n]>0||ok(u))return null;let best=null,bs=null;
+export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,c,from)){if(u.pa<costOf(u,sp)||u.cd[sp.n]>0||ok(u))return null;let best=null,bs=null;
  for(const[k,cost]of rc.dist){if(!cost)continue;const[x,y]=k.split(',').map(Number),from={x,y};if(!ok(from))continue;
   const sc=cost*1000-(ampAt(s,from)>1?100:0)-man(from,c);if(!best||sc<bs){bs=sc;best={k,x,y,cost}}}
  return best}
 // ---------- aperçu de déplacement (V3.0e) : ennemis visables depuis la case `from`, sans rien modifier ----------
 // Sorts offensifs disponibles (assez de PA, sans recharge). Zone : un ennemi compte si une case visable le couvre.
 export function targetsFrom(s,u,from){const foes=s.units.filter(o=>!o.dead&&o.team!==u.team),all=new Set(),list=[];
- for(const id of u.sp){const sp=u.S[id];if(!sp.dmg||u.pa<sp.pa||u.cd[sp.n]>0)continue;
+ for(const id of u.sp){const sp=u.S[id];if(!sp.dmg||u.pa<costOf(u,sp)||u.cd[sp.n]>0)continue;
   const cells=sp.zone?[...s.map.values()].filter(c=>okTarget(s,u,sp,c,from)):null;
   const hit=foes.filter(f=>sp.zone?cells.some(c=>man(c,f)<=1):okTarget(s,u,sp,f,from));
   if(hit.length){list.push({sp,n:hit.length});for(const f of hit)all.add(f)}}
@@ -202,7 +202,9 @@ export function summon(s,b){const{k,n,hp,pm,dmg}=b.summon,m=MON[k],d=reach(s,b,4
    atk:{snd:m.snd,n:'Attaque',pa:4,r:[1,1],t:'enemy',dmg:[...dmg],fx:m.fx??0,proj:0}};s.units.push(u);s.order.push(u);out.push(u)}
  return out}
 // Paie le coût d'un sort (PA, recharge) et tourne l'unité vers la cible.
-export function payCost(u,sp,c){u.pa-=sp.pa;if(sp.cd)u.cd[sp.n]=sp.cd;face(u,c.x,c.y)}
+// V4.5c : coût réel d'un sort pour u ce tour-ci (relance du même sort : +1 PA pour les héros)
+export const costOf=(u,sp)=>sp.pa+(u.team==='h'&&u.casts&&u.casts[sp.n]?PA_RULE.recast:0);
+export function payCost(u,sp,c){u.pa-=costOf(u,sp);(u.casts||(u.casts={}))[sp.n]=(u.casts[sp.n]||0)+1;if(sp.cd)u.cd[sp.n]=sp.cd;face(u,c.x,c.y)}
 // Applique l'effet d'un sort sur la case c (après payCost). Renvoie la liste d'événements.
 export function applySpell(s,u,sp,c){
  if(u.team==='m'&&sp.dmg){const o=occ(s,c.x,c.y);if(o&&o.team!==u.team)s.focus={id:o.id,r:s.round}} // V4.5b : les autres monstres achèvent la même cible s'ils l'atteignent
@@ -255,7 +257,7 @@ export function push(s,t,p){const ev=[{type:'push',t,to:p.to}],dx=Math.sign(p.to
 // ---------- tours ----------
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x,y:u.y,i:5,w:.9},hurt(s,u,u.poison.d,'poison')];if(--u.poison.turns<=0)delete u.poison;return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.

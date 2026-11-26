@@ -642,3 +642,12 @@ test('IA : le tank reste près des monstres fragiles', ()=>{
  const s=arena5(),k=unit5({id:'h0',team:'h',hi:0,x:4,y:8}),g=unit5({id:'m0',team:'m',k:'golem',x:4,y:2,pm:2,atk:atk5()}),sh=unit5({id:'m1',team:'m',k:'shroom',x:4,y:0,atk:atk5([1,4])});
  s.units=[k,g,sh];const a=aiStep(s,g);const[x,y]=a.to.split(',').map(Number);assert.ok(man({x,y},sh)<=4);
 });
+
+// ---------- V4.5c : relance du même sort ----------
+import {costOf,payCost as pay5} from '../src/rules.js';
+test('PA : 2e lancer du même sort dans le tour = +1 PA, remis à zéro au tour suivant', ()=>{
+ const h={team:'h',pa:6,cd:{},x:0,y:0},sl=SP.slash,sh=SP.smash;
+ assert.equal(costOf(h,sl),3);pay5(h,sl,{x:1,y:0});assert.equal(h.pa,3);assert.equal(costOf(h,sl),4);assert.equal(costOf(h,sh),4); // autre sort : inchangé
+ beginTurn(h);assert.equal(costOf(h,sl),3);
+ const m={team:'m',pa:4,cd:{},x:0,y:0};pay5(m,sl,{x:1,y:0});assert.equal(costOf(m,sl),3); // monstres : pas concernés
+});
