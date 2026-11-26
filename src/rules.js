@@ -40,9 +40,12 @@ export function genMap(s,seed,th,cry){
 }
 
 // ---------- description d'un combat (carte, défi, simulateur) ----------
+// V4.5f : toute mission de survie a des vagues ; par défaut 6 tours, 3 + 1/2/1 élite/2, plafond 6, élite = élite de la zone (chevalier) ou son monstre le plus robuste, et pas d'élite au départ
+const defWave=(Z,i)=>({turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,Z.elite?.[i]||[...Z.pool].sort((a,b)=>MON[b].hp-MON[a].hp)[0]],[5,2]]});
 export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
- return{zi,i,lvl:f.lvl||Z.lvl+i,pool:Z.pool,boss:i===zlen(Z)-1?Z.boss:null,elite:Z.elite?.[i],en:f.en,cry:f.cry,tip:f.tip,
-  wave:Z.waves?.[i],goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]}}
+ const F={zi,i,lvl:f.lvl||Z.lvl+i,pool:Z.pool,boss:i===zlen(Z)-1?Z.boss:null,elite:Z.elite?.[i],en:f.en,cry:f.cry,tip:f.tip,
+  goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]};
+ if(F.goal==='survive')F.wave=Z.waves?.[i]||defWave(Z,i);return F}
 export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES[zi]);
 // ---------- progression ----------
 export const xpNeed=l=>60*l;
@@ -105,7 +108,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
- for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L?L[i]:i===1&&F.elite?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}
+ for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L?L[i]:i===1&&F.elite&&!F.wave?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}
  // repères stables A/B/C pour les monstres identiques
  for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+MON[c.k].n.toLowerCase()+(c.tag?' '+c.tag:''); // la lettre de repère reste en majuscule
@@ -195,6 +198,7 @@ export function zoneCenter(s,u,sp,t,from=u){let best=null,bs=-1e9;
 // Renvoie un événement, ou null si la cible est déjà morte.
 export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);
  let saved=false;if(t.lastStand&&amt>=t.hp){amt=t.hp-1;t.lastStand=0;saved=true} // Dernier rempart : une fois par combat
+ if(t.team==='h'&&(src==='quake'||src==='beam'))s.sigHit=1; // V4.5f : attaque signature subie
  t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else t.wasKO=1}
  const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};
  if(killed&&t.poison&&t.poison.spread){e.spread=[];for(const[dx,dy]of DIRS){const o=occ(s,t.x+dx,t.y+dy); // Contagion : ne se propage pas plus loin
@@ -297,8 +301,12 @@ export function waveEmpty(s){const w=s.wave;if(!w||liveM(s).length||!w.q.length|
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
  if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>(s.surv||SURVIVE))return'win';if(!m&&s.wave){if(s.wave.q.length)return null;s.cleared=1}return m?null:'win'}
 
-// Étoiles d'un combat gagné : victoire, aucun héros KO, fini en 5 tours de table (boss : 7).
-export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&(u.dead||u.wasKO)),s.wave?!!s.cleared:s.round<=STAR_ROUNDS[boss?'boss':'fight']]; // V4.5a survie : 3e étoile = toutes les vagues éliminées
+// Étoiles d’un combat gagné : victoire, aucun héros KO, objectif de maîtrise (star3, V4.5f).
+// V4.5f : 3e étoile selon l'objectif (spec ChatGPT 27/11). Survie : toutes les vagues éliminées. Boss à attaque signature (Séisme, Rayon) déclenchée : ne jamais la subir.
+// Sinon (combat, chef, autres boss) : tous les héros debout avec au moins 50 % de leurs PV.
+export const star3=(s,boss)=>s.wave?['waves',!!s.cleared]:boss&&s.sigUsed?['sig',!s.sigHit]:['hp',s.units.filter(u=>u.team==='h').every(u=>!u.dead&&u.hp>=u.max/2)];
+export const STAR3_TXT={waves:'Toutes les vagues éliminées',sig:'Attaque signature du boss évitée',hp:'Tous les héros à 50 % de PV ou plus'};
+export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&(u.dead||u.wasKO)),star3(s,boss)[1]];
 export const stars=(s,boss)=>starList(s,boss).filter(Boolean).length;
 
 // ---------- IA ennemie ----------
@@ -340,7 +348,7 @@ export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
- if(u.bs==='quake'){ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6);
+  if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6);
   for(const h of s.units)if(h.team!==u.team&&!h.dead&&Math.abs(h.x-u.x)+Math.abs(h.y-u.y)<=3){ev.push({type:'fx',x:h.x,y:h.y,i:7,w:1.2});const e=hurt(s,h,d,'quake');if(e)ev.push(e)}}
  return ev}
 // ---------- V4.0c : Titan prismatique ----------
@@ -358,7 +366,7 @@ function beamTurn(s,u,ev){const ph=beamPhase(u);
  u.bt=(u.bt||0)+1;
  if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'beam',from:b.o||{x:u.x,y:u.y},cells:b.cells},{type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'beam_fire'},{type:'shake',ms:450});
   for(const c of b.pr){c.off=s.round+PRISM_OFF;ev.push({type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'})}
-  for(const p of b.cells){const h=occ(s,p.x,p.y),e=h&&h.team!==u.team&&hurt(s,h,d,'beam');if(e)ev.push(e)}}
+  s.sigUsed=1;for(const p of b.cells){const h=occ(s,p.x,p.y),e=h&&h.team!==u.team&&hurt(s,h,d,'beam');if(e)ev.push(e)}}
  else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).

@@ -249,3 +249,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V4.5e (27/11/2026) — Loup alpha à deux phases
 `boss.summon` généralisé (`sn` nom, `snd` son) : sous 50 % PV, appel de la meute (2 Loups de meute, 28 PV, sans XP, une seule fois) ; ensuite hurlement tous les 2 tours au lieu de 3 (`bossP`). Mesure 60 combats : std 9/10 → 8/10, 5,4 → 6,4 tours, PV restants 62 → 43 % ; sous-équipée 6/10 → 3/10 ; optimisée 10/10, 4,2 → 4,7. 77 tests.
+
+## V4.5f (27/11/2026) — survie à vagues partout, 3e étoile selon l'objectif
+- Toute mission « survie » (Bois, Côte, Monts, Château combat 3, Cavernes 7) a des vagues : `defWave(Z,i)` (6 tours, 3 + 1/2/1 élite/2, plafond 6) sauf données propres (`ZONES[].waves`). Une seule élite, l'élite de la zone (chevalier) ou son monstre le plus robuste, au tour 4 ; plus d'élite au départ.
+- 3e étoile (`star3`, `STAR3_TXT`) : survie = toutes les vagues ; boss à attaque signature déclenchée (Séisme, Rayon) = ne jamais la subir ; sinon tous les héros debout à 50 % de PV ou plus. La règle des « 5 tours » disparaît. Anciens records gardés.
+- XP, rareté, forge : non touchées (lot 3C non nécessaire avant les tests de Max). Golem ancien : déjà un mur avant V4.5 (robot 1/3 en std), à revoir après tests. 51 combats simulés, 77 tests.

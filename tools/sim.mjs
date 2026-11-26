@@ -58,7 +58,7 @@ function reward(save,r){const{F,s}=r,z=ZONES[F.zi].id,first=(save.z[z]||0)===F.i
 // ---------- mode pilote (V4.5) : 3 missions × 3 profils × graines fixes ----------
 // sous = niveau −2, sans objet ni talent · std = niveau de la mission, 4 objets communs, Gardien/Tireur/Guérisseuse · opti = niveau +2, 10 objets rares forge 2, Berserker/Tireur/Enchanteresse
 const PROF={sous:{dl:-2,items:[],rr:0,up:0,sp:[null,null,null]},std:{dl:0,items:[0,4,7,5],rr:0,up:0,sp:['gardien','tireur','guerisseuse']},opti:{dl:2,items:[...ITEMS.keys()],rr:1,up:2,sp:['berserk','tireur','enchant']}};
-const PIL={bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3]};
+const PIL={bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,ZONES[zi].lvl+i+p.dl),R=[];
