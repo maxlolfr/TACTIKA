@@ -276,7 +276,7 @@ export function beamCells(s,u){const ph=beamPhase(u),heroes=s.units.filter(h=>h.
  return{by:u,cells:cells.filter((p,i)=>cells.findIndex(q=>q.x===p.x&&q.y===p.y)===i),pr}}
 export const beamDmg=u=>Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*(u.dmgMul||1));
 function beamTurn(s,u,ev){const ph=beamPhase(u);
- if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'enemy_warning'},{type:'shake',ms:300})}
+ if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'titan_roar'},{type:'shake',ms:300})}
  u.bt=(u.bt||0)+1;
  if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'beam_fire'},{type:'shake',ms:350});
   for(const c of b.pr){c.off=s.round+PRISM_OFF;ev.push({type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'})}

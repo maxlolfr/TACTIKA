@@ -1,13 +1,15 @@
 // Audio : Web Audio, fichiers ElevenLabs dans assets/audio/<nom>.mp3, sons synthétisés de secours.
-export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal','push','collision','combo_2','combo_3','trap','dodge','crystal_amp','prism_burst','beam_charge','beam_fire'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle','cave'];
+export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal','push','collision','combo_2','combo_3','trap','dodge','crystal_amp','prism_burst','beam_charge','beam_fire','golem_smash','spider_bite','bat_shriek','titan_roar','titan_death','chest_open','loot_rare','boss_intro'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle','cave','titan_boss','coast','mountain','castle'];
 // tant qu'un nouveau fichier manque, on joue son équivalent existant
-const FALL={main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle'};
+const FALL={main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle',golem_smash:'smash',spider_bite:'bite',bat_shriek:'poison',titan_roar:'enemy_warning',titan_death:'death',chest_open:'coin',loot_rare:'levelup',boss_intro:'enemy_warning',titan_boss:'boss',coast:'battle',mountain:'battle',castle:'battle'};
+// V4.0.3 : sons rangés dans assets/audio/musique (musiques, victoire, défaite) et assets/audio/bruitages ; catalogue : assets/audio/SONS.md
+const dir=n=>MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=AU.c=new C();
  AU.mix=c.createGain();AU.mix.connect(c.destination);AU.m=c.createGain();AU.m.gain.value=AU.on.m?.45:0;AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=AU.on.s?.8:0;AU.s.connect(AU.mix);
- for(const n of[...SNDS,...MUSICS])fetch('assets/audio/'+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>c.decodeAudioData(b,ok,ko))).then(b=>{AU.buf[n]=b;if(MUSICS.includes(n)&&AU.want===n)music(n,1)}).catch(()=>{});
+ for(const n of[...SNDS,...MUSICS])fetch('assets/audio/'+dir(n)+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>c.decodeAudioData(b,ok,ko))).then(b=>{AU.buf[n]=b;if(MUSICS.includes(n)&&AU.want===n)music(n,1)}).catch(()=>{});
  if(AU.want)music(AU.want,1)}
 // iPhone : le son ne se débloque que sur un vrai toucher (touchend/click), et le mode silencieux coupe Web Audio sauf en session « playback »
 try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}

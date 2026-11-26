@@ -13,17 +13,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Télécharger et compresser
         run: |
-          sudo apt-get -qq install -y ffmpeg >/dev/null
-          mkdir -p assets/audio
+          sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y ffmpeg >/dev/null
+          mkdir -p assets/audio/musique assets/audio/bruitages
           while read -r name url; do
             [ -z "$name" ] && continue
             curl -sSfL "$url" -o "/tmp/$name.mp3"
             case "$name" in
-              camp|battle|boss|main_theme|forest|elite_battle|cave) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
-              victory|defeat) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "assets/audio/$name.mp3" ;;
-              *) ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 1 -b:a 64k "assets/audio/$name.mp3" ;;
+              camp|battle|boss|main_theme|forest|elite_battle|cave|titan_boss|coast|mountain|castle|victory|defeat) out="assets/audio/musique/$name.mp3"; ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 2 -b:a 96k "$out" ;;
+              *) out="assets/audio/bruitages/$name.mp3"; ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 1 -b:a 64k "$out" ;;
             esac
-            echo "$name $(du -h assets/audio/$name.mp3 | cut -f1)"
+            echo "$name $(du -h "$out" | cut -f1)"
           done < tools/audio-urls.txt
       - name: Enregistrer
         run: |
