@@ -12,7 +12,7 @@ export function play(events){for(const e of events){switch(e.type){
   if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx(t.bs==='beam'?'titan_death':'death'),150)}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
-  if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx('slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
+  if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);if(e.snd)sfx(e.snd,.8);break;
  case 'shake':shake(e.ms);break;
