@@ -7,7 +7,7 @@ import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
-const OLD=['warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
+const OLD=['kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)).map(n=>new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;ok()};i.onerror=()=>ko(n);i.src='assets/'+n+'.webp'})));
@@ -69,18 +69,20 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
 
 // ---------- image d'une unité ----------
 // Héros V2 (planches ChatGPT) : planche de marche W, planche de poses X
-const HN={warrior:{F:['kaelW',[0,1,2,3]],B:['kaelW',[4,5,6,7]],i:['kaelW',0],iB:['kaelW',4],a:['kaelX',1],c:['kaelX',3],b:['kaelX',2],v:['kaelX',3],ko:['kaelK',0]},
- archer:{F:['fennX',[0,1,2,1]],B:['fennB',[1,0,2,3]],i:['fennX',0],iB:['fennB',0],a:['fennX',3],c:['fennX',5],b:['fennX',0],v:['fennX',6],ko:['fennX',7]},
- healer:{F:['aelisX',[0,1,2,3]],B:['aelisB',[1,0,2,3]],i:['aelisX',0],iB:['aelisB',0],a:['aelisX',4],c:['aelisX',5],b:['aelisX',4],v:['aelisX',6],ko:['aelisX',7]}};
+// poses : planches <héros>9 (ChatGPT, 26/11) ; marche et vues de dos : anciennes planches en attendant la commande H-04
+const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v:[n,8]});
+const HN={warrior:P9('kael9',['kaelW',[0,1,2,3]],['kaelW',[4,5,6,7]],['kaelW',4]),
+ archer:P9('fenn9',['fennX',[0,1,2,1]],['fennB',[1,0,2,3]],['fennB',0]),
+ healer:P9('aelis9',['aelisX',[0,1,2,3]],['aelisB',[1,0,2,3]],['aelisB',0])};
 export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2,back=u.dir===2||u.dir===3;
  if(u.team==='h'){const h=HN[u.k],rf=AT[h.i[0]][h.i[1]][3];
   if(u.dead)return h.ko?[...h.ko,right,rf]:[...h.i,right,rf];
-  if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],right,rf]}
+  if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],right,AT[w[0]][w[1][0]][3]]}
   if(h[p]&&p!=='i')return[...h[p],right,rf];
   if(u.shield>0)return[...h.b,right,rf];
-  return[...(back&&h.iB?h.iB:h.i),right,rf]}
+  return back?[...h.iB,right,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,right,rf]:[...h.i,right,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
  if(u.dead&&u.s==='roiG')return['roiG',4,right,u.ref];
  return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
