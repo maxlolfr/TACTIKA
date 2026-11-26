@@ -56,6 +56,11 @@ export const ZONES=[
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
 // V4.7a : sl = emplacement (arme, armure, bijou, accessoire). Seul l'objet équipé dans chaque emplacement donne son bonus (save.eq).
+// V4.7c : caractéristiques. 1 point par niveau et par héros (niveau 1 : 0 point). who = héros pour qui elle sert.
+// Effet par point « utile » : les 10 premiers comptent en entier, les 10 suivants à moitié, le reste au quart.
+export const ATTR={for:{n:'Force',who:[0,1],d:'+1 % de dégâts',dmg:.01},int:{n:'Intelligence',who:[2],d:'+1 % de dégâts et de soins',dmg:.01},
+ vit:{n:'Vitalité',who:[0,1,2],d:'+2 % de PV',hp:.02},agi:{n:'Agilité',who:[0,1,2],d:'+0,5 % de critique, +0,4 % d’esquive',crit:.005,dodge:.004}};
+export const CRIT_CAP=.35,DODGE_CAP=.25; // plafonds atteignables avec l'Agilité (un talent plus fort garde sa valeur)
 export const SLOTS={arme:'Arme',armure:'Armure',bijou:'Bijou',accessoire:'Accessoire'};
 export const ITEMS=[
  {ic:0,n:'Épée courte',pr:60,who:0,dmg:2,sl:'arme'},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3,sl:'arme'},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8,sl:'accessoire'},{ic:5,n:'Heaume',pr:70,who:0,hp:6,sl:'armure'},
