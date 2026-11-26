@@ -223,3 +223,10 @@ body.camp #exc{display:none}
 .zone.edge b{white-space:normal;width:92px;line-height:1.15;text-align:center}
 .ractions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
 @media (orientation:landscape) and (max-height:600px){#result .ractions{margin-top:8px}}
+
+/* V4.4 : zoom du plateau */
+#cv{touch-action:none}
+#unzoom{position:fixed;right:8px;z-index:3;display:none;padding:7px 11px;font-size:12px}
+#unzoom.on{display:block}body.camp #unzoom{display:none}
+@media (orientation:landscape){#unzoom{right:calc(var(--side) + env(safe-area-inset-right) + 8px)}}
+@media (orientation:portrait){body:has(#exc.on) #unzoom{display:none}} /* la carte de visée prend cette place */
