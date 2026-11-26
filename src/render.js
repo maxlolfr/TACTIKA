@@ -175,8 +175,11 @@ function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;const kin
  ctx.restore()}
 
 // ---------- boucle de dessin ----------
+// mode test (V4.0.2) : ?fps dans l'adresse affiche les images par seconde (moyenne sur 1 s) et le plus long écart
+const FPS=/[?&]fps/.test(location.search)&&Object.assign(document.body.appendChild(document.createElement('div')),{id:'fps'});let fN=0,fT=0,fMax=0,fLast=0;
+if(FPS)FPS.style.cssText='position:fixed;left:4px;bottom:4px;z-index:99;background:#000a;color:#7f7;font:12px monospace;padding:2px 5px;border-radius:4px;pointer-events:none';
 export function draw(now){
- requestAnimationFrame(draw);const{phase,cur,sel,busy,reachC}=G,S=G.s,units=S.units;if(!ground||phase==='camp')return;
+ requestAnimationFrame(draw);if(FPS){fN++;fMax=Math.max(fMax,now-(fLast||now));fLast=now;if(now-fT>1000){FPS.textContent=`${Math.round(fN*1000/(now-fT))} i/s · max ${Math.round(fMax)} ms`;fN=0;fT=now;fMax=0}}const{phase,cur,sel,busy,reachC}=G,S=G.s,units=S.units;if(!ground||phase==='camp')return;
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingQuality='high';
  const sh=shakeT>now?(Math.random()-.5)*6:0;ctx.translate(sh,sh*.5);
  if(punchE>now){const t=(punchE-now)/punchP.ms,[px,py]=scr(punchP.x,punchP.y),k=1+punchP.k*Math.sin(t*Math.PI);ctx.translate(px,py);ctx.scale(k,k);ctx.translate(-px,-py)}

@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,ampAt,prismOn,beamDmg} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,ampAt,prismOn,beamDmg} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -68,9 +68,9 @@ export async function startFight(zi,i,F){
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);$('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
- mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);addRefs(S.units);S.rng=Math.random;
+ mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
- layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);const go=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight;if(save.tuto)go();else tuto(go);
+ layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':zid==='cristal'?'cave':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);const go=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
 const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche une case <b style="color:#ffa040">orange</b> ou le portrait d’un ennemi.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
