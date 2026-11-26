@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -54,6 +54,21 @@ export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save
 export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
 export function sell(save,j){if(!save.items.includes(j))return 0;const g=sellPrice(save,j);save.gold+=g;save.items=save.items.filter(x=>x!==j);if(save.up)delete save.up[j];return g}
 export function buyPot(save){if((save.pot||0)>=POTION.max||save.gold<POTION.cost)return 0;save.gold-=POTION.cost;save.pot=(save.pot||0)+1;return 1}
+// ---------- taverne (V2.6b) : 3 contrats par jour, tirés une fois puis gardés dans la sauvegarde ----------
+// win : gagner n combats · kill : vaincre n monstres d'une espèce (zones ouvertes) · star : n victoires à 3 ★ · boss : vaincre un boss
+export function contracts(save,day){if(save.ct&&save.ct.d===day)return save.ct.l;
+ const r=mulberry(day*7919),open=ZONES.filter((z,i)=>i===0||(save.z&&save.z[ZONES[i-1].id]||0)>=4),pool=[...new Set(open.flatMap(z=>z.pool))];
+ const g=20+8*save.lvl,x=15*save.lvl,c=(o,k=1)=>({...o,g:Math.round(g*k),x:Math.round(x*k),p:0,c:0});
+ const third=r()<.5&&save.z&&Object.values(save.z).some(v=>v>=4)?c({k:'boss',n:1},1.5):c({k:'star',n:1+(r()<.3)},1.2);
+ save.ct={d:day,l:[c({k:'win',n:2+ri(r,0,2)}),c({k:'kill',m:pick(r,pool),n:5+ri(r,0,4)}),third]};return save.ct.l}
+// res : {win,st (étoiles),boss,kills:{espèce:nombre}}. Renvoie les contrats tout juste terminés.
+export function ctUpdate(save,day,res){const done=[];if(!res.win)return done;
+ for(const t of contracts(save,day)){if(t.c||t.p>=t.n)continue;
+  t.p=Math.min(t.n,t.p+(t.k==='win'?1:t.k==='kill'?res.kills[t.m]||0:t.k==='star'?+(res.st===3):+!!res.boss));if(t.p>=t.n)done.push(t)}return done}
+export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p<t.n)return 0;t.c=1;save.gold+=t.g;return 1+gainXp(save,t.x)}
+// défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
+export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&(save.z[ZONES[zi].id]||0)>=4)zi++;const Z=ZONES[zi];
+ return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length]}}
 export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.

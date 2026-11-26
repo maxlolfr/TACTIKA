@@ -363,3 +363,18 @@ test('potion : soigne 40 % une fois, rien sans potion', ()=>{
  const ev=applySpell(s,u,SP.potion,{x:0,y:0});assert.equal(u.hp,50);assert.equal(s.pot,0);assert.ok(ev.some(e=>e.type==='heal'));
  assert.deepEqual(applySpell(s,u,SP.potion,{x:0,y:0}),[]);assert.equal(u.hp,50);
 });
+
+// ---------- V2.6b taverne ----------
+import {contracts,ctUpdate,claim,dailyFight} from '../src/rules.js';
+test('taverne : contrats du jour stables, progression, récompense une seule fois', ()=>{
+ const sv={lvl:3,xp:0,gold:0,z:{prairie:1}},a=contracts(sv,500);
+ assert.equal(a.length,3);assert.ok(['slime','boar'].includes(a[1].m));assert.equal(contracts(sv,500),a);assert.equal(a[2].k,'star');
+ assert.deepEqual(ctUpdate(sv,500,{win:0,st:3,kills:{}}),[]);
+ for(let i=0;i<a[0].n;i++)ctUpdate(sv,500,{win:1,st:1,kills:{}});assert.equal(a[0].p,a[0].n);
+ assert.equal(claim(sv,500,1),0);assert.ok(claim(sv,500,0)>=1);assert.equal(sv.gold,44);assert.equal(claim(sv,500,0),0);
+ const b=contracts(sv,501);assert.notEqual(b,a);assert.equal(b[0].p,0);
+});
+test('défi du jour : zone la plus avancée, sans boss', ()=>{
+ const F=dailyFight({z:{prairie:4,bois:2}},10);assert.equal(F.zi,1);assert.equal(F.lvl,ZONES[1].lvl+4);assert.equal(F.boss,null);assert.equal(F.daily,1);
+ assert.equal(dailyFight({z:{}},10).zi,0);
+});
