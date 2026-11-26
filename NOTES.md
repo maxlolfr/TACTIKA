@@ -98,3 +98,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Essais Playwright : 844×390, 932×430, 667×375, 890×790, 1280×800, 412×900, 790×890 ; touchers justes sur toutes les cases atteignables avant et après rotation.
 - Limite : Chrome de test, pas de vraie encoche iOS ni de Safari : à confirmer sur iPhone.
 - Sol, compléments : périphérie assombrie en dégradé, cases avec décor bloquant assombries avec ombre, cibles valables cerclées de clair, seuls les monstres volants oscillent.
+
+## V3.0e (26/11/2026) — aperçu de déplacement, première mission, HUD
+- Aperçu : 1er toucher sur une case bleue = trajet, fantôme, coût en PM, viseurs sur les ennemis visables de là (`targetsFrom`, pur et testé) ; 2e toucher sur la même case = déplacement (`G.plan`).
+- Première mission (Prairie combat 1, tant qu'elle n'est pas gagnée) : 3 Gelées, `guideSetup` garantit un Tir dès le tour 1 et une 2e cible ouvrable en bougeant (testé sur 300 graines) ; conseil par héros sous les sorts, bouton Tir qui pulse.
+- HUD : frise sur sa propre ligne en portrait, noms sous les sorts, textes plus courts, hauteur de panneau constante (le plateau passait jusqu'à 32 px dessous sur pliable en portrait). 52 tests.

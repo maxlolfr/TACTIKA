@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -28,10 +28,16 @@ function render(){renderTL();
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
   b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));b.insertAdjacentHTML('beforeend',`<b>${sp.pa}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
-  b.disabled=!me||G.busy||u.pa<sp.pa||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
+  b.insertAdjacentHTML('beforeend',`<small>${sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${sp.pa} PA`);
+  if(me&&!sel&&F&&F.guide&&id==='shot'&&u.pa>=sp.pa&&targetsFrom(G.s,u,u).foes.length)b.classList.add('coach');
+  b.disabled=!me||G.busy||u.pa<sp.pa||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
  $('end').disabled=!me||G.busy;
- $('hint').textContent=!me?`${u.n} joue.`:sel?`${sel.sp.n} — ${sel.sp.d}. ${sel.sp.dmg?sel.sp.dmg.join('–')+' dégâts · ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins · ':''}portée ${sel.sp.r.join('–')}. Touche une case orange ou un portrait d’ennemi.`:`Touche une case bleue pour bouger, ou choisis un sort.`;
+ $('hint').textContent=!me?`${u.n} joue.`:sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' dégâts, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins, ':''}${sel.sp.r[1]?`portée ${sel.sp.r.join('–')}`:'sur soi'}. ${sel.sp.d}.`:F&&F.guide?coach(u):`Case bleue : aperçu, puis retouche pour y aller. Ou choisis un sort.`;
 }
+function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
+ if(u.k==='archer')return t&&u.pa>=3?'🎯 Une Gelée est déjà à portée : touche « Tir », puis la Gelée.':u.pm?go+' Le 🎯 compte les ennemis visables de là.':'Bien joué ! Touche « Fin du tour ».';
+ if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
+ return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
 const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')+(o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')};
 function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
  if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(S.pot>0)||u.hp>=u.max))&&selCells(S,u,sp).some(c=>c.ok)}))return;
@@ -43,12 +49,15 @@ cv.addEventListener('pointerdown',e=>{if(G.phase==='fight'&&!G.busy)act(tapCell(
 async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  if(!u||u.team!=='h'){if(o)$('hint').textContent=info(o);return}
  if(G.sel){const hit=G.sel.cells.find(s=>s.x===c.x&&s.y===c.y&&s.ok);if(hit){const sp=G.sel.sp;G.sel=null;await cast(u,sp,c);if(end())return;G.reachC=reach(G.s,u,u.pm);render();autoEnd()}else{const w=whyNot(G.s,u,G.sel.sp,c);$('hint').textContent=(o?info(o)+' · ':'')+(w?w.t+'. ':'Hors de portée. ')+'Touche une cible entourée, ou retouche le sort pour l’annuler.';G.mark=w&&w.at?{...w.at,until:Date.now()+2200}:null}return}
- const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();noTarget(u);autoEnd();return}
- if(o)$('hint').textContent=info(o)}
+ const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
+  if(!G.plan||G.plan.x!==c.x||G.plan.y!==c.y){const t=targetsFrom(G.s,u,c),cost=G.reachC.dist.get(k);G.plan={x:c.x,y:c.y,cost,foes:t.foes,path:pathTo(u,k,G.reachC.prev)};sfx('click',.5);
+   $('hint').textContent=`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
+  G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();noTarget(u);autoEnd();return}
+ if(G.plan){G.plan=null;render()}if(o)$('hint').textContent=info(o)}
 // après un déplacement : prévient s'il ne reste aucune cible pour les sorts offensifs
 function noTarget(u){const off=u.sp.map(id=>u.S[id]).filter(sp=>sp.dmg&&u.pa>=sp.pa&&!(u.cd[sp.n]>0));if(!off.length)return;
  if(!off.some(sp=>selCells(G.s,u,sp).some(c=>c.ok)))$('hint').textContent='Aucune cible à portée depuis cette case. Déplace-toi encore ou passe le tour.'}
-$('end').onclick=()=>{if(G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}};
+$('end').onclick=()=>{if(G.endTurnResolve&&!G.busy){G.plan=null;G.sel=null;G.reachC=null;G.endTurnResolve()}};
 let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-fleeArm<2500){G.phase='lose';G.fid++;if(G.endTurnResolve)G.endTurnResolve();result(false,true)}else{fleeArm=Date.now();$('flee').textContent='Sûr ?';setTimeout(()=>$('flee').textContent='Fuir',2500)}};
 
 // ---------- écrans ----------
@@ -56,12 +65,13 @@ const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5
 export function startFight(zi,i,F){
  const Z=ZONES[zi];G.F=F||{zi,i,lvl:Z.lvl+i,pool:Z.pool,boss:i===3?Z.boss:null,goal:zi&&i===1?'chief':zi&&i===2?'survive':null,seed:zi*1000+i*97+save.gold,th:Z.th[i%Z.th.length]};
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
- resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th);mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));addRefs(S.units);S.rng=Math.random;
- G.turn=-1;G.cur=null;G.sel=null;G.phase='fight';G.fid++;
+ resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
+ mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);addRefs(S.units);S.rng=Math.random;
+ G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
  layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);if(save.tuto)runFight();else tuto(runFight);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
-const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue</b> pour te <b>déplacer</b> (PM). Chaque héros a 3 PM par tour.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche une case <b style="color:#ffa040">orange</b> ou le portrait d’un ennemi.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
+const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche une case <b style="color:#ffa040">orange</b> ou le portrait d’un ennemi.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
 export function tuto(done,i=0){const T=$('tuto');T.classList.add('on');T.innerHTML=`<small>Tutoriel ${i+1}/${TUTO.length}</small><p>${TUTO[i]}</p>`;
  const b=document.createElement('button');b.className='btn';b.textContent=i<TUTO.length-1?'Suivant':'Compris !';b.onclick=()=>i<TUTO.length-1?tuto(done,i+1):(T.classList.remove('on'),save.tuto=1,store(),done&&done());T.append(b);
  if(i<TUTO.length-1){const s=document.createElement('button');s.className='btn dark';s.style.marginLeft='8px';s.textContent='Passer';s.onclick=()=>{T.classList.remove('on');save.tuto=1;store();done&&done()};T.append(s)}}
@@ -140,13 +150,13 @@ function tav(){$('camp').classList.remove('on');const T=$('tav');T.classList.add
  const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 3.0d · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 3.0e · combats tactiques au tour par tour</div>`;
  const A=document.createElement('div'),B=document.createElement('div');A.className=B.className='col';A.append(...C.childNodes);C.append(A,B);
  A.appendChild(party());
  A.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);A.appendChild(st);
  const b=document.createElement('button');b.className='btn';b.style.cssText='font-size:18px;padding:14px 34px';b.textContent='Carte du monde';b.onclick=worldMap;A.appendChild(b);B.appendChild(town());
- B.insertAdjacentHTML('beforeend',`<div class="how"><b>Comment jouer</b> <button class="btn dark" id="rtuto" style="font-size:11px;padding:3px 9px;margin-left:6px">Revoir le tutoriel</button><br>Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.</div>`);
+ B.insertAdjacentHTML('beforeend',`<div class="how"><b>Comment jouer</b> <button class="btn dark" id="rtuto" style="font-size:11px;padding:3px 9px;margin-left:6px">Revoir le tutoriel</button><br>Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, puis une case <b style="color:#ffa040">orange</b>. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.</div>`);
  const r=document.createElement('button');r.className='btn dark';r.style.cssText='font-size:12px;padding:7px 12px';r.textContent='Recommencer à zéro';
  r.onclick=()=>{if(r.dataset.arm){resetSave();camp()}else{r.dataset.arm=1;r.textContent='Touche encore pour effacer'}};B.appendChild(r);
  C.querySelector('#rtuto').onclick=()=>tuto();B.insertAdjacentHTML('beforeend',`<div style="display:flex;gap:8px;margin-top:12px"><button class="btn dark son-m" data-act="son-m">♪ Musique</button><button class="btn dark son-s" data-act="son-s">🔊 Sons</button><button class="btn dark" id="svb">💾 Sauvegarde</button></div><div class="sig">maxlolfr · GitHub</div>`);C.classList.add('on');sonBtns();C.querySelector('#svb').onclick=saveDlg;

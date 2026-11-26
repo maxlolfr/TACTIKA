@@ -125,6 +125,22 @@ export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp
 export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){const d=man(u,c);if(d<sp.r[0]||d>sp.r[1])continue;
  out.push({x:c.x,y:c.y,los:!sp.los||d<=1||los(s,u,c,u),ok:okTarget(s,u,sp,c)})}return out}
 
+// ---------- aperçu de déplacement (V3.0e) : ennemis visables depuis la case `from`, sans rien modifier ----------
+// Sorts offensifs disponibles (assez de PA, sans recharge). Zone : un ennemi compte si une case visable le couvre.
+export function targetsFrom(s,u,from){const foes=s.units.filter(o=>!o.dead&&o.team!==u.team),all=new Set(),list=[];
+ for(const id of u.sp){const sp=u.S[id];if(!sp.dmg||u.pa<sp.pa||u.cd[sp.n]>0)continue;
+  const cells=sp.zone?[...s.map.values()].filter(c=>okTarget(s,u,sp,c,from)):null;
+  const hit=foes.filter(f=>sp.zone?cells.some(c=>man(c,f)<=1):okTarget(s,u,sp,f,from));
+  if(hit.length){list.push({sp,n:hit.length});for(const f of hit)all.add(f)}}
+ return{foes:[...all],list}}
+// ---------- première mission guidée (V3.0e) ----------
+// Une cible à portée de Tir dès le 1er tour de Fenn (6 cases en face), une 2e que le déplacement ouvre (7 cases).
+export function guideSetup(s){const f=s.units.find(u=>u.k==='archer'),m=s.units.filter(u=>u.team==='m');if(!f||m.length<2)return;
+ const spots=[{x:f.x-3,y:f.y-3},{x:f.x-2,y:f.y-5}];
+ // dégage les deux couloirs (obstacles et eau) entre les héros et ces cases
+ for(const c of s.map.values())if(c.x<=f.x&&c.y<=f.y&&c.x>=spots[1].x-1&&c.y>=spots[1].y&&(c.block||c.water)){delete c.block;delete c.water;delete c.d;c.t=s.theme.g[0]}
+ spots.forEach((p,i)=>{const o=occ(s,p.x,p.y);if(o&&o!==m[i])return;Object.assign(m[i],{x:p.x,y:p.y,gx:p.x,gy:p.y})})}
+
 // ---------- dégâts, sorts ----------
 // Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât. Renvoie un événement, ou null si la cible est déjà morte.
 export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));amt=Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))));
