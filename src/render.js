@@ -7,7 +7,8 @@ import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
-const BS=['roiG','golemK','crabK','wolfK','knightK'];
+// planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
+const BS=['roiG','golemK','crabK','wolfK','knightK','slimeN','boarN'];
 const OLD=['aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
@@ -86,6 +87,7 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
   return back?[...h.iB,right,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,right,rf]:[...h.i,right,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
  // planches de boss (ChatGPT) : regard à droite, 6 cases repos, attaque, touché, spécial, KO, repos 2
+ if(BS.includes(u.s)&&u.walk&&AT[u.s].length>=10)return[u.s,6+u.wf%4,!right,u.ref];
  if(BS.includes(u.s))return u.dead?[u.s,4,!right,u.ref]:[u.s,{i:0,a:1,h:2,s:3}[p],!right,u.ref];
  return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
 

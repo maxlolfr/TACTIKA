@@ -75,7 +75,8 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
   F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${own.length}/${all} objets</small></h3>`);
   if(!own.length)F.insertAdjacentHTML('beforeend','<div class="sub">Aucun objet pour l’instant : gagne des combats pour en trouver.</div>');
   for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon('items',o.ic,44));
-   r.insertAdjacentHTML('beforeend',`<div><b>${o.n}</b> <span class="pips">${'◆'.repeat(l)}<i>${'◆'.repeat(3-l)}</i></span><br><small>+${itemVal(o,k,l)} ${STAT[k]}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1)}</b>`:' · maximum'}</small></div>`);
+   r.insertAdjacentHTML('beforeend',`<div><b>${o.n}</b> <span class="pips"></span><br><small>+${itemVal(o,k,l)} ${STAT[k]}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1)}</b>`:' · maximum'}</small></div>`);
+   r.querySelector('.pips').append(icon('badge',l?l-1:3,30)); // badge du niveau d'amélioration (cadenas = jamais amélioré)
    const b=document.createElement('button');b.className='btn'+(c!=null&&save.gold>=c?'':' dark');b.disabled=c==null||save.gold<c;b.innerHTML=c==null?'Max':`${c} <img src="${uiURL(14)}">`;
    b.onclick=()=>{F.querySelectorAll('.frow .btn').forEach(x=>x.disabled=true);if(!upgrade(save,j))return forge();store();
     sfx('smash',.6);setTimeout(()=>sfx('coin',.7),180);r.classList.add('forged');addPop(r,'+1');setTimeout(forge,650)};
