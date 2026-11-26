@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -414,7 +414,7 @@ test('whyNot : portée, obstacle, allié bloquant, cohérent avec okTarget', ()=
  s.units=[f,al,e,far];const shot=SP.shot;
  assert.equal(whyNot(s,f,shot,e).t,'Kael bloque le tir');{const b=losBlock(s,f,e,f);assert.ok(b.x===2&&b.y==0&&b.u===al)}
  assert.match(whyNot(s,f,shot,far).t,/À 9 cases, portée max. 6/);assert.match(whyNot(s,f,shot,al).t,/Trop près|allié/);
- s.map.get(K(3,0)).block=1;al.x=0;al.y=2;assert.equal(whyNot(s,f,shot,e).t,'Un obstacle bloque le tir');
+ s.map.get(K(3,0)).block=1;al.x=0;al.y=2;assert.equal(whyNot(s,f,shot,e).t,'Un obstacle haut bloque le tir');
  s.map.get(K(3,0)).block=0;assert.equal(whyNot(s,f,shot,e),null);assert.ok(okTarget(s,f,shot,e));
 });
 
@@ -545,4 +545,29 @@ test('Cavernes niveau 4 : un ennemi à couvert derrière le prisme, toujours joi
   const p=[...s.map.values()].find(c=>c.cry==='p'),m=s.units.filter(u=>u.team==='m').pop();if(Math.abs(m.x-p.x)+Math.abs(m.y-p.y)===1){n++;assert.ok(m.x+m.y<p.x+p.y)}
   assert.equal(new Set(s.units.map(u=>u.x+','+u.y)).size,s.units.length,'deux unités sur une case')}
  assert.ok(n>150,`à couvert ${n}/200`);
+});
+
+// ---------- V4.1 ----------
+test('V4.1 tir en cloche : Fenn passe par-dessus un décor bas, pas par-dessus un haut, un allié ni (monstres) un décor bas', () => {
+ const s=arena(),f=unit(s,'h',0,0),e=unit(s,'m',4,0),c=cell(s,2,0);
+ c.block=1;c.d=2; // buisson
+ assert.ok(okTarget(s,f,SP.shot,e));assert.ok(okTarget(s,f,SP.volley,e));assert.ok(!okTarget(s,f,SP.venom,e),'Épine ne passe pas');
+ assert.ok(!okTarget(s,e,MON.shroom&&{r:[1,5],los:1,t:'enemy'},f),'un monstre ne tire pas par-dessus');
+ c.d=0; // chêne
+ assert.ok(!okTarget(s,f,SP.shot,e));assert.equal(whyNot(s,f,SP.shot,e).t,'Un obstacle haut bloque le tir');
+ delete c.d; // roche
+ assert.ok(!okTarget(s,f,SP.shot,e));c.block=0;unit(s,'h',2,0,{n:'Kael'});assert.ok(!okTarget(s,f,SP.shot,e));
+});
+test('V4.1 PA reportés : +1 par tranche de 2 PA non dépensés, au plus +2, sans cumul, héros seulement', () => {
+ const s=arena(),h=unit(s,'h',0,0),m=unit(s,'m',5,5);
+ for(const[left,k]of[[0,0],[1,0],[2,1],[3,1],[4,2],[6,2],[8,2]]){h.pa=left;endTurn(h);beginTurn(h);assert.equal(h.pa,6+k,'reste '+left);assert.equal(h.carried,k)}
+ beginTurn(h);assert.equal(h.pa,6,'le report ne sert qu’une fois');
+ m.maxPA=4;m.pa=4;assert.equal(carryPA(m),0);endTurn(m);beginTurn(m);assert.equal(m.pa,4);
+});
+test('V4.1 approche : case la moins chère d’où lancer le sort, rien si les PM ou les PA manquent', () => {
+ const s=arena(),k=unit(s,'h',0,0),e=unit(s,'m',4,0);
+ const a=approach(s,k,SP.slash,e);assert.equal(a.cost,3);assert.deepEqual([a.x,a.y],[3,0]);assert.equal(k.x,0,'rien n’est modifié');
+ k.pm=2;assert.equal(approach(s,k,SP.slash,e),null);k.pm=3;k.pa=2;assert.equal(approach(s,k,SP.slash,e),null);
+ k.pa=6;e.x=2;e.y=0;const b=approach(s,k,SP.slash,e);assert.equal(b.cost,1);
+ e.x=1;assert.equal(approach(s,k,SP.slash,e),null,'déjà à portée : pas d’approche');
 });

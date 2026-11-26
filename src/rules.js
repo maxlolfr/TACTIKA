@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -114,26 +114,33 @@ export function reach(s,u,maxd){const dist=new Map([[K(u.x,u.y),0]]),prev=new Ma
  return{dist,prev}}
 // Chemin [[x,y],…] de la position de u jusqu'à la case k, d'après `prev` de reach().
 export function pathTo(u,k,prev){const path=[];while(k&&k!==K(u.x,u.y)){path.unshift(k.split(',').map(Number));k=prev.get(k)}return path}
-export function los(s,a,b,ign){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
+const wall=(c,lob)=>!c||c.block&&!(lob&&LOW.has(c.d)); // lob : le tir passe au-dessus des décors bas, jamais des personnages
+export function los(s,a,b,ign,lob){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
  for(let i=1;i<n;i++){const t=i/n,x=Math.round(a.x+(b.x-a.x)*t+1e-4),y=Math.round(a.y+(b.y-a.y)*t-1e-4);
-  if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(!c||c.block)return false;const o=occ(s,x,y);if(o&&o!==ign)return false}return true}
+  if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(wall(c,lob))return false;const o=occ(s,x,y);if(o&&o!==ign)return false}return true}
 // Première obstruction sur la ligne a→b (même règle que los) : {x,y,u} (u = unité qui bloque) ou null
-export function losBlock(s,a,b,ign){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
+export function losBlock(s,a,b,ign,lob){const n=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*4;
  for(let i=1;i<n;i++){const t=i/n,x=Math.round(a.x+(b.x-a.x)*t+1e-4),y=Math.round(a.y+(b.y-a.y)*t-1e-4);
-  if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(!c||c.block)return{x,y,u:null};const o=occ(s,x,y);if(o&&o!==ign)return{x,y,u:o}}return null}
+  if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(wall(c,lob))return{x,y,u:null};const o=occ(s,x,y);if(o&&o!==ign)return{x,y,u:o}}return null}
 // Pourquoi une cible n'est pas valable (même règles que okTarget) : {t:'texte court',at:{x,y}|undefined}, ou null si elle l'est
 export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
  if(d>sp.r[1])return{t:`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:`Trop près, portée min. ${sp.r[0]}`};
- if(sp.los&&d>1&&!los(s,from,c,u)){const b=losBlock(s,from,c,u);return{t:b?(b.u?`${b.u.n} bloque le tir`:'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
+ if(sp.los&&d>1&&!los(s,from,c,u,sp.lob)){const b=losBlock(s,from,c,u,sp.lob);return{t:b?(b.u?`${b.u.n} bloque le tir`:sp.lob?'Un obstacle haut bloque le tir':'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
  if(sp.t==='enemy')return{t:!o?'Personne ici':o.team===u.team?`${o.n} est un allié`:'Cible invalide'};
  if(sp.t==='ally')return{t:!o?'Personne ici':'Ce n’est pas un allié'};
  if(sp.t==='dead')return{t:'Aucun héros à relever ici'};if(sp.free)return{t:'Case occupée ou bloquée'};return okTarget(s,u,sp,c,from)?null:{t:'Cible invalide'}}
-export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u))return 0;const o=occ(s,c.x,c.y);
+export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u,sp.lob))return 0;const o=occ(s,c.x,c.y);
  if(sp.t==='self')return c.x===from.x&&c.y===from.y;if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
  if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return sp.t==='enemy'&&sp.dmg&&prismOn(s,cell(s,c.x,c.y))?1:0;return sp.t==='enemy'?o.team!==u.team:o.team===u.team}
 export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){const d=man(u,c);if(d<sp.r[0]||d>sp.r[1])continue;
- out.push({x:c.x,y:c.y,los:!sp.los||d<=1||los(s,u,c,u),ok:okTarget(s,u,sp,c)})}return out}
+ out.push({x:c.x,y:c.y,los:!sp.los||d<=1||los(s,u,c,u,sp.lob),ok:okTarget(s,u,sp,c)})}return out}
 
+// V4.1 : cible hors d'atteinte → meilleure case (dans les PM) d'où lancer le sort sur c, ou null.
+// Le moins de PM possible, puis une case amplifiée, puis la plus éloignée de la cible.
+export function approach(s,u,sp,c,rc=reach(s,u,u.pm)){if(u.pa<sp.pa||u.cd[sp.n]>0||okTarget(s,u,sp,c))return null;let best=null,bs=null;
+ for(const[k,cost]of rc.dist){if(!cost)continue;const[x,y]=k.split(',').map(Number),from={x,y};if(!okTarget(s,u,sp,c,from))continue;
+  const sc=cost*1000-(ampAt(s,from)>1?100:0)-man(from,c);if(!best||sc<bs){bs=sc;best={k,x,y,cost}}}
+ return best}
 // ---------- aperçu de déplacement (V3.0e) : ennemis visables depuis la case `from`, sans rien modifier ----------
 // Sorts offensifs disponibles (assez de PA, sans recharge). Zone : un ennemi compte si une case visable le couvre.
 export function targetsFrom(s,u,from){const foes=s.units.filter(o=>!o.dead&&o.team!==u.team),all=new Set(),list=[];
@@ -219,12 +226,13 @@ export function push(s,t,p){const ev=[{type:'push',t,to:p.to}],dx=Math.sign(p.to
  return ev.filter(Boolean)}
 
 // ---------- tours ----------
-// Début de tour : PA/PM remis au maximum, recharges et bouclier diminuent d'un tour.
-export function beginTurn(u){delete u.hitBy;if(u.trap&&--u.trap.left<=0)delete u.trap;u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+// Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
+export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
+export function beginTurn(u){delete u.hitBy;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x,y:u.y,i:5,w:.9},hurt(s,u,u.poison.d,'poison')];if(--u.poison.turns<=0)delete u.poison;return ev.filter(Boolean)}
-// Fin de tour : le bonus de dégâts diminue d'un tour.
-export function endTurn(u){if(u.buff&&--u.buff.turns<=0)delete u.buff}
+// Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
+export function endTurn(u){u.carry=carryPA(u);if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
 // objectifs (V2.6d) : s.goal = 'chief' (abattre le chef suffit) ou 'survive' (tenir jusqu'au début du tour SURVIVE+1)
 export const SURVIVE=4;
@@ -299,5 +307,5 @@ const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o
 // case où le héros relevé réapparaît : la sienne si libre, sinon une voisine libre
 function reviveSpot(s,h){if(!occ(s,h.x,h.y))return{x:h.x,y:h.y};for(const[dx,dy]of DIRS){const x=h.x+dx,y=h.y+dy;if(passable(s,x,y)&&!occ(s,x,y))return{x,y}}return null}
 function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
- h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.buff;h.shield=0;
+ h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.buff;delete h.carry;h.shield=0;
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}

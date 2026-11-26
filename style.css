@@ -196,3 +196,15 @@ body.camp #top,body.camp #panel{visibility:hidden}
 }
 @media (orientation:landscape){#who{column-gap:8px}}
 @media (orientation:landscape){#who .pa,#who .pm{font-size:12px}#who .pa img,#who .pm img{width:15px;height:15px}#hpt{font-size:12px}#hpb{flex:1 1 55%}}
+
+/* V4.1 : objectif, cibles à portée après déplacement, PA gardés, onglets du maître d'armes */
+#goal{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 100px);transform:translate(-50%,-8px);z-index:4;max-width:92vw;white-space:nowrap;padding:8px 16px;border-radius:14px;background:#1b140cf2;border:2px solid var(--gold);color:#ffe9b0;font-weight:800;font-size:15px;pointer-events:none;opacity:0;visibility:hidden;transition:.25s}
+#goal.on{opacity:1;visibility:visible;transform:translate(-50%,0)}
+@media (orientation:landscape){#goal{top:calc(env(safe-area-inset-top) + 56px);left:calc(50% - var(--side)/2)}}
+body.camp #goal{display:none}
+.goalwon{color:#9dff9a;font-weight:800;margin:2px 0 6px}
+#tgt .tb.ap{opacity:.9;filter:none;border:2px dashed #ffc060}
+#end small{display:block;font:800 10px system-ui;margin-top:1px;opacity:.85;white-space:nowrap}
+.htabs{display:flex;gap:8px;justify-content:center;width:100%;max-width:440px;margin:0 0 4px}
+.htabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border-radius:12px;border:2px solid #7a5a32;background:#1f110ae6;color:#f3ead8;font:800 15px system-ui;cursor:pointer}
+.htabs button.on{border-color:var(--gold);background:#5a3016;box-shadow:0 0 10px #ffd65a66}.htabs canvas{width:40px;height:40px}.htabs small{font:700 10px system-ui;color:#cbbd9c}
