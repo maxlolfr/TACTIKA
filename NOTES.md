@@ -79,3 +79,6 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - **V2.6b Taverne** : `contracts(save,day)` 3 contrats tirés une fois par jour (`save.ct`), `ctUpdate` en fin de victoire, `claim`. Défi du jour `dailyFight` (zone la plus avancée, niveau +4, double or, objet garanti, potion), `save.dd`.
 - **V2.6c Boss** : `bs` dans ZONES (howl, shell, quake, rage), `bossTurn` au début du tour du boss (turns.js), `bossNext` affiché dans la fiche ennemi.
 - **V2.6d** : raretés (`RARE`, `save.rr`, `rollRare`, ×1 / ×1,5 / ×2), objectifs alternatifs dans les zones 2 à 5 : combat 2 = chef (♛, barre dorée, 1,8× PV), combat 3 = survie 4 tours (`s.goal`, `outcome`).
+
+## V3.0a (26/11/2026)
+Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment jouer » au camp). Export/import de la sauvegarde en code texte (base64) via le bouton « 💾 Sauvegarde » du camp. Reste pour la V3.0 : FR/EN, tests externes, sortie mobile.
