@@ -6,7 +6,7 @@ from scipy.signal import fftconvolve
 name,sheet=sys.argv[1:3];atlas='assets/atlas.json'
 ref=json.load(open(atlas))[name][0][3]
 def cut(sc):
-    subprocess.run(['python3','tools/cut3.py',sheet,name+'m','--scale',str(sc),'--atlas'],check=True,capture_output=True)
+    subprocess.run(['python3','tools/cut3.py',sheet,name+'m','--scale',str(sc),'--quality','95','--atlas'],check=True,capture_output=True)
     return json.load(open(atlas))[name+'m']
 F=cut(.5);F=cut(round(.5*ref/np.mean([f[3] for f in F]),4))
 S=np.array(Image.open(f'assets/{name}m.webp'))[...,3]/255

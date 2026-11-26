@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V3.7 (26/11/2026) — qualité maximale et intérieurs
+- Demande de Max : garder la qualité maximale. Les décors Gemini sont désormais à leur taille d'origine, WebP qualité 92 (`tools/prep_bg.py`) ; marche des chevaliers en qualité 95. Les images plus anciennes (Prairie et Bois verticaux, Côte et Château horizontaux, village vertical, maître d'armes) sont inchangées.
+- Forge, Marchand et Taverne ont leur intérieur peint (G-08 à G-10), voile éclairci.
+- Village horizontal remplacé par la même scène en 2528×1696 (coordonnées de `home.js` inchangées).
+
 ## V3.6 (26/11/2026) — marche des chevaliers et nouveaux décors
 - Marche en 4 images des trois chevaliers (MK-01 à 03) : planches à part `knight{B,R,N}m`, découpées par `tools/cut_walk.py` (calage sur le haut du corps). `frameOf` les utilise pour toute unité de `BS` qui a une planche `<nom>m`. Limite : les images 1 et 3 avancent la même jambe.
 - Chevalier sombre : au repos, il était décalé de sa case (ancre faussée par l'épée).
