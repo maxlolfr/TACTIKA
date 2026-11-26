@@ -16,8 +16,8 @@ export const HER=[
  {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots']},
  {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura']}];
 export const MON={
- slime:{snd:'slime',n:'Gelée',s:'monA',row:0,hp:24,pm:2,init:8,dmg:[5,8],h:.62,xp:8},
- boar:{snd:'hit',n:'Sanglier',s:'monA',row:1,hp:32,pm:4,init:11,dmg:[7,10],h:.8,xp:12},
+ slime:{snd:'slime',n:'Gelée',s:'slimeN',row:0,hp:24,pm:2,init:8,dmg:[5,8],h:.62,xp:8},
+ boar:{snd:'hit',n:'Sanglier',s:'boarN',row:0,hp:32,pm:4,init:11,dmg:[7,10],h:.8,xp:12},
  bat:{snd:'bite',n:'Chauve-souris',s:'monA',row:2,hp:18,pm:5,init:13,dmg:[4,7],h:.72,xp:9,fly:1},
  shroom:{snd:'poison',n:'Champignon',s:'monB',row:0,hp:26,pm:2,init:7,dmg:[4,6],r:[1,4],los:1,poison:[3,2],fx:5,h:.95,xp:12},
  wolf:{snd:'bite',n:'Loup',s:'monB',row:2,hp:30,pm:5,init:12,dmg:[8,11],h:.8,xp:14},

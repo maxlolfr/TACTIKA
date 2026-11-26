@@ -72,3 +72,4 @@ Phaser + modules, moteur de combat testable, IA par score, intentions ennemies a
 - Piège : `u.trap={x,y,left:3}` sur Fenn (un seul, décompté dans `beginTurn`), déclenché par `stepOn` après chaque pas (`moveTo` s'arrête dessus) et dans `push` sur les cases traversées. Dessiné au sol (icône chaîne).
 - Renaissance : cible `t:'dead'` (`koAt`, `reviveSpot` : case du KO ou voisine libre, sinon sort impossible), 25 % des PV, recharge 99 (affichée « — »). `u.wasKO` : l'étoile « aucun héros KO » reste perdue même après résurrection.
 - Sons `trap` et `dodge` ajoutés à `SNDS` (fichiers déjà présents). 41 tests.
+- Monstres au nouveau style (26/11) : `slimeN`, `boarN` dans `BS`, 10 cases dans l'atlas (repos, attaque, touché, spécial, KO, repos 2, 4 pas de marche). Badges de forge `badge` (bronze, argent, or, cadenas = jamais amélioré).
