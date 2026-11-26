@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -41,7 +41,10 @@ export const xpNeed=l=>60*l;
 // ---------- forge ----------
 // Niveau d'amélioration d'un objet (0 à 3), valeur d'une caractéristique à un niveau donné, coût du niveau suivant (null = maximum).
 export const upLvl=(save,j)=>(save.up&&save.up[j])||0;
-export const itemVal=(o,k,l)=>o[k]?Math.round(o[k]*(1+FORGE_STEP*l)):0;
+export const itemVal=(o,k,l,r=0)=>o[k]?Math.round(o[k]*(1+FORGE_STEP*l)*RARE[r].k):0;
+export const rarOf=(save,j)=>(save.rr&&save.rr[j])||0;
+// rareté d'un objet trouvé : 70 % commun, 25 % rare, 5 % épique ; au moins rare pour un boss ou le défi du jour
+export function rollRare(rng,good){const x=rng();return x<.05?2:good||x<.3?1:0}
 export const upCost=(save,j)=>FORGE_COST[upLvl(save,j)]??null;
 // Améliore l'objet j si possédé, pas au maximum et assez d'or. Renvoie le nouveau niveau, ou 0 si refusé.
 export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j)||c==null||save.gold<c)return 0;
@@ -51,8 +54,8 @@ export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j
 export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
 export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save.gold<o.pr)return 0;save.gold-=o.pr;save.items.push(j);return 1}
 // revente : moitié du prix + moitié de l'or mis dans la forge
-export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
-export function sell(save,j){if(!save.items.includes(j))return 0;const g=sellPrice(save,j);save.gold+=g;save.items=save.items.filter(x=>x!==j);if(save.up)delete save.up[j];return g}
+export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr*RARE[rarOf(save,j)].k+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
+export function sell(save,j){if(!save.items.includes(j))return 0;const g=sellPrice(save,j);save.gold+=g;save.items=save.items.filter(x=>x!==j);if(save.up)delete save.up[j];if(save.rr)delete save.rr[j];return g}
 export function buyPot(save){if((save.pot||0)>=POTION.max||save.gold<POTION.cost)return 0;save.gold-=POTION.cost;save.pot=(save.pot||0)+1;return 1}
 // ---------- taverne (V2.6b) : 3 contrats par jour, tirés une fois puis gardés dans la sauvegarde ----------
 // win : gagner n combats · kill : vaincre n monstres d'une espèce (zones ouvertes) · star : n victoires à 3 ★ · boss : vaincre un boss
@@ -70,7 +73,7 @@ export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p
 export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&(save.z[ZONES[zi].id]||0)>=4)zi++;const Z=ZONES[zi];
  return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length]}}
 export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
- const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
+ const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}
 
@@ -87,6 +90,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
   s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
    atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,fx:m.fx??0,proj:m.r?1:0}})}
+ if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+c.n.toLowerCase();c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }
 export function face(u,x,y){const dx=x-u.x,dy=y-u.y;if(!dx&&!dy)return;u.dir=Math.abs(dx)>=Math.abs(dy)?(dx>0?0:3):(dy>0?1:2)}
@@ -168,7 +172,10 @@ export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x
 // Fin de tour : le bonus de dégâts diminue d'un tour.
 export function endTurn(u){if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
-export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);return h&&m?null:(h?'win':'lose')}
+// objectifs (V2.6d) : s.goal = 'chief' (abattre le chef suffit) ou 'survive' (tenir jusqu'au début du tour SURVIVE+1)
+export const SURVIVE=4;
+export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
+ if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>SURVIVE)return'win';return m?null:'win'}
 
 // Étoiles d'un combat gagné : victoire, aucun héros KO, fini en 5 tours de table (boss : 7).
 export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&(u.dead||u.wasKO)),s.round<=STAR_ROUNDS[boss?'boss':'fight']];

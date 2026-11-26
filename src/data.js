@@ -58,5 +58,7 @@ export const R=16, CMAX=5;
 // V2.4b forge : coût de chaque niveau (1 à 3) ; chaque niveau ajoute +50 % du bonus de base de l'objet
 // marchand (V2.6a) : potion de soin, 3 objets différents proposés chaque jour, revente à 50 %
 export const POTION={cost:30,max:3}, SHOP_N=3, SELL_K=.5;
+// raretés (V2.6d) : commun, rare, épique — multiplient le bonus de l'objet
+export const RARE=[{n:'Commun',k:1,c:'#e8dcc0'},{n:'Rare',k:1.5,c:'#6fb6ff'},{n:'Épique',k:2,c:'#c98bff'}];
 export const FORGE_COST=[25,60,120], FORGE_STEP=.5;
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};

@@ -390,3 +390,18 @@ test('boss : hurlement, carapace, séisme, fureur', ()=>{
  bossTurn(sg,g);bossTurn(sg,g);assert.equal(near.hp,50);bossTurn(sg,g);assert.equal(near.hp,44);assert.equal(far.hp,50);
  const k=mk({bs:'rage'});assert.deepEqual(bossTurn({units:[k]},k),[]);k.hp=50;bossTurn({units:[k]},k);assert.equal(k.maxPM,4);assert.equal(k.dmgMul,1.3);assert.deepEqual(bossTurn({units:[k]},k),[]);
 });
+
+// ---------- V2.6d raretés et objectifs ----------
+import {rollRare,rarOf,SURVIVE} from '../src/rules.js';
+test('raretés : bonus multiplié, revente plus chère, tirage', ()=>{
+ const sv={lvl:1,items:[0],up:{},rr:{0:2},sp:[null,null,null]};
+ assert.equal(heroStats(sv,0).dmg,4);assert.equal(sellPrice(sv,0),60);assert.equal(rarOf(sv,0),2);
+ assert.equal(rollRare(()=>.9,0),0);assert.equal(rollRare(()=>.9,1),1);assert.equal(rollRare(()=>.01,0),2);
+ sell(sv,0);assert.equal(sv.rr[0],undefined);
+});
+test('objectifs : chef abattu = victoire, survie', ()=>{
+ const h={team:'h'},c={team:'m',chief:1,dead:1},m={team:'m'};
+ assert.equal(outcome({units:[h,c,m],goal:'chief',round:1}),'win');assert.equal(outcome({units:[h,{...c,dead:0},m],goal:'chief',round:1}),null);
+ assert.equal(outcome({units:[h,m],goal:'survive',round:SURVIVE}),null);assert.equal(outcome({units:[h,m],goal:'survive',round:SURVIVE+1}),'win');
+ assert.equal(outcome({units:[{team:'h',dead:1},m],goal:'survive',round:9}),'lose');
+});
