@@ -9,29 +9,29 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.6.1';
+export const VERSION='4.6.2';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
 // lumières glow [x,y,rayon,genre] : l lanterne, w fenêtre, f feu, m magie ; camp : héros [x,y des pieds, héros, miroir]
 // box : partie utile à garder visible [largeur, hauteur, centre x, centre y]
-// cry : cristal. Vertical : zone [x,y,largeur,hauteur] sur le cristal peint. Horizontal : calque, [centre x, bas y]
+// cry : calque du cristal [centre x, bas y] ; ck : échelle des états 1 à 4 puis du 5e (un peu réduit pour ne pas cacher les voisins)
 const INFO={caserne:{ic:['items',5],n:'Caserne',d:'Tes héros'},taverne:{ic:['items',17],n:'Taverne',d:'Contrats et défi'},
  forge:{ic:['ficon',0],n:'Forge',d:'Améliorer'},marchand:{ic:['items',15],n:'Marchand',d:'Acheter, vendre'},
  entrainement:{ic:['spells',0],n:'Entraînement',d:'Bientôt'},talents:{ic:['ui',12],n:'Académie',d:'Talents'}};
 const place=P=>Object.entries(P).map(([id,[z,l]])=>({id,...INFO[id],z,l}));
 const SCENES={
- // verticale : téléphone droit et écrans presque carrés
+ // verticale : téléphone droit et écrans presque carrés (V4.6.2 : sans cristal peint)
  p:{src:'assets/village.webp',w:941,h:1686,box:[905,1390,470,862],hero:[130,158],
   bld:place({caserne:[[40,180,385,370],[225,535]],taverne:[[535,290,390,300],[722,590]],forge:[[0,630,370,350],[178,985]],marchand:[[640,655,301,315],[752,978]],
    entrainement:[[0,1020,405,390],[205,1215]],talents:[[590,1030,351,520],[755,1515]]}),
-  glow:[[98,415,42,'l'],[232,415,42,'l'],[165,432,40,'w'],[462,498,40,'l'],[590,335,42,'l'],[702,380,40,'w'],[806,378,40,'w'],[690,490,46,'w'],[832,492,46,'w'],
-   [308,850,85,'f'],[757,855,42,'l'],[852,737,34,'w'],[566,1248,48,'l'],[747,1338,42,'w'],[707,1408,52,'m'],[840,1448,42,'l'],[60,1488,42,'l'],[460,1455,110,'f']],
-  smoke:[[140,630,1],[808,265,.8]],water:[0,1605,100,75],
+  glow:[[94,421,42,'l'],[229,421,42,'l'],[161,439,40,'w'],[462,505,40,'l'],[591,341,42,'l'],[705,386,40,'w'],[810,384,40,'w'],[693,497,46,'w'],[836,499,46,'w'],
+   [306,860,85,'f'],[760,865,42,'l'],[857,746,34,'w'],[567,1262,48,'l'],[750,1353,42,'w'],[710,1423,52,'m'],[844,1464,42,'l'],[55,1504,42,'l'],[460,1471,110,'f']],
+  smoke:[[136,638,1],[812,270,.8]],water:[0,1605,100,75],
   // feuillages qui ondulent : on redessine un morceau de la peinture, à bords fondus
   leaves:[[0,0,300,170],[0,1270,100,190],[0,500,115,160],[850,500,91,170]],
-  camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[345,710,265,420]},
- // horizontale : paysage large, sans cristal peint (le calque évolue avec les régions terminées)
+  camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[480,1140],ck:[.507,.44]},
+ // horizontale : paysage large
  l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[940,880,700,535],hero:[100,122],
   bld:place({caserne:[[495,105,230,235],[608,340]],taverne:[[800,175,270,195],[940,368]],forge:[[470,390,235,215],[578,605]],marchand:[[850,405,225,200],[978,600]],
    entrainement:[[225,625,420,255],[430,862]],talents:[[865,610,265,345],[1005,932]]}),
@@ -39,9 +39,9 @@ const SCENES={
    [828,765,38,'l'],[945,820,34,'w'],[918,862,45,'m'],[1090,858,32,'w'],[1005,893,30,'l'],[505,912,30,'l'],[1197,378,34,'w'],[1370,468,45,'m'],[762,892,75,'f']],
   smoke:[[558,390,.9],[986,172,.7]],water:[400,975,130,55],
   leaves:[[0,300,165,220],[0,840,200,190],[1400,770,136,200],[1380,0,156,190]],
-  camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697]}};
-// Cristal de l'Éther : [largeur, hauteur] des 5 images, et échelle vers la scène horizontale (le 5e est un peu réduit pour ne pas cacher le Marchand)
-const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]],cryK=n=>n===5?.26:.285;
+  camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697],ck:[.285,.26]}};
+// Cristal de l'Éther : [largeur, hauteur] des 5 images
+const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]];
 let tab='camp',A=null,root=null;
 const today=()=>A.today();
 // ---------- notifications ----------
@@ -65,9 +65,8 @@ function scene(k){
  for(const[x,y,k]of Q.smoke)for(let i=0;i<4;i++){const s=el('i','v-smoke');s.style.cssText=pc(x-26*k,y-26*k,52*k,52*k);s.style.animationDelay=-i*1.1+'s';stage.append(s)}
  {const w=el('i','v-water');w.style.cssText=pc(...Q.water);stage.append(w)}
  // Cristal de l'Éther → Expéditions
- {const painted=k==='p',st=crystalState(save);let rect=Q.cry;if(!painted){const[w,h]=CRY[st-1].map(v=>v*cryK(st));rect=[Q.cry[0]-w/2,Q.cry[1]-h,w,h]}
-  const c=el('button','v-cry'+(painted?' painted':''));c.style.cssText=pc(...rect);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
-  c.innerHTML=(painted?'':`<img src="assets/cry/crystal${st}.webp" alt="">`)+'<i class="v-cry-glow"></i>';
+ {const st=crystalState(save),[w,h]=CRY[st-1].map(v=>v*Q.ck[st===5?1:0]);
+  const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
   const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
  // héros autour du feu
  for(const[x,y,i,flip]of Q.camp){const[hw,hh]=Q.hero,b=el('button','v-hero');b.style.cssText=pc(x-hw/2,y-hh*.95,hw,hh);b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
