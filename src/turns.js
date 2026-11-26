@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {pathTo,face,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
+import {pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,TH} from './render.js';
 import {sfx} from './audio.js';
 
@@ -53,7 +53,7 @@ export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne bouc
   beginTurn(u);hooks.renderTL();hooks.render();
   if(u.poison){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
-  else{await wait(300);await ai(u,id)}
+  else{const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}
   if(G.fid!==id)return;endTurn(u);
   G.sel=null;if(end())return}
 }

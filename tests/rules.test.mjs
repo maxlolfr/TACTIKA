@@ -378,3 +378,15 @@ test('défi du jour : zone la plus avancée, sans boss', ()=>{
  const F=dailyFight({z:{prairie:4,bois:2}},10);assert.equal(F.zi,1);assert.equal(F.lvl,ZONES[1].lvl+4);assert.equal(F.boss,null);assert.equal(F.daily,1);
  assert.equal(dailyFight({z:{}},10).zi,0);
 });
+
+// ---------- V2.6c boss ----------
+import {bossTurn,bossNext} from '../src/rules.js';
+test('boss : hurlement, carapace, séisme, fureur', ()=>{
+ const mk=(o)=>({team:'m',x:0,y:0,hp:100,max:100,maxPM:3,pm:3,atk:{dmg:[10,10]},...o});
+ const w=mk({bs:'howl'}),m2=mk({x:5}),h={team:'h',x:1,y:1,hp:50,max:50},s={units:[w,m2,h],rng:()=>.5};
+ assert.equal(bossNext(w),2);bossTurn(s,w);assert.ok(!w.buff);assert.equal(bossNext(w),1);bossTurn(s,w);assert.equal(m2.buff.pct,.3);assert.equal(w.buff.turns,2);
+ const c=mk({bs:'shell'});bossTurn({units:[c]},c);assert.equal(c.shield,1);
+ const g=mk({bs:'quake'}),near={team:'h',x:2,y:1,hp:50,max:50},far={team:'h',x:4,y:4,hp:50,max:50},sg={units:[g,near,far],rng:()=>.5};
+ bossTurn(sg,g);bossTurn(sg,g);assert.equal(near.hp,50);bossTurn(sg,g);assert.equal(near.hp,44);assert.equal(far.hp,50);
+ const k=mk({bs:'rage'});assert.deepEqual(bossTurn({units:[k]},k),[]);k.hp=50;bossTurn({units:[k]},k);assert.equal(k.maxPM,4);assert.equal(k.dmgMul,1.3);assert.deepEqual(bossTurn({units:[k]},k),[]);
+});
