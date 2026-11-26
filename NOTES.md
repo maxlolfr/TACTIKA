@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V2.4b+ (26/11/2026) — retour du test de Max (Honor Magic V5)
+- Visée : avec un sort choisi, toucher le dessin ou la barre de vie d'une cible valable la vise même si une autre unité est devant (`tapCell`) ; les portraits de la frise visent aussi (`act()` commun au plateau et à la frise) ; cibles valables entourées d'un halo orange (`shadowBlur`), unités qui les cachent à 40 % d'opacité ; une case non valable n'annule plus le sort (retoucher le sort l'annule). Règles de portée, ligne de vue et PA inchangées (passent toujours par `selCells`/`okTarget`).
+- Caméra : `ISO=.62` dans render.js (hauteur de case / largeur, au lieu de 0,5) ; seuls les sols sont étirés en hauteur ; cadrage `TW=min(W/6.3, avail/(9·ISO+1.4), 130)`.
+- Netteté : planches des héros redécoupées en double résolution depuis les originaux (`Game-studio-ai/docs/studio/art/tactika/heros` et `v24`) : kaelW/fennX/aelisX `--scale 1`, kaelX 0.898, fennB 1.03, aelisB 0.918, kaelK 1.1 ; ombres violettes effacées sur fennB, aelisB, kaelK. `imageSmoothingQuality='high'`. Les 10 anciennes planches (warrior, archer, healer, kaelF/B/P, fennF/P, aelisF/P) ne sont plus chargées (`OLD` dans render.js) : environ +0,6 Mo pour les héros, −0,65 Mo d'anciennes planches.
+
 ## V2.4b (26/11/2026) — forge
 - Forge au camp (bâtiment 0) : améliore chaque objet possédé, niveaux 1 à 3, coûts `FORGE_COST` = 25/60/120 or, +50 % du bonus de base par niveau (`FORGE_STEP`, ×2,5 au niveau 3). Règles pures `upgrade/upCost/upLvl/itemVal` (rules.js), utilisées par `heroStats`. Niveaux dans `save.up` (absent = 0 : anciennes sauvegardes intactes). Boutons bloqués pendant l'animation (pas de double achat). 29 tests.
 - Images B-01 (forge.png) attendues : marteau animé et badges à brancher à réception.
