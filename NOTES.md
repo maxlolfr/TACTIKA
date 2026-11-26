@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.8a (27/11/2026) : six PNJ au village
+- Affichage seul, aucune règle touchée. Garrick (Caserne), Mira (Taverne), Borin (Forge), Ezran (Marchand), Darius (Entraînement), Elyndra (Académie).
+- `assets/pnj/<nom>.webp` : 4 cases (repos, 2 gestes, salut), préparées par `tools/prep_pnj.py` depuis les découpes du studio. Positions : `SCENES.*.pnj`, taille : `npc`.
+- Le salut s'affiche au toucher du bâtiment ; l'écran s'ouvre après 450 ms (190 ms avec les animations rapides). Animations coupées avec « réduire les animations ».
+
 ## V4.7a (27/11/2026) : quatre emplacements
 - `ITEMS[].sl` : arme, armure, bijou, accessoire. `gear(save,i)` : un objet par emplacement ; seul l'objet équipé compte (`save.eq["héros:emplacement"]`, `save.wpn` ancien encore lu). Sauvegarde non convertie ni effacée.
 - `compare(save,j)` : valeurs avant/après, affichées dans la fiche héros et l'inventaire.

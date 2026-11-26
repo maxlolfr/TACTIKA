@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.7a';
+export const VERSION='4.8a';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -23,6 +23,7 @@ const place=P=>Object.entries(P).map(([id,[z,l]])=>({id,...INFO[id],z,l}));
 const SCENES={
  // verticale : téléphone droit et écrans presque carrés (V4.6.2 : sans cristal peint)
  p:{src:'assets/village.webp',w:941,h:1686,box:[905,1390,470,862],hero:[130,158],
+  npc:150,pnj:{caserne:[405,548,false],taverne:[535,600,false],forge:[360,1000,true],marchand:[590,978,false],entrainement:[215,1385,false],talents:[792,1462,true]},
   bld:place({caserne:[[40,180,385,370],[225,535]],taverne:[[535,290,390,300],[722,590]],forge:[[0,630,370,350],[178,985]],marchand:[[640,655,301,315],[752,978]],
    entrainement:[[0,1020,405,390],[205,1215]],talents:[[590,1030,351,520],[755,1515]]}),
   glow:[[94,421,42,'l'],[229,421,42,'l'],[161,439,40,'w'],[462,505,40,'l'],[591,341,42,'l'],[705,386,40,'w'],[810,384,40,'w'],[693,497,46,'w'],[836,499,46,'w'],
@@ -33,6 +34,7 @@ const SCENES={
   camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[480,1140],ck:[.507,.44]},
  // horizontale : paysage large
  l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[940,880,700,535],hero:[100,122],
+  npc:108,pnj:{caserne:[742,352,true],taverne:[815,396,false],forge:[708,614,true],marchand:[842,614,false],entrainement:[312,846,false],talents:[1125,938,true]},
   bld:place({caserne:[[495,105,230,235],[608,340]],taverne:[[800,175,270,195],[940,368]],forge:[[470,390,235,215],[578,605]],marchand:[[850,405,225,200],[978,600]],
    entrainement:[[225,625,420,255],[430,862]],talents:[[865,610,265,345],[1005,932]]}),
   glow:[[532,255,30,'l'],[575,265,34,'w'],[648,258,30,'w'],[848,295,30,'l'],[915,235,34,'w'],[985,262,34,'w'],[935,292,40,'w'],[665,525,60,'f'],[952,528,34,'l'],
@@ -40,6 +42,9 @@ const SCENES={
   smoke:[[558,390,.9],[986,172,.7]],water:[400,975,130,55],
   leaves:[[0,300,165,220],[0,840,200,190],[1400,770,136,200],[1380,0,156,190]],
   camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697],ck:[.285,.26]}};
+// V4.8a : un PNJ devant chaque bâtiment. Bandes `tools/prep_pnj.py` : repos, geste 1, geste 2, salut (au toucher). [nom, largeur, hauteur d'une case en pixels]
+const PNJ={caserne:['garrick',300,365],taverne:['mira',402,369],forge:['borin',372,368],marchand:['ezran',332,370],entrainement:['darius',416,369],talents:['elyndra',366,372]};
+// pieds [x,y,miroir] dans chaque peinture ; npc = hauteur d'une case de 370 px en pixels logiques
 // Cristal de l'Éther : [largeur, hauteur] des 5 images
 const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]];
 let tab='camp',A=null,root=null;
@@ -75,9 +80,12 @@ function scene(k){
  for(const b of Q.bld){const z=el('button','v-bld');z.dataset.b=b.id;z.style.cssText=pc(...b.z);z.setAttribute('aria-label',`${b.n} : ${b.d}`);
   const lift=el('i','v-lift');lift.style.backgroundImage=`url(${Q.src})`;lift.dataset.crop=b.z.slice(0,2).join();z.append(lift);
   const p=el('span','v-plate',`<span><b>${b.n}</b><small>${b.d}</small></span>`);p.prepend(icon(...b.ic,28));p.style.cssText=`left:${(b.l[0]-b.z[0])/b.z[2]*100}%;top:${(b.l[1]-b.z[1])/b.z[3]*100}%`;z.append(p);
+  {const[nom,cw,ch]=PNJ[b.id],[x,y,flip]=Q.pnj[b.id],h=Q.npc*ch/370,w=h*cw/ch,[zx,zy,zw,zh]=b.z,N=el('i','v-npc'+(flip?' flip':''));N.dataset.npc=nom;
+   N.style.cssText=`left:${(x-w/2-zx)/zw*100}%;top:${(y-h-zy)/zh*100}%;width:${w/zw*100}%;height:${h/zh*100}%`;
+   const im=el('i');im.style.backgroundImage=`url(assets/pnj/${nom}.webp)`;const d=-(x+y)%90/10;im.style.animationDelay=`${d}s,${d*1.7}s`;N.append(im);z.append(N)}
   const n=NEWS[b.id]();if(n)p.append(el('u','v-badge',n));
   // la réaction du bâtiment se voit avant l'ouverture de l'écran
-  z.onclick=()=>{if(z.classList.contains('hit'))return;z.classList.add('hit');setTimeout(()=>{z.classList.remove('hit');open(b.id)},190)};stage.append(z)}
+  z.onclick=()=>{if(z.classList.contains('hit'))return;z.classList.add('hit');setTimeout(()=>{z.classList.remove('hit');open(b.id)},save.fast?190:450)};stage.append(z)}
  return stage;
 }
 
