@@ -600,3 +600,24 @@ test('V4.2 Volée : centre autorisé qui touche indirectement, case vide visable
  const hp=al.hp;applySpell(s,f,SP.volley,c);assert.ok(e.hp<50);assert.equal(al.hp,hp,'allié dans la zone épargné');
  e.x=9;assert.equal(zoneCenter(s,f,SP.volley,e),null);
 });
+
+// ---------- V4.5a : survie à renforts ----------
+import {waveTick,waveEmpty,spawnCells} from '../src/rules.js';
+const waveFight=(seed=3)=>{const F=fightSpec(1,2,seed),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:6,items:[],sp:[null,null,null]},j)));return{F,s}};
+test('survie à renforts : départ, annonce, arrivée, plafond', ()=>{
+ const{F,s}=waveFight(),mons=()=>s.units.filter(u=>u.team==='m'&&!u.dead);
+ assert.equal(F.wave.turns,6);assert.equal(mons().length,3);assert.equal(s.wave.q.length,6);assert.equal(s.wave.next.length,1); // 1 annoncé pour le tour 2
+ const n0=s.order.length;s.round=2;const a=waveTick(s);assert.equal(a.length,1);assert.equal(s.order.length,n0+1);assert.equal(s.order.at(-1),a[0]); // joue en fin de tour
+ assert.ok(a[0].reinf&&a[0].xp>0);assert.equal(s.wave.next.length,2);
+ const c=s.wave.next[0];const h=s.units.find(u=>u.team==='h');const ox=h.x,oy=h.y;h.x=c.x;h.y=c.y; // case prise : le renfort attend
+ s.round=3;const b=waveTick(s);assert.equal(b.length,1);assert.ok(s.wave.q.some(q=>q.r===3));h.x=ox;h.y=oy;
+ s.round=4;waveTick(s);assert.ok(mons().length<=6);assert.ok(s.units.some(u=>u.elite&&u.k==='wolf')||s.wave.q.some(q=>q.elite));
+});
+test('survie à renforts : pas de victoire tant qu’il reste des vagues, retraite, 3e étoile', ()=>{
+ const{s}=waveFight();const kill=()=>s.units.forEach(u=>{if(u.team==='m')u.dead=true});
+ kill();assert.equal(outcome(s),null);assert.equal(s.wave.next.length,1);
+ s.wave.next=[];assert.equal(waveEmpty(s),1);assert.ok(s.wave.next.length>0); // la vague suivante est avancée
+ s.round=7;assert.equal(outcome(s),'win');assert.equal(stars(s,false),2); // tenu, mais vagues restantes : pas de 3e étoile
+ const t=waveFight().s;t.units.forEach(u=>{if(u.team==='m')u.dead=true});t.wave.q=[];assert.equal(outcome(t),'win');assert.ok(t.cleared);assert.equal(stars(t,false),3);
+ assert.equal(fightSpec(1,1,1).wave,undefined); // seul Bois 3 est concerné
+});

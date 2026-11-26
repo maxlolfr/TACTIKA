@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach} from './rules.js';
+import {pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
 import {sfx} from './audio.js';
 
@@ -39,8 +39,8 @@ export async function moveTo(u,k,prev){const path=pathTo(u,k,prev);
  G.busy=false}
 
 // Termine le combat si un camp est éliminé. Renvoie true quand le combat est fini.
-export function end(){if(G.phase!=='fight')return true;const o=outcome(G.s);if(!o)return false;
- G.phase=o;if(o==='win')G.s.units.forEach(u=>{if(u.team==='h'&&!u.dead)pose(u,'v',9e9)});
+export function end(){if(G.phase!=='fight')return true;const o=outcome(G.s);if(!o){if(waveEmpty(G.s))hooks.newRound([]);return false}
+ G.phase=o;if(o==='win')G.s.units.forEach(u=>{if(u.team==='h'&&!u.dead)pose(u,'v',9e9);else if(u.team==='m'&&!u.dead&&G.s.wave){say(u,'Repli !','#ffd65a');u.dead=true;u.fled=1;u.deadT=performance.now()}}); // V4.5a : les survivants se replient
  setTimeout(()=>hooks.result(o==='win'),900);if(G.endTurnResolve)G.endTurnResolve();return true}
 
 async function ai(u,id){
@@ -51,7 +51,7 @@ async function ai(u,id){
 }
 export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne boucle s'arrête si un autre combat commence
  while(G.phase==='fight'&&G.fid===id){
-  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;hooks.newRound()}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);keepInView(u.x,u.y);hooks.renderTL();hooks.render();
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}

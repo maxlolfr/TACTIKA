@@ -225,6 +225,8 @@ export function draw(now){
  if(plan){const pts=[[cur.gx,cur.gy],...plan.path].map(([x,y])=>scr(x,y)),[ex,ey]=pts[pts.length-1];ctx.save();ctx.lineCap=ctx.lineJoin='round';
   for(const[w,c]of[[7,'rgba(0,20,50,.7)'],[3.5,'#fff']]){ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.setLineDash([9,7]);ctx.lineDashOffset=-now/45;ctx.stroke()}
   ctx.setLineDash([]);diamond(ctx,ex,ey,.92);ctx.fillStyle='rgba(255,255,255,.28)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
+ // V4.5a : cases d'arrivée des renforts du prochain tour (hachures orange et ⚠)
+ if(S.wave)for(const p of S.wave.next){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,p.q.elite?'#ffd65a':'#ff8a3a',.3+.2*Math.sin(now/200));ctx.save();ctx.font=`900 ${Math.round(TW*.3)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText('⚠',sx,sy+TW*.1);ctx.fillStyle=p.q.elite?'#ffd65a':'#ffa040';ctx.fillText('⚠',sx,sy+TW*.1);ctx.restore()}
  // Titan : cases du rayon chargé (hachures violettes)
  if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
@@ -243,7 +245,7 @@ export function draw(now){
  for(const o of L){if(o.m){if(o.m.cry){crystal(ctx,o.m,now);continue}if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*(o.m.block?DK[o.m.d]??.84:1)*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
-  ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
+  ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':u.elite?'#ffd65a':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,up=lift(u),jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
   if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
    if(ch){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5+.3*Math.sin(now/70);const g=ctx.createRadialGradient(sx,sy-hgt(u)*.55,0,sx,sy-hgt(u)*.55,TW*.9);g.addColorStop(0,'rgba(230,190,255,.9)');g.addColorStop(1,'rgba(160,80,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy-hgt(u)*.55,TW*.9,0,7);ctx.fill()}ctx.restore()}

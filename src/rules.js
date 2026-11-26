@@ -42,7 +42,7 @@ export function genMap(s,seed,th,cry){
 // ---------- description d'un combat (carte, défi, simulateur) ----------
 export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
  return{zi,i,lvl:f.lvl||Z.lvl+i,pool:Z.pool,boss:i===zlen(Z)-1?Z.boss:null,elite:Z.elite?.[i],en:f.en,cry:f.cry,tip:f.tip,
-  goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]}}
+  wave:Z.waves?.[i],goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]}}
 export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES[zi]);
 // ---------- progression ----------
 export const xpNeed=l=>60*l;
@@ -86,22 +86,25 @@ export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}
 
 // ---------- unités ----------
+// Un monstre de la mission F (niveau F.lvl) sur la case p ; B = boss de zone ; elite (V4.5a) : PV ×1,5, dégâts ×1,2, anneau doré
+function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*(n-1),ek=elite?1.5:1;
+ const hp=Math.round(m.hp*sc*(boss?B.hp:1)*ek),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)*(elite?1.2:1)));
+ return{id,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
+  cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:(boss?m.h*B.h:m.h)*(elite?1.15:1),xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)*(elite?2:1)),
+  atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,fx:m.fx??0,proj:m.r?1:0}}}
+
 // hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
  HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
- const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=L?L.length:Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
+ const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
- for(let i=0;i<cnt;i++){const B=i===0&&F.boss,r=B?null:pick(rng,pool),t=B?B.k:L?L[i]:i===1&&F.elite?F.elite:r,m=MON[t],boss=!!B,p=spots[i];
-  const hp=Math.round(m.hp*sc*(boss?B.hp:1)),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)));
-  s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
-   cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
-   atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,fx:m.fx??0,proj:m.r?1:0}})}
+ for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L?L[i]:i===1&&F.elite?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}
  // repères stables A/B/C pour les monstres identiques
  for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+MON[c.k].n.toLowerCase()+(c.tag?' '+c.tag:''); // la lettre de repère reste en majuscule
-  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;
+  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }
 export function face(u,x,y){const dx=x-u.x,dy=y-u.y;if(!dx&&!dy)return;u.dir=Math.abs(dx)>=Math.abs(dy)?(dx>0?0:3):(dy>0?1:2)}
@@ -259,11 +262,35 @@ export function endTurn(u){u.carry=carryPA(u);if(u.buff&&--u.buff.turns<=0)delet
 // null tant que le combat continue, sinon 'win' ou 'lose'.
 // objectifs (V2.6d) : s.goal = 'chief' (abattre le chef suffit) ou 'survive' (tenir jusqu'au début du tour SURVIVE+1)
 export const SURVIVE=4;
+// ---------- V4.5a : survie à renforts ----------
+// F.wave = {turns, cap (ennemis en jeu au plus), start (présents au départ), add:[[tour, nombre, espèce élite ?], …]}
+// Les renforts sont annoncés un tour avant (s.wave.next : cases réservées), arrivent au début du tour, jouent en fin de tour (aucun double tour).
+// Case prise ou plafond atteint : le renfort attend le tour suivant. XP des renforts ÷2 (budget de la mission borné).
+const liveM=s=>s.units.filter(u=>u.team==='m'&&!u.dead);
+export function waveSetup(s,F,es){const W=F.wave;s.surv=W.turns;s.es=es;
+ s.wave={cap:W.cap,F,next:[],q:W.add.flatMap(([r,n,e])=>Array.from({length:n},(_,k)=>({r,elite:k===0&&e||null})))};wavePlan(s)}
+// cases libres d'apparition : départs ennemis, puis haut du plateau ; les plus loin des héros d'abord
+export function spawnCells(s,taken=[]){const H=s.units.filter(u=>u.team==='h'&&!u.dead),seen=new Set(),out=[];
+ for(const c of[...s.es,...[...s.map.values()].filter(c=>c.x+c.y<=6)]){const k=K(c.x,c.y);if(seen.has(k))continue;seen.add(k);
+  if(passable(s,c.x,c.y)&&!occ(s,c.x,c.y)&&!trapAt(s,c.x,c.y,'m')&&!taken.some(o=>o.x===c.x&&o.y===c.y))out.push({x:c.x,y:c.y,d:Math.min(99,...H.map(h=>man(h,c)))})}
+ return out.sort((a,b)=>b.d-a.d)}
+// annonce des renforts du prochain tour (au plus ce que le plafond permet aujourd'hui)
+export function wavePlan(s){const w=s.wave;if(!w)return;const due=w.q.filter(q=>q.r<=s.round+1).slice(0,Math.max(0,w.cap-liveM(s).length)),cs=spawnCells(s);
+ w.next=due.slice(0,cs.length).map((q,i)=>({x:cs[i].x,y:cs[i].y,q}))}
+// début de tour : les renforts annoncés arrivent ; renvoie les nouveaux monstres
+export function waveTick(s){const w=s.wave;if(!w)return[];const out=[];
+ for(const c of w.next){if(occ(s,c.x,c.y)||liveM(s).length>=w.cap)continue;w.q.splice(w.q.indexOf(c.q),1);
+  const t=c.q.elite||pick(s.rng,w.F.pool),u=monUnit(w.F,t,c,'m'+s.units.length,s.rng,null,!!c.q.elite);u.reinf=1;u.init=0;u.xp=Math.round(u.xp/2);
+  const same=s.units.filter(o=>o.team==='m'&&o.k===t).length;if(same){u.tag=String.fromCharCode(65+same);u.n+=' '+u.tag}
+  s.units.push(u);s.order.push(u);out.push(u)}
+ wavePlan(s);return out}
+// plateau vidé alors que des vagues restent : la suivante est avancée au prochain tour (pas de tours d'attente)
+export function waveEmpty(s){const w=s.wave;if(!w||liveM(s).length||!w.q.length||w.next.length)return 0;const r=w.q[0].r;for(const q of w.q)if(q.r===r)q.r=s.round+1;wavePlan(s);return 1}
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
- if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>SURVIVE)return'win';return m?null:'win'}
+ if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>(s.surv||SURVIVE))return'win';if(!m&&s.wave){if(s.wave.q.length)return null;s.cleared=1}return m?null:'win'}
 
 // Étoiles d'un combat gagné : victoire, aucun héros KO, fini en 5 tours de table (boss : 7).
-export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&(u.dead||u.wasKO)),s.round<=STAR_ROUNDS[boss?'boss':'fight']];
+export const starList=(s,boss)=>[true,!s.units.some(u=>u.team==='h'&&(u.dead||u.wasKO)),s.wave?!!s.cleared:s.round<=STAR_ROUNDS[boss?'boss':'fight']]; // V4.5a survie : 3e étoile = toutes les vagues éliminées
 export const stars=(s,boss)=>starList(s,boss).filter(Boolean).length;
 
 // ---------- IA ennemie ----------
