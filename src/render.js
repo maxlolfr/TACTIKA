@@ -1,19 +1,26 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,DECO_W,CMAX,R,ZONES} from './data.js';
-import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
+import {DEC,DECO_W,CMAX,R,ZONES,MON} from './data.js';
+import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN'];
+const BS=['knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat'];
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
+// V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
+const MS=new Set(),LD={};
+function load(n){return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;delete LD[n];ok()};i.onerror=()=>{delete LD[n];ko(n)};i.src='assets/'+n+'.webp'}))}
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
- await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)).map(n=>new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;ok()};i.onerror=()=>ko(n);i.src='assets/'+n+'.webp'})));
+ for(const k of[...Object.values(MON).map(m=>m.s),...ZONES.map(z=>z.boss.s)])for(const n of[k,k+'m',k+'w'])if(AT[n])MS.add(n);
+ await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)).map(load));
 }
+export function zoneAssets(F){const want=new Set();for(const k of[...F.pool,...(F.en||[]),F.elite,F.boss&&F.boss.k].filter(Boolean))want.add(MON[k].s);if(F.boss&&F.boss.s)want.add(F.boss.s);
+ for(const n of[...want])for(const v of[n+'m',n+'w'])if(AT[v])want.add(v);
+ for(const n of MS)if(!want.has(n))delete IMG[n];return Promise.all([...want].map(load))}
 
 // ---------- images ----------
 export function drawF(c,s,i,x,y,sc,flip,alpha){const f=AT[s][i];c.save();c.globalAlpha=alpha??1;c.translate(x,y);if(flip)c.scale(-1,1);
@@ -25,7 +32,8 @@ export function skin(){const st=document.createElement('style');st.textContent=`
  .btn.dark{padding:12px 28px}#top .btn{background:#2a1b10dd;border:1px solid #7a5a32;border-radius:10px;padding:6px 9px;color:#f3ead8}
  #panel{background:url(${uiURL(11)}) center/100% 100% no-repeat,#2a1b10;border-top:0}`;document.head.appendChild(st)}
 export function icon(s,i,px,top){const cv=document.createElement('canvas'),d=2;cv.width=cv.height=px*d;const c=cv.getContext('2d'),f=AT[s][i];
- const sh=top?f[3]*top:f[3];const k=Math.min(px*d/f[2],px*d/sh);c.drawImage(IMG[s],f[0],f[1],f[2],sh,(px*d-f[2]*k)/2,(px*d-sh*k)/2,f[2]*k,sh*k);return cv}
+ const sh=top?f[3]*top:f[3],k=Math.min(px*d/f[2],px*d/sh),paint=()=>c.drawImage(IMG[s],f[0],f[1],f[2],sh,(px*d-f[2]*k)/2,(px*d-sh*k)/2,f[2]*k,sh*k);
+ IMG[s]?paint():load(s).then(paint,()=>{});return cv} // planche pas encore chargée : l'icône se dessine à son arrivée
 // Hauteur de référence du sprite de chaque unité (sert à les mettre à l'échelle).
 export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[HN[u.k].i[0]][HN[u.k].i[1]][3]:AT[u.s][u.row*3][3]}
 
@@ -60,30 +68,56 @@ export function layout(){
 // numéro de tuile du jeu (data.js) -> case de la planche tiles4
 const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
-const BGZ=['prairie','bois','plage','mont','chateau'],BG={};
+const BGZ=['prairie','bois','plage','mont','chateau','cristal'],BG={};
+const BGA={cristal:'mont'}; // fond provisoire des Cavernes tant que G-14/G-15 ne sont pas dans le jeu (teinté en violet)
 // chaque zone a deux peintures : <zone>.webp (verticale) et <zone>-l.webp (écran plus large que haut)
-function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=W>H?z+'-l':z;
- if(!(id in BG)){BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===z)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
+function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=(BGA[z]||z)+(W>H?'-l':'');
+ if(!(id in BG)){for(const k in BG)delete BG[k]; // un seul fond en mémoire
+  BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===z)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
- if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
+ if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle=theme.cave?'rgba(26,8,64,.5)':'rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
  // périphérie assombrie : le regard va au plateau
  {const[cx,cy]=scr(R/4,R/4),rad=Math.max(W,H)*.75,v=g.createRadialGradient(cx,cy,TW*2.5,cx,cy,rad);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=v;g.fillRect(0,0,W,H)}
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
  // tuiles calmes (planche TU-02 de Max, tiles4) : ancrées sur les coins gauche/droit de la face du dessus ; miroir et deux herbes au hasard contre la répétition
- const tl=(t,sx,sy,m)=>{const f=AT.tiles4[t===0&&m?1:T4[t]],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m&&t!==14&&t!==15)g.scale(-1,1);g.drawImage(IMG.tiles4,f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore()};
+ // thème avec sa propre planche (ts, ex. tiles5 des Cavernes) : numéros de tuile = cases de la planche
+ const ts=theme.ts||'tiles4',tl=(t,sx,sy,m)=>{const f=theme.ts?AT[ts][t]:AT.tiles4[t===0&&m?1:T4[t]],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m&&(theme.ts||t!==14&&t!==15))g.scale(-1,1);g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore()};
  const flipAt=(x,y)=>((x*7349+y*9151)>>>2)&1;
  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){if((r+c)&1)continue;const a=(r+c)/2,b=(r-c)/2,x=V?b:a,y=V?-a:b,[sx,sy]=scr(x,y),m=cell(S,x,y);
-  if(m){tl(m.t,sx,sy,flipAt(x,y));if(m.t<2){diamond(g,sx,sy);g.fillStyle='rgba(8,24,0,.12)';g.fill()} // herbe un peu calmée : les personnages ressortent
+  if(m){tl(m.t,sx,sy,flipAt(x,y));if(m.t<2&&!theme.ts){diamond(g,sx,sy);g.fillStyle='rgba(8,24,0,.12)';g.fill()} // herbe un peu calmée : les personnages ressortent
   if((x+y)&1){diamond(g,sx,sy);g.fillStyle='rgba(0,0,0,.08)';g.fill()}}else if(!bg){const t=theme.g[Math.floor(rr()*theme.g.length)];tl(t===4||t===8?theme.g[0]:t,sx,sy,flipAt(x,y));diamond(g,sx,sy,1.02);g.fillStyle='rgba(8,14,6,.55)';g.fill();
    const dist=Math.max(Math.abs(x-y)-CMAX,-x-y,x+y-R);if(dist>=2&&rr()<.1)outer.push({x,y,d:pick(rr,theme.out||(dist>2&&rr()<.12?[10,9,11]:[0,1,1,2,0,4,7]))})}}
  for(const m of S.map.values())if(m.flower){const[sx,sy]=scr(m.x,m.y);const f=AT.deco[5];drawF(g,'deco',5,sx,sy+TH*.1,TW*.7/f[2])}
  // liseré du plateau
  for(const m of S.map.values()){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.98);g.strokeStyle='rgba(20,28,10,.5)';g.lineWidth=1.5;g.stroke();diamond(g,sx,sy,.9);g.strokeStyle='rgba(255,240,200,.14)';g.lineWidth=1;g.stroke()}
  // case infranchissable avec un décor : fond sombre et ombre au pied (l'eau et la roche ont déjà leur tuile)
+ // cases amplifiées : contour turquoise en tirets et chevron montant (lisible sans la couleur)
+ for(const m of S.map.values())if(m.cry==='a')for(const p of prismHits(S,m)){const c=cell(S,p.x,p.y);if(c.block||c.water)continue;const[sx,sy]=scr(p.x,p.y);
+  diamond(g,sx,sy,.8);g.fillStyle='rgba(60,230,215,.16)';g.fill();g.setLineDash([5,4]);g.strokeStyle='rgba(120,255,240,.85)';g.lineWidth=2;g.stroke();g.setLineDash([]);chevron(g,sx,sy,TW*.09)}
  for(const m of S.map.values())if(m.block&&m.d!=null){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.94);g.fillStyle='rgba(12,14,6,.42)';g.fill();g.beginPath();g.ellipse(sx,sy+TH*.12,TW*.34,TH*.26,0,0,7);g.fillStyle='rgba(0,0,0,.4)';g.fill()}
 }
+function chevron(c,x,y,z){c.beginPath();c.moveTo(x-z,y+z*.2);c.lineTo(x,y-z*.7);c.lineTo(x+z,y+z*.2);c.lineWidth=2.5;c.strokeStyle='rgba(220,255,250,.9)';c.stroke()}
+// cristaux dessinés par le code (en attendant C6-09) : turquoise = éclats dressés, violet = losange taillé ; éteint = gris et tours restants
+function shard(c,x,y,w,h,col){c.beginPath();c.moveTo(x-w/2,y);c.lineTo(x-w/2,y-h*.75);c.lineTo(x,y-h);c.lineTo(x+w/2,y-h*.75);c.lineTo(x+w/2,y);c.closePath();
+ const g=c.createLinearGradient(x-w/2,0,x+w/2,0);g.addColorStop(0,col[0]);g.addColorStop(.5,col[1]);g.addColorStop(1,col[2]);c.fillStyle=g;c.fill();c.strokeStyle='#2a1b10';c.lineWidth=2;c.stroke()}
+function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||prismOn(G.s,m),h=TW*.7,pulse=.5+.5*Math.sin(now/400+m.x);
+ if(AT.crystals){const i=m.cry==='a'?0:on?2:1,f=AT.crystals[i]; // planche C6-09 : turquoise, violet éteint, violet allumé, éclat
+  c.save();if(on){c.shadowColor=m.cry==='a'?'#4ff5e5':'#c07bff';c.shadowBlur=TW*(.1+.1*pulse)}drawF(c,'crystals',i,x,y+TH*.08,TW*.82/f[3],false,on?1:.7);c.restore();
+  if(!on){c.save();c.font=`900 ${Math.round(TW*.26)}px system-ui`;c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';const t='⏸'+(m.off-G.s.round);c.strokeText(t,x,y-TW*.3);c.fillStyle='#ddd';c.fillText(t,x,y-TW*.3);c.restore()}
+  return}
+ c.save();c.fillStyle='rgba(0,0,0,.4)';c.beginPath();c.ellipse(x,y,TW*.3,TH*.22,0,0,7);c.fill();
+ if(on){c.shadowColor=m.cry==='a'?'#4ff5e5':'#b37bff';c.shadowBlur=TW*(.15+.12*pulse)}
+ if(m.cry==='a'){const C=['#0c6f78','#8ff8ec','#2bc3c0'];shard(c,x-TW*.13,y,TW*.15,h*.6,C);shard(c,x+TW*.14,y,TW*.14,h*.7,C);shard(c,x,y+2,TW*.2,h,C)}
+ else{const C=on?['#3c1f78','#e6cbff','#8b55e8']:['#3a3842','#a9a5b4','#6a6578'],cy=y-h*.5-(on?pulse*TH*.08:0),w=TW*.3;
+  c.beginPath();c.moveTo(x,cy-h*.42);c.lineTo(x+w,cy);c.lineTo(x,cy+h*.42);c.lineTo(x-w,cy);c.closePath();const g=c.createLinearGradient(x-w,0,x+w,0);g.addColorStop(0,C[0]);g.addColorStop(.45,C[1]);g.addColorStop(1,C[2]);c.fillStyle=g;c.fill();c.strokeStyle='#2a1b10';c.lineWidth=2;c.stroke();
+  c.beginPath();c.moveTo(x-w,cy);c.lineTo(x+w,cy);c.moveTo(x,cy-h*.42);c.lineTo(x,cy+h*.42);c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.stroke();
+  if(!on){c.shadowBlur=0;c.font=`900 ${Math.round(TW*.26)}px system-ui`;c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';const t='⏸'+(m.off-G.s.round);c.strokeText(t,x,cy+TW*.1);c.fillStyle='#ddd';c.fillText(t,x,cy+TW*.1)}}
+ c.restore()}
+// case marquée : hachures diagonales dans le losange (rayon du Titan, cases touchées par un prisme)
+function hatch(c,x,y,col,a){c.save();diamond(c,x,y,.9);c.globalAlpha=a;c.fillStyle=col;c.fill();c.clip();c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=2;c.beginPath();for(let k=-3;k<=3;k++){c.moveTo(x+k*TW*.14-TW*.3,y+TH*.5);c.lineTo(x+k*TW*.14+TW*.3,y-TH*.5)}c.stroke();c.restore();
+ diamond(c,x,y,.9);c.strokeStyle=col;c.lineWidth=2.5;c.stroke()}
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
 export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
  const a=(px-ox)/(TW/2),b=(py-oy)/(TH/2),va=Math.round((a+b)/2),vb=Math.round((b-a)/2),g=V?{x:vb,y:0-va}:{x:va,y:vb},k=K(g.x,g.y);
@@ -132,7 +166,7 @@ export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<12;i++)
 export function say(u,s,c,big){texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
 // particules d'ambiance par décor : 0 luciole 1 étincelle 2 feuille 3 neige 4 braise 6 feu follet
-const AMB=[[0,2],[0,2,0],[1,0],[1],[3,3],[4,6,4]];
+const AMB=[[0,2],[0,2,0],[1,0],[1],[3,3],[4,6,4],[6,0,6]];
 function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;const kinds=AMB[G.F?G.F.th:0]||[0];
  while(parts.length<26){const k=kinds[parts.length%kinds.length],fall=k===2||k===3;parts.push({k,x:Math.random()*W,y:fall?-20-Math.random()*H:Math.random()*H,vx:(Math.random()-.5)*.02,vy:fall?.03+Math.random()*.03:k===4||k===6?-.03-Math.random()*.03:(Math.random()-.5)*.01,s:.12+Math.random()*.14,ph:Math.random()*7,r:Math.random()*6})}
  ctx.save();for(const p of parts){p.x+=p.vx*dt+Math.sin(now/900+p.ph)*.15;p.y+=p.vy*dt;if(p.y>H+30||p.y<-40||p.x<-30||p.x>W+30){Object.assign(p,{x:Math.random()*W,y:p.vy>0?-20:H+20})}
@@ -160,6 +194,11 @@ export function draw(now){
  if(plan){const pts=[[cur.gx,cur.gy],...plan.path].map(([x,y])=>scr(x,y)),[ex,ey]=pts[pts.length-1];ctx.save();ctx.lineCap=ctx.lineJoin='round';
   for(const[w,c]of[[7,'rgba(0,20,50,.7)'],[3.5,'#fff']]){ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.setLineDash([9,7]);ctx.lineDashOffset=-now/45;ctx.stroke()}
   ctx.setLineDash([]);diamond(ctx,ex,ey,.92);ctx.fillStyle='rgba(255,255,255,.28)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
+ // Titan : cases du rayon chargé (hachures violettes)
+ if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
+ // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
+ const pv=[];if(sel&&sel.sp.dmg&&cur&&!busy)for(const m of S.map.values())if(prismOn(S,m)&&sel.cells.some(c=>c.ok&&(c.x===m.x&&c.y===m.y||sel.sp.zone&&man(c,m)<=1))){const d=prismDmg(S,cur,sel.sp);
+  for(const p of prismHits(S,m)){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#c98bff',.3);const o=occ(S,p.x,p.y);if(o)pv.push([o,d])}}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:depth(m.x,m.y),m});for(const o of outer)L.push({z:depth(o.x,o.y),m:o});
  for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:depth(u.gx,u.gy)+.01,u});
@@ -168,11 +207,12 @@ export function draw(now){
  const hides=u=>!tg.includes(u)&&tg.some(t=>{const dz=depth(u.gx,u.gy)-depth(t.gx,t.gy);return dz>0&&dz<=3&&Math.abs(lat(u.gx,u.gy)-lat(t.gx,t.gy))<=1.2});
  for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,'sico',12,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
  const ghost=new Set();
- for(const o of L){if(o.m){if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
+ for(const o of L){if(o.m){if(o.m.cry){crystal(ctx,o.m,now);continue}if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*(o.m.block?DK[o.m.d]??.84:1)*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,lift=u.fly?TH*.7:0,jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
+  if(u.bs==='beam'&&!u.dead){ctx.save();ctx.globalAlpha=.35+.15*Math.sin(now/300);ctx.fillStyle='#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48,TH*.36,0,0,7);ctx.fill();ctx.restore()}
   const glow=tg.includes(u);if(glow){ctx.save();ctx.shadowColor='#ffb040';ctx.shadowBlur=TW*(.18+.08*Math.sin(now/160))}
   drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
@@ -182,6 +222,7 @@ export function draw(now){
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-(u.fly?TH*.7:0)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
   {const ss=[u.shield>0&&1,u.buff&&12,u.poison&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
+ for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-(o.fly?TH*.7:0)-TW*.12;ctx.save();ctx.font=`900 ${Math.round(TW*.22)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);
   for(const o of plan.foes){const[sx,sy]=scr(o.gx,o.gy),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.75+.25*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}

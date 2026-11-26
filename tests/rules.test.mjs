@@ -458,3 +458,83 @@ test('objectif chef : la lettre de repère reste en majuscule', () => {
  const s=newBattle(),{hs,es}=genMap(s,5,0);mkUnits(s,{lvl:1,pool:['slime'],boss:null,goal:'chief'},hs,es,HS);
  const c=s.units.find(u=>u.chief);assert.match(c.n,/^Chef .+ [A-Z]$/);
 });
+
+// ---------- V4.0 : région 6 (cristaux, entrave, Titan, 10 niveaux) ----------
+import {fightSpec,zoneDone,ampAt,prismOn,prismDmg,beamCells,beamPhase,beamDmg} from '../src/rules.js';
+import {zlen} from '../src/data.js';
+const Z6=ZONES.findIndex(z=>z.id==='cristal');
+const cry=(s,x,y,k)=>Object.assign(cell(s,x,y),{block:1,cry:k});
+
+test('région 6 : 10 combats, boss au dernier, ouverte après le Château', () => {
+ assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),4);
+ assert.ok(fightSpec(Z6,9,1).boss);assert.ok(!fightSpec(Z6,8,1).boss);assert.ok(fightSpec(0,3,1).boss);
+ assert.equal(fightSpec(Z6,4,1).goal,'chief');assert.equal(fightSpec(Z6,6,1).goal,'survive');assert.equal(fightSpec(Z6,0,1).goal,null);
+ assert.equal(fightSpec(2,1,1).goal,'chief'); // anciennes zones inchangées
+ const save={z:{chateau:4}};assert.ok(zoneDone(save,Z6-1));assert.ok(!zoneDone({z:{cristal:9}},Z6));assert.ok(zoneDone({z:{cristal:10}},Z6));
+});
+
+test('région 6 : 200 cartes par niveau, ennemis joignables, cristaux posés hors des départs', () => {
+ for(let i=0;i<10;i++){const F=fightSpec(Z6,i,0);
+  for(let seed=0;seed<200;seed++){const s=newBattle(),{hs,es}=genMap(s,seed*131+i,F.th,F.cry);mkUnits(s,{...F,seed},hs,es,HS);
+   const want=(F.cry.a||0)+(F.cry.p||0),got=[...s.map.values()].filter(c=>c.cry);assert.equal(got.length,want,`niveau ${i+1} graine ${seed}`);
+   for(const u of s.units){assert.ok(!cell(s,u.x,u.y).cry,'unité sur un cristal');assert.ok(!cell(s,u.x,u.y).block)}
+   const h=s.units.find(u=>u.team==='h'),d=reach({...s,units:[]},h,99).dist;
+   for(const u of s.units)assert.ok(d.has(K(u.x,u.y)),`niveau ${i+1} graine ${seed} : ${u.n} injoignable`);
+   assert.equal(s.units.filter(u=>u.team==='m').length,F.en.length+(F.boss?1:0));assert.ok(s.units.filter(u=>u.team==='m').length<=7)}}
+});
+
+test('amplificateur : +30 % de dégâts et de soin depuis une case voisine, pas de cumul, pas sur le poison', () => {
+ const s=arena();cry(s,5,5,'a');cry(s,5,7,'a');const a=unit(s,'h',5,6),b=unit(s,'m',6,6,{hp:200,max:200}),c=unit(s,'h',8,8);
+ assert.equal(ampAt(s,a),1.3);assert.equal(ampAt(s,c),1);
+ const sp={...SP.slash,dmg:[10,10]};s.rng=seqRng([.99]);applySpell(s,a,sp,b);assert.equal(b.hp,200-13);
+ delete b.hitBy;s.rng=seqRng([.99]);applySpell(s,c,{...sp,r:[1,9]},b);assert.equal(b.hp,200-13-10);
+ a.hp=10;a.max=50;applySpell(s,a,{...SP.heal,heal:[10,10]},a);assert.equal(a.hp,23);
+ const v={...SP.venom,dmg:[0,0]};b.hp=100;s.rng=seqRng([.99]);applySpell(s,a,v,b);assert.deepEqual(b.poison,{d:4,turns:2}); // poison non amplifié
+});
+
+test('prisme : visable, 70 % des dégâts moyens aux 4 voisines (alliés compris), puis éteint 2 tours', () => {
+ const s=arena();const p=cry(s,5,5,'p'),a=unit(s,'h',5,2),f=unit(s,'m',5,6,{hp:100,max:100}),ally=unit(s,'h',4,5,{hp:100,max:100}),far=unit(s,'m',9,9,{hp:100,max:100});
+ const sp={...SP.shot,dmg:[10,14]};assert.ok(okTarget(s,a,sp,{x:5,y:5}),'prisme visable');
+ assert.ok(!okTarget(s,a,SP.heal,{x:5,y:5}),'un soin ne vise pas le prisme');
+ assert.equal(prismDmg(s,a,sp),8);
+ payCost(a,sp,{x:5,y:5});applySpell(s,a,sp,{x:5,y:5});assert.equal(f.hp,92);assert.equal(ally.hp,92);assert.equal(far.hp,100);
+ assert.ok(!prismOn(s,p));assert.ok(!okTarget(s,a,sp,{x:5,y:5}),'éteint');
+ s.round+=2;assert.ok(prismOn(s,p));
+ // Volée dont la zone touche le prisme : déclenché une fois
+ f.hp=ally.hp=100;applySpell(s,a,{...SP.volley,dmg:[10,10]},{x:5,y:6});assert.ok(!prismOn(s,p));assert.equal(ally.hp,93);
+});
+
+test('poussée contre un cristal : collision normale, prisme non déclenché', () => {
+ const s=arena();const p=cry(s,5,5,'p'),a=unit(s,'h',5,2),t=unit(s,'m',5,3,{hp:100,max:100});
+ push(s,t,pushPlan(s,a,t,2));assert.equal(t.y,4);assert.equal(t.hp,95);assert.ok(prismOn(s,p));
+});
+
+test('IA : le monstre préfère une case amplifiée, et son intention inclut le bonus', () => {
+ const s=arena();cry(s,3,6,'a');const h=unit(s,'h',5,5),m=unit(s,'m',2,5,{maxPA:4,pa:4,maxPM:3,pm:3,atk:{n:'A',pa:4,r:[1,3],t:'enemy',los:1,dmg:[10,10]}});
+ const a=aiStep(s,m);assert.equal(a.type,'move');const[x,y]=a.to.split(',').map(Number);assert.equal(ampAt(s,{x,y}),1.3);
+ const it=intent(s,m);assert.deepEqual(it.dmg,[13,13]);assert.ok(it.amp);assert.equal(m.x,2);
+ // les monstres ne visent jamais un prisme
+ const s2=arena();cry(s2,3,5,'p');const m2=unit(s2,'m',2,5,{maxPA:4,pa:4,atk:{n:'A',pa:4,r:[1,1],t:'enemy',dmg:[5,5]}});unit(s2,'h',9,9);
+ assert.notEqual(aiStep(s2,m2)?.type,'cast');
+});
+
+test('araignée de quartz : son attaque retire 1 PM au tour suivant', () => {
+ const s=newBattle(()=>.5),{hs,es}=genMap(s,5,6);mkUnits(s,{lvl:17,pool:['qspider'],boss:null,en:['qspider']},hs,es,HS);
+ const sp=s.units.find(u=>u.k==='qspider'),h=s.units.find(u=>u.team==='h');assert.ok(sp.atk.slow);assert.deepEqual(sp.atk.r,[1,3]);
+ applySpell(s,sp,sp.atk,h);assert.ok(h.slow);beginTurn(h);assert.equal(h.pm,h.maxPM-1);
+});
+
+test('Titan : 3 phases, ligne puis croix, tir un tour après le marquage, prisme qui éclate en phase 3', () => {
+ const s=arena(),T=unit(s,'m',5,5,{hp:300,max:300,bs:'beam',atk:{dmg:[20,30]}}),h=unit(s,'h',5,9,{hp:200,max:200}),h2=unit(s,'h',8,6,{hp:200,max:200});
+ assert.equal(beamPhase(T),1);let b=beamCells(s,T);assert.ok(b.cells.every(p=>p.x===5&&p.y>5));assert.equal(b.cells.length,6);
+ bossTurn(s,T);assert.ok(s.beam,'marqué au 1er tour');assert.equal(h.hp,200);
+ T.x=1;T.y=1; // déplacé : le tir garde les cases marquées
+ bossTurn(s,T);assert.equal(s.beam,null);assert.equal(h.hp,200-beamDmg(T));assert.equal(h2.hp,200);
+ bossTurn(s,T);assert.equal(s.beam,null,'repos au 3e tour');
+ T.x=5;T.y=5;T.hp=150;assert.equal(beamPhase(T),2);b=beamCells(s,T);assert.ok(b.cells.some(p=>p.x>5)&&b.cells.some(p=>p.y>5)&&b.cells.some(p=>p.x<5)&&b.cells.some(p=>p.y<5));
+ const ev=bossTurn(s,T);assert.ok(ev.some(e=>e.text==='Phase 2 !'));assert.ok(s.beam);
+ // le rayon s'arrête au premier obstacle ou cristal
+ const s3=arena(),T3=unit(s3,'m',5,5,{hp:50,max:300,bs:'beam',atk:{dmg:[20,30]}});const p=cry(s3,5,8,'p');unit(s3,'h',5,10);
+ b=beamCells(s3,T3);assert.ok(!b.cells.some(q=>q.x===5&&q.y>=8&&q.y!==9),'arrêté au prisme');assert.ok(b.cells.some(q=>q.x===4&&q.y===8)&&b.cells.some(q=>q.x===5&&q.y===9),'voisines du prisme marquées');
+ assert.equal(b.pr[0],p);
+});

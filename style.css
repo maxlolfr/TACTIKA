@@ -52,7 +52,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#16220f;color:var(--in
 .zone canvas,.zone .q{width:58px;height:58px;border-radius:50%;background:#1a120ccc;border:3px solid var(--gold);box-shadow:0 3px 8px #0008}.zone .q{display:flex;align-items:center;justify-content:center;font:800 26px system-ui;color:#cbbd9c}
 .zone b{font-size:12px;background:#1a120cdd;border-radius:8px;padding:2px 7px;margin-top:3px;white-space:nowrap}.zone small{font-size:11px;color:#ffd65a;text-shadow:0 1px 2px #000;white-space:nowrap}
 .zone.lock canvas,.zone.lock .q{filter:grayscale(1) brightness(.6);border-color:#666}.zone.lock small{color:#ddd}
-#zsheet{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--panel);border-top:2px solid var(--line);padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);display:none;flex-direction:column;gap:8px;text-align:center}#zsheet.on{display:flex}#zsheet h3{margin:0;color:var(--gold)}#zsheet small{color:#cbbd9c;margin-bottom:4px}
+#zsheet{position:absolute;left:0;right:0;bottom:0;z-index:4;background:var(--panel);border-top:2px solid var(--line);padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);display:none;flex-direction:column;gap:8px;text-align:center}#zsheet.on{display:flex;max-height:82%;overflow-y:auto}#zsheet h3{margin:0;color:var(--gold)}#zsheet small{color:#cbbd9c;margin-bottom:4px}
 body.camp #top,body.camp #panel{visibility:hidden}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9;background:#0c120a;color:#cbbd9c}
 /* V2.3 : étoiles et coffre de butin */
@@ -181,3 +181,6 @@ body.camp #top,body.camp #panel{visibility:hidden}
 @media (orientation:landscape){#row{min-height:0}#hint{height:auto}#tl{min-height:36px}}
 
 #load{background:linear-gradient(#120c1a99,#120c1acc),url(assets/village.webp) center/cover;color:#fff1cf;font:700 18px system-ui;text-shadow:0 2px 6px #000}
+/* V4.0 : contrats et défi du jour avec bandeau illustré */
+.loot.qrow.qrow{background-color:#1a120a;background-size:cover;background-position:right center;min-height:92px;border-color:#a8864f}
+.loot.qrow.qrow b{color:#fff3d6;text-shadow:0 1px 3px #000}.loot.qrow.qrow small{color:#e8dcc0;text-shadow:0 1px 2px #000}
