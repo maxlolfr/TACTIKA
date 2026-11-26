@@ -60,7 +60,7 @@ export function layout(){
  const top=$('top').getBoundingClientRect().bottom;hudB=top;
  // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
  const x0=side?pad('top','paddingLeft')-10:0,x1=side?P.left:W,bot=side?H-Math.max(4,pad('panel','paddingBottom')-8):P.top,avail=bot-top;
- const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+(v?1.22:1.4)),130);
+ const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+(v?1:1.05)),130); // V4.0.5 : moins de marge réservée au-dessus du plateau
  V=side&&fit(true)>fit(false)*1.05;TW=fit(V);TH=TW*ISO;
  const rows=V?CMAX+1:R/2+1,bh=rows*TH+1.1*TW,mid=R/4; // case centrale (mid,mid)
  ox=(x0+x1)/2-lat(mid,mid)*TW/2;oy=top+(avail-bh)/2+1.1*TW+rows*TH/2-depth(mid,mid)*TH/2;
