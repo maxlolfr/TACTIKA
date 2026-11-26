@@ -155,3 +155,11 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - Règles de combat et format de sauvegarde inchangés. Ancien accueil (cartes héros, grille) supprimé.
 - Polices Lilita One / Nunito via Google Fonts (non bloquant, repli système) — non vérifiées en essai (réseau fermé). 52 tests ; Playwright sur 10 formats (enseignes visibles et non recouvertes, chaque bâtiment ouvre son écran, aventure → combat).
 - Limite : en paysage la peinture verticale laisse des côtés flous ; une version paysage est commandée (VI-02).
+
+## V4.0 (26/11/2026) — région 6 « Cavernes de cristal » jouable
+- Zones à longueur variable : `ZONES[].fights` (lvl, en, cry, goal, tip), `zlen(z)`, `fightSpec()` (rules.js, partagé avec le simulateur), `zoneDone()`. Sauvegarde v2 inchangée (`z.cristal` de 0 à 10).
+- Cristaux : `cell.cry` ('a' amplificateur, 'p' prisme, bloquants), `cell.off` (prisme éteint jusqu'au tour de table indiqué). `ampAt` ×1,3 dégâts directs et soins, `prismOn/prismDmg/prismHits/prismFire` (70 % des dégâts moyens aux 4 voisines, alliés compris, éteint 2 tours). Poussée contre un cristal = collision normale. IA : case amplifiée préférée, intention avec bonus (`it.amp`). Les monstres ne visent jamais un prisme.
+- Monstres : `crygolem`, `qspider` (attaque `slow`), `prisbat`. Titan prismatique (`bs:'beam'`) : `beamPhase`, `beamCells`, `beamTurn`, `s.beam` (cases hachurées) ; marque, tire au tour suivant, repos ; croix en phase 2 ; prisme qui éclate en phase 3. Le rayon ne touche que les héros.
+- Rendu : cristaux C6-09 (`crystals`, dessin par le code en secours), cases amplifiées (tirets + chevron), aperçu du prisme (hachures + « ◆ -N »), sol `tiles5` via `theme.ts`, fond provisoire = Monts teinté.
+- Chargement par région : `zoneAssets(F)` ; un seul fond en mémoire ; `icon()` paresseux.
+- Aussi : 10 décors refaits (5 zones × 2 sens), bandeaux de contrats `assets/q/`, `tools/cut_flood.py`, `TILE_W` pour `cut_tiles.py`. 62 tests.

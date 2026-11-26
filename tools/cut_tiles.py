@@ -13,7 +13,7 @@ solid=ndimage.binary_opening(~np.isin(lab,list(edge)),iterations=2)
 lab,n=ndimage.label(solid);sizes=ndimage.sum(solid,lab,range(1,n+1))
 boxes=[(i+1,ndimage.find_objects((lab==i+1).astype(int))[0]) for i in np.argsort(sizes)[::-1][:16]]
 boxes.sort(key=lambda b:(round((b[1][0].start+b[1][0].stop)/2/(H/4)-.5),b[1][1].start))
-cut=[];geo=[];TW=240
+cut=[];geo=[];TW=int(__import__("os").environ.get("TILE_W",240)) # TILE_W : largeur gardée (V4.0 : taille native des planches récentes)
 for i,(ys,xs) in boxes:
     m=ndimage.binary_fill_holes(lab[ys,xs]==i);al=ndimage.gaussian_filter(ndimage.binary_erosion(m).astype(float),.7)
     px=a[ys,xs].copy()
