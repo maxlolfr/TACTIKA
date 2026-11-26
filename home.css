@@ -141,7 +141,7 @@
 button.v-cl{cursor:pointer}button.v-cl:hover,button.v-cl:focus-visible{background:#ffd65a22;outline:2px solid #ffd65a88}
 .v-cl small{font-weight:600;color:#e8d6b8}
 .v-chap{cursor:pointer;font:inherit}
-/* Cristal de l'Éther : calque (paysage) ou zone sur le cristal peint (portrait) */
+/* Cristal de l'Éther : calque posé sur la place ronde */
 .v-cry{position:absolute;z-index:2;background:none;border:0;padding:0;cursor:pointer;color:var(--cream)}
 .v-cry i{position:absolute;display:block;pointer-events:none}
 .v-cry img{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 4px 5px #0007)}

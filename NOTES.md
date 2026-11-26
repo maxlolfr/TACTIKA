@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.6.2 (27/11/2026) : cristal évolutif en portrait
+- Village vertical sans cristal (G-18) ; le calque `assets/cry/` sert maintenant dans les deux sens (`SCENES.*.cry`, `ck`).
+
 ## V4.6.1 (27/11/2026) : nouveau village et lisibilité
 - Village vertical (six bâtiments, cristal peint) et horizontal (sans cristal), préparés avec `tools/prep_bg.py`. Coordonnées « logiques » dans `SCENES` (941×1686 et 1536×1030).
 - Entraînement : « bientôt » (V4.7). L'ancien bâtiment Talents devient l'Académie.
