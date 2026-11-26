@@ -85,6 +85,9 @@ export function resetFx(){fx=[];texts=[];parts=[]}
 export const addFx=(x,y,i,w,dur=550)=>fx.push({x,y,i,w,t0:performance.now(),dur});
 export const addProj=(a,b)=>fx.push({proj:1,a:{x:a.x,y:a.y},b,t0:performance.now(),dur:260});
 export const shake=ms=>{shakeT=performance.now()+ms};
+// impacts : zoom bref vers un point, éclats de particules (coup critique, KO, collision)
+let punchE=0,punchP=null;export const punch=(u,k=.05,ms=220)=>{punchE=performance.now()+ms;punchP={x:u.gx,y:u.gy,k,ms}};
+export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<12;i++){const a=Math.random()*6.28,v=.6+Math.random();fx.push({burst:1,x:u.gx,y:u.gy,k:kind,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,t0,dur:650})}};
 export function say(u,s,c,big){texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
 // particules d'ambiance par décor : 0 luciole 1 étincelle 2 feuille 3 neige 4 braise 6 feu follet
@@ -100,6 +103,7 @@ export function draw(now){
  requestAnimationFrame(draw);const{phase,cur,sel,busy,reachC}=G,S=G.s,units=S.units;if(!ground||phase==='camp')return;
  ctx.setTransform(dpr,0,0,dpr,0,0);
  const sh=shakeT>now?(Math.random()-.5)*6:0;ctx.translate(sh,sh*.5);
+ if(punchE>now){const t=(punchE-now)/punchP.ms,[px,py]=scr(punchP.x,punchP.y),k=1+punchP.k*Math.sin(t*Math.PI);ctx.translate(px,py);ctx.scale(k,k);ctx.translate(-px,-py)}
  ctx.drawImage(ground,0,0,W,H);
  // surbrillances
  if(cur&&cur.team==='h'&&!busy&&phase==='fight'){
@@ -118,7 +122,8 @@ export function draw(now){
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=u.h*TW/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.35*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.08,TW*.28,TH*.22,0,0,7);ctx.fill();ctx.restore();
   const bob=Math.sin(now/300+u.id.charCodeAt(1)*2)*(u.fly?TH*.12:1),lift=u.fly?TH*.7:0,jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0;
-  drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,al)}
+  drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,al);
+  if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  // barres de vie
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-u.h*TW-(u.fly?TH*.7:0)-4-(u.hop||0),w=TW*.6;
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':'#e0493a';ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
@@ -135,10 +140,11 @@ export function draw(now){
  if(cur&&!cur.dead&&phase==='fight'){const[sx,sy]=scr(cur.gx,cur.gy),f=AT.parts[10],w=TW*.32,y=sy-cur.h*TW-(cur.fly?TH*.7:0)-TW*.42+Math.sin(now/180)*4;ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,y-w*f[3]/f[2],w,w*f[3]/f[2])}
  ambient(now);
  fx=fx.filter(e=>now-e.t0<e.dur);for(const e of fx){const t=(now-e.t0)/e.dur;
+  if(e.burst){const[sx,sy]=scr(e.x,e.y),f=AT.parts[e.k],w=TW*.22*(1-t*.5),el=t*e.dur/16;ctx.save();ctx.globalAlpha=1-t;ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx+e.vx*el*2.2-w/2,sy-TW*.5+(e.vy*el+.045*el*el)*1.6-w/2,w,w*f[3]/f[2]);ctx.restore();continue}
   if(e.proj){const[ax,ay]=scr(e.a.x,e.a.y),[bx,by]=scr(e.b.x,e.b.y),x=ax+(bx-ax)*t,y=ay+(by-ay)*t-TW*.6-Math.sin(t*Math.PI)*TW*.4;
    const f=AT.fx[6];ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(by-ay-Math.PI*Math.cos(t*Math.PI)*TW*.4,bx-ax));ctx.drawImage(IMG.fx,f[0],f[1],f[2],f[3],-TW*.45,-TW*.45*f[3]/f[2],TW*.9,TW*.9*f[3]/f[2]);ctx.restore();continue}
   const[sx,sy]=scr(e.x,e.y),f=AT.fx[e.i],s=(e.w||1.3)*TW/f[2]*(.7+.4*Math.min(1,t*3));
   ctx.save();ctx.globalAlpha=t<.6?1:1-(t-.6)/.4;ctx.drawImage(IMG.fx,f[0],f[1],f[2],f[3],sx-f[2]*s/2,sy+TH*.3-f[3]*s,f[2]*s,f[3]*s);ctx.restore()}
  texts=texts.filter(e=>now-e.t0<1000);ctx.textAlign='center';for(const e of texts){const t=(now-e.t0)/1000,[sx,sy]=scr(e.x,e.y);
-  ctx.font=`900 ${Math.round(TW*(e.big?.5:.4))}px system-ui`;ctx.globalAlpha=t<.7?1:1-(t-.7)/.3;ctx.lineWidth=4;ctx.strokeStyle='#000';const y=sy-TW*1.1-t*30;ctx.strokeText(e.s,sx,y);ctx.fillStyle=e.c;ctx.fillText(e.s,sx,y);ctx.globalAlpha=1}
+  const pop=1+.7*Math.min(1,Math.max(0,1-(now-e.t0)/140));ctx.font=`900 ${Math.round(TW*(e.big?.58:.42)*pop)}px system-ui`;ctx.globalAlpha=t<.7?1:1-(t-.7)/.3;ctx.lineWidth=4;ctx.strokeStyle='#000';const y=sy-TW*1.1-t*30;ctx.strokeText(e.s,sx,y);ctx.fillStyle=e.c;ctx.fillText(e.s,sx,y);ctx.globalAlpha=1}
 }

@@ -3,7 +3,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,intent} from '../src/rules.js';
+ hurt,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -221,4 +221,13 @@ test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer
  const it=intent(s,m);assert.equal(it.target,h);assert.deepEqual(it.dmg,[7,10]);assert.deepEqual(it.from,{x:3,y:2});
  assert.deepEqual([m.x,m.y,m.pa,m.pm],[5,2,0,0]);
  const m2=unit(s,'m',11,0,{maxPA:4,maxPM:1,pa:4,pm:1,atk:{pa:4,r:[1,1],t:'enemy',dmg:[1,2]}});assert.equal(intent(s,m2),null,'trop loin : aucune attaque');
+});
+
+// ---------- V2.4a ----------
+test('étoiles : le détail est juste (rapide mais avec un KO)', () => {
+ const s=arena();unit(s,'h',0,0,{dead:true});unit(s,'h',1,0);s.round=3;
+ assert.deepEqual(starList(s,false),[true,false,true]);assert.equal(stars(s,false),2);
+});
+test('carte : jamais d\'échec, même sur 300 graines', () => {
+ for(let seed=0;seed<300;seed++)assert.ok(genMap(newBattle(),seed*7919,seed%THEMES.length),'graine '+seed);
 });

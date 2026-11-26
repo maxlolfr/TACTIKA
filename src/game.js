@@ -9,6 +9,7 @@ export const G={
  sel:null,          // sort choisi {sp,cells}
  reachC:null,       // cases atteignables du héros qui joue
  intents:null,      // intentions des monstres [{m,target,dmg}] pendant le tour d'un héros
- endTurnResolve:null};
+ endTurnResolve:null,
+ fid:0};            // numéro du combat en cours
 // Fonctions de l'interface appelées par la boucle de tours (renseignées par ui.js).
 export const hooks={render(){},renderTL(){},result(){}};
