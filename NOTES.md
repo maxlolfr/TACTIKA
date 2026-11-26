@@ -166,3 +166,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V4.0.1 (26/11/2026) — un sol HD par région
 `sol_prairie` (Prairie et Village), `sol_bois`, `sol_plage`, `sol_mont`, `sol_chateau` (planches ChatGPT 2×2, 512 px par tuile, WebP 90), `tiles5` pour les Cavernes. `THEMES[].ts` + `g` = cases de la planche ; l'eau et la roche restent dans `tiles4`. Les sols sont chargés à l'entrée de leur zone et libérés ensuite. Écartées : tuile avec gros rocher (Prairie), dalle sculptée (Château). `cut_tiles.py` : `TILE_W`, `TILE_N`, `TILE_Q`.
+
+## V4.0.2 (26/11/2026) — sons des Cavernes, finitions
+- Sons ElevenLabs (lot R6, 968 crédits) : `crystal_amp`, `prism_burst`, `beam_charge`, `beam_fire`, musique `cave` (stéréo, ajoutée au `case` de audio.yml). Secours dans `FALL` tant qu'un fichier manque.
+- Niveau 4 : `prismCover` met le dernier monstre à couvert derrière le prisme. Défi du jour des Cavernes avec 1 turquoise + 1 violet.
+- Mode test : `?fps` dans l'adresse affiche images/s et le plus long écart entre deux images. 63 tests.

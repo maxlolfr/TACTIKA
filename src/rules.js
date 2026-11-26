@@ -79,7 +79,7 @@ export function ctUpdate(save,day,res){const done=[];if(!res.win)return done;
 export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p<t.n)return 0;t.c=1;save.gold+=t.g;return 1+gainXp(save,t.x)}
 // défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
 export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
- return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length]}}
+ return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.fights?{a:1,p:1}:undefined}}
 export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
@@ -144,6 +144,9 @@ export function targetsFrom(s,u,from){const foes=s.units.filter(o=>!o.dead&&o.te
  return{foes:[...all],list}}
 // ---------- première mission guidée (V3.0e) ----------
 // Une cible à portée de Tir dès le 1er tour de Fenn (6 cases en face), une 2e que le déplacement ouvre (7 cases).
+// Cavernes, niveau 4 (V4.0.2) : le dernier monstre se met à couvert juste derrière le prisme (côté ennemi), pour apprendre à le toucher par le prisme
+export function prismCover(s){const p=[...s.map.values()].find(c=>c.cry==='p'),m=s.units.filter(u=>u.team==='m').pop();if(!p||!m)return;
+ const spot=prismHits(s,p).filter(q=>passable(s,q.x,q.y)&&!occ(s,q.x,q.y)).sort((a,b)=>(a.x+a.y)-(b.x+b.y))[0];if(spot&&spot.x+spot.y<p.x+p.y)Object.assign(m,{x:spot.x,y:spot.y,gx:spot.x,gy:spot.y})}
 export function guideSetup(s){const f=s.units.find(u=>u.k==='archer'),m=s.units.filter(u=>u.team==='m');if(!f||m.length<2)return;
  const spots=[{x:f.x-3,y:f.y-3},{x:f.x-2,y:f.y-5}];
  // dégage les deux couloirs (obstacles et eau) entre les héros et ces cases
@@ -186,7 +189,7 @@ export function applySpell(s,u,sp,c){
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
   if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
- if(amp>1&&(sp.dmg||sp.heal))ev.unshift({type:'status',t:u,text:'Cristal +30 %',color:'#5ff2e0'});
+ if(amp>1&&(sp.dmg||sp.heal))ev.unshift({type:'status',t:u,text:'Cristal +30 %',color:'#5ff2e0',snd:'crystal_amp'});
  const pc=sp.dmg&&tg.map(p=>cell(s,p.x,p.y)).find(c=>prismOn(s,c));if(pc)ev.push(...prismFire(s,u,pc,prismDmg(s,u,sp)));
  if(sp.shake)ev.push({type:'shake',ms:250});
  return ev}
@@ -199,7 +202,7 @@ export const prismOn=(s,c)=>!!c&&c.cry==='p'&&!(c.off>s.round);
 export const prismDmg=(s,u,sp)=>Math.round(((sp.dmg[0]+sp.dmg[1])/2+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.buff?1+u.buff.pct:1)*ampAt(s,u)*PRISM);
 // Cases et unités touchées si le prisme c éclate (aperçu et effet)
 export const prismHits=(s,c)=>DIRS.map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).filter(p=>cell(s,p.x,p.y));
-export function prismFire(s,u,c,amt){c.off=s.round+PRISM_OFF;const ev=[{type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'},{type:'status',t:u,text:'Prisme !',color:'#c98bff',snd:'critical'},{type:'shake',ms:200}];
+export function prismFire(s,u,c,amt){c.off=s.round+PRISM_OFF;const ev=[{type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'},{type:'status',t:u,text:'Prisme !',color:'#c98bff',snd:'prism_burst'},{type:'shake',ms:200}];
  for(const p of prismHits(s,c)){ev.push({type:'fx',x:p.x,y:p.y,i:5,w:1});const o=occ(s,p.x,p.y),e=o&&hurt(s,o,amt,'prism');if(e)ev.push(e)}return ev}
 
 // ---------- poussée ----------
@@ -275,10 +278,10 @@ export const beamDmg=u=>Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*(u.dmgMul||1));
 function beamTurn(s,u,ev){const ph=beamPhase(u);
  if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'enemy_warning'},{type:'shake',ms:300})}
  u.bt=(u.bt||0)+1;
- if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'critical'},{type:'shake',ms:350});
+ if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'beam_fire'},{type:'shake',ms:350});
   for(const c of b.pr){c.off=s.round+PRISM_OFF;ev.push({type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'})}
   for(const p of b.cells){ev.push({type:'fx',x:p.x,y:p.y,i:5,w:1});const h=occ(s,p.x,p.y),e=h&&h.team!==u.team&&hurt(s,h,d,'beam');if(e)ev.push(e)}}
- else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'enemy_warning'})}
+ else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
 export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;

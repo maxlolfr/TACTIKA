@@ -538,3 +538,11 @@ test('Titan : 3 phases, ligne puis croix, tir un tour après le marquage, prisme
  b=beamCells(s3,T3);assert.ok(!b.cells.some(q=>q.x===5&&q.y>=8&&q.y!==9),'arrêté au prisme');assert.ok(b.cells.some(q=>q.x===4&&q.y===8)&&b.cells.some(q=>q.x===5&&q.y===9),'voisines du prisme marquées');
  assert.equal(b.pr[0],p);
 });
+
+test('Cavernes niveau 4 : un ennemi à couvert derrière le prisme, toujours joignable', async () => {
+ const {prismCover}=await import('../src/rules.js');let n=0;
+ for(let seed=0;seed<200;seed++){const F=fightSpec(Z6,3,seed),s=newBattle(),{hs,es}=genMap(s,seed,F.th,F.cry);mkUnits(s,F,hs,es,HS);prismCover(s);
+  const p=[...s.map.values()].find(c=>c.cry==='p'),m=s.units.filter(u=>u.team==='m').pop();if(Math.abs(m.x-p.x)+Math.abs(m.y-p.y)===1){n++;assert.ok(m.x+m.y<p.x+p.y)}
+  assert.equal(new Set(s.units.map(u=>u.x+','+u.y)).size,s.units.length,'deux unités sur une case')}
+ assert.ok(n>150,`à couvert ${n}/200`);
+});
