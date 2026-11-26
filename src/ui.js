@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,upgrade,upCost,upLvl,itemVal,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,upgrade,upCost,upLvl,itemVal,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -32,7 +32,7 @@ function render(){renderTL();
  $('end').disabled=!me||G.busy;
  $('hint').textContent=!me?`${u.n} joue.`:sel?`${sel.sp.n} — ${sel.sp.d}. ${sel.sp.dmg?sel.sp.dmg.join('–')+' dégâts · ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins · ':''}portée ${sel.sp.r.join('–')}. Touche une case orange ou un portrait à droite.`:`Touche une case bleue pour bouger, ou choisis un sort.`;
 }
-const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')};
+const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')+(o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')};
 function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
  if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(S.pot>0)||u.hp>=u.max))&&selCells(S,u,sp).some(c=>c.ok)}))return;
  $('hint').textContent='Plus rien à faire : tour suivant…';setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},700)}
@@ -125,7 +125,7 @@ function tav(){$('camp').classList.remove('on');const T=$('tav');T.classList.add
  const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.6b · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.6c · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);

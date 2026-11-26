@@ -84,7 +84,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
   const hp=Math.round(m.hp*sc*(boss?B.hp:1)),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)));
-  s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
+  s.units.push({id:'m'+i,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
    cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:boss?m.h*B.h:m.h,xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)),
    atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,fx:m.fx??0,proj:m.r?1:0}})}
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
@@ -187,6 +187,18 @@ export function aiStep(s,u){
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),from={x,y};
   const can=u.pa>=sp.pa&&heroes.some(h=>okTarget(s,u,sp,h,from));const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0):100+(fd.get(k)??99)*10+d;if(sc<bs){bs=sc;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
+// ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
+// howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
+export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme']};
+export function bossNext(u){const p=BOSS_P[u.bs];if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
+export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
+ if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'kael_charge'},{type:'shake',ms:300})}return ev}
+ u.bt=(u.bt||0)+1;const[P,ph,n]=BOSS_P[u.bs];if(u.bt%P!==ph)return ev;
+ if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
+ if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
+ if(u.bs==='quake'){ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6);
+  for(const h of s.units)if(h.team!==u.team&&!h.dead&&Math.abs(h.x-u.x)+Math.abs(h.y-u.y)<=3){ev.push({type:'fx',x:h.x,y:h.y,i:7,w:1.2});const e=hurt(s,h,d,'quake');if(e)ev.push(e)}}
+ return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
 export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
  for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){r={target:a.target,dmg:a.sp.dmg,from:{x:u.x,y:u.y}};break}
