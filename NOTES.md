@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.4 (26/11/2026) — zoom du plateau
+- Deux doigts : agrandir jusqu'à ×2,5 ; un doigt qui glisse sur un plateau agrandi : le déplacer ; molette et glisser à la souris ; bouton « Vue entière ».
+- **Un appui agit désormais au relâchement** (et pas à l'appui), sans glissement ni second doigt.
+- `view` dans render.js (écran = monde × z + x,y), prise en compte par `tapCell`. Le sol est redessiné plus net après le geste, plafonné à 8 millions de pixels.
+- Plateau agrandi : la caméra suit le héros qui joue et la cible des sorts. Zoom remis à 1 à chaque combat et à la rotation.
+- Testé en émulation tactile Chrome (390×844 et 844×390), pas sur un vrai iPhone ni sur le Magic V5.
+
 ## V4.3 (26/11/2026) — P2 du brief de Michel et étiquette des Cavernes
 - Déplacements : pastille blanche sur les cases accessibles (l'eau n'en a pas). Appui sur l'eau ou un obstacle : « Eau · infranchissable ».
 - Conseil selon l'état réel (PM, PA, recharges, cibles) ; le passage automatique est annoncé par une bannière (1,5 s). Remplace l'ancien message « aucune cible » après déplacement.

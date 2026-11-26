@@ -55,8 +55,23 @@ export const depth=(x,y)=>V?x-y:x+y; // profondeur à l'écran (ordre de dessin)
 const lat=(x,y)=>V?-x-y:x-y;        // position horizontale à l'écran
 export function scr(x,y){return[ox+lat(x,y)*TW/2,oy+depth(x,y)*TH/2]}
 let ground=null,outer=[];
+// V4.4 : zoom du plateau. Écran = monde × z + (x,y) ; le décor dessiné couvre toujours tout l'écran.
+export const view={z:1,x:0,y:0};
+export const ZMAX=2.5;
+let groundK=0,sharpT=0; // résolution du sol pré-dessiné
+const resFor=z=>Math.min(dpr*z,Math.max(dpr,Math.sqrt(8e6/(W*H)))); // plafond mémoire (iPhone)
+export function setView(z,x,y){view.z=Math.min(ZMAX,Math.max(1,z));if(view.z<1.03)view.z=1;
+ view.x=Math.min(0,Math.max(W*(1-view.z),x));view.y=Math.min(0,Math.max(H*(1-view.z),y));
+ $('unzoom').classList.toggle('on',view.z>1);if(view.z>1)$('unzoom').style.top=hudB+6+'px'; // sous la barre du haut, loin des cases qu'on touche le plus
+ // le sol est redessiné plus net une fois le geste fini
+ clearTimeout(sharpT);sharpT=setTimeout(()=>{if(ground&&Math.abs(resFor(view.z)-groundK)>.2)buildGround()},220)}
+// zoom autour d'un point de l'écran (il reste sous le doigt)
+export const zoomAt=(z,px,py)=>{const k=Math.min(ZMAX,Math.max(1,z))/view.z;setView(view.z*k,px-(px-view.x)*k,py-(py-view.y)*k)};
+// plateau agrandi : ramène la case (x,y) à l'écran si elle est sortie de la zone visible
+export function keepInView(x,y){if(view.z===1)return;const[wx,wy]=scr(x,y),sx=wx*view.z+view.x,sy=wy*view.z+view.y,m=TW*view.z*.6,P=$('panel').getBoundingClientRect(),side=matchMedia('(orientation:landscape)').matches,r=side?P.left:W,b=side?H:P.top;
+ if(sx<m||sx>r-m||sy<hudB+m*1.6||sy>b-m*.6)setView(view.z,r/2-wx*view.z,(hudB+b)/2-wy*view.z)}
 export function layout(){
- const box=cv.getBoundingClientRect();W=box.width||innerWidth;H=box.height||innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
+ const box=cv.getBoundingClientRect();if(box.width!==W||box.height!==H){view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}W=box.width||innerWidth;H=box.height||innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
  const side=matchMedia('(orientation:landscape)').matches,P=$('panel').getBoundingClientRect(),pad=(id,k)=>parseFloat(getComputedStyle($(id))[k])||0;
  const top=$('top').getBoundingClientRect().bottom;hudB=top;
  // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
@@ -77,7 +92,7 @@ function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;co
  if(!(id in BG)){for(const k in BG)delete BG[k]; // un seul fond en mémoire
   BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===z)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
- ground=document.createElement('canvas');ground.width=W*dpr;ground.height=H*dpr;const g=ground.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+ groundK=resFor(view.z);ground=document.createElement('canvas');ground.width=W*groundK;ground.height=H*groundK;const g=ground.getContext('2d');g.setTransform(groundK,0,0,groundK,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
  if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle=theme.cave?'rgba(26,8,64,.5)':'rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
  // périphérie assombrie : le regard va au plateau
@@ -121,7 +136,7 @@ function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||p
 function hatch(c,x,y,col,a){c.save();diamond(c,x,y,.9);c.globalAlpha=a;c.fillStyle=col;c.fill();c.clip();c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=2;c.beginPath();for(let k=-3;k<=3;k++){c.moveTo(x+k*TW*.14-TW*.3,y+TH*.5);c.lineTo(x+k*TW*.14+TW*.3,y-TH*.5)}c.stroke();c.restore();
  diamond(c,x,y,.9);c.strokeStyle=col;c.lineWidth=2.5;c.stroke()}
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
-export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
+export function tapCell(px,py){const{sel,reachC}=G,S=G.s;px=(px-view.x)/view.z;py=(py-view.y)/view.z;
  const a=(px-ox)/(TW/2),b=(py-oy)/(TH/2),va=Math.round((a+b)/2),vb=Math.round((b-a)/2),g=V?{x:vb,y:0-va}:{x:va,y:vb},k=K(g.x,g.y);
  const[gx,gy]=scr(g.x,g.y),core=Math.abs(px-gx)/(TW/2)+Math.abs(py-gy)/(TH/2)<.55; // appui au milieu de la case
  const now=S.units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy)),box=(u,w)=>{const[sx,sy]=scr(u.gx,u.gy),top=sy-hgt(u)-lift(u); // jusqu'à la barre de vie
@@ -162,7 +177,7 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
 
 // ---------- effets visuels ----------
 let fx=[],texts=[],shakeT=0,parts=[],lastA=0;
-export function resetFx(){fx=[];texts=[];parts=[]}
+export function resetFx(){fx=[];texts=[];parts=[];view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}
 export const addFx=(x,y,i,w,dur=550,sh='fx',dy=0)=>fx.push({x,y,i,w,sh,dy,t0:performance.now(),dur});
 const dic=(c,s,i,x,y,w)=>{const f=AT[s][i],k=w/Math.max(f[2],f[3]);c.drawImage(IMG[s],f[0],f[1],f[2],f[3],x,y,f[2]*k,f[3]*k)};
 // V4.0.4 : effets du Titan — rayon prismatique (traits lumineux de l'origine vers chaque case, colonnes de lumière) et onde de choc
@@ -190,7 +205,7 @@ if(FPS)FPS.style.cssText='position:fixed;left:4px;bottom:4px;z-index:99;backgrou
 export function draw(now){
  requestAnimationFrame(draw);if(FPS){fN++;fMax=Math.max(fMax,now-(fLast||now));fLast=now;if(now-fT>1000){FPS.textContent=`${Math.round(fN*1000/(now-fT))} i/s · max ${Math.round(fMax)} ms`;fN=0;fT=now;fMax=0}}const{phase,cur,sel,busy,reachC}=G,S=G.s,units=S.units;if(!ground||phase==='camp')return;
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingQuality='high';
- const sh=shakeT>now?(Math.random()-.5)*6:0;ctx.translate(sh,sh*.5);
+ const sh=shakeT>now?(Math.random()-.5)*6:0;ctx.translate(sh,sh*.5);ctx.translate(view.x,view.y);ctx.scale(view.z,view.z);
  if(punchE>now){const t=(punchE-now)/punchP.ms,[px,py]=scr(punchP.x,punchP.y),k=1+punchP.k*Math.sin(t*Math.PI);ctx.translate(px,py);ctx.scale(k,k);ctx.translate(-px,-py)}
  ctx.drawImage(ground,0,0,W,H);
  // surbrillances
@@ -260,7 +275,7 @@ export function draw(now){
   ctx.save();ctx.strokeStyle='rgba(255,74,58,.75)';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.lineDashOffset=-now/40;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo((sx+tx)/2,Math.min(sy,ty)-TH,tx,ty);ctx.stroke();ctx.restore();
   // la bulle prend la place libre la plus proche (au-dessus, à côté ou plus bas), sans passer sous la barre du haut
   let bx=sx;{const y0=y-h*.75;let best=null;
-   for(const[i,j]of SPOTS){const cx=Math.max(w/2+2,Math.min(W-w/2-2,sx+i*(w+3))),top=Math.max(hudB,y0+j*(h+3));
+   for(const[i,j]of SPOTS){const cx=Math.max(w/2+2,Math.min(W-w/2-2,sx+i*(w+3))),top=Math.max((hudB-view.y)/view.z,y0+j*(h+3));
     const n=taken.filter(([a,b,c,d])=>cx-w/2<c&&cx+w/2>a&&top<d&&top+h>b).length;if(!best||n<best[0])best=[n,cx,top];if(!n)break}
    bx=best[1];y=best[2]+h*.75;taken.push([bx-w/2,best[2],bx+w/2,best[2]+h])}
   ctx.fillStyle='rgba(40,8,6,.85)';ctx.strokeStyle='#ff6b5a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(bx-w/2,y-h*.75,w,h,6);ctx.fill();ctx.stroke();dic(ctx,'ico',0,bx-w/2+4,y-h*.75+(h-iw)/2,iw);ctx.fillStyle='#ffd9d2';ctx.fillText(t,bx+iw/2,y)}}

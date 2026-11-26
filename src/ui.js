@@ -4,7 +4,7 @@ import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,ampAt,prismOn,beamDmg,approach,okTarget,carryPA} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets,say} from './render.js';
+import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
 import {SPECS,TIER,DONE,specOf} from './talents.js';
@@ -60,7 +60,19 @@ function autoEnd(){const u=G.cur;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0|
  $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
 
 // ---------- saisie ----------
-cv.addEventListener('pointerdown',e=>{if(G.phase==='fight'&&!G.busy)act(tapCell(e.clientX,e.clientY))});
+// V4.4 : deux doigts = zoom, un doigt qui glisse sur un plateau agrandi = déplacement, molette à la souris.
+// Un appui n'agit qu'au relâchement, s'il n'a ni glissé ni été accompagné d'un second doigt.
+const PT=new Map();let moved=false;
+const pinch=()=>{const[a,b]=[...PT.values()];return{d:Math.hypot(a.x-b.x,a.y-b.y)||1,x:(a.x+b.x)/2,y:(a.y+b.y)/2}};
+cv.addEventListener('pointerdown',e=>{if(e.button>0)return;if(!PT.size)moved=false;PT.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY});if(PT.size>1)moved=true;try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+addEventListener('pointermove',e=>{const p=PT.get(e.pointerId);if(!p||G.phase==='camp')return;
+ const before=PT.size>1?pinch():null,dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+ if(before){const n=pinch();zoomAt(view.z*n.d/before.d,before.x,before.y);setView(view.z,view.x+n.x-before.x,view.y+n.y-before.y);return}
+ if(Math.hypot(p.x-p.x0,p.y-p.y0)>(view.z>1?10:24)){if(!moved&&view.z>1)setView(view.z,view.x+p.x-p.x0,view.y+p.y-p.y0);else if(view.z>1)setView(view.z,view.x+dx,view.y+dy);moved=true}});
+const lift=(e,cancel)=>{const p=PT.get(e.pointerId);if(!p)return;PT.delete(e.pointerId);if(!cancel&&!PT.size&&!moved&&G.phase==='fight'&&!G.busy)act(tapCell(p.x0,p.y0))};
+addEventListener('pointerup',e=>lift(e));addEventListener('pointercancel',e=>lift(e,true));
+cv.addEventListener('wheel',e=>{e.preventDefault();if(G.phase!=='camp')zoomAt(view.z*Math.exp(-e.deltaY*.0015),e.clientX,e.clientY)},{passive:false});
+$('unzoom').onclick=()=>setView(1,0,0);
 cv.addEventListener('pointermove',e=>{const u=G.cur;if(e.pointerType!=='mouse'||e.buttons||G.phase!=='fight'||G.busy||!G.sel||G.sel.sp.t==='self'||!u||u.team!=='h'||!G.endTurnResolve)return;
  const c=tapCell(e.clientX,e.clientY);if(G.s.map.has(K(c.x,c.y))&&!same(c,G.ex?.tap))aim(u,c,true)});
 // action sur une case (toucher du plateau, ou portrait de la frise des tours pour viser une unité cachée)
@@ -212,7 +224,7 @@ function quests(T,again){const d=today(),l=contracts(save,d);store();
 // bandeaux illustrés des contrats (Gemini, 26/11) : image à droite, texte sur le quart gauche assombri
 function qban(r,k){r.classList.add('qrow');r.style.backgroundImage=`linear-gradient(90deg,#000d 0,#000b 42%,#0000 78%),url(assets/q/${k}.webp)`}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
-const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• PA non dépensés : +1 au tour suivant par tranche de 2 (au plus +2).<br>• Cible trop loin : l’aperçu montre le héros avancer avant de lancer.<br>• Volée : la zone rouge montre les cases touchées ; la portée limite son centre.<br>• Les flèches de Fenn passent par-dessus les décors bas (buissons, cailloux, souches, caisses…), pas par-dessus les arbres, rochers et murs.<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, touche une cible pour voir les dégâts, retouche-la pour lancer. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
+const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• PA non dépensés : +1 au tour suivant par tranche de 2 (au plus +2).<br>• Cible trop loin : l’aperçu montre le héros avancer avant de lancer.<br>• Volée : la zone rouge montre les cases touchées ; la portée limite son centre.<br>• Les flèches de Fenn passent par-dessus les décors bas (buissons, cailloux, souches, caisses…), pas par-dessus les arbres, rochers et murs.<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, touche une cible pour voir les dégâts, retouche-la pour lancer. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• Écarte deux doigts pour agrandir le plateau, glisse pour le déplacer (molette à la souris). « Vue entière » revient en arrière.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
 const HOME={today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
  // partir à l'aventure : la carte, ouverte sur le chapitre en cours
  adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
