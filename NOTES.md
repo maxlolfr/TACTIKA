@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V3.6 (26/11/2026) — marche des chevaliers et nouveaux décors
+- Marche en 4 images des trois chevaliers (MK-01 à 03) : planches à part `knight{B,R,N}m`, découpées par `tools/cut_walk.py` (calage sur le haut du corps). `frameOf` les utilise pour toute unité de `BS` qui a une planche `<nom>m`. Limite : les images 1 et 3 avancent la même jambe.
+- Chevalier sombre : au repos, il était décalé de sa case (ancre faussée par l'épée).
+- Décors Gemini : Monts, Côte et Château en vertical ; Prairie, Bois et Monts en horizontal. Chaque zone a `<zone>.webp` (vertical) et `<zone>-l.webp` (écran plus large que haut). Prairie et Bois gardent leur ancienne peinture verticale. `tools/prep_bg.py` efface l'étoile Gemini et réduit l'image.
+- Village vertical reçu mais non intégré : Max en prépare un autre. 53 tests.
+
 ## V3.5 (26/11/2026) — trois chevaliers
 - Demande de Max avec ses 3 planches : bleu (facile), rouge (plus difficile), noir (très difficile, nommé « Chevalier sombre » pour ne pas le confondre avec le boss « Chevalier noir », inchangé).
 - `MON.knightB/R/N` : PV 36/48/62, dégâts 8–11 / 11–14 / 14–18 (avant montée selon le niveau). Chiffres de départ, non équilibrés.
