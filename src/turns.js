@@ -9,13 +9,13 @@ import {sfx} from './audio.js';
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w);break;
  case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
-  if(e.killed){punch(t,.05,260);burst(t);t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
+  if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx('death'),150)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);break;
  case 'shake':shake(e.ms);break;
  case 'push':{const t=e.t,x0=t.gx,y0=t.gy;sfx('push',.8);tween(200,k=>{t.gx=x0+(e.to.x-x0)*k;t.gy=y0+(e.to.y-y0)*k});break}
- case 'collision':setTimeout(()=>{sfx('collision',.9);shake(200);punch(e.t,.04);burst(e.t,4)},200);break;
- case 'combo':say(e.t,'Combo ×'+e.n,'#ff9cf2',true);sfx('combo_'+e.n,.9)}}}
+ case 'collision':setTimeout(()=>{sfx('collision',.9);shake(200);punch(e.t,.04);burst(e.t,4);addFx(e.t.gx,e.t.gy,1,1.1,500,'fxi',-.2)},200);break;
+ case 'combo':say(e.t,'Combo ×'+e.n,'#ff9cf2',true);addFx(e.t.gx,e.t.gy,14,.8,800,'ico',-.9);sfx('combo_'+e.n,.9)}}}
 
 export async function cast(u,sp,c){const S=G.s; // l'état du combat en cours, même si on fuit pendant l'animation
  payCost(u,sp,c);
