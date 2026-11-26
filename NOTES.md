@@ -85,3 +85,8 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V3.0b (26/11/2026) — lot ciblage de l'audit
 `whyNot`/`losBlock` (rules.js) : raison d'une cible indisponible (portée max/min, obstacle, unité qui bloque) avec la même règle que `okTarget` ; case bloquante marquée en rouge 2 s (`G.mark`). Repères A/B/C stables sur les monstres identiques (nom, barre de vie, portrait). Portraits : ordre stable, cliquables même grisés (affichent la raison), `aria-label`. Après un déplacement sans cible : message. Taverne : bouton « Réclamer ». Restent de l'audit : aperçu de déplacement, comparaison d'inclinaison 0,62/0,68, première mission guidée, HUD, chargement par paquets.
+
+## V3.0c (26/11/2026) — retours de Max sur iPhone (paysage, sol, sprites flottants)
+- Mode paysage (`style.css`, `min-aspect-ratio:5/4`) : panneau de combat à droite (`--side`), barre du haut à gauche, zones sûres ; version compacte sous 520 px de haut. `layout()` détecte le panneau latéral et centre le plateau dans la place restante.
+- Sol : tuiles opaques (plus de 62 %), fond assombri (.34), damier léger, bords sombres nets + liseré clair.
+- Ancrage : ombre plus nette et anneau d'équipe (bleu héros, rouge monstres) au pied. Décor toujours opaque ; une unité cachée derrière est redessinée en silhouette (35 %, 60 % si héros actif ou cible).
