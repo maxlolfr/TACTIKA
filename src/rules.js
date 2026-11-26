@@ -203,7 +203,7 @@ export const prismDmg=(s,u,sp)=>Math.round(((sp.dmg[0]+sp.dmg[1])/2+(u.dmgB||0))
 // Cases et unités touchées si le prisme c éclate (aperçu et effet)
 export const prismHits=(s,c)=>DIRS.map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).filter(p=>cell(s,p.x,p.y));
 export function prismFire(s,u,c,amt){c.off=s.round+PRISM_OFF;const ev=[{type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'},{type:'status',t:u,text:'Prisme !',color:'#c98bff',snd:'prism_burst'},{type:'shake',ms:200}];
- for(const p of prismHits(s,c)){ev.push({type:'fx',x:p.x,y:p.y,i:5,w:1});const o=occ(s,p.x,p.y),e=o&&hurt(s,o,amt,'prism');if(e)ev.push(e)}return ev}
+ ev.push({type:'beam',from:c,cells:prismHits(s,c)});for(const p of prismHits(s,c)){const o=occ(s,p.x,p.y),e=o&&hurt(s,o,amt,'prism');if(e)ev.push(e)}return ev}
 
 // ---------- poussée ----------
 // Trajet d'une poussée de n cases depuis `from` : case d'arrivée, cases non parcourues, unité percutée.
@@ -273,14 +273,14 @@ export function beamCells(s,u){const ph=beamPhase(u),heroes=s.units.filter(h=>h.
  let dirs=DIRS;if(ph===1){let bs=1e9;for(const d of DIRS)for(const h of heroes){const al=(h.x-u.x)*d[0]+(h.y-u.y)*d[1],pe=Math.abs((h.x-u.x)*d[1]-(h.y-u.y)*d[0]),sc=pe*10+al;if(al>0&&sc<bs){bs=sc;dirs=[d]}}if(dirs===DIRS)dirs=[DIRS[0]]}
  for(const d of dirs)for(let k=1;k<=6;k++){const x=u.x+d[0]*k,y=u.y+d[1]*k,c=cell(s,x,y);if(!c)break;
   if(c.block){if(ph===3&&prismOn(s,c)){pr.push(c);cells.push(...prismHits(s,c).filter(p=>passable(s,p.x,p.y)))}break}cells.push({x,y})}
- return{by:u,cells:cells.filter((p,i)=>cells.findIndex(q=>q.x===p.x&&q.y===p.y)===i),pr}}
+ return{by:u,o:{x:u.x,y:u.y},cells:cells.filter((p,i)=>cells.findIndex(q=>q.x===p.x&&q.y===p.y)===i),pr}}
 export const beamDmg=u=>Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*(u.dmgMul||1));
 function beamTurn(s,u,ev){const ph=beamPhase(u);
- if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'titan_roar'},{type:'shake',ms:300})}
+ if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'wave',t:u},{type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'titan_roar'},{type:'shake',ms:450})}
  u.bt=(u.bt||0)+1;
- if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'beam_fire'},{type:'shake',ms:350});
+ if(s.beam&&s.beam.by===u){const b=s.beam,d=beamDmg(u);s.beam=null;ev.push({type:'beam',from:b.o||{x:u.x,y:u.y},cells:b.cells},{type:'status',t:u,text:'Rayon prismatique !',color:'#c98bff',snd:'beam_fire'},{type:'shake',ms:450});
   for(const c of b.pr){c.off=s.round+PRISM_OFF;ev.push({type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'})}
-  for(const p of b.cells){ev.push({type:'fx',x:p.x,y:p.y,i:5,w:1});const h=occ(s,p.x,p.y),e=h&&h.team!==u.team&&hurt(s,h,d,'beam');if(e)ev.push(e)}}
+  for(const p of b.cells){const h=occ(s,p.x,p.y),e=h&&h.team!==u.team&&hurt(s,h,d,'beam');if(e)ev.push(e)}}
  else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
