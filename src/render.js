@@ -38,7 +38,7 @@ export function layout(){
  if(G.s.map.size)buildGround();
 }
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
-const BGZ=['prairie','bois','mont','chateau'],BG={};
+const BGZ=['prairie','bois','plage','mont','chateau'],BG={};
 function bgOf(){const id=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(id))return null;
  if(!(id in BG)){BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===id)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
@@ -64,9 +64,9 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
 
 // ---------- image d'une unité ----------
 // Héros V2 (planches ChatGPT) : planche de marche W, planche de poses X
-const HN={warrior:{F:['kaelW',[0,1,2,3]],B:['kaelW',[4,5,6,7]],i:['kaelW',0],iB:['kaelW',4],a:['kaelX',1],c:['kaelX',3],b:['kaelX',2],v:['kaelX',3],ko:null},
- archer:{F:['fennX',[0,1,2,1]],i:['fennX',0],a:['fennX',3],c:['fennX',5],b:['fennX',0],v:['fennX',6],ko:['fennX',7]},
- healer:{F:['aelisX',[0,1,2,3]],i:['aelisX',0],a:['aelisX',4],c:['aelisX',5],b:['aelisX',4],v:['aelisX',6],ko:['aelisX',7]}};
+const HN={warrior:{F:['kaelW',[0,1,2,3]],B:['kaelW',[4,5,6,7]],i:['kaelW',0],iB:['kaelW',4],a:['kaelX',1],c:['kaelX',3],b:['kaelX',2],v:['kaelX',3],ko:['kaelK',0]},
+ archer:{F:['fennX',[0,1,2,1]],B:['fennB',[1,0,2,3]],i:['fennX',0],iB:['fennB',0],a:['fennX',3],c:['fennX',5],b:['fennX',0],v:['fennX',6],ko:['fennX',7]},
+ healer:{F:['aelisX',[0,1,2,3]],B:['aelisB',[1,0,2,3]],i:['aelisX',0],iB:['aelisB',0],a:['aelisX',4],c:['aelisX',5],b:['aelisX',4],v:['aelisX',6],ko:['aelisX',7]}};
 export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',right=u.dir===0||u.dir===2,back=u.dir===2||u.dir===3;
