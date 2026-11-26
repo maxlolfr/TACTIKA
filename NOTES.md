@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V3.2.1 (26/11/2026) — sens des héros
+- Bug présent depuis la V2.5a : toutes les planches de héros (`<héros>9` et `<héros>M`) regardent à droite, mais `frameOf` les retournait quand l'unité regardait à droite. Les héros regardaient, marchaient et frappaient à l'opposé. Miroir inversé pour les héros seulement (monstres et boss inchangés).
+
 ## V3.2 (26/11/2026) — caméra plus plongeante et nouveaux sols
 - Demande de Max (après avoir battu le Roi Gelée) : problème de visibilité, caméra à relever.
 - `ISO` passe de .62 à .70 (render.js). En paysage tourné, marge de cadrage 1,22 au lieu de 1,4 : cases d'iPhone couché de 62 px de large (64 avant) mais plus hautes (44 au lieu de 40).
