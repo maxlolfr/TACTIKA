@@ -8,6 +8,7 @@ export const G={
  cur:null,turn:-1,  // unité qui joue, index dans l'ordre
  sel:null,          // sort choisi {sp,cells}
  plan:null,         // aperçu de déplacement {x,y,cost,path,foes}
+ ex:null,           // cible examinée avec un sort choisi {tap:{x,y},x,y (centre),ap (approche),bad (refus)}
  reachC:null,       // cases atteignables du héros qui joue
  intents:null,      // intentions des monstres [{m,target,dmg}] pendant le tour d'un héros
  endTurnResolve:null,

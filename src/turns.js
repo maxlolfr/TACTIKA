@@ -58,5 +58,5 @@ export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne bouc
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
   else{const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}
   if(G.fid!==id)return;endTurn(u);
-  G.sel=null;G.plan=null;if(end())return}
+  G.sel=null;G.plan=null;G.ex=null;if(end())return}
 }
