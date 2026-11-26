@@ -8,7 +8,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='3.1';
+export const VERSION='3.2';
 const IW=941,IH=1672; // taille de assets/village.webp : toutes les positions ci-dessous sont en pixels de l'image
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 const pc=(x,y,w,h)=>`left:${x/IW*100}%;top:${y/IH*100}%`+(w?`;width:${w/IW*100}%;height:${h/IH*100}%`:'');

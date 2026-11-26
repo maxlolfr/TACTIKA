@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V3.2 (26/11/2026) — caméra plus plongeante et nouveaux sols
+- Demande de Max (après avoir battu le Roi Gelée) : problème de visibilité, caméra à relever.
+- `ISO` passe de .62 à .70 (render.js). En paysage tourné, marge de cadrage 1,22 au lieu de 1,4 : cases d'iPhone couché de 62 px de large (64 avant) mais plus hautes (44 au lieu de 40).
+- Planche de 16 tuiles de Max (TU-01) découpée par `tools/cut_tiles.py` → `assets/tiles3.webp` + clé `tiles3`. Utilisées via la table `T3` pour les sols herbe, fleurs, terre, sable, eau, pavés, sous-bois et dalles du village (Prairie, Bois, Village, Plage). Miroir au hasard contre la répétition, herbe légèrement assombrie. Monts gris et Château gardent l'ancienne planche : les nouvelles tuiles correspondantes (neige, cristaux, lave, rose des vents) sont trop chargées une fois répétées.
+- Décors du plateau réduits (`DK`, puits et arbres le plus) et personnages à 93 % (`US`). Les décors hors plateau et les règles ne changent pas.
+
 ## V2.4b+ (26/11/2026) — retour du test de Max (Honor Magic V5)
 - Visée : avec un sort choisi, toucher le dessin ou la barre de vie d'une cible valable la vise même si une autre unité est devant (`tapCell`) ; les portraits de la frise visent aussi (`act()` commun au plateau et à la frise) ; cibles valables entourées d'un halo orange (`shadowBlur`), unités qui les cachent à 40 % d'opacité ; une case non valable n'annule plus le sort (retoucher le sort l'annule). Règles de portée, ligne de vue et PA inchangées (passent toujours par `selCells`/`okTarget`).
 - Caméra : `ISO=.62` dans render.js (hauteur de case / largeur, au lieu de 0,5) ; seuls les sols sont étirés en hauteur ; cadrage `TW=min(W/6.3, avail/(9·ISO+1.4), 130)`.
