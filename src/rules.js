@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -85,13 +85,19 @@ export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p
 // défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
 export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
  return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.fights?{a:1,p:1}:undefined}}
-// V4.5d : arme active du héros i (index dans ITEMS ou null). Choix du joueur s'il possède encore l'arme, sinon la plus forte possédée.
-const wVal=(save,j)=>{const o=ITEMS[j];return itemVal(o,o.dmg?'dmg':'heal',upLvl(save,j),rarOf(save,j))};
-export function weaponOf(save,i){const own=save.items.filter(j=>ITEMS[j].who===i&&ITEMS[j].w);if(!own.length)return null;const c=save.wpn&&save.wpn[i];
- return own.includes(c)?c:own.sort((a,b)=>wVal(save,b)-wVal(save,a))[0]}
-export function equip(save,j){const o=ITEMS[j];if(!o||!o.w||!save.items.includes(j))return 0;(save.wpn||(save.wpn=[null,null,null]))[o.who]=j;return 1}
-export function heroStats(save,i){const h=HER[i],wp=weaponOf(save,i),it=save.items.filter(j=>ITEMS[j].who===i&&(!ITEMS[j].w||j===wp)),m=1+.1*(save.lvl-1);
+// V4.7a : équipement du héros i, un objet par emplacement. Choix du joueur (save.eq, ou save.wpn d'avant la V4.7a pour l'arme)
+// s'il possède encore l'objet ; sinon le meilleur possédé pour cet emplacement (à égalité, les PV d'abord).
+const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(save,j));return v('hp')+2.9*(v('dmg')+v('heal'))};
+export function gear(save,i){const g={};for(const sl in SLOTS){const own=save.items.filter(j=>ITEMS[j].who===i&&ITEMS[j].sl===sl),
+ c=save.eq?.[i+':'+sl]??(sl==='arme'?save.wpn?.[i]:null);g[sl]=own.includes(c)?c:own.sort((a,b)=>score(save,b)-score(save,a))[0]??null}return g}
+export const weaponOf=(save,i)=>gear(save,i).arme;
+export const isOn=(save,j)=>gear(save,ITEMS[j].who)[ITEMS[j].sl]===j;
+export function equip(save,j){const o=ITEMS[j];if(!o||!save.items.includes(j))return 0;(save.eq||(save.eq={}))[o.who+':'+o.sl]=j;return 1}
+export function heroStats(save,i){const h=HER[i],it=Object.values(gear(save,i)).filter(j=>j!=null),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
+// ce que changerait l'objet j s'il était équipé : [[nom, avant, après]] pour les seules valeurs qui bougent (ne modifie rien)
+export function compare(save,j){const i=ITEMS[j].who,a=heroStats(save,i),b=heroStats({...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq,[i+':'+ITEMS[j].sl]:j}},i);
+ return[['PV','hp'],['dégâts','dmg'],['soin','heal']].filter(([,k])=>a[k]!==b[k]).map(([n,k])=>[n,a[k],b[k]])}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}
 

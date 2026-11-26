@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.7a (27/11/2026) : quatre emplacements
+- `ITEMS[].sl` : arme, armure, bijou, accessoire. `gear(save,i)` : un objet par emplacement ; seul l'objet équipé compte (`save.eq["héros:emplacement"]`, `save.wpn` ancien encore lu). Sauvegarde non convertie ni effacée.
+- `compare(save,j)` : valeurs avant/après, affichées dans la fiche héros et l'inventaire.
+- Avec les 10 objets actuels, un seul conflit nouveau : anneau et amulette d'Aelis (bijou). Les profils « sous » et « std » du simulateur sont inchangés ; non relancé.
+
 ## V4.6.2 (27/11/2026) : cristal évolutif en portrait
 - Village vertical sans cristal (G-18) ; le calque `assets/cry/` sert maintenant dans les deux sens (`SCENES.*.cry`, `ck`).
 

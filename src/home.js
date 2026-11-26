@@ -1,15 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
-import {HER,ITEMS,ZONES,POTION,RARE,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip,fightSpec,zoneDone,crystalState} from './rules.js';
+import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,zlen} from './data.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.6.2';
+export const VERSION='4.7a';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -166,25 +166,27 @@ const entrainement=P=>P.append(el('div','v-card','<b>Bientôt disponible</b><p c
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
-function itemRow(j,who){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),on=o.w&&weaponOf(save,o.who)===j;row.append(icon('items',o.ic,42));
- row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.w?(on?' · <b style="color:#7dff8a">arme active</b>':' · arme rangée (sans effet)'):''}</small>`));
- if(o.w&&!on&&!who)row.append(wood('Équiper',()=>{equip(save,j);store();show('heros')},'sm'));return row}
+// V4.7a : comparaison avant/après, « PV 112 → 118 » (vert : gain, rouge : perte)
+export const diffHTML=j=>compare(save,j).map(([n,a,b])=>`<span class="v-diff ${b>a?'up':'down'}">${n} ${a} → ${b}</span>`).join(' ')||'<span class="v-diff">aucun changement</span>';
+function itemRow(j,who,again){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),on=save.items.includes(j)&&isOn(save,j);row.append(icon('items',o.ic,42));
+ row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}<br>${on?'<b class="v-diff up">équipé</b>':'en réserve, sans effet · si équipé : '+diffHTML(j)}</small>`));
+ if(!on)row.append(wood('Équiper',()=>{equip(save,j);store();again()},'sm'));return row}
 function heros(P){
  const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
  card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd></dl>`));P.append(card);
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',A.armes,'sm'));P.append(tl);
+ P.append(el('h4',null,'Équipement'),el('p','v-empty','Quatre emplacements : seul l’objet équipé compte.'));
+ const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],c=el('div','v-eq'+(j==null?' vide':''));if(j!=null){c.append(icon('items',ITEMS[j].ic,40));c.append(el('span',null,`<i>${SLOTS[sl]}</i><b>${ITEMS[j].n}</b><small>${bonus(j)}</small>`))}else c.append(el('span',null,`<i>${SLOTS[sl]}</i><b>Vide</b>`));G.append(c)}P.append(G);
+ const spare=save.items.filter(j=>ITEMS[j].who===hero&&!isOn(save,j));if(spare.length){P.append(el('h4',null,'En réserve'));for(const j of spare)P.append(itemRow(j,0,()=>show('heros')))}
  P.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));P.append(row)}
- P.append(el('h4',null,'Équipement'),el('p','v-empty','Une seule arme active par héros ; les autres objets s’additionnent.'));
- const own=save.items.filter(j=>ITEMS[j].who===hero);own.forEach(j=>P.append(itemRow(j)));
- if(!own.length)P.append(el('p','v-empty','Aucun objet pour l’instant : gagne des combats ou passe chez le marchand.'));
 }
 function inventaire(P){
  const grid=el('div','v-grid');ITEMS.forEach((o,j)=>{const has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off'));b.append(icon('items',o.ic,54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');
   if(has){b.style.borderColor=RARE[rarOf(save,j)].c;if(upLvl(save,j))b.append(el('u',null,'+'+upLvl(save,j)))}
-  b.onclick=()=>{grid.querySelectorAll('.v-slot').forEach(x=>x.classList.toggle('sel',x===b));info.innerHTML='';info.append(has?itemRow(j,1):el('p','v-empty',`Objet à découvrir pour ${HER[o.who].n}.`))};grid.append(b)});
+  b.onclick=()=>{grid.querySelectorAll('.v-slot').forEach(x=>x.classList.toggle('sel',x===b));info.innerHTML='';info.append(has?itemRow(j,1,()=>{show('inventaire');$('vpanel').querySelectorAll('.v-slot')[j]?.click()}):el('p','v-empty',`Objet à découvrir pour ${HER[o.who].n}.`))};grid.append(b)});
  const info=el('div','v-card','<p class="v-empty">Touche un objet pour voir son effet.</p>');
  P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),grid,info);
  const r=el('div','v-actions');r.append(wood('La Forge',A.forge),wood('Le Marchand',A.shop,'dk'));P.append(r)}
