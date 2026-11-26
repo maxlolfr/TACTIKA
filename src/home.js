@@ -1,15 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
-import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState} from './rules.js';
+import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen} from './data.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,attrOf,ptsLeft,spendAttr,resetAttr} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.8c';
+export const VERSION='4.8d';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -18,7 +18,7 @@ const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className
 // cry : calque du cristal [centre x, bas y] ; ck : échelle des états 1 à 4 puis du 5e (un peu réduit pour ne pas cacher les voisins)
 const INFO={caserne:{ic:['items',5],n:'Caserne',d:'Tes héros'},taverne:{ic:['items',17],n:'Taverne',d:'Contrats et défi'},
  forge:{ic:['ficon',0],n:'Forge',d:'Améliorer'},marchand:{ic:['items',15],n:'Marchand',d:'Acheter, vendre'},
- entrainement:{ic:['spells',0],n:'Entraînement',d:'Bientôt'},talents:{ic:['ui',12],n:'Académie',d:'Talents'}};
+ entrainement:{ic:['spells',0],n:'Entraînement',d:'Caractéristiques'},talents:{ic:['ui',12],n:'Académie',d:'Talents'}};
 const place=P=>Object.entries(P).map(([id,[z,l]])=>({id,...INFO[id],z,l}));
 const SCENES={
  // verticale : téléphone droit et écrans presque carrés (V4.6.2 : sans cristal peint)
@@ -55,9 +55,10 @@ const today=()=>A.today();
 // ---------- notifications ----------
 const forgeNews=()=>save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c});
 const talentNews=()=>save.lvl>=3&&save.sp.includes(null);
+const trainNews=()=>HER.some((_,i)=>ptsLeft(save,i)>0);
 const claimable=()=>contracts(save,today()).filter(t=>t.p>=t.n&&!t.c).length;
 const NEWS={forge:()=>forgeNews()?'↑':0,talents:()=>talentNews()?'!':0,taverne:()=>claimable()||(save.dd!==today()?'!':0),
- marchand:()=>0,caserne:()=>0,entrainement:()=>0};
+ marchand:()=>0,caserne:()=>0,entrainement:()=>trainNews()?'+':0};
 // chapitre en cours : première zone ouverte non terminée
 function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`Chapitre ${i+1} · ${z.n}`,s:`Étape ${prog(z.id)+1} sur ${L}`+(prog(z.id)===L-1?` · Boss : ${z.boss.n}`:'')}}
  return{i:-1,t:'Aventure terminée',s:'Rejoue les combats pour 3 ★'}}
@@ -155,7 +156,7 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
  P.append(el('h3',null,'Commandement'));
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
  P.append(el('h4',null,'Équipe'));HER.forEach((h,i)=>{const st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
- const todo=[[talentNews(),'Choisir une spécialisation','talents'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
+ const todo=[[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
  if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
  if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
  P.append(row('💎 <b>Cristal de l’Éther</b> : expéditions et revanches',()=>show('expe')));
@@ -195,7 +196,7 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
 
 // ---------- panneaux ----------
 // V4.7b : `from` = panneau d'où l'on vient (bouton ‹) ; `resume` = panneau à rouvrir au retour de l'Académie, la Forge ou le Marchand
-let hero=0,back=null,resume=null,slotOpen=null,inv={who:-1,sl:'',sel:null};
+let hero=0,back=null,resume=null,slotOpen=null,inv={who:-1,sl:'',sel:null},draft={},resetArm=0; // draft : points choisis mais pas encore confirmés
 export function show(t,from){const P=$('vpanel'),same=t===tab&&P.querySelector('.v-body'),scroll=same?same.scrollTop:0;
  if(from!==undefined)back=from;else if(t!==tab)back=null;tab=t;root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
  P.innerHTML='';P.classList.toggle('on',t!=='camp');root.classList.toggle('paneled',t!=='camp');if(t==='camp')return;
@@ -206,8 +207,26 @@ export function show(t,from){const P=$('vpanel'),same=t===tab&&P.querySelector('
 // ouvrir un écran plein (Académie, Forge, Marchand) depuis un panneau : son bouton Retour y ramène
 const visit=fn=>()=>{resume=tab;fn()};
 // clic dans la barre du bas : on repart de zéro (aucun filtre, aucun emplacement ouvert)
-function fresh(t){slotOpen=null;inv={who:-1,sl:'',sel:null};show(t,null)}
-const entrainement=P=>P.append(el('div','v-card','<b>Bientôt disponible</b><p class="v-how">Le terrain d’entraînement ouvrira avec les caractéristiques des héros, dans la version 4.7.</p>'));
+function fresh(t){draft={};slotOpen=null;inv={who:-1,sl:'',sel:null};show(t,null)}
+// V4.7c : Entraînement. On prépare la répartition (− et +), on voit l'effet, puis on confirme ; redistribution gratuite.
+const pct=v=>Math.round(v*1000)/10+' %';
+function preview(i,add){const A=attrOf(save,i);for(const k in add)A[k]+=add[k];const all=HER.map((_,j)=>attrOf(save,j));all[i]=A;
+ const a=heroStats(save,i),b=heroStats({...save,attr:all},i);
+ return[['PV',a.hp,b.hp],['Puissance','×'+a.mult.toFixed(2),'×'+b.mult.toFixed(2)],['Critique',pct(a.crit),pct(b.crit)],['Esquive',pct(a.dodge),pct(b.dodge)]]}
+function entrainement(P){
+ const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');const n=ptsLeft(save,i);b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));if(n)b.append(el('u','v-badge',n));b.onclick=()=>{if(i!==hero){draft={};resetArm=0}hero=i;show('entrainement')};tabs.append(b)});P.append(tabs);
+ const used=Object.values(draft).reduce((a,b)=>a+b,0),free=ptsLeft(save,hero)-used,A=attrOf(save,hero),cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col'+(used?' v-dock-prev':''));cols.append(L,R);
+ P.append(el('p','v-count',`${free} point${free>1?'s':''} à répartir · 1 point par niveau et par héros`),cols);
+ for(const k in ATTR){const o=ATTR[k];if(!o.who.includes(hero))continue;const add=draft[k]||0,row=el('div','v-row v-attr');row.dataset.attr=k;
+  row.append(el('div',null,`<b>${o.n} <i>${A[k]}${add?` + ${add}`:''}</i></b><small>${o.d}</small>`));
+  const step=(t,d,ok,label)=>{const b=wood(t,()=>{draft[k]=add+d;if(!draft[k])delete draft[k];resetArm=0;show('entrainement')},'sm v-step');b.disabled=!ok;b.setAttribute('aria-label',`${label} un point en ${o.n}`);return b};
+  row.append(step('−',-1,add>0,'Retirer'),step('+',1,free>0,'Ajouter'));L.append(row)}
+ L.append(el('p','v-empty','Au-delà de 10 points dans une caractéristique, chaque point compte pour moitié ; au-delà de 20, pour un quart.'));
+ const box=el('div','v-card v-prev');box.innerHTML=`<b>${used?'Aperçu':'Valeurs actuelles'}</b><dl>${preview(hero,draft).map(([n,a,b])=>`<dt>${n}</dt><dd>${a===b?a:`${a} → <em>${b}</em>`}</dd>`).join('')}</dl>`;R.append(box);
+ const act=el('div','v-actions'),ok=wood('Confirmer',()=>{if(spendAttr(save,hero,draft)){store();sfx('buff',.7)}draft={};show('entrainement')}),no=wood('Annuler',()=>{draft={};show('entrainement')},'dk');
+ ok.disabled=no.disabled=!used;act.append(ok,no);R.append(act);
+ if(Object.values(A).some(v=>v)){const z=wood(resetArm?'Touche encore pour redistribuer':'Redistribuer (gratuit)',()=>{if(!resetArm){resetArm=1;show('entrainement');return}resetArm=0;draft={};resetAttr(save,hero);store();show('entrainement')},'dk sm');R.append(z)}
+ if(save.lvl<2)R.append(el('p','v-empty','Le premier point arrive au niveau 2.'))}
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
@@ -217,11 +236,11 @@ function itemRow(j,who,again){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-r
  row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}<br>${on?'<b class="v-diff up">équipé</b>':'en réserve, sans effet · si équipé : '+diffHTML(j)}</small>`));
  if(!on)row.append(wood('Équiper',()=>{equip(save,j);store();again()},'sm'));return row}
 function heros(P){
- const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero)slotOpen=null;hero=i;show('heros')};tabs.append(b)});P.append(tabs);
+ const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
- card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd></dl>`));L.append(card);
+ card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd><dt>Critique · esquive</dt><dd>${pct(st.crit)} · ${pct(st.dodge)}</dd></dl>`));L.append(card);
  L.append(el('h4',null,'Équipement'),el('p','v-empty','Touche un emplacement pour changer d’objet.'));
  const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],spare=save.items.filter(q=>ITEMS[q].who===hero&&ITEMS[q].sl===sl&&q!==j).length;
   const b=el('button','v-eq'+(j==null?' vide':'')+(slotOpen===sl?' sel':''));b.dataset.sl=sl;b.setAttribute('aria-expanded',slotOpen===sl);if(j!=null)b.append(icon('items',ITEMS[j].ic,40));
@@ -232,6 +251,7 @@ function heros(P){
   for(const j of own)box.append(itemRow(j,0,()=>show('heros')));
   const act=el('div','v-actions');act.append(own.length?wood('Voir dans l’inventaire',()=>{inv={who:hero,sl:slotOpen,sel:g[slotOpen]};show('inventaire','heros')},'dk sm'):wood('Le Marchand',visit(A.shop),'sm'));box.append(act);L.append(box)}
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',visit(A.armes),'sm'));R.append(tl);
+ {const n=ptsLeft(save,hero),a=attrOf(save,hero),tr=el('div','v-card v-row');tr.append(icon('spells',0,42),el('div',null,`<b>${n?`${n} point${n>1?'s':''} à répartir`:'Caractéristiques'}</b><small>${Object.keys(ATTR).filter(k=>ATTR[k].who.includes(hero)).map(k=>ATTR[k].n+' '+a[k]).join(' · ')}</small>`),wood('Entraînement',()=>{draft={};show('entrainement','heros')},'sm'));R.append(tr)}
  R.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));R.append(row)}
 }

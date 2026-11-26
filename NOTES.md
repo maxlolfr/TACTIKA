@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.8d (27/11/2026) : caractéristiques et Entraînement (lot 4.7c)
+- Force (Kael, Fenn) ou Intelligence (Aelis, dégâts et soins) : +1 % par point ; Vitalité : +2 % PV ; Agilité : +0,5 % critique, +0,4 % esquive (plafonds 35 % et 25 %). 10 premiers points entiers, 10 suivants à moitié, puis quart. Valeurs dans `ATTR` (data.js).
+- 1 point par niveau et par héros. `save.attr` ne garde que les points placés : absent = tout libre, jeu identique ; répartition invalide = points rendus (`cleanAttr`, idempotent). Redistribution gratuite.
+- Simulateur : std répartit en trois, opti tout en attaque. 45 combats avant + 45 après, graines 1 à 5 : effet faible (repère seulement).
+- **Écart optimisé/standard à niveau égal (dégâts attendus de l'attaque principale)** : avant la V4.8d, Kael 1,72-1,81, Fenn 1,33, Aelis 1,00 ; après, Kael 1,77-1,91, Fenn 1,37-1,41, Aelis 1,02-1,06. La limite de 1,6 était déjà dépassée pour Kael ; rien d'ancien n'a été retouché (décision de Max/ChatGPT, après ses tests).
+
 ## V4.8c (27/11/2026) : menus héros, inventaire, équipement (lot 4.7b de la feuille de route)
 - Fiche héros : un emplacement se touche et montre les objets possédés avec la comparaison et « Équiper » ; ⇄ = nombre d'objets en réserve.
 - Inventaire : filtres héros et emplacement, ✓ sur les objets équipés, « Voir la fiche ».

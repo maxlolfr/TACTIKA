@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -93,8 +93,23 @@ export function gear(save,i){const g={};for(const sl in SLOTS){const own=save.it
 export const weaponOf=(save,i)=>gear(save,i).arme;
 export const isOn=(save,j)=>gear(save,ITEMS[j].who)[ITEMS[j].sl]===j;
 export function equip(save,j){const o=ITEMS[j];if(!o||!save.items.includes(j))return 0;(save.eq||(save.eq={}))[o.who+':'+o.sl]=j;return 1}
+// V4.7c : la sauvegarde ne garde que le nombre de points placés (save.attr[héros]) ; les valeurs peuvent changer sans rien perdre
+export const attrOf=(save,i)=>({for:0,int:0,vit:0,agi:0,...(save.attr&&save.attr[i])});
+export const attrEff=n=>Math.min(n,10)+Math.max(0,Math.min(n,20)-10)/2+Math.max(0,n-20)/4;
+export const ptsLeft=(save,i)=>Math.max(0,save.lvl-1-Object.values(attrOf(save,i)).reduce((a,b)=>a+b,0));
+// sauvegarde ancienne ou abîmée : héros sans répartition valable = tous ses points rendus (appliquer deux fois ne change rien)
+export function cleanAttr(v,lvl){return HER.map((h,i)=>{const a=attrOf({attr:v},i),o={};let n=0;
+ for(const k in ATTR){const x=a[k];if(!Number.isInteger(x)||x<0||x&&!ATTR[k].who.includes(i))return attrOf({},i);o[k]=x;n+=x}
+ return n>Math.max(0,lvl-1)?attrOf({},i):o})}
+// place les points `add` (ex. {vit:2}) ; tout ou rien. Renvoie 1 si accepté.
+export function spendAttr(save,i,add){let n=0;for(const[k,x]of Object.entries(add)){if(!ATTR[k]||!ATTR[k].who.includes(i)||!Number.isInteger(x)||x<0)return 0;n+=x}
+ if(!n||n>ptsLeft(save,i))return 0;const a=attrOf(save,i);for(const k in add)a[k]+=add[k];(save.attr||(save.attr=HER.map((h,j)=>attrOf(save,j))))[i]=a;return 1}
+export function resetAttr(save,i){if(save.attr)save.attr[i]=attrOf({},i)}
 export function heroStats(save,i){const h=HER[i],it=Object.values(gear(save,i)).filter(j=>j!=null),m=1+.1*(save.lvl-1);
- const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
+ const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i),A=attrOf(save,i),bonus=f=>Object.keys(ATTR).reduce((s,k)=>s+(ATTR[k].who.includes(i)?(ATTR[k][f]||0)*attrEff(A[k]):0),0);
+ const crit=tal.crit||.12,dodge=tal.dodge||0;
+ return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
+  crit:Math.min(Math.max(CRIT_CAP,crit),crit+bonus('crit')),dodge:Math.min(Math.max(DODGE_CAP,dodge),dodge+bonus('dodge')),tal}}
 // ce que changerait l'objet j s'il était équipé : [[nom, avant, après]] pour les seules valeurs qui bougent (ne modifie rien)
 export function compare(save,j){const i=ITEMS[j].who,a=heroStats(save,i),b=heroStats({...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq,[i+':'+ITEMS[j].sl]:j}},i);
  return[['PV','hp'],['dégâts','dmg'],['soin','heal']].filter(([,k])=>a[k]!==b[k]).map(([n,k])=>[n,a[k],b[k]])}
@@ -113,7 +128,7 @@ function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
  HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
-  sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
+  sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L?L[i]:i===1&&F.elite&&!F.wave?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}

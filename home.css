@@ -191,3 +191,10 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 .v-chips button.on{border-color:#ffe19a;background:linear-gradient(#8a5128,#5a3016);color:#fff}
 .v-slot s{position:absolute;left:-4px;top:-4px;text-decoration:none;font:800 11px var(--f-text);color:#fff;background:#2f8a3c;border:1.5px solid #bdf0bd;border-radius:50%;width:18px;height:18px;line-height:15px}
 .v-head .v-ret{left:8px;right:auto;font-size:24px;line-height:1}
+/* V4.7c : Entraînement */
+.v-attr .v-step{width:42px;min-height:40px;padding:0;font-size:20px;flex:none}.v-btn:disabled{filter:grayscale(.8);opacity:.5;cursor:default}
+.v-prev dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:6px 0 0;text-align:left;font:800 13px var(--f-text)}.v-prev dt{color:#6b4a2c}.v-prev dd{margin:0;text-align:right}.v-prev em{font-style:normal;color:#1e7a2e}
+.v-tabs button{position:relative}.v-tabs .v-badge{top:-5px;right:-3px}
+.v-dock-prev{position:sticky;bottom:-10px;z-index:2;background:#2a1a10;border-radius:14px;padding:6px 0 4px}
+.v-dock-prev .v-prev dl{grid-template-columns:auto 1fr auto 1fr;font-size:12px}
+@container (min-width:520px){.v-dock-prev{top:0;bottom:auto;background:none}}

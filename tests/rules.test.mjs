@@ -685,3 +685,43 @@ test('emplacements : comparaison sans modifier la sauvegarde', ()=>{const sv=sv4
  assert.deepEqual(compare(sv47(),3),[['PV',62,68]])}); // objet pas encore possédé (marchand)
 test('emplacements : ancienne sauvegarde (wpn) respectée, vente = repli', ()=>{const sv=sv47({items:[0,1,2],wpn:[0,null,null]});
  assert.equal(gear(sv,0).arme,0);equip(sv,1);assert.equal(gear(sv,0).arme,1);sv.items=[0,2];assert.equal(gear(sv,0).arme,0);assert.equal(gear(sv,0).armure,null)});
+
+// ---------- V4.7c : caractéristiques ----------
+import {attrOf,attrEff,ptsLeft,spendAttr,resetAttr,cleanAttr} from '../src/rules.js';
+import {ATTR,CRIT_CAP,DODGE_CAP} from '../src/data.js';
+const sv=(lvl,o={})=>({lvl,xp:0,gold:0,items:[],sp:[null,null,null],...o});
+
+test('V4.7c : une ancienne sauvegarde garde exactement ses valeurs et reçoit ses points libres', () => {
+ const old=sv(9),a=[0,1,2].map(i=>heroStats(old,i));
+ old.attr=cleanAttr(old.attr,old.lvl);
+ for(const i of[0,1,2]){assert.deepEqual(heroStats(old,i),a[i]);assert.equal(ptsLeft(old,i),8)}
+ assert.equal(a[0].crit,.12);assert.equal(a[0].dodge,0);
+});
+test('V4.7c : nettoyage idempotent, points valables gardés, répartition abîmée rendue', () => {
+ const good=cleanAttr([{for:3,agi:2},{vit:5},{int:4}],6);
+ assert.deepEqual(cleanAttr(good,6),good);assert.equal(good[0].for,3);assert.equal(good[2].int,4);
+ for(const bad of[[{for:99}],[{for:-1}],[{for:1.5}],[{int:2}],[{vit:'3'}]])assert.deepEqual(cleanAttr(bad,6)[0],attrOf({},0),JSON.stringify(bad));
+ for(const v of[null,'x',{},7])assert.equal(cleanAttr(v,6).length,3);
+});
+test('V4.7c : dépense tout ou rien, 1 point par niveau et par héros, redistribution', () => {
+ const s=sv(4);
+ assert.equal(spendAttr(s,0,{for:4}),0);assert.equal(spendAttr(s,0,{int:1}),0);assert.equal(spendAttr(s,2,{for:1}),0);assert.equal(spendAttr(s,0,{for:2,vit:-1}),0);assert.equal(ptsLeft(s,0),3);
+ assert.equal(spendAttr(s,0,{for:2,vit:1}),1);assert.equal(ptsLeft(s,0),0);assert.equal(ptsLeft(s,1),3);assert.equal(spendAttr(s,0,{agi:1}),0);
+ s.lvl=5;assert.equal(ptsLeft(s,0),1);
+ resetAttr(s,0);assert.equal(ptsLeft(s,0),4);assert.deepEqual(heroStats(s,0),heroStats(sv(5),0));
+});
+test('V4.7c : effets, rendements décroissants et plafonds', () => {
+ assert.deepEqual([10,15,20,24,49].map(attrEff),[10,12.5,15,16,22.25]);
+ const base=heroStats(sv(11),0),f=heroStats(sv(11,{attr:[{for:10}]}),0),v=heroStats(sv(11,{attr:[{vit:10}]}),0);
+ assert.ok(Math.abs(f.mult/base.mult-1.10)<1e-9);assert.equal(f.hp,base.hp);
+ assert.equal(v.hp,Math.round(base.hp*1.2));assert.equal(v.mult,base.mult);
+ const g=heroStats(sv(50,{attr:[{agi:49}]}),0);assert.ok(g.crit<=CRIT_CAP&&g.crit>.22);assert.ok(g.dodge<=DODGE_CAP);
+ const t=heroStats(sv(50,{sp:[null,'eclaireur',null],attr:[{},{agi:49}]}),1);assert.ok(t.dodge>=.15&&t.dodge<=DODGE_CAP);
+ const intel=heroStats(sv(11,{attr:[{},{},{int:10}]}),2);assert.ok(intel.mult>heroStats(sv(11),2).mult);
+ for(const k in ATTR)assert.ok(ATTR[k].who.length);
+});
+test('V4.7c : le combat utilise les valeurs des caractéristiques', () => {
+ const s=newBattle(()=>.5),{hs,es}=genMap(s,7,0),sav=sv(11,{attr:[{agi:10}]}),st=[0,1,2].map(i=>heroStats(sav,i));
+ mkUnits(s,{...FIGHT,lvl:11},hs,es,st);const k=s.units.find(u=>u.hi===0);
+ assert.equal(k.crit,st[0].crit);assert.equal(k.dodge,st[0].dodge);assert.ok(k.dodge>0);assert.equal(k.max,st[0].hp);
+});
