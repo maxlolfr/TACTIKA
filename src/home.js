@@ -1,14 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
-import {$} from './util.js';
+import {$,SPEED} from './util.js';
 import {HER,ITEMS,ZONES,POTION,RARE,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,equip,fightSpec,zoneDone} from './rules.js';
+import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.5f';
+export const VERSION='4.6';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village. Toutes les positions sont en pixels de l'image de la scène.
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -26,7 +27,7 @@ const SCENES={
   smoke:[[176,655,1],[815,300,.8]],water:[335,1450,95,150],
   // feuillages qui ondulent : on redessine un morceau de la peinture, à bords fondus
   leaves:[[0,0,340,200],[790,1230,151,330],[0,1015,130,180],[0,470,120,150]],
-  camp:[[262,1190,0,false],[352,1116,1,false],[540,1196,2,true]]},
+  camp:[[262,1190,0,false],[352,1116,1,false],[540,1196,2,true]],cry:[462,850,150]},
  // horizontale (V3.4) : paysage large
  l:{src:'assets/village-paysage.webp',w:1536,h:1024,box:[1470,715,795,490],hero:[118,144],
   bld:place({forge:[[115,135,430,255],[335,392]],marchand:[[915,185,400,230],[1135,382]],caserne:[[60,395,425,215],[262,598]],taverne:[[1100,420,425,205],[1330,578]],talents:[[1095,628,315,200],[1250,812]]}),
@@ -34,7 +35,7 @@ const SCENES={
    [1240,497,40,'w'],[1345,522,42,'w'],[1438,520,40,'w'],[1135,700,62,'m'],[1238,748,52,'w'],[762,222,95,'m'],[578,798,55,'f'],[973,795,55,'f'],[213,755,40,'f']],
   smoke:[[322,128,1.1],[1358,352,.8]],water:[880,168,56,82],
   leaves:[[0,0,230,200],[0,835,190,180],[1400,835,136,180],[1425,60,111,170]],
-  camp:[[655,792,0,false],[766,742,1,false],[884,796,2,true]]}};
+  camp:[[655,792,0,false],[766,742,1,false],[884,796,2,true]],cry:[766,330,100,1]}}; // paysage : le cristal est déjà peint sur la fontaine
 let tab='camp',A=null,root=null;
 const today=()=>A.today();
 // ---------- notifications ----------
@@ -57,6 +58,9 @@ function scene(k){
  for(const[x,y,r,k]of Q.glow){const g=el('i','v-glow '+k);g.style.cssText=pc(x-r,y-r,r*2,r*2);g.style.animationDelay=-((x*7+y)%31)/10+'s';stage.append(g)}
  for(const[x,y,k]of Q.smoke)for(let i=0;i<4;i++){const s=el('i','v-smoke');s.style.cssText=pc(x-26*k,y-26*k,52*k,52*k);s.style.animationDelay=-i*1.1+'s';stage.append(s)}
  {const w=el('i','v-water');w.style.cssText=pc(...Q.water);stage.append(w)}
+ // V4.6 : Cristal de l'Éther provisoire (dessiné par code, en attendant l'image QG-07) sur la place pavée → Expéditions
+ {const[x,y,r,painted]=Q.cry,c=el('button','v-cry'+(painted?' painted':''));c.style.cssText=pc(x-r*.55,y-r*1.75,r*1.1,r*2);c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');c.innerHTML=painted?'<i class="v-cry-glow"></i>':'<i class="v-cry-base"></i><i class="v-cry-s1"></i><i class="v-cry-s2"></i><i class="v-cry-gem"></i><i class="v-cry-glow"></i>';
+  const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
  // héros autour du feu
  for(const[x,y,i,flip]of Q.camp){const[hw,hh]=Q.hero,b=el('button','v-hero');b.style.cssText=pc(x-hw/2,y-hh*.95,hw,hh);b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
   const c=el('canvas');c.width=260;c.height=316;const[s,k]=heroFrame(HER[i].k),f=AT[s][k];drawF(c.getContext('2d'),s,k,130,300,284/f[3],flip);c.style.animationDelay=-i*.9+'s';b.append(c);
@@ -91,13 +95,36 @@ function build(){
  // bas : aventure + navigation
  const dock=el('div','v-dock'),ch=chapter();
  const go=el('button','v-go',`<b>Partir à l’aventure</b>`);go.prepend(icon('ico',0,40));go.onclick=()=>A.adventure(ch.i);
- dock.append(el('div','v-chap',`<b>${ch.t}</b><small>${ch.s}</small>`),go);
+ const chap=el('button','v-chap',`<b>${ch.t}</b><small>${ch.s}</small>`);chap.onclick=()=>root.querySelector('.v-cmd').classList.toggle('open');
+ dock.append(cmdPanel(ch),chap,go);
  const nav=el('nav','v-nav');
  for(const[id,n,ic]of[['camp','Camp',['ficon',13]],['heros','Héros',['ui',21]],['inventaire','Inventaire',['ui',26]],['quetes','Quêtes',['ui',20]]]){
   const b=el('button');b.dataset.tab=id;b.append(icon(...ic,34),el('span',null,n));const q=id==='quetes'?claimable():id==='heros'&&talentNews()?'!':0;if(q)b.append(el('u','v-badge',q));b.onclick=()=>show(id);nav.append(b)}
  dock.append(nav);C.append(dock);
  const P=el('section','v-panel');P.id='vpanel';C.append(P);
 }
+// ---------- V4.6 : panneau de commandement (colonne sur grand écran, tiroir en portrait) ----------
+const GOAL={survive:'⏳ Survie',chief:'♛ Chef'};
+function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F=fightSpec(ch.i,i,0),names=F.en?[...new Set(F.en.map(k=>MON[k].n))]:F.pool.map(k=>MON[k].n);
+ return{F,type:F.boss?'💀 Boss : '+F.boss.n:GOAL[F.goal]?GOAL[F.goal]+(F.wave?` ${F.wave.turns} tours, renforts`:''):'⚔ Combat',foes:[...new Set([...(F.boss?[F.boss.n]:[]),...names,...(F.elite&&!F.wave?[MON[F.elite].n]:[])])]}}
+function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.last(),row=(h,fn)=>{const r=el(fn?'button':'div','v-cl',`<span>${h}</span>`);if(fn)r.onclick=fn;return r};
+ P.append(el('h3',null,'Commandement'));
+ if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
+ P.append(el('h4',null,'Équipe'));HER.forEach((h,i)=>{const st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
+ const todo=[[talentNews(),'Choisir une spécialisation','talents'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
+ if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
+ if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
+ P.append(row('💎 <b>Cristal de l’Éther</b> : expéditions et revanches',()=>show('expe')));
+ return P}
+// ---------- V4.6 : Cristal de l'Éther → expéditions (missions gagnées à rejouer, revanches des boss) ----------
+function expe(P){
+ P.append(el('p','v-empty','Rejoue une mission déjà gagnée : XP des monstres, moitié de l’or, 15 % de chance d’objet. Sans limite, sans obligation.'));
+ const boss=ZONES.map((z,zi)=>({z,zi})).filter(o=>zoneDone(save,o.zi));
+ if(boss.length){P.append(el('h4',null,'Revanches'));for(const{z,zi}of boss){const L=zlen(z),r=el('div','v-row');r.append(el('div',null,`<b>${z.boss.n}</b><small>${z.n} · ${'★'.repeat((save.st[z.id]||[])[L-1]||0)||'aucune étoile'}</small>`),wood('Affronter',()=>A.fight(zi,L-1),'sm'));P.append(r)}}
+ P.append(el('h4',null,'Missions'));let any=0;
+ ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions');
+  for(let i=0;i<done;i++){const F=fightSpec(zi,i,0),b=wood(`${i+1}${F.goal==='survive'?' ⏳':F.goal==='chief'?' ♛':''} ${'★'.repeat((save.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
+ if(!any)P.append(el('p','v-empty','Gagne ton premier combat pour ouvrir les expéditions.'))}
 function open(id){if(id==='caserne'){show('heros');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
 
 // ---------- mise en place de la scène : les 5 bâtiments toujours visibles entre la barre du haut et le bas ----------
@@ -127,8 +154,8 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
 let hero=0;
 export function show(t){tab=t;const P=$('vpanel');root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
  P.innerHTML='';P.classList.toggle('on',t!=='camp');root.classList.toggle('paneled',t!=='camp');if(t==='camp')return;
- const head=el('div','v-head',`<h2>${{heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages'}[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);P.append(head);
- const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages})[t](body)}
+ const head=el('div','v-head',`<h2>${{heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther'}[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);P.append(head);
+ const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe})[t](body)}
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
@@ -157,13 +184,13 @@ function inventaire(P){
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
 function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
- const r2=el('div','v-actions');r2.append(wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const r2=el('div','v-actions'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
  P.append(el('div','v-card v-how',A.HOW));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
 }
 
-export function renderHome(actions){A=actions;build();root.classList.add('on');fitHome();show('camp');sonBtns();store()}
+export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;build();root.classList.add('on');fitHome();show('camp');sonBtns();store()}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});
 // la barre du navigateur intégré peut apparaître ou disparaître sans événement resize au retour d'un combat
 if(window.ResizeObserver)new ResizeObserver(()=>fitHome()).observe($('camp'));

@@ -232,7 +232,9 @@ function quests(T,again){const d=today(),l=contracts(save,d);store();
 function qban(r,k){r.classList.add('qrow');r.style.backgroundImage=`linear-gradient(90deg,#000d 0,#000b 42%,#0000 78%),url(assets/q/${k}.webp)`}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• PA non dépensés : +1 au tour suivant par tranche de 2 (au plus +2).<br>• Cible trop loin : l’aperçu montre le héros avancer avant de lancer.<br>• Volée : la zone rouge montre les cases touchées ; la portée limite son centre.<br>• Les flèches de Fenn passent par-dessus les décors bas (buissons, cailloux, souches, caisses…), pas par-dessus les arbres, rochers et murs.<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, touche une cible pour voir les dégâts, retouche-la pour lancer. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• Écarte deux doigts pour agrandir le plateau, glisse pour le déplacer (molette à la souris). « Vue entière » revient en arrière.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
-const HOME={today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
+// V4.6 : dernier combat (données factuelles pour le panneau de commandement et l'écran de défaite)
+let LAST=null;
+const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
  // partir à l'aventure : la carte, ouverte sur le chapitre en cours
  adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
@@ -254,7 +256,8 @@ function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
-function result(win,fled){const F=G.F;$('tuto').classList.remove('on');$('goal').classList.remove('on');
+function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
+ LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>u.n.replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?'victory':'defeat');
  if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 Objectif atteint : ${G.s.goal==='survive'?`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`:'le chef est abattu'}</div>`:G.s.cleared?'<div class="goalwon">🎯 Toutes les vagues éliminées : +25 % d’or</div>':'';
   const zid=ZONES[F.zi].id,first=!F.daily&&prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=!F.daily&&st===3&&(best[F.i]||0)<3;
@@ -277,14 +280,16 @@ function result(win,fled){const F=G.F;$('tuto').classList.remove('on');$('goal')
    loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);box.appendChild(d);sfx(i===2?'levelup':'coin',.6)},300+i*380));
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
- }else Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">Tes héros se replient. Soigne-toi et réessaie, ou rejoue un combat déjà gagné pour monter de niveau.</div>`;
+ }else{const L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
+  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':`Tour ${L.round}`} · ${L.ko} héros KO · ${L.left} ennemi${L.left>1?'s':''} encore debout${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?` · ${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`:''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div><ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
  // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi
  const acts=document.createElement('div');acts.className='ractions';let gone=false;
  const act2=(t,f,dark)=>{const b=document.createElement('button');b.className='btn'+(dark?' dark':'');b.textContent=t;b.onclick=()=>{if(gone)return;gone=true;f()};acts.append(b)};
  const nx=win&&!F.daily&&F.i+1<zlen(ZONES[F.zi])?F.i+1:null;
  if(nx!==null)act2(nx===zlen(ZONES[F.zi])-1?'Affronter le boss':'Combat suivant',()=>{Rs.classList.remove('on');startFight(F.zi,nx)});
  if(win&&contracts(save,today()).some(t=>t.p>=t.n&&!t.c))act2('Taverne : récompense à réclamer',()=>{camp();tav()},true);
- act2('Retour à la carte',()=>{Rs.classList.remove('on');worldMap()},nx!==null);Rs.appendChild(acts);
+ if(!win){act2('Réessayer',()=>{Rs.classList.remove('on');startFight(F.zi,F.i,F.daily?F:undefined)});act2('Préparer au camp',()=>camp(),true)}
+ act2('Retour à la carte',()=>{Rs.classList.remove('on');worldMap()},nx!==null||!win);Rs.appendChild(acts);
  Rs.classList.add('on');
 }
 
