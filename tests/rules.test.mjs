@@ -453,3 +453,8 @@ test('V3.5 : un chevalier au plus par combat prévu, à la 2e place, et le boss 
  const[b,r,n]=['knightB','knightR','knightN'].map(k=>MON[k]);assert.ok(b.hp<r.hp&&r.hp<n.hp&&b.dmg[1]<r.dmg[1]&&r.dmg[1]<n.dmg[1]);
  assert.equal(MON.knight.hp,60);
 });
+
+test('objectif chef : la lettre de repère reste en majuscule', () => {
+ const s=newBattle(),{hs,es}=genMap(s,5,0);mkUnits(s,{lvl:1,pool:['slime'],boss:null,goal:'chief'},hs,es,HS);
+ const c=s.units.find(u=>u.chief);assert.match(c.n,/^Chef .+ [A-Z]$/);
+});

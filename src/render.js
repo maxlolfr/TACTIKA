@@ -31,6 +31,9 @@ export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[HN[u.k
 
 // ---------- géométrie ----------
 export let W,H,dpr,TW,TH,ox,oy;
+let hudB=0; // bas de la barre du haut (frise des tours)
+// places essayées pour une bulle d'attaque : [colonnes, rangées] autour de sa place normale, les plus proches d'abord
+const SPOTS=[[0,0],[0,-1],[-1,0],[1,0],[-1,-1],[1,-1],[0,-2],[0,1],[-1,1],[1,1],[-2,0],[2,0],[-1,-2],[1,-2],[-2,-1],[2,-1]];
 const ISO=.70; // hauteur d'une case / largeur (0,5 = isométrie classique) : vue plongeante (V3.2), les sols sont étirés, pas les personnages
 const US=.93;  // taille des personnages par rapport à leur hauteur de base (V3.2 : un peu réduits pour moins se cacher)
 const hgt=u=>u.h*TW*US; // hauteur d'une unité à l'écran
@@ -45,7 +48,7 @@ let ground=null,outer=[];
 export function layout(){
  const box=cv.getBoundingClientRect();W=box.width||innerWidth;H=box.height||innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
  const side=matchMedia('(orientation:landscape)').matches,P=$('panel').getBoundingClientRect(),pad=(id,k)=>parseFloat(getComputedStyle($(id))[k])||0;
- const top=$('top').getBoundingClientRect().bottom;
+ const top=$('top').getBoundingClientRect().bottom;hudB=top;
  // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
  const x0=side?pad('top','paddingLeft')-10:0,x1=side?P.left:W,bot=side?H-Math.max(4,pad('panel','paddingBottom')-8):P.top,avail=bot-top;
  const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+(v?1.22:1.4)),130);
@@ -174,8 +177,9 @@ export function draw(now){
   drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-lift+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  for(const u of ghost){const[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u);drawF(ctx,s,i,sx,sy+TH*.12-(u.fly?TH*.7:0)-(u.hop||0),hgt(u)/rf,flip,u===cur||tg.includes(u)?.6:.35)} // silhouette derrière un décor
- // barres de vie
- for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-(u.fly?TH*.7:0)-4-(u.hop||0),w=TW*.6;
+ // barres de vie (leurs rectangles servent à écarter les bulles d'attaque)
+ const taken=[];
+ for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-(u.fly?TH*.7:0)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
   {const ss=[u.shield>0&&1,u.buff&&12,u.poison&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
@@ -188,9 +192,14 @@ export function draw(now){
   ctx.save();ctx.strokeStyle='#fff';ctx.fillStyle='#fff';ctx.lineWidth=3;ctx.globalAlpha=.9;if(p.to.x!==o.x||p.to.y!==o.y){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();const a=Math.atan2(by-ay,bx-ax);ctx.beginPath();ctx.moveTo(bx+Math.cos(a)*8,by+Math.sin(a)*8);ctx.lineTo(bx+Math.cos(a+2.4)*10,by+Math.sin(a+2.4)*10);ctx.lineTo(bx+Math.cos(a-2.4)*10,by+Math.sin(a-2.4)*10);ctx.fill()}
   if(p.left){ctx.font=`900 ${Math.round(TW*.24)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='-'+p.k*p.left,z=TW*.3;dic(ctx,'fxi',1,bx-ctx.measureText(t).width/2-z-2,by-TH*.1-z*.85,z);ctx.strokeText(t,bx,by-TH*.1);ctx.fillStyle='#ffa040';ctx.fillText(t,bx,by-TH*.1)}ctx.restore()}
  // intentions : bulle au-dessus de chaque monstre
- if(G.intents&&!busy){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-(u.fly?TH*.7:0)-TW*.3,t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
+ if(G.intents&&!busy){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-(u.fly?TH*.7:0)-TW*.3;const t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
   ctx.save();ctx.strokeStyle='rgba(255,74,58,.75)';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.lineDashOffset=-now/40;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo((sx+tx)/2,Math.min(sy,ty)-TH,tx,ty);ctx.stroke();ctx.restore();
-  ctx.fillStyle='rgba(40,8,6,.85)';ctx.strokeStyle='#ff6b5a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(sx-w/2,y-h*.75,w,h,6);ctx.fill();ctx.stroke();dic(ctx,'ico',0,sx-w/2+4,y-h*.75+(h-iw)/2,iw);ctx.fillStyle='#ffd9d2';ctx.fillText(t,sx+iw/2,y)}}
+  // la bulle prend la place libre la plus proche (au-dessus, à côté ou plus bas), sans passer sous la barre du haut
+  let bx=sx;{const y0=y-h*.75;let best=null;
+   for(const[i,j]of SPOTS){const cx=Math.max(w/2+2,Math.min(W-w/2-2,sx+i*(w+3))),top=Math.max(hudB,y0+j*(h+3));
+    const n=taken.filter(([a,b,c,d])=>cx-w/2<c&&cx+w/2>a&&top<d&&top+h>b).length;if(!best||n<best[0])best=[n,cx,top];if(!n)break}
+   bx=best[1];y=best[2]+h*.75;taken.push([bx-w/2,best[2],bx+w/2,best[2]+h])}
+  ctx.fillStyle='rgba(40,8,6,.85)';ctx.strokeStyle='#ff6b5a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(bx-w/2,y-h*.75,w,h,6);ctx.fill();ctx.stroke();dic(ctx,'ico',0,bx-w/2+4,y-h*.75+(h-iw)/2,iw);ctx.fillStyle='#ffd9d2';ctx.fillText(t,bx+iw/2,y)}}
  // effets
  if(cur&&!cur.dead&&phase==='fight'){const[sx,sy]=scr(cur.gx,cur.gy),f=AT.parts[10],w=TW*.32,y=sy-hgt(cur)-(cur.fly?TH*.7:0)-TW*.42+Math.sin(now/180)*4;ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,y-w*f[3]/f[2],w,w*f[3]/f[2])}
  ambient(now);
