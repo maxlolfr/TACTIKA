@@ -4,8 +4,9 @@
 //         node tools/sim.mjs [campagnes]   (campagne entière : très coûteux, seulement avec l'accord de Max)
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
-import {SP,HER,ZONES,ITEMS,zlen} from '../src/data.js';
-import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty} from '../src/rules.js';
+import {SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
+if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
+import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,costOf} from '../src/rules.js';
 
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
@@ -24,7 +25,7 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
 function best(s,u){const rc=reach(s,u,u.pm);let b=null;
  const cells=s.units.filter(x=>!x.dead).map(x=>({x:x.x,y:x.y}));
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),p={x,y};
-  for(const id of u.sp){const sp=SP[id];if(u.pa<sp.pa||u.cd[sp.n]>0)continue;
+  for(const id of u.sp){const sp=SP[id];if(u.pa<costOf(u,sp)||u.cd[sp.n]>0)continue;
    for(const c of sp.t==='self'?[p]:cells){if(!okTarget(s,u,sp,c,p))continue;const v=value(s,u,sp,c)-d*.5;if(v>0&&(!b||v>b.v))b={p,d,sp,c,v}}}}
  return b}
 function heroTurn(s,u){
@@ -40,7 +41,8 @@ function monTurn(s,u){tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<
 function tally(s,ev){for(const e of ev||[]){if(e.type==='hurt')s.T[e.t.team==='m'?'hit':'taken']+=e.amt;if(e.type==='heal')s.T.heal+=e.amt}}
 // Un combat, comme startFight + runFight de l'interface. rs = graine du hasard du combat (reproductible).
 function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F=fightSpec(zi,i,seed);
- const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)));s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
+ const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
+ s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;
  while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
   beginTurn(u);if(u.poison){poisonTick(s,u);if(outcome(s)||u.dead)continue}

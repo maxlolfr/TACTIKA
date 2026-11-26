@@ -88,4 +88,6 @@ export const FORGE_COST=[25,60,120], FORGE_STEP=.5;
 export const AMP=.3, PRISM=.7, PRISM_OFF=2;
 // V4.1 : PA non dépensés par un héros : +1 au tour suivant par tranche de 2, au plus +2
 export const PA_CARRY={per:2,max:2};
+// V4.5c (variante B, choisie par Max et ChatGPT) : un héros qui relance le même sort dans le même tour paie +1 PA à partir du 2e lancer
+export const PA_RULE={recast:1};
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
