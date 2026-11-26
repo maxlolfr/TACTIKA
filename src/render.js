@@ -1,7 +1,7 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,TIL,DECO_W,CMAX,R,ZONES} from './data.js';
+import {DEC,DECO_W,CMAX,R,ZONES} from './data.js';
 import {K,mulberry,pick,cell,occ,pushPlan} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -9,7 +9,7 @@ export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
 const BS=['roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN'];
-const OLD=['aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
+const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 export async function loadAssets(){
  AT=await(await fetch('assets/atlas.json')).json();
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)).map(n=>new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;ok()};i.onerror=()=>ko(n);i.src='assets/'+n+'.webp'})));
@@ -54,8 +54,8 @@ export function layout(){
  ox=(x0+x1)/2-lat(mid,mid)*TW/2;oy=top+(avail-bh)/2+1.1*TW+rows*TH/2-depth(mid,mid)*TH/2;
  if(G.s.map.size)buildGround();
 }
-// numéro de tuile du jeu -> case de la planche tiles3 ; les autres gardent l'ancienne planche
-const T3={0:0,1:0,2:1,3:3,4:5,5:2,6:8,7:2};
+// numéro de tuile du jeu (data.js) -> case de la planche tiles4
+const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
 const BGZ=['prairie','bois','plage','mont','chateau'],BG={};
 function bgOf(){const id=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(id))return null;
@@ -67,9 +67,8 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  // périphérie assombrie : le regard va au plateau
  {const[cx,cy]=scr(R/4,R/4),rad=Math.max(W,H)*.75,v=g.createRadialGradient(cx,cy,TW*2.5,cx,cy,rad);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=v;g.fillRect(0,0,W,H)}
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
- // tuiles V3.2 (planche de Max, tiles3) : ancrées sur les coins gauche/droit de la face du dessus, miroir au hasard pour casser la répétition
- const tl=(t,sx,sy,m)=>{const n=T3[t];if(n!=null){const f=AT.tiles3[n],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m)g.scale(-1,1);g.drawImage(IMG.tiles3,f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore();return}
-  const[ts,ti]=TIL(t),f=AT[ts][ti],s=TW*1.04/f[2];g.drawImage(IMG[ts],f[0],f[1],f[2],f[3],sx-TW*.52,sy-TH*.52,f[2]*s,f[3]*s*ISO*2)};
+ // tuiles calmes (planche TU-02 de Max, tiles4) : ancrées sur les coins gauche/droit de la face du dessus ; miroir et deux herbes au hasard contre la répétition
+ const tl=(t,sx,sy,m)=>{const f=AT.tiles4[t===0&&m?1:T4[t]],kx=TW*1.035/f[2],ky=TH*1.035/(2*f[5]);g.save();g.translate(sx,sy);if(m&&t!==14&&t!==15)g.scale(-1,1);g.drawImage(IMG.tiles4,f[0],f[1],f[2],f[3],-f[4]*kx,-f[5]*ky,f[2]*kx,f[3]*ky);g.restore()};
  const flipAt=(x,y)=>((x*7349+y*9151)>>>2)&1;
  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){if((r+c)&1)continue;const a=(r+c)/2,b=(r-c)/2,x=V?b:a,y=V?-a:b,[sx,sy]=scr(x,y),m=cell(S,x,y);
   if(m){tl(m.t,sx,sy,flipAt(x,y));if(m.t<2){diamond(g,sx,sy);g.fillStyle='rgba(8,24,0,.12)';g.fill()} // herbe un peu calmée : les personnages ressortent

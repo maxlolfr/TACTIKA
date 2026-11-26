@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V3.3 (26/11/2026) — sols calmes partout
+- Planche TU-02 de Max découpée par `tools/cut_tiles.py planche.png tiles4` (accepte maintenant un fond magenta). Les 16 numéros de sol du jeu passent sur `tiles4` (table `T4`), Monts gris et Château compris. Deux herbes tirées au hasard. `tiles`, `tiles2`, `tiles3` ne sont plus chargées (`OLD`).
+- Inclut le correctif V3.2.2 ci-dessous, publié dans la même version.
+
+## V3.2.2 (26/11/2026) — village invisible sur écran presque carré
+- Capture de Max (Honor déplié, retour au village) : seul le fond flou restait. `fitHome` déduisait le paysage de `largeur > hauteur` ; quand le CSS plaçait quand même le menu en colonne, la zone libre devenait négative et le village n'avait plus de taille.
+- La disposition se lit maintenant sur la position réelle du menu, l'échelle ne peut plus être nulle, et un `ResizeObserver` recadre quand la zone change sans événement `resize`.
+
 ## V3.2.1 (26/11/2026) — sens des héros
 - Bug présent depuis la V2.5a : toutes les planches de héros (`<héros>9` et `<héros>M`) regardent à droite, mais `frameOf` les retournait quand l'unité regardait à droite. Les héros regardaient, marchaient et frappaient à l'opposé. Miroir inversé pour les héros seulement (monstres et boss inchangés).
 
