@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,ampAt,prismOn,beamDmg,approach,okTarget,carryPA} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -120,13 +120,17 @@ function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
  return out}
 function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.className='';X.innerHTML='';return}
  const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[];
- L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:'case visée'}</strong>`);
+ L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?'prisme':'case visée'}</strong>`);
  if(E.bad)L.push(`✗ ${E.bad}`);
  else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
   if(sp.zone){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
    for(const o of hit){const f=forecast(S,u,sp,o,from);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
-   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · tes héros sont épargnés`:'Aucun ennemi dans la zone')}
+   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · la Volée épargne tes héros`:'Aucun ennemi dans la zone')}
   else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
+  // prisme déclenché : effet à part, qui touche aussi les héros
+  const pc=sp.dmg&&(sp.zone?zoneCells(S,E):[E]).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
+  if(pc){const d=prismDmg(S,{...u,x:from.x,y:from.y},sp),who=prismHits(S,pc).map(p=>E.ap&&p.x===E.ap.x&&p.y===E.ap.y?u:occ(S,p.x,p.y)===u&&E.ap?null:occ(S,p.x,p.y)).filter(Boolean);
+   L.push(`<span class="pz${who.some(o=>o.team==='h')?' danger':''}">◆ Prisme déclenché : ${who.length?who.map(o=>`${o.n} -${soak(o,d)}`).join(', '):'personne autour'}${who.some(o=>o.team==='h')?' — héros touché !':''}</span>`)}
   L.push('<i>Retouche au même endroit pour lancer</i>')}
  X.innerHTML=L.map(l=>`<div>${l}</div>`).join('');X.className='on'+(E.bad?' bad':'');
  X.style.top=matchMedia('(orientation:landscape)').matches?'':$('top').getBoundingClientRect().bottom+2+'px';
@@ -137,7 +141,8 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 // ---------- écrans ----------
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){
- F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);$('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
+ F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp'; // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
+ $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
