@@ -212,10 +212,12 @@ test('combos : 2e héros +15 %, 3e héros +30 %, remis à zéro quand le monstre
  assert.equal(hit(a,SP.slash),Math.round(12*1.3),'le même héros qui refrappe garde le bonus, sans nouvelle annonce');
  beginTurn(m);assert.equal(hit(b,SP.slash),12);
 });
-test('étoiles : victoire, aucun KO, rapidité', () => {
+test('étoiles (V4.5f) : victoire, aucun KO, objectif de maîtrise selon la mission', () => {
  const s=arena();unit(s,'h',0,0);const h2=unit(s,'h',1,0);
- s.round=5;assert.equal(stars(s,false),3);s.round=6;assert.equal(stars(s,false),2);assert.equal(stars(s,true),3);
- h2.dead=true;assert.equal(stars(s,true),2);s.round=9;assert.equal(stars(s,true),1);
+ s.round=12;assert.equal(stars(s,false),3); // la durée ne compte plus
+ h2.hp=24;assert.equal(stars(s,false),2);h2.hp=25;assert.equal(stars(s,true),3); // 50 % de PV au moins
+ s.sigUsed=1;s.sigHit=1;assert.equal(stars(s,true),2);assert.equal(star3(s,true)[0],'sig');s.sigHit=0;assert.equal(stars(s,true),3); // boss : signature évitée
+ h2.dead=true;h2.wasKO=1;assert.equal(stars(s,false),1);
 });
 test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer à l\'état', () => {
  const s=arena(),h=unit(s,'h',2,2,{hp:30}),far=unit(s,'h',10,10),m=unit(s,'m',5,2,{maxPA:4,maxPM:3,pa:0,pm:0,atk:{pa:4,r:[1,1],t:'enemy',dmg:[7,10]}});
@@ -226,8 +228,9 @@ test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer
 
 // ---------- V2.4a ----------
 test('étoiles : le détail est juste (rapide mais avec un KO)', () => {
- const s=arena();unit(s,'h',0,0,{dead:true});unit(s,'h',1,0);s.round=3;
- assert.deepEqual(starList(s,false),[true,false,true]);assert.equal(stars(s,false),2);
+ const s=arena();unit(s,'h',0,0,{hp:10});unit(s,'h',1,0);s.round=3;
+ assert.deepEqual(starList(s,false),[true,true,false]);assert.equal(stars(s,false),2);
+ assert.equal(fightSpec(2,2,1).wave.add[2][2],'knightB');assert.equal(fightSpec(1,2,1).wave.add[2][2],'wolf'); // survie généralisée
 });
 test('carte : jamais d\'échec, même sur 300 graines', () => {
  for(let seed=0;seed<300;seed++)assert.ok(genMap(newBattle(),seed*7919,seed%THEMES.length),'graine '+seed);
@@ -480,7 +483,7 @@ test('région 6 : 200 cartes par niveau, ennemis joignables, cristaux posés hor
    for(const u of s.units){assert.ok(!cell(s,u.x,u.y).cry,'unité sur un cristal');assert.ok(!cell(s,u.x,u.y).block)}
    const h=s.units.find(u=>u.team==='h'),d=reach({...s,units:[]},h,99).dist;
    for(const u of s.units)assert.ok(d.has(K(u.x,u.y)),`niveau ${i+1} graine ${seed} : ${u.n} injoignable`);
-   assert.equal(s.units.filter(u=>u.team==='m').length,F.en.length+(F.boss?1:0));assert.ok(s.units.filter(u=>u.team==='m').length<=7)}}
+   assert.equal(s.units.filter(u=>u.team==='m').length,F.wave?F.wave.start:F.en.length+(F.boss?1:0));assert.ok(s.units.filter(u=>u.team==='m').length<=7)}}
 });
 
 test('amplificateur : +30 % de dégâts et de soin depuis une case voisine, pas de cumul, pas sur le poison', () => {
@@ -602,7 +605,7 @@ test('V4.2 Volée : centre autorisé qui touche indirectement, case vide visable
 });
 
 // ---------- V4.5a : survie à renforts ----------
-import {man,waveTick,waveEmpty,spawnCells} from '../src/rules.js';
+import {man,star3,waveTick,waveEmpty,spawnCells} from '../src/rules.js';
 const waveFight=(seed=3)=>{const F=fightSpec(1,2,seed),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:6,items:[],sp:[null,null,null]},j)));return{F,s}};
 test('survie à renforts : départ, annonce, arrivée, plafond', ()=>{
  const{F,s}=waveFight(),mons=()=>s.units.filter(u=>u.team==='m'&&!u.dead);
