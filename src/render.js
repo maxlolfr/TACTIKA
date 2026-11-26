@@ -158,6 +158,8 @@ const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
  healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0])};
 export const heroFrame=k=>HN[k].i;
+// images de marche [planche, 4 cases], tournées vers la droite (réutilisées au village, V4.8b)
+export const walkFrames=(k,back)=>HN[k][back?'B':'F'];
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',d=V?[1,3,0,2][u.dir]:u.dir,right=d===0||d===2,back=d===2||d===3;
 // toutes les planches de héros (poses et marche) regardent à DROITE : miroir seulement quand l'unité regarde à gauche

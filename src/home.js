@@ -5,11 +5,11 @@ import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,zlen} from './data.js';
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,icon,uiURL,logoURL,drawF,heroFrame} from './render.js';
+import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.8a';
+export const VERSION='4.8b';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -31,7 +31,9 @@ const SCENES={
   smoke:[[136,638,1],[812,270,.8]],water:[0,1605,100,75],
   // feuillages qui ondulent : on redessine un morceau de la peinture, à bords fondus
   leaves:[[0,0,300,170],[0,1270,100,190],[0,500,115,160],[850,500,91,170]],
-  camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[480,1140],ck:[.507,.44]},
+  camp:[[262,1525,0,false],[345,1420,1,false],[590,1432,2,true]],cry:[480,1140],ck:[.507,.44],
+  // V4.8b : trajet de chaque héros sur les chemins (après son poste) — Kael vers la forge, Fenn vers le marchand, Aelis vers le cristal
+  walk:[[[300,1425],[420,1340],[440,1255],[320,1160]],[[440,1350],[510,1260],[600,1215],[672,1172]],[[560,1365],[485,1325],[400,1345]]]},
  // horizontale : paysage large
  l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[940,880,700,535],hero:[100,122],
   npc:108,pnj:{caserne:[742,352,true],taverne:[815,396,false],forge:[708,614,true],marchand:[842,614,false],entrainement:[312,846,false],talents:[1125,938,true]},
@@ -41,7 +43,8 @@ const SCENES={
    [828,765,38,'l'],[945,820,34,'w'],[918,862,45,'m'],[1090,858,32,'w'],[1005,893,30,'l'],[505,912,30,'l'],[1197,378,34,'w'],[1370,468,45,'m'],[762,892,75,'f']],
   smoke:[[558,390,.9],[986,172,.7]],water:[400,975,130,55],
   leaves:[[0,300,165,220],[0,840,200,190],[1400,770,136,200],[1380,0,156,190]],
-  camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697],ck:[.285,.26]}};
+  camp:[[655,928,0,false],[722,852,1,false],[846,892,2,true]],cry:[765,697],ck:[.285,.26],
+  walk:[[[715,845],[765,790],[720,752],[645,757]],[[780,800],[835,755],[920,738]],[[812,855],[792,812],[745,808]]]}};
 // V4.8a : un PNJ devant chaque bâtiment. Bandes `tools/prep_pnj.py` : repos, geste 1, geste 2, salut (au toucher). [nom, largeur, hauteur d'une case en pixels]
 const PNJ={caserne:['garrick',300,365],taverne:['mira',402,369],forge:['borin',372,368],marchand:['ezran',332,370],entrainement:['darius',416,369],talents:['elyndra',366,372]};
 // pieds [x,y,miroir] dans chaque peinture ; npc = hauteur d'une case de 370 px en pixels logiques
@@ -73,10 +76,11 @@ function scene(k){
  {const st=crystalState(save),[w,h]=CRY[st-1].map(v=>v*Q.ck[st===5?1:0]);
   const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
   const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
- // héros autour du feu
- for(const[x,y,i,flip]of Q.camp){const[hw,hh]=Q.hero,b=el('button','v-hero');b.style.cssText=pc(x-hw/2,y-hh*.95,hw,hh);b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
-  const c=el('canvas');c.width=260;c.height=316;const[s,k]=heroFrame(HER[i].k),f=AT[s][k];drawF(c.getContext('2d'),s,k,130,300,284/f[3],flip);c.style.animationDelay=-i*.9+'s';b.append(c);
-  b.onclick=()=>{hero=i;show('heros')};stage.append(b)}
+ // héros : leur poste est autour du feu, ils vont faire un tour puis reviennent (V4.8b)
+ const walkers=Q.camp.map(([x,y,i,flip])=>{const[hw,hh]=Q.hero,b=el('button','v-hero');b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
+  const c=el('canvas');c.width=260;c.height=316;c.style.animationDelay=-i*.9+'s';b.append(c);b.onclick=()=>{hero=i;show('heros')};stage.append(b);
+  const W={i,b,g:c.getContext('2d'),path:[[x,y],...Q.walk[i]],flip,x,y,at:0,dir:1,wait:1.5+i*4.5,t:0,key:''};place1(Q,W);paint(W);return W});
+ roam(stage,Q,walkers);
  for(const b of Q.bld){const z=el('button','v-bld');z.dataset.b=b.id;z.style.cssText=pc(...b.z);z.setAttribute('aria-label',`${b.n} : ${b.d}`);
   const lift=el('i','v-lift');lift.style.backgroundImage=`url(${Q.src})`;lift.dataset.crop=b.z.slice(0,2).join();z.append(lift);
   const p=el('span','v-plate',`<span><b>${b.n}</b><small>${b.d}</small></span>`);p.prepend(icon(...b.ic,28));p.style.cssText=`left:${(b.l[0]-b.z[0])/b.z[2]*100}%;top:${(b.l[1]-b.z[1])/b.z[3]*100}%`;z.append(p);
@@ -88,6 +92,31 @@ function scene(k){
   z.onclick=()=>{if(z.classList.contains('hit'))return;z.classList.add('hit');setTimeout(()=>{z.classList.remove('hit');open(b.id)},save.fast?190:450)};stage.append(z)}
  return stage;
 }
+
+// ---------- V4.8b : promenade des héros (décor seulement : aucun effet sur le jeu) ----------
+// position : bouton posé sur ses pieds ; il passe devant le cristal quand il marche plus bas que lui
+function place1(Q,W){const[hw,hh]=Q.hero;W.b.style.cssText=`left:${(W.x-hw/2)/Q.w*100}%;top:${(W.y-hh*.95)/Q.h*100}%;width:${hw/Q.w*100}%;height:${hh/Q.h*100}%;z-index:${W.y>Q.cry[1]?2:1}`}
+// image : à l'arrêt la pose de repos, en marche les 4 images du combat (de face en descendant, de dos en montant)
+function paint(W,walk){let s,k,ref,flip=W.flip;
+ if(walk){const w=walkFrames(HER[W.i].k,walk.back);s=w[0];k=w[1][Math.floor(W.t/.16)%4];ref=AT[s][w[1][0]][3];flip=walk.left}
+ else{[s,k]=heroFrame(HER[W.i].k);ref=AT[s][k][3]}
+ const key=s+k+flip;if(key===W.key)return;W.key=key;W.b.classList.toggle('walk',!!walk);W.g.clearRect(0,0,260,316);drawF(W.g,s,k,130,300,284/ref,flip)}
+// avance un héros de dt secondes ; vitesse proportionnelle à sa taille dans la peinture
+function step(Q,W,dt){
+ if(W.wait>0){W.wait-=dt;return}
+ const next=W.path[W.at+W.dir],dx=next[0]-W.x,dy=next[1]-W.y,d=Math.hypot(dx,dy),v=Q.hero[1]*.5*dt;W.t+=dt;
+ const way={back:dy<0,left:dx<0};
+ if(d>v){W.x+=dx/d*v;W.y+=dy/d*v;paint(W,way)}
+ else{[W.x,W.y]=next;W.at+=W.dir;
+  if(W.at===W.path.length-1||W.at===0){const home=W.at===0;W.dir=home?1:-1;W.wait=home?6+Math.random()*8:3+Math.random()*3;if(!home)W.flip=way.left;else W.flip=Q.camp[W.i][3];W.t=0;paint(W)}}
+ place1(Q,W)}
+// une seule boucle, arrêtée quand la scène est remplacée ; en pause quand le village n'est pas visible
+// (à la première image la scène est déjà en place, ou déjà remplacée par l'autre peinture : la boucle s'arrête alors)
+function roam(stage,Q,walkers){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;let last=0;
+ const tick=now=>{if(!stage.isConnected)return;
+  const dt=Math.min(.05,(now-(last||now))/1000);last=now;
+  if(root.classList.contains('on')&&!root.classList.contains('paneled'))for(const W of walkers)step(Q,W,dt);
+  requestAnimationFrame(tick)};requestAnimationFrame(tick)}
 
 // ---------- structure ----------
 function build(){

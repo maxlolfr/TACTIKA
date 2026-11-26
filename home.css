@@ -26,6 +26,8 @@
 @keyframes leaf{0%{transform:translate(0,-30px) rotate(0);opacity:0}15%{opacity:.9}100%{transform:translate(-70px,160px) rotate(320deg);opacity:0}}
 /* héros au coin du feu */
 .v-hero{background:none;border:0;padding:0;cursor:pointer;display:block}
+.v-stage>.v-hero{pointer-events:none}.v-hero::after{content:'';position:absolute;left:20%;right:20%;top:8%;bottom:0;pointer-events:auto}
+.v-hero.walk canvas{animation:none}
 .v-hero::before{content:'';position:absolute;left:18%;right:18%;bottom:0;height:13%;border-radius:50%;background:radial-gradient(closest-side,#1a0c04bb,#0000)}
 .v-hero canvas{position:relative;width:100%;height:100%;display:block;transform-origin:50% 100%;animation:breathe 2.8s ease-in-out infinite}
 @keyframes breathe{50%{transform:scale(1.012,1.028)}}
