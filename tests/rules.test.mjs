@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
 import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -570,4 +570,33 @@ test('V4.1 approche : case la moins chère d’où lancer le sort, rien si les P
  k.pm=2;assert.equal(approach(s,k,SP.slash,e),null);k.pm=3;k.pa=2;assert.equal(approach(s,k,SP.slash,e),null);
  k.pa=6;e.x=2;e.y=0;const b=approach(s,k,SP.slash,e);assert.equal(b.cost,1);
  e.x=1;assert.equal(approach(s,k,SP.slash,e),null,'déjà à portée : pas d’approche');
+});
+
+// ---------- V4.2 : prévision ----------
+test('V4.2 prévision = résolution : arc, Aura, combo, armure, Rempart, critique, collision de Fracas', () => {
+ let n=0;
+ for(const spName of ['shot','smash','slash','venom'])for(const buff of [null,{pct:.3,turns:2}])for(const armor of [0,.25])for(const shield of [0,1])for(const prior of [0,1])for(const dmgB of [0,2])for(const wallBehind of [0,1]){
+  const run=(roll,crit)=>{const s=arena(),sp=SP[spName],u=unit(s,'h',0,0,{dmgB,mult:1.06,dmgMul:1.15,buff:buff&&{...buff}}),t=unit(s,'m',sp.r[0]>1?3:1,0,{hp:500,max:500,armor,shield});
+   if(prior)t.hitBy=new Set(['autre']);if(wallBehind)cell(s,t.x+1,0).block=1;
+   const before=JSON.stringify([s.units.map(o=>({...o,hitBy:o.hitBy&&[...o.hitBy]})),s.killedXp]);let calls=0;s.rng=()=>{calls++;return 0};
+   const f=forecast(s,u,sp,t);assert.equal(calls,0,'aucun hasard consommé');assert.equal(JSON.stringify([s.units.map(o=>({...o,hitBy:o.hitBy&&[...o.hitBy]})),s.killedXp]),before,'état intact');
+   let i=0;s.rng=()=>i++===0?(crit?0:.999):roll;
+   const ev=applySpell(s,u,sp,{x:t.x,y:t.y}),h=ev.find(e=>e.type==='hurt'&&e.src===0),col=ev.filter(e=>e.type==='hurt'&&e.src==='collision'&&e.t===t).reduce((a,e)=>a+e.amt,0);
+   assert.equal(h.amt,(crit?f.crit:f.dmg)[roll?1:0],`${spName} buff${!!buff} armure${armor} rempart${shield} combo${prior}`);assert.equal(col,f.push);n++};
+  for(const roll of [0,.9999])for(const crit of [false,true])run(roll,crit)}
+ assert.equal(n,4*2*2*2*2*2*2*4);
+});
+test('V4.2 KO : garanti, possible, seulement en critique, jamais garanti avec esquive', () => {
+ const s=arena(),u=unit(s,'h',0,0),t=unit(s,'m',3,0);
+ const ko=hp=>{t.hp=hp;return forecast(s,u,SP.shot,t).ko};
+ assert.equal(ko(8),'sure');assert.equal(ko(12),'maybe');assert.equal(ko(18),'crit');assert.equal(ko(19),null);
+ t.dodge=.15;assert.equal(ko(8),'maybe');
+});
+test('V4.2 Volée : centre autorisé qui touche indirectement, case vide visable, alliés épargnés', () => {
+ const s=arena(),f=unit(s,'h',0,0),e=unit(s,'m',6,0),al=unit(s,'h',5,1);
+ assert.ok(!okTarget(s,f,SP.volley,e),'6 cases : hors portée du centre');
+ const c=zoneCenter(s,f,SP.volley,e);assert.deepEqual(c,{x:5,y:0});assert.ok(okTarget(s,f,SP.volley,c));
+ assert.equal(zoneCells(s,c).length,4,'au bord du plateau : seulement les voisines qui existent');
+ const hp=al.hp;applySpell(s,f,SP.volley,c);assert.ok(e.hp<50);assert.equal(al.hp,hp,'allié dans la zone épargné');
+ e.x=9;assert.equal(zoneCenter(s,f,SP.volley,e),null);
 });

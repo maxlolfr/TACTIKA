@@ -1,5 +1,14 @@
 # Notes du projet Tactika
 
+## V4.2 (26/11/2026) — P1 du brief de Michel : lire avant de frapper
+- **Changement de commande** : avec un sort choisi, 1er appui (ou survol à la souris) = examiner, 2e appui au même endroit (ou même portrait) = lancer. Sorts sur soi : un seul appui. Retoucher le sort annule.
+- Cible examinée : silhouette redessinée par-dessus les personnages qui la masquent, case entourée, portrait entouré de blanc. Carte de visée : nom, PV, validité, motif de refus (trop près, hors de portée, allié ou obstacle qui bloque) ou trajet.
+- Appuis : le milieu d'une case occupée l'emporte, sinon le dessin de cible le plus proche. Sort de zone : le milieu d'une case libre reste visable.
+- Volée : cases oranges = centres autorisés, zone rouge = cases touchées. Un ennemi hors de portée du centre propose un centre voisin. Alliés annoncés épargnés ; prismes montrés à part, seulement ceux que la case examinée déclenche.
+- Dégâts réels (`forecast` dans rules.js, mêmes fonctions que la résolution : `power`, `soak`, `healing`) : arc, Aura, combo, cristal, armure, perforation, Rempart, collision, critique à part, « KO garanti / possible / si critique ». Aucun hasard consommé, aucun état modifié (test). La barre du bas dit « de base ».
+- Non couvert par la prévision : dégâts de prisme dans le calcul de KO (chiffres ◆ à part), poison au tour suivant.
+- Petit écran (375×667) : la carte de visée peut couvrir les rangées du haut du plateau. 69 tests.
+
 ## V4.1 (26/11/2026) — retours de Max
 - Objectifs annoncés : carte au début des combats « survie » et « chef » (affichée à chaque fois), tours restants sous le titre, bannière à chaque nouveau tour de survie, objectif indiqué dans la liste des combats, « Objectif atteint » à la victoire. La survie est désormais gagnée dès le début du 5e tour (avant, un héros devait encore jouer).
 - Tir et Volée passent par-dessus les décors bas (`LOW` dans data.js, champ `lob` des sorts). Arbres, rochers, murs, piliers, cristaux et personnages bloquent toujours. Épine, Piège et les monstres ne changent pas.

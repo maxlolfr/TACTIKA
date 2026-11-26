@@ -137,8 +137,8 @@ export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){con
 
 // V4.1 : cible hors d'atteinte → meilleure case (dans les PM) d'où lancer le sort sur c, ou null.
 // Le moins de PM possible, puis une case amplifiée, puis la plus éloignée de la cible.
-export function approach(s,u,sp,c,rc=reach(s,u,u.pm)){if(u.pa<sp.pa||u.cd[sp.n]>0||okTarget(s,u,sp,c))return null;let best=null,bs=null;
- for(const[k,cost]of rc.dist){if(!cost)continue;const[x,y]=k.split(',').map(Number),from={x,y};if(!okTarget(s,u,sp,c,from))continue;
+export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,c,from)){if(u.pa<sp.pa||u.cd[sp.n]>0||ok(u))return null;let best=null,bs=null;
+ for(const[k,cost]of rc.dist){if(!cost)continue;const[x,y]=k.split(',').map(Number),from={x,y};if(!ok(from))continue;
   const sc=cost*1000-(ampAt(s,from)>1?100:0)-man(from,c);if(!best||sc<bs){bs=sc;best={k,x,y,cost}}}
  return best}
 // ---------- aperçu de déplacement (V3.0e) : ennemis visables depuis la case `from`, sans rien modifier ----------
@@ -161,8 +161,31 @@ export function guideSetup(s){const f=s.units.find(u=>u.k==='archer'),m=s.units.
  spots.forEach((p,i)=>{const o=occ(s,p.x,p.y);if(o&&o!==m[i])return;Object.assign(m[i],{x:p.x,y:p.y,gx:p.x,gy:p.y})})}
 
 // ---------- dégâts, sorts ----------
-// Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât. Renvoie un événement, ou null si la cible est déjà morte.
-export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));amt=Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))));
+// Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât.
+export function soak(t,amt,pen=0){if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));return Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))))}
+// Dégâts d'un sort avant bouclier et armure, pour un tirage `roll`
+const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*cb*(cr?1.5:1);
+const healing=(u,roll,amp)=>Math.round((roll+(u.healB||0))*(u.mult||1)*(u.healMul||1)*amp);
+// nombre de héros ayant frappé t, u compris (palier de combo)
+const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u.id]).size:0;
+// V4.2 : prévision d'un sort sur l'unité t, lancé depuis `from`. Ne tire aucun hasard et ne modifie rien.
+// {dmg:[min,max], crit:[min,max], pc:chance de critique, dodge, combo, push:dégâts de collision, ko:'sure'|'maybe'|'crit'|null, heal:[min,max]}
+export function forecast(s,u,sp,t,from=u){const amp=ampAt(s,from),out={amp:amp>1};
+ if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(healing(u,r,amp),t.max-t.hp));
+ if(!sp.dmg||t.team===u.team)return out;
+ const n=comboSize(u,t),cb=COMBO[n]||1,hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr),sp.pierce||0);
+ out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=t.dodge||0;out.combo=n>1?n:0;out.push=0;
+ if(sp.push){const p=pushPlan(s,{...from,pushDmg:u.pushDmg},t,sp.push);if(p.left)out.push=soak(t,(p.k||PUSH_DMG)*p.left)}
+ const kills=d=>d+out.push>=t.hp&&!t.lastStand;
+ out.ko=kills(out.dmg[0])&&!out.dodge?'sure':kills(out.dmg[1])?'maybe':kills(out.crit[1])?'crit':null;return out}
+// cases touchées par un sort de zone visant c
+export const zoneCells=(s,c)=>[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))].filter(p=>cell(s,p.x,p.y));
+// sort de zone : meilleur centre autorisé qui touche l'unité t (le plus d'ennemis, puis le plus proche de t), ou null
+export function zoneCenter(s,u,sp,t,from=u){let best=null,bs=-1e9;
+ for(const c of zoneCells(s,t)){if(!okTarget(s,u,sp,c,from))continue;const n=zoneCells(s,c).filter(p=>{const o=occ(s,p.x,p.y);return o&&o.team!==u.team}).length,sc=n*10-man(c,t);if(sc>bs){bs=sc;best=c}}
+ return best&&{x:best.x,y:best.y}}
+// Renvoie un événement, ou null si la cible est déjà morte.
+export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);
  let saved=false;if(t.lastStand&&amt>=t.hp){amt=t.hp-1;t.lastStand=0;saved=true} // Dernier rempart : une fois par combat
  t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else t.wasKO=1}
  const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};
@@ -182,15 +205,15 @@ export function applySpell(s,u,sp,c){
  if(sp.trap){u.trap={x:c.x,y:c.y,left:3};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Piège posé',color:'#ffa040'}]}
  if(sp.revive)return revive(s,u,c);
  if(sp.potion){if(!(s.pot>0))return[];s.pot--;const g=Math.min(Math.round(u.max*.4),u.max-u.hp);u.hp+=g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.3},{type:'heal',t:u,amt:g}]}
- const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c],buff=u.buff?1+u.buff.pct:1;
+ const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c];
  for(const p of tg){const t=occ(s,p.x,p.y);
   if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
   if(sp.dmg&&t.dodge&&t.team!==u.team&&rng()<t.dodge){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,amp*(ri(rng,...sp.dmg)+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*buff*cb*(cr?1.5:1),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
-  if(sp.heal){const v=Math.round((ri(rng,...sp.heal)+(u.healB||0))*(u.mult||1)*(u.healMul||1)*amp),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
+  if(sp.heal){const v=healing(u,ri(rng,...sp.heal),amp),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}

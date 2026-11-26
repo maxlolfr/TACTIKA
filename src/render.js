@@ -2,7 +2,7 @@
 import {G} from './game.js';
 import {$} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES} from './data.js';
-import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man} from './rules.js';
+import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
@@ -123,9 +123,13 @@ function hatch(c,x,y,col,a){c.save();diamond(c,x,y,.9);c.globalAlpha=a;c.fillSty
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
 export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
  const a=(px-ox)/(TW/2),b=(py-oy)/(TH/2),va=Math.round((a+b)/2),vb=Math.round((b-a)/2),g=V?{x:vb,y:0-va}:{x:va,y:vb},k=K(g.x,g.y);
- const now=S.units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy)),box=(u,w)=>{const[sx,sy]=scr(u.gx,u.gy),top=sy-hgt(u)-lift(u);return Math.abs(px-sx)<TW*w&&py<sy+TH*.4&&py>top-TW*.3?Math.abs(px-sx):null}; // jusqu'à la barre de vie
- // sort choisi : toucher le dessin d'une cible valable la vise, même si un autre personnage est devant
- if(sel){const t=now.map(u=>({u,d:box(u,.42)})).filter(o=>o.d!=null&&sel.cells.some(s=>s.ok&&s.x===o.u.x&&s.y===o.u.y)).sort((a,b)=>a.d-b.d)[0];if(t)return{x:t.u.x,y:t.u.y}}
+ const[gx,gy]=scr(g.x,g.y),core=Math.abs(px-gx)/(TW/2)+Math.abs(py-gy)/(TH/2)<.55; // appui au milieu de la case
+ const now=S.units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy)),box=(u,w)=>{const[sx,sy]=scr(u.gx,u.gy),top=sy-hgt(u)-lift(u); // jusqu'à la barre de vie
+  return Math.abs(px-sx)<TW*w&&py<sy+TH*.4&&py>top-TW*.3?Math.hypot(px-sx,(py-(sy+top)/2)*.6):null};
+ // sort choisi : le milieu d'une case occupée (le socle) l'emporte ; sinon le dessin de cible le plus proche, même derrière un autre personnage
+ if(sel&&sel.sp.t!=='self'){const o=occ(S,g.x,g.y);if(core&&o)return g;
+  if(sel.sp.zone&&core&&S.map.has(k))return g; // sort de zone : le milieu d'une case libre reste visable
+  const t=now.filter(u=>sel.sp.t==='ally'?u.team==='h':u.team==='m').map(u=>({u,d:box(u,.42),ok:sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)})).filter(o=>o.d!=null).sort((a,b)=>b.ok-a.ok||a.d-b.d)[0];if(t)return{x:t.u.x,y:t.u.y}}
  if(sel?sel.cells.some(s=>s.ok&&s.x===g.x&&s.y===g.y):reachC&&reachC.dist.get(k)>0)return g;
  for(const u of now){const[sx,sy]=scr(u.gx,u.gy),top=sy-hgt(u)-lift(u);if(Math.abs(px-sx)<TW*.32&&py<sy+TH*.3&&py>top)return{x:u.x,y:u.y}}
  return g}
@@ -191,28 +195,32 @@ export function draw(now){
  // surbrillances
  if(cur&&cur.team==='h'&&!busy&&phase==='fight'){
   if(G.mark&&Date.now()<G.mark.until){const[mx,my]=scr(G.mark.x,G.mark.y);diamond(ctx,mx,my,.92);ctx.fillStyle='rgba(255,60,60,.45)';ctx.fill();ctx.strokeStyle='#ff5a5a';ctx.lineWidth=3;ctx.stroke()}
-  if(sel){for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?'rgba(255,140,40,.62)':c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
+  if(sel){const dim=sel.sp.zone&&G.ex&&!G.ex.bad;for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?(dim?'rgba(255,140,40,.3)':'rgba(255,140,40,.62)'):c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok&&!dim){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
   else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle='rgba(220,240,255,.7)';ctx.lineWidth=1.5;ctx.stroke()}}
  if(sel&&cur&&!busy)for(const c of sel.cells)if(c.ok&&occ(S,c.x,c.y)){const[sx,sy]=scr(c.x,c.y),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.7+.3*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
  // cible visée par un monstre : losange rouge
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
+ // cible examinée : empreinte de la zone (rouge, distincte des centres orange)
+ const E=sel&&cur&&!busy&&phase==='fight'?G.ex:null,exU=E?occ(S,E.tap.x,E.tap.y):null;
+ if(E&&!E.bad&&sel.sp.zone)for(const p of zoneCells(S,E)){const[sx,sy]=scr(p.x,p.y),mid=p.x===E.x&&p.y===E.y;diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(235,40,30,.55)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=mid?3.5:1.8;ctx.setLineDash(mid?[]:[6,4]);ctx.stroke();ctx.setLineDash([]);if(mid){diamond(ctx,sx,sy,.4);ctx.stroke()}}
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // aperçu de déplacement : trajet, case d'arrivée et coût
- const plan=G.plan&&cur&&!busy&&(!sel||G.plan.sp===sel.sp)&&phase==='fight'?G.plan:null;
+ const plan=!cur||busy||phase!=='fight'?null:sel?E&&E.ap||null:G.plan;
  if(plan){const pts=[[cur.gx,cur.gy],...plan.path].map(([x,y])=>scr(x,y)),[ex,ey]=pts[pts.length-1];ctx.save();ctx.lineCap=ctx.lineJoin='round';
   for(const[w,c]of[[7,'rgba(0,20,50,.7)'],[3.5,'#fff']]){ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.setLineDash([9,7]);ctx.lineDashOffset=-now/45;ctx.stroke()}
   ctx.setLineDash([]);diamond(ctx,ex,ey,.92);ctx.fillStyle='rgba(255,255,255,.28)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // Titan : cases du rayon chargé (hachures violettes)
  if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
- const pv=[];if(sel&&sel.sp.dmg&&cur&&!busy)for(const m of S.map.values())if(prismOn(S,m)&&sel.cells.some(c=>c.ok&&(c.x===m.x&&c.y===m.y||sel.sp.zone&&man(c,m)<=1))){const d=prismDmg(S,cur,sel.sp);
+ const pv=[];if(sel&&sel.sp.dmg&&cur&&!busy)for(const m of S.map.values())if(prismOn(S,m)&&(G.ex&&!G.ex.bad?m.x===G.ex.x&&m.y===G.ex.y||sel.sp.zone&&man(G.ex,m)<=1:sel.cells.some(c=>c.ok&&(c.x===m.x&&c.y===m.y||sel.sp.zone&&man(c,m)<=1)))){const d=prismDmg(S,cur,sel.sp);
   for(const p of prismHits(S,m)){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#c98bff',.3);const o=occ(S,p.x,p.y);if(o)pv.push([o,d])}}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:depth(m.x,m.y),m});for(const o of outer)L.push({z:depth(o.x,o.y),m:o});
  for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:depth(u.gx,u.gy)+.01,u});
  L.sort((a,b)=>a.z-b.z);
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
- const hides=u=>!tg.includes(u)&&tg.some(t=>{const dz=depth(u.gx,u.gy)-depth(t.gx,t.gy);return dz>0&&dz<=3&&Math.abs(lat(u.gx,u.gy)-lat(t.gx,t.gy))<=1.2});
+ const focus=exU?[exU]:tg;
+ const hides=u=>u!==exU&&!focus.includes(u)&&focus.some(t=>{const dz=depth(u.gx,u.gy)-depth(t.gx,t.gy);return dz>0&&dz<=3&&Math.abs(lat(u.gx,u.gy)-lat(t.gx,t.gy))<=1.2});
  for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,'sico',12,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
  const ghost=new Set();
  for(const o of L){if(o.m){if(o.m.cry){crystal(ctx,o.m,now);continue}if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
@@ -241,8 +249,13 @@ export function draw(now){
  if(sel&&sel.sp.push&&cur&&!busy)for(const c of sel.cells){const o=c.ok&&occ(S,c.x,c.y);if(!o)continue;const p=pushPlan(S,cur,o,sel.sp.push),[ax,ay]=scr(o.x,o.y),[bx,by]=scr(p.to.x,p.to.y);
   ctx.save();ctx.strokeStyle='#fff';ctx.fillStyle='#fff';ctx.lineWidth=3;ctx.globalAlpha=.9;if(p.to.x!==o.x||p.to.y!==o.y){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();const a=Math.atan2(by-ay,bx-ax);ctx.beginPath();ctx.moveTo(bx+Math.cos(a)*8,by+Math.sin(a)*8);ctx.lineTo(bx+Math.cos(a+2.4)*10,by+Math.sin(a+2.4)*10);ctx.lineTo(bx+Math.cos(a-2.4)*10,by+Math.sin(a-2.4)*10);ctx.fill()}
   if(p.left){ctx.font=`900 ${Math.round(TW*.24)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='-'+p.k*p.left,z=TW*.3;dic(ctx,'fxi',1,bx-ctx.measureText(t).width/2-z-2,by-TH*.1-z*.85,z);ctx.strokeText(t,bx,by-TH*.1);ctx.fillStyle='#ffa040';ctx.fillText(t,bx,by-TH*.1)}ctx.restore()}
+ if(E){const col=E.bad?'#ff5a4a':'#fff27a';
+  if(exU){const[sx,sy]=scr(exU.gx,exU.gy),[s,i,flip,rf]=frameOf(exU);ctx.save();ctx.shadowColor=col;ctx.shadowBlur=TW*.22*dpr;const draw1=()=>drawF(ctx,s,i,sx,sy+TH*.12-lift(exU),hgt(exU)/rf,flip,.92);draw1();draw1();ctx.restore()}
+  const[sx,sy]=scr(E.tap.x,E.tap.y);ctx.save();for(const[w,c]of[[6,'rgba(0,0,0,.75)'],[3,col]]){diamond(ctx,sx,sy,1+.05*Math.sin(now/140));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()}ctx.restore();
+  if(!E.bad&&sel.sp.dmg&&!sel.sp.all)for(const p of sel.sp.zone?zoneCells(S,E):[E]){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
+   ctx.save();ctx.font=`900 ${Math.max(12,Math.round(TW*.22))}px system-ui`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.strokeText(t,ex,y);ctx.fillStyle=f.ko==='sure'?'#ff7a6a':'#ffe9a0';ctx.fillText(t,ex,y);ctx.restore()}}
  // intentions : bulle au-dessus de chaque monstre
- if(G.intents&&!busy){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-lift(u)-TW*.3;const t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
+ if(G.intents&&!busy&&!E){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-lift(u)-TW*.3;const t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
   ctx.save();ctx.strokeStyle='rgba(255,74,58,.75)';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.lineDashOffset=-now/40;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo((sx+tx)/2,Math.min(sy,ty)-TH,tx,ty);ctx.stroke();ctx.restore();
   // la bulle prend la place libre la plus proche (au-dessus, à côté ou plus bas), sans passer sous la barre du haut
   let bx=sx;{const y0=y-h*.75;let best=null;
