@@ -246,3 +246,6 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 
 ## V4.5d (27/11/2026) — une arme active par héros
 `ITEMS[].w` (épée, hache, arc, bâton), `weaponOf(save,i)` / `equip(save,j)`, `save.wpn` (facultatif, sauvegarde toujours v2). Sans choix : l'arme la plus forte possédée. Bouton « Équiper » dans la fiche du héros (Caserne). Autres objets toujours cumulés ; rareté et forge inchangées. Mesure (opti, 30 + 30 combats) : dégâts infligés −7 à −9 %, durée inchangée. 76 tests.
+
+## V4.5e (27/11/2026) — Loup alpha à deux phases
+`boss.summon` généralisé (`sn` nom, `snd` son) : sous 50 % PV, appel de la meute (2 Loups de meute, 28 PV, sans XP, une seule fois) ; ensuite hurlement tous les 2 tours au lieu de 3 (`bossP`). Mesure 60 combats : std 9/10 → 8/10, 5,4 → 6,4 tours, PV restants 62 → 43 % ; sous-équipée 6/10 → 3/10 ; optimisée 10/10, 4,2 → 4,7. 77 tests.

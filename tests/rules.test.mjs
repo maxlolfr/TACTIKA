@@ -660,3 +660,11 @@ test('arme : une seule active par héros, choix du joueur, autres objets cumulé
  assert.equal(equip(sv,0),1);assert.equal(heroStats(sv,0).dmg,2);assert.equal(heroStats(sv,0).hp,62+8); // bouclier toujours compté
  assert.equal(equip(sv,2),0);assert.equal(weaponOf(sv,1),null);sv.items=[1];assert.equal(weaponOf(sv,0),1); // arme vendue : repli
 });
+
+// ---------- V4.5e : Loup alpha ----------
+test('Loup alpha : appel de la meute à 50 % PV, une fois, puis hurlement tous les 2 tours', ()=>{
+ const F=fightSpec(1,3,5),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:7,items:[],sp:[null,null,null]},j)));
+ const b=s.units.find(u=>u.bs==='howl');const n=s.units.length;hurt(s,b,Math.ceil(b.max*.55));assert.equal(s.units.length,n+2);
+ const w=s.units.at(-1);assert.ok(w.n.startsWith('Loup de meute')&&w.xp===0&&w.k==='wolf');hurt(s,b,1);assert.equal(s.units.length,n+2);
+ b.bt=0;assert.equal(bossNext(b),2);
+});

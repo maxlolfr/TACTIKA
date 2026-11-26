@@ -201,9 +201,9 @@ export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,am
   if(o&&o.team===t.team&&!(o.poison&&o.poison.d*o.poison.turns>=12)){o.poison={d:6,turns:2};e.spread.push(o)}}}if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
  return e}
 // Invocation unique d'un boss (Roi Gelée) : sur les cases libres les plus proches, sans XP, jouent en fin de tour de jeu.
-export function summon(s,b){const{k,n,hp,pm,dmg}=b.summon,m=MON[k],d=reach(s,b,4).dist,out=[];
+export function summon(s,b){const{k,n,hp,pm,dmg,sn}=b.summon,m=MON[k],d=reach(s,b,4).dist,out=[];
  for(const c of [...d.keys()].filter(c=>d.get(c)>0).sort((a,c)=>d.get(a)-d.get(c)).slice(0,n)){const[x,y]=c.split(',').map(Number);
-  const u={id:'m'+s.units.length,team:'m',k,s:m.s,row:m.row,n:'Petite gelée '+String.fromCharCode(65+s.units.filter(o=>o.minion).length),x,y,gx:x,gy:y,hp,max:hp,maxPA:4,maxPM:pm,pa:4,pm,init:0,cd:{},armor:0,dir:1,h:m.h*.75,xp:0,minion:1,
+  const u={id:'m'+s.units.length,team:'m',k,s:m.s,row:m.row,n:(sn||'Petite gelée')+' '+String.fromCharCode(65+s.units.filter(o=>o.minion).length),x,y,gx:x,gy:y,hp,max:hp,maxPA:4,maxPM:pm,pa:4,pm,init:0,cd:{},armor:0,dir:1,h:m.h*.75,xp:0,minion:1,
    atk:{snd:m.snd,n:'Attaque',pa:4,r:[1,1],t:'enemy',dmg:[...dmg],fx:m.fx??0,proj:0}};s.units.push(u);s.order.push(u);out.push(u)}
  return out}
 // Paie le coût d'un sort (PA, recharge) et tourne l'unité vers la cible.
@@ -331,11 +331,13 @@ export function aiStep(s,u){
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
 export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique']};
-export function bossNext(u){const p=BOSS_P[u.bs];if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
+// V4.5e : après l'appel de la meute (sous 50 % PV), le Loup alpha hurle tous les 2 tours
+const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:BOSS_P[u.bs];
+export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'kael_charge'},{type:'shake',ms:300})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
- u.bt=(u.bt||0)+1;const[P,ph,n]=BOSS_P[u.bs];if(u.bt%P!==ph)return ev;
+ u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
  if(u.bs==='quake'){ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6);

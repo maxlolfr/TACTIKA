@@ -43,7 +43,7 @@ export const MON={
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6;
 export const ZONES=[
  {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}}},
- {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl'},
+ {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl',summon:{k:'wolf',n:2,hp:28,pm:5,dmg:[6,9],sn:'Loup de meute',snd:'bite'}},
   waves:{2:{turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,'wolf'],[5,2]]}}}, // V4.5a pilote : survie à renforts (3 + 1/2/1 élite/2)
  {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{2:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'}},
  {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{1:'knightB',2:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'}},
