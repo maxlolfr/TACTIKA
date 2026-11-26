@@ -92,9 +92,9 @@ function result(win,fled){const F=G.F;
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon('items',ITEMS[it].ic,48),`<b>${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${ITEMS[it].dmg?`+${ITEMS[it].dmg} dégâts`:ITEMS[it].hp?`+${ITEMS[it].hp} PV`:`+${ITEMS[it].heal} soin`}`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
-  const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<i></i><b></b><small>Touche le coffre</small>';Rs.appendChild(ch);
+  const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);
   const box=document.createElement('div');Rs.appendChild(box);
-  const open=()=>{if(ch.classList.contains('open'))return;ch.classList.add('open');sfx('coin');
+  const open=()=>{if(ch.classList.contains('open'))return;ch.classList.add('open');sfx('buff',.8);sfx('coin');
    loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);box.appendChild(d);sfx(i===2?'levelup':'coin',.6)},300+i*380));
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
