@@ -93,7 +93,7 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;
 
 // ---------- image d'une unité ----------
 // Héros V2 (planches ChatGPT) : planche de marche W, planche de poses X
-// poses : planches <héros>9 (ChatGPT, 26/11) ; marche et vues de dos : anciennes planches en attendant la commande H-04
+// poses : planches <héros>9 (ChatGPT, 26/11) ; marche et vues de dos : planches <héros>M
 const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v:[n,8]});
 const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]),
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
@@ -101,12 +101,13 @@ const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]
 export const heroFrame=k=>HN[k].i;
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',d=V?[1,3,0,2][u.dir]:u.dir,right=d===0||d===2,back=d===2||d===3;
- if(u.team==='h'){const h=HN[u.k],rf=AT[h.i[0]][h.i[1]][3];
-  if(u.dead)return h.ko?[...h.ko,right,rf]:[...h.i,right,rf];
-  if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],right,AT[w[0]][w[1][0]][3]]}
-  if(h[p]&&p!=='i')return[...h[p],right,rf];
-  if(u.shield>0)return[...h.b,right,rf];
-  return back?[...h.iB,right,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,right,rf]:[...h.i,right,rf]}
+// toutes les planches de héros (poses et marche) regardent à DROITE : miroir seulement quand l'unité regarde à gauche
+ if(u.team==='h'){const h=HN[u.k],flip=!right,rf=AT[h.i[0]][h.i[1]][3];
+  if(u.dead)return h.ko?[...h.ko,flip,rf]:[...h.i,flip,rf];
+  if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],flip,AT[w[0]][w[1][0]][3]]}
+  if(h[p]&&p!=='i')return[...h[p],flip,rf];
+  if(u.shield>0)return[...h.b,flip,rf];
+  return back?[...h.iB,flip,AT[h.iB[0]][h.iB[1]][3]]:u.hp<u.max*.3?[h.i[0],7,flip,rf]:[...h.i,flip,rf]}
  if(u.walk&&AT[u.s+'w'])return[u.s+'w',u.row*4+u.wf%4,right,u.ref];
  // planches de boss (ChatGPT) : regard à droite, 6 cases repos, attaque, touché, spécial, KO, repos 2
  if(BS.includes(u.s)&&u.walk&&AT[u.s].length>=10)return[u.s,6+u.wf%4,!right,u.ref];
