@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -46,6 +46,14 @@ export const upCost=(save,j)=>FORGE_COST[upLvl(save,j)]??null;
 // Améliore l'objet j si possédé, pas au maximum et assez d'or. Renvoie le nouveau niveau, ou 0 si refusé.
 export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j)||c==null||save.gold<c)return 0;
  save.gold-=c;(save.up||(save.up={}))[j]=upLvl(save,j)+1;return save.up[j]}
+// ---------- marchand (V2.6a) ----------
+// Stock du jour : SHOP_N objets non possédés, mélangés selon le jour (même stock toute la journée).
+export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
+export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save.gold<o.pr)return 0;save.gold-=o.pr;save.items.push(j);return 1}
+// revente : moitié du prix + moitié de l'or mis dans la forge
+export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
+export function sell(save,j){if(!save.items.includes(j))return 0;const g=sellPrice(save,j);save.gold+=g;save.items=save.items.filter(x=>x!==j);if(save.up)delete save.up[j];return g}
+export function buyPot(save){if((save.pot||0)>=POTION.max||save.gold<POTION.cost)return 0;save.gold-=POTION.cost;save.pot=(save.pot||0)+1;return 1}
 export function heroStats(save,i){const h=HER[i],it=save.items.filter(j=>ITEMS[j].who===i),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j)),0);const tal=talentFx(save,i);return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)),dmg:sum('dmg'),heal:sum('heal'),mult:1+.06*(save.lvl-1),tal}}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
@@ -55,8 +63,8 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 // hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3;s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
-  sp:[...h.sp,...(tf.add||[])],S:Object.fromEntries([...h.sp,...(tf.add||[])].map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
+ HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+  sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:tf.crit||.12,guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,cnt=Math.min(3+Math.floor((n-1)/2),8),sc=1+.12*(n-1);
  const spots=[...es].sort(()=>rng()-.5);
  for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:pick(rng,pool),m=MON[t],boss=!!B,p=spots[i];
@@ -106,6 +114,7 @@ export function payCost(u,sp,c){u.pa-=sp.pa;if(sp.cd)u.cd[sp.n]=sp.cd;face(u,c.x
 export function applySpell(s,u,sp,c){
  if(sp.trap){u.trap={x:c.x,y:c.y,left:3};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Piège posé',color:'#ffa040'}]}
  if(sp.revive)return revive(s,u,c);
+ if(sp.potion){if(!(s.pot>0))return[];s.pot--;const g=Math.min(Math.round(u.max*.4),u.max-u.hp);u.hp+=g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.3},{type:'heal',t:u,amt:g}]}
  const ev=[],rng=s.rng,tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c],buff=u.buff?1+u.buff.pct:1;
  for(const p of tg){const t=occ(s,p.x,p.y);
   if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});

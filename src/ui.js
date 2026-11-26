@@ -1,8 +1,8 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,ITEMS} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,upgrade,upCost,upLvl,itemVal} from './rules.js';
+import {SP,HER,MON,ZONES,ITEMS,POTION} from './data.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,upgrade,upCost,upLvl,itemVal,shopStock,buy,sell,sellPrice,buyPot} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,logoURL,drawF,layout,tapCell,addRefs,resetFx,heroFrame} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -12,7 +12,7 @@ import {SPECS,TIER,DONE,specOf} from './talents.js';
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
  const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
-const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['sico',12],revive:['sico',14],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6]};
+const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['sico',12],revive:['sico',14],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6]};
 function render(){renderTL();
  const u=G.cur,{sel,F}=G;
  $('title').textContent=F?`${ZONES[F.zi].n} · ${F.boss?'Boss':F.i+1+'/3'} · tour ${G.s.round}`:'';
@@ -28,13 +28,13 @@ function render(){renderTL();
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
   b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));b.insertAdjacentHTML('beforeend',`<b>${sp.pa}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
-  b.disabled=!me||G.busy||u.pa<sp.pa||u.cd[sp.n]>0;b.onclick=()=>{if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
+  b.disabled=!me||G.busy||u.pa<sp.pa||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
  $('end').disabled=!me||G.busy;
  $('hint').textContent=!me?`${u.n} joue.`:sel?`${sel.sp.n} — ${sel.sp.d}. ${sel.sp.dmg?sel.sp.dmg.join('–')+' dégâts · ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins · ':''}portée ${sel.sp.r.join('–')}. Touche une case orange ou un portrait à droite.`:`Touche une case bleue pour bouger, ou choisis un sort.`;
 }
 const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}`:'')};
 function autoEnd(){const u=G.cur,S=G.s;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0)return;
- if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&selCells(S,u,sp).some(c=>c.ok)}))return;
+ if(u.sp.some(id=>{const sp=u.S[id];return u.pa>=sp.pa&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(S.pot>0)||u.hp>=u.max))&&selCells(S,u,sp).some(c=>c.ok)}))return;
  $('hint').textContent='Plus rien à faire : tour suivant…';setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},700)}
 
 // ---------- saisie ----------
@@ -52,7 +52,7 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 export function startFight(zi,i){
  const Z=ZONES[zi];G.F={zi,i,lvl:Z.lvl+i,pool:Z.pool,boss:i===3?Z.boss:null,seed:zi*1000+i*97+save.gold,th:Z.th[i%Z.th.length]};
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
- resetFx();const S=G.s=newBattle();const{hs,es}=genMap(S,G.F.seed,G.F.th);mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));addRefs(S.units);S.rng=Math.random;
+ resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th);mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.phase='fight';G.fid++;
  layout();renderTL();render();const zid=ZONES[zi].id;music(G.F.boss?'boss':i===2?'elite_battle':zid==='prairie'||zid==='bois'?'forest':'battle');setTimeout(()=>sfx('enemy_warning',.7),400);runFight();
 }
@@ -61,10 +61,10 @@ function party(){const d=document.createElement('div');d.className='party';HER.f
  c.insertAdjacentHTML('beforeend',`<b>${h.n}</b><small>${h.cls} · ${s.hp} PV${s.dmg?` · +${s.dmg} dég.`:''}${s.heal?` · +${s.heal} soin`:''}</small>`);
  const inv=document.createElement('div');inv.className='inv';save.items.filter(j=>ITEMS[j].who===i).forEach(j=>inv.appendChild(icon('items',ITEMS[j].ic,22)));c.appendChild(inv);d.appendChild(c)});return d}
 // bâtiments du camp (planche bld : 0 forge, 1 marchand, 2 maître d'armes, 3 taverne) ; fonctions en V2.4b et après
-const BLD=[['La Forge','Améliore les équipements de tes héros.'],['Le Marchand','Achat et vente d’équipements. Bientôt.'],['Le Maître d’armes','Spécialisations des héros.'],['La Taverne','Contrats et défis du jour. Bientôt.']];
+const BLD=[['La Forge','Améliore les équipements de tes héros.'],['Le Marchand','Achat et vente d’équipements, potions.'],['Le Maître d’armes','Spécialisations des héros.'],['La Taverne','Contrats et défis du jour. Bientôt.']];
 function town(){const d=document.createElement('div');d.className='town';const note=document.createElement('div');note.className='bnote';
- BLD.forEach(([n,t],i)=>{const b=document.createElement('button');const live=i===0||i===2,news=i===2&&save.lvl>=3&&save.sp.includes(null);b.className='bld'+(live?' next':'');b.append(icon('bld',i,120));b.insertAdjacentHTML('beforeend',`<b>${n}</b><small>${i===0?'Améliorer':i===2?(news?'<span style="color:#7dff8a">Nouveau !</span>':'Spécialisations'):'Bientôt'}</small>`);
-  b.onclick=i===0?forge:i===2?armes:null;if(!live)b.onclick=()=>{d.querySelectorAll('.bld').forEach(x=>x.classList.toggle('on',x===b));note.innerHTML=`<b>${n}</b> — ${t}`};d.appendChild(b)});
+ BLD.forEach(([n,t],i)=>{const b=document.createElement('button');const live=i<3,news=i===2&&save.lvl>=3&&save.sp.includes(null);b.className='bld'+(live?' next':'');b.append(icon('bld',i,120));b.insertAdjacentHTML('beforeend',`<b>${n}</b><small>${i===0?'Améliorer':i===1?'Acheter':i===2?(news?'<span style="color:#7dff8a">Nouveau !</span>':'Spécialisations'):'Bientôt'}</small>`);
+  b.onclick=[forge,shop,armes][i];if(!live)b.onclick=()=>{d.querySelectorAll('.bld').forEach(x=>x.classList.toggle('on',x===b));note.innerHTML=`<b>${n}</b> — ${t}`};d.appendChild(b)});
  d.appendChild(note);return d}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
@@ -92,9 +92,25 @@ function armes(){$('camp').classList.remove('on');const A=$('armes');A.classList
    const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('buff',.7);armes()};c.append(b);row.append(c)}
   A.append(row)});
  const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
+// ---------- marchand (V2.6a) ----------
+const effet=o=>o.dmg?`+${o.dmg} dégâts`:o.hp?`+${o.hp} PV`:`+${o.heal} soin`;
+function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classList.add('on');S.innerHTML='';const sellTab=tab==='v';
+ S.insertAdjacentHTML('beforeend',`<h1>Le Marchand</h1><div class="sub">${sellTab?'Revente : la moitié du prix et de l’or mis dans la forge.':'Nouveaux objets chaque jour. Les potions se boivent en combat (4 PA, 1 par héros et par combat).'}</div>`);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',1,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);S.append(top);
+ const tabs=document.createElement('div');tabs.style.cssText='display:flex;gap:8px;margin:6px 0';
+ for(const[k,n]of[['a','Acheter'],['v','Vendre']]){const b=document.createElement('button');b.className='btn'+((k==='v')===sellTab?'':' dark');b.textContent=n;b.onclick=()=>shop(k);tabs.append(b)}S.append(tabs);
+ const row=(ic,html,label,ok,act)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...ic,44));r.insertAdjacentHTML('beforeend',`<div>${html}</div>`);
+  const b=document.createElement('button');b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.innerHTML=label;b.onclick=()=>{if(!act())return shop(tab);store();sfx('coin',.8);addPop(r,'');setTimeout(()=>shop(tab),350)};r.append(b);S.append(r)};
+ const price=n=>`${n} <img src="${uiURL(14)}">`;
+ if(sellTab){if(!save.items.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu n’as aucun objet à vendre.</div>');
+  for(const j of save.items){const o=ITEMS[j];row(['items',o.ic],`<b>${o.n}</b><br><small>${HER[o.who].n} · ${effet(o)}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
+ else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>Soigne 40 % des PV · tu en as ${p}/${POTION.max}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
+  const st=shopStock(save,Math.floor(Date.now()/864e5));if(!st.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu as déjà tous les objets !</div>');
+  for(const j of st){const o=ITEMS[j];row(['items',o.ic],`<b>${o.n}</b><br><small>${HER[o.who].n} · ${effet(o)}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
+ const back=document.createElement('button');back.className='btn dark';back.style.marginTop='14px';back.textContent='Retour au camp';back.onclick=()=>{S.classList.remove('on');camp()};S.append(back)}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.5d · combats tactiques au tour par tour</div>`;
+ G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop'])$(i).classList.remove('on');const C=$('camp');C.innerHTML=`<img src="${logoURL()}" alt="Tactika" style="width:min(78vw,340px);margin:4px 0 2px"><div class="sub">Version 2.6a · combats tactiques au tour par tour</div>`;
  C.appendChild(party());
  C.insertAdjacentHTML('beforeend',`<div style="font-weight:700">Niveau ${save.lvl} · ${save.xp}/${xpNeed(save.lvl)} XP</div><div class="bar"><i style="width:${100*save.xp/xpNeed(save.lvl)}%"></i></div>`);
  const st=document.createElement('div');st.className='stat';st.append(icon('ui',14,22),` ${save.gold} or`,` · ${save.items.length}/${ITEMS.length} objets`);C.appendChild(st);
@@ -120,7 +136,7 @@ function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet');S.innerHTML=
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
 function result(win,fled){const F=G.F;
- const Rs=$('result');Rs.innerHTML='';G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?'victory':'defeat');
+ const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?'victory':'defeat');
  if(win){const zid=ZONES[F.zi].id,first=prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=st===3&&(best[F.i]||0)<3;
   const gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)),xp=G.s.killedXp;save.gold+=gold;const up=gainXp(save,xp);
   const free=ITEMS.map((_,i)=>i).filter(i=>!save.items.includes(i));let it=null;if(free.length&&Math.random()<(F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it)}

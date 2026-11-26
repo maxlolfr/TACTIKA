@@ -348,3 +348,18 @@ test('niv 11 Aelis : Renaissance, étoile « aucun KO », Contagion, Bénédicti
  hurt(s2,n,999); // poison transmis : pas de nouvelle contagion
  const s3=team([null,null,'enchant'],11),e=s3.units[2];applySpell(s3,e,e.S.aura,s3.units[0]);assert.ok(s3.units.filter(h=>h.team==='h').every(h=>h.buff&&h.buff.pct===.4));
 });
+
+// ---------- V2.6a marchand ----------
+import {shopStock,buy,sell,sellPrice,buyPot} from '../src/rules.js';
+test('marchand : stock sans objets possédés, achat, revente avec forge, potions', ()=>{
+ const sv={gold:500,items:[0,1],up:{0:2}};const st=shopStock(sv,20000);
+ assert.equal(st.length,3);assert.ok(!st.includes(0)&&!st.includes(1));assert.deepEqual(shopStock(sv,20000),st);
+ assert.equal(buy(sv,2),1);assert.equal(sv.gold,410);assert.equal(buy(sv,2),0);
+ assert.equal(sellPrice(sv,0),Math.round(.5*(60+25+60)));const g=sv.gold;sell(sv,0);assert.equal(sv.gold,g+73);assert.ok(!sv.items.includes(0)&&!sv.up[0]);
+ for(let i=0;i<4;i++)buyPot(sv);assert.equal(sv.pot,3);
+});
+test('potion : soigne 40 % une fois, rien sans potion', ()=>{
+ const s={units:[],rng:()=>.5,pot:1},u={team:'h',x:0,y:0,hp:10,max:100};
+ const ev=applySpell(s,u,SP.potion,{x:0,y:0});assert.equal(u.hp,50);assert.equal(s.pot,0);assert.ok(ev.some(e=>e.type==='heal'));
+ assert.deepEqual(applySpell(s,u,SP.potion,{x:0,y:0}),[]);assert.equal(u.hp,50);
+});
