@@ -135,13 +135,17 @@
 @media (orientation:landscape),(min-width:760px) and (min-aspect-ratio:4/5){
  .v-cmd{display:flex!important;position:static!important;width:92%!important;max-height:none!important;flex:1 1 auto;min-height:0;margin-top:4px}
  .v-chap{cursor:default}
- .v-dock{pointer-events:none;left:auto;top:0;width:calc(clamp(220px,30vw,320px) + env(safe-area-inset-right));justify-content:flex-end;gap:10px;padding:60px env(safe-area-inset-right) 0 0;background:linear-gradient(90deg,#1d0f0700,#1d0f07cc 18%)}
+ .v-dock{pointer-events:none;left:auto;top:0;width:calc(var(--dock) + env(safe-area-inset-right));justify-content:flex-end;gap:10px;padding:60px env(safe-area-inset-right) 0 0;background:linear-gradient(90deg,#1d0f0700,#1d0f07cc 18%)}
  .v-dock>*{pointer-events:auto}
  .v-go{width:92%}.v-go b{font-size:clamp(15px,2.2vw,22px)}.v-go canvas{width:26px;height:26px}.v-chap{flex-direction:column;gap:0;align-items:center}.v-nav{grid-template-columns:1fr 1fr;gap:4px;border-radius:16px 0 0 0;border-left:3px solid var(--rim)}
  .v-top{right:max(8px,env(safe-area-inset-right))}.v-lvl{flex:0 1 210px;margin-right:auto}
  .v-logo{top:auto;bottom:calc(env(safe-area-inset-bottom) + 6px);width:clamp(80px,13vw,150px)!important}
- .v-panel{left:max(8px,env(safe-area-inset-left));right:calc(clamp(220px,30vw,320px) + env(safe-area-inset-right) + 6px);bottom:calc(env(safe-area-inset-bottom) + 8px);max-width:640px;top:calc(env(safe-area-inset-top) + 56px)}
+ .v-panel{left:max(8px,env(safe-area-inset-left));right:calc(var(--dock) + env(safe-area-inset-right) + 6px);bottom:calc(env(safe-area-inset-bottom) + 8px);max-width:640px;top:calc(env(safe-area-inset-top) + 56px)}
 }
+/* V4.30 : écran presque carré (téléphone pliant ouvert, tablette) : menu de droite plus étroit, le village y gagne */
+#camp{--dock:clamp(220px,30vw,320px)}
+@media (max-aspect-ratio:7/5){#camp{--dock:clamp(220px,26vw,300px)}}
+@media (orientation:landscape) and (max-aspect-ratio:7/5),(min-width:760px) and (min-aspect-ratio:4/5) and (max-aspect-ratio:7/5){#camp .v-go{width:95%;gap:6px;padding-left:6px;padding-right:6px}#camp .v-go b{font-size:clamp(14px,1.75vw,20px);white-space:nowrap}}
 @media (prefers-reduced-motion:reduce){#camp *,#camp *::after{animation:none!important}.v-glow{opacity:.5}.v-flies{display:none}}
 
 /* V4.6 : panneau de commandement (tiroir en portrait étroit, colonne ailleurs) */

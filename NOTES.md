@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.30 (27/11) : camp sur écran presque carré (pliant ouvert, tablette)
+- Le village horizontal s'affiche dès que la zone à gauche du menu atteint 0,8 fois sa hauteur (avant : 1,2). Cadre utile resserré (860 → 810), plaque Académie décalée.
+- Menu de droite plus étroit sous le rapport 7/5 (`--dock`), « Partir à l'aventure » sur une ligne. Écrans larges et téléphone droit inchangés. Signalé par Max sur Magic V5 déplié ; testé au navigateur seulement.
+
 ## V4.29 (27/11) : Forteresse de braise, aperçu caché
 - Adresse : `?apercu=braise`. Sans elle, rien ne change (`ZONES` : 6 régions). Sauvegarde séparée `landeTactique1_braise`, copiée de la vraie ; la vraie n'est pas écrite (import compris). Carte I considérée terminée, niveau 21 au moins.
 - 10 missions (niveaux 21 à 25), `R7` dans data.js. Cases brûlantes (`lavaMark`, `lavaTick`) : marquées un tour à l'avance (▲), 12 % des PV max, Rempart réduit, armure ignorée, un tour sur deux ou chaque tour (missions 6 et 9). Salamandre, élémentaire et Ignaros insensibles ; chevalier d'obsidienne vulnérable (poussée). L'IA évite les cases marquées. Ignaros : surchauffe sous 50 % PV (+20 % dégâts, 2 cases de plus, chaque tour). « Braises à éteindre » du plan : non codé.
