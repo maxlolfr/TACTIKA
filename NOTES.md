@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+
+## V4.18 (27/11) : images des Cavernes
+Araignée, chauve-souris et Titan définitifs (6 poses + 4 images de marche ou de vol, planche `titan` à part du golem), 6 obstacles ternes (`deco3`, bas : éboulis, chariot, champignons), 7 sols C6-10 v3 (`tiles5` ; la dalle humide est écartée, elle ressemble à de l'eau). Découpe : `tools/prep_cave.py`. Aucune règle de combat changée, hormis les décors bas ci-dessus.
+
 ## V4.17 (27/11/2026) : Château en ruine à 10 étapes (lot 7)
 - Niveaux 13,13,13,14,14,14,14,15,15,15 ; étape 5 = Chevalier rouge en chef, étape 8 = survie (élite de renfort : Chevalier sombre), étape 10 = Chevalier noir (conseil : Fureur).
 - La liste détaillée du monde 5 n'était pas dans le dépôt : formations composées par Claude d'après le plan directeur, à relire par ChatGPT.

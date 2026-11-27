@@ -8,7 +8,7 @@ export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat'];
+const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan'];
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
