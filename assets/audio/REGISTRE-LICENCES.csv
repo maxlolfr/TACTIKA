@@ -1,0 +1,232 @@
+fichier,type,source,voix / remarque,octets,sha256 (16),droits commerciaux
+musique/battle.mp3,musique,ElevenLabs musique (génération par prompt),,1080620,9b9b811996f610a0,À CONFIRMER
+musique/boss.mp3,musique,ElevenLabs musique (génération par prompt),,1080620,77caf7e48624f80f,À CONFIRMER
+musique/boss_map2.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,c0b0548aa0553788,À CONFIRMER
+musique/boss_v2.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,e9e9791ce9ddeb32,À CONFIRMER
+musique/camp.mp3,musique,ElevenLabs musique (génération par prompt),,1080620,e1eee7894830ca03,À CONFIRMER
+musique/castle.mp3,musique,ElevenLabs musique (génération par prompt),,720620,84728cf132cdefb8,À CONFIRMER
+musique/cave.mp3,musique,ElevenLabs musique (génération par prompt),,720620,9336e3dac7f449bc,À CONFIRMER
+musique/coast.mp3,musique,ElevenLabs musique (génération par prompt),,720620,a83f49c1a6427d22,À CONFIRMER
+musique/darkwood.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,c919a48cb5f04875,À CONFIRMER
+musique/defeat.mp3,musique,ElevenLabs musique (génération par prompt),,60812,c4872cbdfb97ce59,À CONFIRMER
+musique/elite2.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,df7cb0994b339d93,À CONFIRMER
+musique/elite_battle.mp3,musique,ElevenLabs musique (génération par prompt),,900620,a4050ca546a010f5,À CONFIRMER
+musique/ember.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,f5c435de6ac55ea3,À CONFIRMER
+musique/ending.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,2d225bfa8d8de39b,À CONFIRMER
+musique/final_boss.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,1b3bab85a512e242,À CONFIRMER
+musique/forest.mp3,musique,ElevenLabs musique (génération par prompt),,900620,94e22639d9a5c7fd,À CONFIRMER
+musique/frost.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,ff3c91566dc2547e,À CONFIRMER
+musique/main_theme.mp3,musique,ElevenLabs musique (génération par prompt),,720620,5e343181faa753b7,À CONFIRMER
+musique/map2.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,cc304f5a582b22ab,À CONFIRMER
+musique/mountain.mp3,musique,ElevenLabs musique (génération par prompt),,720620,d65d92bca7ceb0f3,À CONFIRMER
+musique/sanctuary.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,06d79614d7dfbf4d,À CONFIRMER
+musique/sands.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,a44a59b5b48dd8cc,À CONFIRMER
+musique/skycitadel.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,33b26e92f439e4c9,À CONFIRMER
+musique/swamp.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,35750100b4d49aac,À CONFIRMER
+musique/titan_boss.mp3,musique,ElevenLabs musique (génération par prompt),,720620,c85be0541e9d770b,À CONFIRMER
+musique/victory.mp3,musique,ElevenLabs musique (génération par prompt),,60812,37e7a3ee39318543,À CONFIRMER
+musique/village.mp3,musique,ElevenLabs musique (génération par prompt),,2178322,3b588c6652e0f4c5,À CONFIRMER
+bruitages/aelis_heal.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,dbc65aac6d7d7933,À CONFIRMER
+bruitages/aetherion_shift.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,31599,1c0a68f93a0b2ef5,À CONFIRMER
+bruitages/arrowhit.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,311fc8366811e803,À CONFIRMER
+bruitages/bat_shriek.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,70cf939a9953a48c,À CONFIRMER
+bruitages/beam_charge.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16552,2e252238a7c33655,À CONFIRMER
+bruitages/beam_fire.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,a428bfd40fa2375c,À CONFIRMER
+bruitages/bite.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,de0390b9a8640984,À CONFIRMER
+bruitages/boss_death.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,20314,9ec0cc0895c6ae7c,À CONFIRMER
+bruitages/boss_intro.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24493,22733514c15be282,À CONFIRMER
+bruitages/boss_phase.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16552,a54e23e9a1eeccbe,À CONFIRMER
+bruitages/bow.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,5267,b0e590a4877720d6,À CONFIRMER
+bruitages/breaker_expose.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,31808,1bc7c30c949f62eb,À CONFIRMER
+bruitages/buff.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,400d610190c0475e,À CONFIRMER
+bruitages/chest_open.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,a736fb042406de71,À CONFIRMER
+bruitages/click.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,198a324dc1147b24,À CONFIRMER
+bruitages/coin.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6103,8e99c80489215766,À CONFIRMER
+bruitages/collision.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,455515eafad91920,À CONFIRMER
+bruitages/combo_2.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,bfc9bde35f99fd37,À CONFIRMER
+bruitages/combo_3.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,ccb1c754c1446d3e,À CONFIRMER
+bruitages/critical.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,10074,5a542f97c39dbdd3,À CONFIRMER
+bruitages/crystal_amp.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,40585,4a269259e7d64281,À CONFIRMER
+bruitages/death.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,1b5f5b5ba40adb39,À CONFIRMER
+bruitages/dodge.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,5267,c7da1f1836552ca1,À CONFIRMER
+bruitages/ember_eruption.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,37869,9a6ade4f948db6ce,À CONFIRMER
+bruitages/enemy_warning.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,10074,e18382bf9cad2cb2,À CONFIRMER
+bruitages/frost_crack.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,32017,13a7f1de9e1adf39,À CONFIRMER
+bruitages/frost_shield_break.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,31181,d9ebea5183604bb9,À CONFIRMER
+bruitages/golem_smash.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,ad4ccd4af0cb755e,À CONFIRMER
+bruitages/guard.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,c68d55773316092a,À CONFIRMER
+bruitages/heal.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,10074,7e345284567eba7b,À CONFIRMER
+bruitages/hit.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,781509e054d88be0,À CONFIRMER
+bruitages/kael_charge.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,fddf5f1780e294ae,À CONFIRMER
+bruitages/levelup.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16552,21bc5ae5a9fa161f,À CONFIRMER
+bruitages/loot_rare.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16552,02ef9d2d0838bb53,À CONFIRMER
+bruitages/lyria_aura.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,32644,89f72f6bcfd70f9a,À CONFIRMER
+bruitages/lyria_bastion.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24494,138b426482b15d7f,À CONFIRMER
+bruitages/lyria_cleanse.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,32644,f399c09d8bb5b58e,À CONFIRMER
+bruitages/lyria_hammer.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24494,fcbb83559f766834,À CONFIRMER
+bruitages/lyria_intercept.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12373,2756bda32ce06d1a,À CONFIRMER
+bruitages/lyria_shield.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24494,9f0d1997dd1f0028,À CONFIRMER
+bruitages/nyra_backstab.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8612,8e31ef95eac7182f,À CONFIRMER
+bruitages/nyra_execute.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16553,68066d6ea6b65c10,À CONFIRMER
+bruitages/nyra_mark.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16344,cbd0ab8bb4c49f21,À CONFIRMER
+bruitages/nyra_poison.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16344,0a72ce727a866449,À CONFIRMER
+bruitages/nyra_shadow.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,15717,10e29dacd97f3161,À CONFIRMER
+bruitages/nyra_slash.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16135,c03b4e51407efcd7,À CONFIRMER
+bruitages/nyra_smoke.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16135,f3f3b317e317f2b8,À CONFIRMER
+bruitages/orion_arcane.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16553,9e76bf97768fc25e,À CONFIRMER
+bruitages/orion_blink.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16344,a7b03cc606b857b8,À CONFIRMER
+bruitages/orion_fire.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24285,e1aa4514513a85dc,À CONFIRMER
+bruitages/orion_glyph.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,32226,54ee0a0b5c53c0e9,À CONFIRMER
+bruitages/orion_ice.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,32435,24c7cc2030d7279b,À CONFIRMER
+bruitages/orion_storm.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24285,88626266a9c9f7e0,À CONFIRMER
+bruitages/orion_wall.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,38705,0bfe0ed136bef62e,À CONFIRMER
+bruitages/poison.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,add6c10e64087df3,À CONFIRMER
+bruitages/prism_burst.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,d1b1d131af2a3935,À CONFIRMER
+bruitages/push.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,19d1c8c9ddd447da,À CONFIRMER
+bruitages/quest_complete.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,12372,f642f41b618e757c,À CONFIRMER
+bruitages/recruit_hero.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24285,3f49f63f627d8346,À CONFIRMER
+bruitages/sands_trap.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,23867,875534ed1241a35c,À CONFIRMER
+bruitages/slash.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,4909e8da5dc43edd,À CONFIRMER
+bruitages/slime.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,4431,31f6a84c070a36be,À CONFIRMER
+bruitages/smash.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,01ecedf5ad16c297,À CONFIRMER
+bruitages/spider_bite.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,48d0f7046e9ed897,À CONFIRMER
+bruitages/star_earned.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,6939,6e47e36ecdd602fb,À CONFIRMER
+bruitages/step.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,16552,5f568a1fac94e958,À CONFIRMER
+bruitages/talent_unlock.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8612,d02b92ffb396556a,À CONFIRMER
+bruitages/titan_death.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,24493,4d9a9bbbe3364e2d,À CONFIRMER
+bruitages/titan_roar.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,20314,ee825cfba7486914,À CONFIRMER
+bruitages/trap.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,8611,68231508124eab35,À CONFIRMER
+bruitages/turn.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,5267,b828665fbe514bce,À CONFIRMER
+bruitages/village_ambience.mp3,bruitages,ElevenLabs effets sonores (génération par prompt),,160539,11e43f907716ae4c,À CONFIRMER
+voix/v_aelis_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,42664,d64e6d0d8cd1afd8,À CONFIRMER
+voix/v_aelis_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,6731,c5d22c20ca27b73c,À CONFIRMER
+voix/v_aelis_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,42664,27711352744e3063,À CONFIRMER
+voix/v_aelis_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,5686,2d483e8acdd2f3d5,À CONFIRMER
+voix/v_aelis_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,41410,14b97042a303f668,À CONFIRMER
+voix/v_aelis_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,10493,cb6518ec7ab68463,À CONFIRMER
+voix/v_aelis_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,45172,cbf15b373f5584b3,À CONFIRMER
+voix/v_aelis_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,10075,1f62721e7ebfc826,À CONFIRMER
+voix/v_aelis_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,41410,1b21fe92d3f126b7,À CONFIRMER
+voix/v_aelis_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,8821,e936d1f5581f6a5d,À CONFIRMER
+voix/v_aelis_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,37231,b03f7efa73ec92a8,À CONFIRMER
+voix/v_aelis_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,4641,55320e887799ee6d,À CONFIRMER
+voix/v_aelis_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,38484,45ddfc94d8043bb7,À CONFIRMER
+voix/v_aelis_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Aelis »,8821,c319e148d5cc9e1b,À CONFIRMER
+voix/v_fenn_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,52695,f268e458f243d52f,À CONFIRMER
+voix/v_fenn_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,9030,c7548011435cecff,À CONFIRMER
+voix/v_fenn_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,52695,df357ff1962ca077,À CONFIRMER
+voix/v_fenn_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,10910,8bfa1e4fc91835ec,À CONFIRMER
+voix/v_fenn_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,40156,2594102432d6d1ff,À CONFIRMER
+voix/v_fenn_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,7776,c49930d62d74832b,À CONFIRMER
+voix/v_fenn_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,42664,dbc5882116bca627,À CONFIRMER
+voix/v_fenn_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,7149,75f0b3f59c61dc24,À CONFIRMER
+voix/v_fenn_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,35977,f1c794c7ea808dfd,À CONFIRMER
+voix/v_fenn_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,5268,1bdce0fe176ef2fb,À CONFIRMER
+voix/v_fenn_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,41410,085288b6f2a7ee69,À CONFIRMER
+voix/v_fenn_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,7149,d975b28a4b1e9a39,À CONFIRMER
+voix/v_fenn_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,41410,02f7b25f002ff312,À CONFIRMER
+voix/v_fenn_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Fenn »,6104,dc0b04daf218e591,À CONFIRMER
+voix/v_kael_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,41410,e241271f4e772bca,À CONFIRMER
+voix/v_kael_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,6522,4f3fe50c895923c9,À CONFIRMER
+voix/v_kael_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,41410,6f485100b817ec6d,À CONFIRMER
+voix/v_kael_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,7358,59d4f649eaf2c5c9,À CONFIRMER
+voix/v_kael_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,42664,f10602a60880386e,À CONFIRMER
+voix/v_kael_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,12582,e4a043200a1eee95,À CONFIRMER
+voix/v_kael_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,37231,c80910c688381147,À CONFIRMER
+voix/v_kael_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,8194,a66e46027f3cf009,À CONFIRMER
+voix/v_kael_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,35977,6942edb9083ffa81,À CONFIRMER
+voix/v_kael_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,5477,507371886951cbe1,À CONFIRMER
+voix/v_kael_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,38484,88075bbea9afaa0a,À CONFIRMER
+voix/v_kael_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,6731,b99eb7a1e85a3bc9,À CONFIRMER
+voix/v_kael_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,48933,6683a830ce06b41e,À CONFIRMER
+voix/v_kael_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),voix créée « Tactika - Kael » (FR) ; EN : voir NOTES V4.82,10284,8719c1b132cac4e5,À CONFIRMER
+voix/v_lyria_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),9657,45d8b3ed2b3cb37d,À CONFIRMER
+voix/v_lyria_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),9866,bc4127ca9d50bb5b,À CONFIRMER
+voix/v_lyria_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),13627,77ee1a6e9d68bfaf,À CONFIRMER
+voix/v_lyria_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),9448,df120566500bee4d,À CONFIRMER
+voix/v_lyria_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),13627,466c7dbc43d3f2b5,À CONFIRMER
+voix/v_lyria_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),13209,2ff5f6773e340f93,À CONFIRMER
+voix/v_lyria_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),6940,efe17c4934eb7f34,À CONFIRMER
+voix/v_lyria_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),7567,46ec68b86d8b4fd4,À CONFIRMER
+voix/v_lyria_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),9448,573fc458e09ee6f5,À CONFIRMER
+voix/v_lyria_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),8612,09752588e1aa1a34,À CONFIRMER
+voix/v_lyria_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),7567,5e4208f502ba1786,À CONFIRMER
+voix/v_lyria_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),7567,d772d81f9b71f9d3,À CONFIRMER
+voix/v_lyria_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),9866,73fbb946784bb595,À CONFIRMER
+voix/v_lyria_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ophélie (bibliothèque ElevenLabs),11119,89cd0168d4bc0a24,À CONFIRMER
+voix/v_nyra_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),7149,0ca290505784abce,À CONFIRMER
+voix/v_nyra_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),7149,82e5eb321c70c95f,À CONFIRMER
+voix/v_nyra_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),7985,44d42411141e13a9,À CONFIRMER
+voix/v_nyra_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),8821,1ade382c6a4cb25f,À CONFIRMER
+voix/v_nyra_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),10284,4499987d91bf2163,À CONFIRMER
+voix/v_nyra_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),9030,cd28b54d3a2ff838,À CONFIRMER
+voix/v_nyra_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),5059,10a41f7eca7c7c31,À CONFIRMER
+voix/v_nyra_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),6940,2a6122f28dcc89b3,À CONFIRMER
+voix/v_nyra_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),8612,0f90c4ae9e08cd82,À CONFIRMER
+voix/v_nyra_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),7567,1ca88fa1a5c5bc12,À CONFIRMER
+voix/v_nyra_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),5477,c826edc98b9ad115,À CONFIRMER
+voix/v_nyra_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),9657,6bca535995befb6a,À CONFIRMER
+voix/v_nyra_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),8821,32c25bcef6959ef4,À CONFIRMER
+voix/v_nyra_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Dahlia (bibliothèque ElevenLabs),8821,4728f52296bd881b,À CONFIRMER
+voix/v_orion_hurt.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),8821,5ad4c220e1e76bc5,À CONFIRMER
+voix/v_orion_hurt_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),10701,5589b6693cb72c11,À CONFIRMER
+voix/v_orion_ko.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),8403,90c4dbc8ee02c3ee,À CONFIRMER
+voix/v_orion_ko_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),10284,79cc68996cb11972,À CONFIRMER
+voix/v_orion_level.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),13209,93b6e4519d38501a,À CONFIRMER
+voix/v_orion_level_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),11119,b1592c9ce8135085,À CONFIRMER
+voix/v_orion_sig.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),7776,2cb0674024c91937,À CONFIRMER
+voix/v_orion_sig_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),6522,1dcec20f10072947,À CONFIRMER
+voix/v_orion_start.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),9030,9ad7cc87c1b50c41,À CONFIRMER
+voix/v_orion_start_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),14254,ac815eac9abf0838,À CONFIRMER
+voix/v_orion_support.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),9239,1d630220030343a0,À CONFIRMER
+voix/v_orion_support_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),9239,2dc27e42df2c56ea,À CONFIRMER
+voix/v_orion_win.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),9030,8cbd1832104b70f0,À CONFIRMER
+voix/v_orion_win_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),Ludovic (bibliothèque ElevenLabs),7985,af594ff80b816349,À CONFIRMER
+voix/vo_epilogue_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",26375,e5f8a161d299e1c1,À CONFIRMER
+voix/vo_epilogue_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",26166,f131e48a5e2f0ab7,À CONFIRMER
+voix/vo_epilogue_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",18643,dbd167a9aa8c7712,À CONFIRMER
+voix/vo_epilogue_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",20315,1a28e918eb0d5a53,À CONFIRMER
+voix/vo_epilogue_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",12582,98a0db3ea2c9f048,À CONFIRMER
+voix/vo_epilogue_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",10701,ac6cf2507cd0f9ba,À CONFIRMER
+voix/vo_prologue_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",14254,088ca931a839d64b,À CONFIRMER
+voix/vo_prologue_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",17389,a2c55fff8866e119,À CONFIRMER
+voix/vo_prologue_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",16762,6a028319acfbc240,À CONFIRMER
+voix/vo_prologue_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",17180,2e13c8cb5548d6d6,À CONFIRMER
+voix/vo_prologue_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",3805,7eeb4a70ec512ee3,À CONFIRMER
+voix/vo_prologue_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",4850,7cb5462dc559ac17,À CONFIRMER
+voix/vo_prologue_4_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",20941,c636fca47ea65ea9,À CONFIRMER
+voix/vo_prologue_4_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",24285,9a5e130874ce5fcd,À CONFIRMER
+voix/vo_r06_end_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",26584,24efeb11c644832d,À CONFIRMER
+voix/vo_r06_end_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",22613,d2a01425dc0edf92,À CONFIRMER
+voix/vo_r06_end_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",9030,4307c6c7be74d3b0,À CONFIRMER
+voix/vo_r06_end_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",10075,fc6668e184c6828f,À CONFIRMER
+voix/vo_r06_end_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",41630,2a2bf645c069da3b,À CONFIRMER
+voix/vo_r06_end_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",30346,eb504e3ecca2b4cf,À CONFIRMER
+voix/vo_r06_end_4_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",9239,68368a9ca04415bd,À CONFIRMER
+voix/vo_r06_end_4_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",12791,46bd29fde0b7388b,À CONFIRMER
+voix/vo_r09_end_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",22822,60018968e5ae7848,À CONFIRMER
+voix/vo_r09_end_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",24703,bb5178a14faf87ee,À CONFIRMER
+voix/vo_r09_end_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",13418,2ac6d5fa14f73b02,À CONFIRMER
+voix/vo_r09_end_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",16344,a3cb250297a958bb,À CONFIRMER
+voix/vo_r09_end_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",9866,c757ae2a3a50aab4,À CONFIRMER
+voix/vo_r09_end_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",10284,c741fbff61d65153,À CONFIRMER
+voix/vo_r09_end_4_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",18016,3e38613b21726956,À CONFIRMER
+voix/vo_r09_end_4_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",21986,1f9967ca75e0d098,À CONFIRMER
+voix/vo_r09_end_5_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",20733,cd95debe00813d1d,À CONFIRMER
+voix/vo_r09_end_5_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",42675,b2811a5bc53f2096,À CONFIRMER
+voix/vo_r12_end_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",17598,91dba96b2cf9e435,À CONFIRMER
+voix/vo_r12_end_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",18852,31455b7297cae0c1,À CONFIRMER
+voix/vo_r12_end_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",20733,83428216577b3d2c,À CONFIRMER
+voix/vo_r12_end_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",16553,005648785a984716,À CONFIRMER
+voix/vo_r12_end_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",32435,e3290ee9a59b9776,À CONFIRMER
+voix/vo_r12_end_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",30555,a5f53e2bbaaf10f4,À CONFIRMER
+voix/vo_r12_end_4_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",7358,896b508de6b93e65,À CONFIRMER
+voix/vo_r12_end_4_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",5895,824c6f173e43099c,À CONFIRMER
+voix/vo_r12_pre_1_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",43929,549cb0b570b288c3,À CONFIRMER
+voix/vo_r12_pre_1_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",56259,03db39b275d50e9e,À CONFIRMER
+voix/vo_r12_pre_2_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",13418,c316ea46504997d2,À CONFIRMER
+voix/vo_r12_pre_2_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",14463,2686686dcae9dc70,À CONFIRMER
+voix/vo_r12_pre_3_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",15090,4914fa69b7d17ed2,À CONFIRMER
+voix/vo_r12_pre_3_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",14672,dc933a5cf52f91e9,À CONFIRMER
+voix/vo_r12_pre_4_en.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",12373,1e6316c088d7fa8a,À CONFIRMER
+voix/vo_r12_pre_4_fr.mp3,voix,ElevenLabs text-to-speech (modèle eleven_v4),"narration : Mira = Anne-Sophie, Garrick = Baptiste, Architecte = Georges (bibliothèque ElevenLabs), autres = voix des héros",16553,d4bd5f4eef2976be,À CONFIRMER

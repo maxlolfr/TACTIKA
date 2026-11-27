@@ -4,12 +4,22 @@ import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
 import {cleanChron} from './chronicle.js';
+import {pickSave,parseSave} from './savecore.js';
 import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateChateau} from './rules.js';
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
-// sauvegarde illisible ou abîmée : on garde les valeurs par défaut plutôt que de planter
+// V5.01 : lecture sûre. Principal -> copie de secours (_bak) ; un texte abîmé est mis de côté (_corrupt), jamais écrasé en silence.
 // V4.29 : l'aperçu de la région 7 a sa propre sauvegarde, copiée de la vraie à la première ouverture : la vraie n'est jamais écrite
 export const KEY=PREVIEW?'landeTactique1_braise':'landeTactique1';
-try{const s=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('landeTactique1'));if(s&&typeof s==='object'&&Number.isFinite(s.lvl)&&Array.isArray(s.items))Object.assign(save,s,{v:2})}catch(e){}
+export const KB=KEY+'_bak',KC=KEY+'_corrupt';
+export const storeState={ok:true,err:null,loadFrom:'new'}; // loadFrom : new | main | backup | corrupt
+const rd=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const wr=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
+let lastGood=null,lastBak=0;
+{const main=rd(KEY)||rd('landeTactique1'),r=pickSave([main,rd(KB)]);
+ if(r){Object.assign(save,r.s,{v:2});storeState.loadFrom=r.from?'backup':'main';
+  if(r.from===0){lastGood=main;wr(KB,main)} // point de retour : l'état au début de cette session
+  else{lastGood=rd(KB);if(main)wr(KC,main)}} // le principal était abîmé : on le garde de côté, la copie de secours est restaurée
+ else if(main){storeState.loadFrom='corrupt';wr(KC,main)}} // illisible et sans secours : valeurs par défaut, mais l'original reste récupérable
 save.sp=cleanSp(save.sp); // spécialisations (V2.5) : absentes ou invalides = aucune
 save.attr=cleanAttr(save.attr,save.lvl); // caractéristiques (V4.7c) : absentes = tous les points libres
 if(!save.z)save.z={prairie:Math.min(4,save.fight-1)}; // reprise des anciennes sauvegardes
@@ -20,5 +30,23 @@ cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids v
 cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu
 export const prog=id=>save.z[id]||0,unlocked=zi=>!ZONES[zi].soon&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
-export function store(){try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}}
+// avertissement non bloquant quand l'écriture échoue (stockage plein ou bloqué) : au plus une fois par minute
+let warnAt=0;
+function warn(){if(typeof document==='undefined'||Date.now()-warnAt<60000)return;warnAt=Date.now();
+ try{let d=document.getElementById('svwarn');if(!d){d=document.createElement('div');d.id='svwarn';d.style.cssText='position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7a1f12;color:#fff;font:700 14px system-ui,sans-serif;padding:10px 14px;border-radius:10px;text-align:center';d.onclick=()=>d.remove();document.body.append(d)}
+  d.textContent=save.lang==='en'?'⚠ Cannot save (storage full or blocked). Export your game in Settings → Save, then tap to close.':'⚠ Sauvegarde impossible (stockage plein ou bloqué). Exporte ta partie dans Réglages → Sauvegarde, puis touche ici pour fermer.'}catch(e){}}
+export function store(){
+ let txt;
+ try{txt=JSON.stringify(save)}catch(e){storeState.ok=false;storeState.err=e;warn();return false}
+ const now=Date.now();
+ if(lastGood&&now-lastBak>45000){if(wr(KB,lastGood))lastBak=now} // copie de secours = état précédent, rafraîchie au plus toutes les 45 s
+ let ok=wr(KEY,txt);
+ if(!ok){try{localStorage.removeItem(KC)}catch(e){}ok=wr(KEY,txt)} // plein : on libère la copie du texte abîmé et on réessaie une fois
+ if(ok){lastGood=txt;storeState.ok=true;storeState.err=null;const d=typeof document!=='undefined'&&document.getElementById('svwarn');if(d)d.remove();return true}
+ storeState.ok=false;storeState.err='write';warn();return false}
+// copie de secours : existe-t-elle et est-elle lisible ? la restauration remplace le principal puis l'appelant recharge
+export const hasBackup=()=>!!parseSave(rd(KB));
+export function restoreBackup(){const b=rd(KB);if(!parseSave(b))return false;const cur=rd(KEY);if(cur)wr(KC,cur);return wr(KEY,b)}
+// import validé (code ou fichier) : la partie actuelle devient la copie de secours, donc l'import est annulable
+export function importSave(o){const txt=JSON.stringify(o),cur=rd(KEY);if(cur&&parseSave(cur))wr(KB,cur);return wr(KEY,txt)}
 export function resetSave(){for(const k of Object.keys(save))delete save[k];Object.assign(save,{v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:{},st:{},up:{},sp:cleanSp(),pot:0,attr:cleanAttr(null,1),p10:1,b10:1,c10:1,m10:1,h10:1,storySeen:{}});cleanChron(save);store()}

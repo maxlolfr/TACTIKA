@@ -19,5 +19,10 @@
    "sizes": "512x512",
    "type": "image/png"
   }
+ ],
+ "id": "./",
+ "description": "Tactika — jeu tactique au tour par tour / turn-based tactical RPG",
+ "categories": [
+  "games"
  ]
 }
