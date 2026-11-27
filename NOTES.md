@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.32 (27/11) : vraies images de la région 7 et héros vétérans (aperçu seulement)
+- `?apercu=braise` : élémentaire, chevalier d'obsidienne, salamandre, Ignaros (`tools/prep_r7.py`), 8 dalles (`sol_braise` : `TILE_N=8 TILE_W=512 python3 tools/cut_tiles.py r7-09-dalles-gemini-1822.png sol_braise`) et 6 obstacles (`deco4`, 30 à 35 ; charbon et chariot bas). Originaux : studio, `art/tactika/r7-planches/`. Le recolorage provisoire (`PH`) est supprimé.
+- Héros vétérans (`tools/prep_heros.py`) : en aperçu dès le niveau 25 (`VET_LVL`), ou tout de suite avec `&veterans`. Pas de marche : pose fixe qui glisse avec le rebond existant.
+- Monstres sans planche de marche : ils glissent aussi. Toujours provisoires : musique et sons. Valeurs non validées.
+
 ## V4.31 (27/11) : volume réglable, musiques d'origine rétablies
 - Réglages : curseurs Musique et Bruitages (0 à 150 %, `landeVol`), niveau à 100 % plus fort qu'avant (musique 0,45 → 0,9, bruitages 0,8 → 1), limiteur en sortie.
 - Demande de Max, garder toutes les musiques à leur place : village = thème d'origine ; la nouvelle `village` va à la Taverne ; ancienne `boss` pour Prairie, Bois et Côte, `boss_v2` pour Monts, Château et aperçu Braise.

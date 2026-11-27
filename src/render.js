@@ -1,26 +1,28 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,PH} from './data.js';
+import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,PREVIEW,VET_LVL,VET_FORCE} from './data.js';
+import {save} from './save.js';
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','ph_obsid','ph_salam','ph_fire','ph_ignaros'];
+const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','obsid','salam','fireel','ignaros'];
+const PRE=['kaelV','fennV','aelisV','ignaros','deco4']; // chargées en aperçu seulement
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
 function tint(src,rgba){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const x=c.getContext('2d');x.drawImage(src,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=rgba;x.fillRect(0,0,c.width,c.height);return c}
-function load(n){if(PH[n])return IMG[n]?Promise.resolve():load(PH[n][0]).then(()=>{IMG[n]=tint(IMG[PH[n][0]],PH[n][1])}); // V4.29 : planches provisoires recolorées
+function load(n){
  if(n==='slimeT')return IMG[n]?Promise.resolve():load('slimeN').then(()=>{IMG[n]=tint(IMG.slimeN,'rgba(150,40,200,.5)')}); // V4.13 : gelée toxique = gelée recolorée
  return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;delete LD[n];ok()};i.onerror=()=>{delete LD[n];ko(n)};i.src='assets/'+n+'.webp'}))}
 export async function loadAssets(){
- AT=await(await fetch('assets/atlas.json')).json();AT.slimeT=AT.slimeN;for(const[n,[src]]of Object.entries(PH))AT[n]=AT[src];
+ AT=await(await fetch('assets/atlas.json')).json();AT.slimeT=AT.slimeN;
  for(const k of[...Object.values(MON).map(m=>m.s),...ZONES.map(z=>z.boss.s)])for(const n of[k,k+'m',k+'w'])if(AT[n])MS.add(n);
  for(const t of THEMES)if(t.ts)MS.add(t.ts); // sols par région : chargés aussi à l'entrée de la zone
- await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)).map(load));
+ await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)&&(PREVIEW||!PRE.includes(n))).map(load));
 }
 export function zoneAssets(F){const want=new Set([THEMES[F.th].ts].filter(Boolean));for(const k of[...F.pool,...(F.en||[]),F.elite,F.boss&&F.boss.k].filter(Boolean))want.add(MON[k].s);if(F.boss&&F.boss.s)want.add(F.boss.s);
  for(const n of[...want])for(const v of[n+'m',n+'w'])if(AT[v])want.add(v);
@@ -159,13 +161,18 @@ const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v
 const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]),
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
  healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0])};
-export const heroFrame=k=>HN[k].i;
+// V4.32 : héros « vétérans » (aperçu R7 seulement tant que la région n'est pas ouverte), dès le niveau 25 ou avec &veterans.
+// Pas de planche de marche : la pose de repos glisse avec le petit rebond de chaque case.
+const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','aelisV']].map(([k,n])=>{const still=[n,[0,0,0,0]];return[k,{...P9(n,still,still,[n,0]),vet:1}]}));
+export const isVet=()=>PREVIEW&&(VET_FORCE||save.lvl>=VET_LVL);
+const hn=k=>(isVet()?HV:HN)[k];
+export const heroFrame=k=>hn(k).i;
 // images de marche [planche, 4 cases], tournées vers la droite (réutilisées au village, V4.8b)
-export const walkFrames=(k,back)=>HN[k][back?'B':'F'];
+export const walkFrames=(k,back)=>hn(k)[back?'B':'F'];
 // renvoie [planche, case, miroir, hauteur de référence]
 function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i',d=V?[1,3,0,2][u.dir]:u.dir,right=d===0||d===2,back=d===2||d===3;
 // toutes les planches de héros (poses et marche) regardent à DROITE : miroir seulement quand l'unité regarde à gauche
- if(u.team==='h'){const h=HN[u.k],flip=!right,rf=AT[h.i[0]][h.i[1]][3];
+ if(u.team==='h'){const h=hn(u.k),flip=!right,rf=AT[h.i[0]][h.i[1]][3];
   if(u.dead)return h.ko?[...h.ko,flip,rf]:[...h.i,flip,rf];
   if(u.walk){const w=back&&h.B?h.B:h.F;return[w[0],w[1][u.wf%4],flip,AT[w[0]][w[1][0]][3]]}
   if(h[p]&&p!=='i')return[...h[p],flip,rf];

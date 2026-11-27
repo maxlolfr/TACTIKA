@@ -45,12 +45,10 @@ export const MON={
  crygolem:{ai:'tank',snd:'golem_smash',n:'Golem cristallin',s:'crygolem',row:0,hp:56,pm:2,init:6,dmg:[11,15],armor:.25,h:1.05,xp:20},
  qspider:{ai:'range',snd:'spider_bite',n:'Araignée de quartz',s:'qspider',row:0,hp:28,pm:4,init:12,dmg:[6,9],r:[1,3],los:1,slow:1,fx:5,h:.8,xp:16},
  prisbat:{ai:'range',snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1},
- // V4.29, région 7 (aperçu caché, chiffres de départ proposés). imm = insensible aux braises. Images PROVISOIRES : planches existantes recolorées (PH).
- fireel:{ai:'range',snd:'poison',n:'Élémentaire de feu',s:'ph_fire',row:0,hp:30,pm:3,init:11,dmg:[8,11],r:[1,4],los:1,fx:5,h:.95,xp:18,fly:1,imm:1},
- obsid:{ai:'tank',snd:'smash',n:'Chevalier d’obsidienne',s:'ph_obsid',row:0,hp:58,pm:3,init:9,dmg:[11,15],armor:.25,h:1.22,xp:26},
- salam:{ai:'flank',snd:'bite',n:'Salamandre de lave',s:'ph_salam',row:0,hp:38,pm:5,init:12,dmg:[9,12],h:.8,xp:20,imm:1}};
-// images provisoires : nom → [planche d'origine, teinte]
-export const PH={ph_fire:['ghostN','rgba(255,110,0,.62)'],ph_obsid:['knightN','rgba(60,8,0,.55)'],ph_salam:['boarN','rgba(215,40,0,.58)'],ph_ignaros:['golemK','rgba(190,50,0,.5)']};
+ // V4.29, région 7 (aperçu caché, chiffres de départ proposés). imm = insensible aux braises. V4.32 : vraies images (tools/prep_r7.py).
+ fireel:{ai:'range',snd:'poison',n:'Élémentaire de feu',s:'fireel',row:0,hp:30,pm:3,init:11,dmg:[8,11],r:[1,4],los:1,fx:5,h:.95,xp:18,fly:1,imm:1},
+ obsid:{ai:'tank',snd:'smash',n:'Chevalier d’obsidienne',s:'obsid',row:0,hp:58,pm:3,init:9,dmg:[11,15],armor:.25,h:1.22,xp:26},
+ salam:{ai:'flank',snd:'bite',n:'Salamandre de lave',s:'salam',row:0,hp:38,pm:5,init:12,dmg:[9,12],h:.8,xp:20,imm:1}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB',KR='knightR',KN='knightN',GO='golem',GB='goblin',GH='ghost',SK='skel';
@@ -85,7 +83,7 @@ export const ZONES=[
 // V4.29 : Forteresse de braise, 10 missions. HORS de ZONES : visible seulement avec ?apercu=braise (sauvegarde séparée, voir save.js).
 // lava = {n : cases marquées à la fois, hot : chaque tour au lieu d'un tour sur deux}
 const FE='fireel',OB='obsid',SA='salam';
-export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl:21,pool:[FE,OB,SA],boss:{k:OB,s:'ph_ignaros',n:'Ignaros',hp:3.4,dmg:1.3,h:1.5,bs:'forge'},
+export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl:21,pool:[FE,OB,SA],boss:{k:OB,s:'ignaros',n:'Ignaros',hp:3.4,dmg:1.3,h:1.5,bs:'forge'},
  waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,OB]]}},
  fights:[{lvl:21,en:[SA,SA,SA],lava:{n:3},tip:'lava'},{lvl:21,en:[SA,SA,FE,FE],lava:{n:4}},{lvl:22,en:[OB,FE,FE,SA],lava:{n:4},tip:'pushfire'},
   {lvl:22,en:[OB,OB,SA,SA],lava:{n:5}},{lvl:23,en:[OB,FE,SA,SA],lava:{n:4},goal:'chief'},{lvl:23,en:[FE,FE,FE,OB,OB],lava:{n:5,hot:1}},
@@ -94,6 +92,7 @@ export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl
 export const LAVA_DMG=.12; // part des PV max perdue sur une case qui s'embrase
 export const PREVIEW=!!globalThis.location?.search.includes('apercu=braise');
 if(PREVIEW)ZONES.push(R7);
+export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
 export const MAP2=[{n:'Forteresse de braise',x:20,y:64,lx:23,ly:69},{n:'Temple des sables',x:78,y:63,lx:73,ly:69},
@@ -185,13 +184,13 @@ export const THEMES=[
  {n:'Monts gris',ts:'sol_mont',g:[0,1,2,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]},
  {n:'Château en ruine',ts:'sol_chateau',g:[0,1,1,3],obs:[12,13,14,15,16,17,18,22],noflower:1,out:[12,13,22,16,14]},
  {n:'Cavernes de cristal',ts:'tiles5',g:[0,0,1,1,5,5,6,2,3,7],obs:[24,25,26,27,28,29],noflower:1,out:[24,25,27,26],cave:1},
- // V4.29 : sols et obstacles PROVISOIRES (ceux du Château) en attendant R7-09 et R7-10
- {n:'Forteresse de braise',ts:'sol_chateau',g:[0,1,1,3],obs:[12,13,14,15,16,17],noflower:1,out:[12,13,16,14]}];
+ // V4.32 : dalles et obstacles R7-09 / R7-10 (Gemini)
+ {n:'Forteresse de braise',ts:'sol_braise',g:[0,0,0,0,5,5,6,6,2,7,3],obs:[30,31,32,33,34,35],noflower:1,out:[30,31,32,30]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29]);
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35]);
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9];
-export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:['deco3',d-24],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98];
+export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:['deco4',d-30],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles
