@@ -2,12 +2,12 @@
 // Page, code et styles : réseau d'abord (4 s) puis cache, donc une mise à jour est vue dès qu'on est en ligne.
 // Images et sons : cache d'abord, remplis au fil du jeu (les sons sont servis par morceaux, comme le demande <audio>).
 // Pour invalider tout le cache après une version : changer VERSION ci-dessous.
-const VERSION='5.01',CORE='tactika-core-'+VERSION,MEDIA='tactika-media-'+VERSION;
+const VERSION='5.02',CORE='tactika-core-'+VERSION,MEDIA='tactika-media-'+VERSION;
 const SHELL=['./','index.html','style.css','home.css','manifest.webmanifest','assets/icon-192.png','assets/icon-512.png','assets/icon-180.png',
  'assets/fonts/nunito-latin-700-normal.woff2','assets/fonts/nunito-latin-800-normal.woff2','assets/fonts/nunito-latin-900-normal.woff2','assets/fonts/lilita-one-latin-400-normal.woff2',
  'src/main.js','src/util.js','src/data.js','src/game.js','src/render.js','src/audio.js','src/save.js','src/savecore.js','src/rules.js','src/turns.js','src/talents.js','src/mastery.js','src/story.js','src/chronicle.js','src/quests.js','src/ui.js','src/home.js',
  'src/i18n.js','src/i18n-desc.js','src/i18n-quests.js','src/tips.js','src/tips-en.js','assets/village.webp','assets/world1-l.webp'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CORE).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))).then(()=>self.skipWaiting()))});
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CORE).then(c=>Promise.all(SHELL.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('tactika-')&&k!==CORE&&k!==MEDIA).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 const isMedia=u=>/\/assets\/.*\.(webp|png|jpg|mp3|ogg|woff2)$/.test(u.pathname);
 async function ranged(req,res){const h=req.headers.get('range'),m=h&&/bytes=(\d+)-(\d*)/.exec(h);if(!m)return res;
@@ -17,7 +17,7 @@ async function media(req){const c=await caches.open(MEDIA),key=new Request(req.u
  if(!hit){try{const res=await fetch(key);if(res.ok){await c.put(key,res.clone());hit=res}else return res}catch(e){return new Response('',{status:504})}}
  return ranged(req,hit)}
 async function shell(req){const c=await caches.open(CORE),key=req.mode==='navigate'?new Request('index.html'):req;
- const net=fetch(req).then(r=>{if(r.ok)c.put(key,r.clone());return r});
+ const net=fetch(req,{cache:'no-cache'}).then(r=>{if(r.ok)c.put(key,r.clone());return r});
  try{return await Promise.race([net,new Promise((_,no)=>setTimeout(no,4000))])}catch(e){const hit=await c.match(key,{ignoreSearch:true});return hit||net.catch(()=>new Response('Hors connexion',{status:503}))}}
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET'||u.origin!==location.origin)return;
  e.respondWith(isMedia(u)?media(r):shell(r))});
