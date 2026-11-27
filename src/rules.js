@@ -528,5 +528,5 @@ function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
 // ---------- quêtes (V4.55) ----------
 export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.need==null||recruited(save,q.need));
 export const questDone=(save,q)=>!!(save.q&&save.q[q.id]);
-export function questFight(q,save){const Z=ZONES[q.z],F={zi:q.z,i:-1,quest:q.id,lvl:Z.lvl+q.l,pool:Z.pool,boss:null,elite:q.e,goal:q.g||null,seed:q.z*131+ +q.id.slice(1)*17,th:Z.th[+q.id.slice(1)%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined};
+export function questFight(q,save){const Z=ZONES[q.z],F={zi:q.z,i:-1,quest:q.id,lvl:Z.lvl+q.l,pool:Z.pool,boss:null,elite:q.e,goal:q.g||null,seed:q.z*131+ +q.id.slice(1)*17,th:Z.th[+q.id.slice(1)%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined,lava:Z.fights?.[3]?.lava}; // V4.64 : cases brûlantes ou dalles piégées de la région (R7, R8)
  if(F.goal==='survive')F.wave=defWave(Z,+q.id.slice(1)%zlen(Z));return F}
