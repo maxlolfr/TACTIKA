@@ -21,3 +21,8 @@ test('40 quêtes traduites (titre, description, réplique)',()=>{
 test('tr() et trh() en mode anglais',()=>{
  L.on=true;assert.equal(tr(QUESTS[0].t),'Missing Merchant');assert.equal(trh(TUTO[0]),TUTO_EN[0]);assert.equal(trh(TIPS.trap[0]),TIPS_EN.trap[0]);
  L.on=false;assert.equal(trh(TUTO[0]),TUTO[0])});
+// V4.91 : en V4.89-4.90, un commentaire collé devant requestAnimationFrame(draw) désactivait tout le dessin (plateau noir)
+import {readFileSync} from 'node:fs';
+test('main.js lance bien la boucle de dessin (pas avalée par un commentaire)',()=>{
+ const ln=readFileSync(new URL('../src/main.js',import.meta.url),'utf8').split('\n').find(l=>l.includes('requestAnimationFrame(draw)'));
+ assert.ok(ln);const i=ln.indexOf('//');assert.ok(i<0||ln.indexOf('requestAnimationFrame(draw)')<i,ln)});
