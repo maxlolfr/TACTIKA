@@ -1095,7 +1095,8 @@ test('tempête : rayon 2, 50 % autour, alliés épargnés, une fois par combat',
 const orion = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [null, null, null, voie] }, 3).tal.sp;
 test('talents d’Orion : 5 paliers aux niveaux 3, 7, 11, 25 et 40, une seule voie', () => {
   assert.deepEqual([2, 3, 7, 11, 24, 25, 40].map(l => tiersOf(l, 3)), [0, 1, 2, 3, 3, 4, 5]);
-  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 0)), [0, 3, 3], 'les autres héros gardent 3 paliers');
+  assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 0)), [0, 3, 4, 5], 'Kael a 5 paliers (V4.46)');
+  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 1)), [0, 3, 3], 'Fenn garde 3 paliers');
   assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null], 'ancienne sauvegarde à 3 entrées');
   assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null]);
   assert.deepEqual(orion(50, null), {});
@@ -1306,4 +1307,20 @@ test('V4.44 : Aelis à 10 sorts (bouclier, purification, racines, rayon lunaire,
  k.hp=Math.round(k.max/2);const kh=k.hp;r.applySpell(s,a,SP.moon,m);assert.ok(k.hp>kh||m.dead);
  // bénédiction : tous les héros
  for(const h of s.units)if(h.team==='h'){h.hp=10;h.poison={d:3,turns:2}}r.applySpell(s,a,SP.bless,a);for(const h of s.units)if(h.team==='h')assert.ok(h.hp>10&&!h.poison);
+});
+
+// V4.46 : talents de Kael aux paliers 25 et 40
+const kael = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [voie, null, null] }, 0).tal.sp;
+test('talents de Kael V4.46 : paliers 25 et 40, une seule voie', () => {
+  assert.equal(kael(24, 'berserk').rage, undefined);
+  assert.equal(kael(25, 'berserk').rage.buffT, 3);
+  assert.equal(kael(25, 'berserk').judge, undefined);
+  assert.equal(kael(40, 'berserk').judge.k, 1.25);
+  assert.equal(kael(40, 'berserk').judge.pierce, 1);
+  assert.equal(kael(25, 'gardien').taunt.taunt, 5);
+  assert.equal(kael(40, 'gardien').counter.counter, 1);
+  assert.equal(kael(25, 'briseur').whirl.push, 1);
+  assert.equal(kael(40, 'briseur').judge.push, 3);
+  assert.equal(kael(40, 'gardien').judge, undefined, 'pas de cumul entre voies');
+  assert.equal(SPECS[0].every(x => x.t.length === 5), true);
 });

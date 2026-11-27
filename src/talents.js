@@ -4,11 +4,19 @@ import {HER} from './data.js';
 // fx : dmgMul (dégâts directs des sorts), hpMul, healMul, maxPM, sp:{id:{champs du sort remplacés}}
 // V4.38 : Orion a 5 paliers par voie (valeurs pilotes de ChatGPT, 27/11, non validées)
 export const TIER=[3,7,11], TIER_ORION=[3,7,11,25,40];
-export const tiersFor=i=>i===3?TIER_ORION:TIER;
+// V4.46 : Kael (0) passe aussi à 5 paliers ; Fenn et Aelis suivent dans les prochaines versions
+export const FIVE=[0,3];
+export const tiersFor=i=>FIVE.includes(i)?TIER_ORION:TIER;
 export const SPECS=[
- [{id:'berserk',n:'Berserker',ic:['spec',0],d:'Frappe plus fort, achève les blessés.',t:[['Fureur','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Rage','Critique 22 % au lieu de 12 %',{crit:.22}],['Exécution','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}]]},
-  {id:'gardien',n:'Gardien',ic:['spec',1],d:'Encaisse et protège.',t:[['Robustesse','PV maximum ×1,15',{hpMul:1.15}],['Forteresse','Rempart réduit les dégâts de 65 %',{guardK:.35,sp:{guard:{d:'Dégâts reçus −65 % jusqu’à ton prochain tour'}}}],['Dernier rempart','Une fois par combat, reste à 1 PV au lieu d’être KO',{lastStand:1}]]},
-  {id:'briseur',n:'Briseur',ic:['spec',6],d:'Repousse et écrase contre les obstacles.',t:[['Onde de choc','Fracas repousse de 3 cases',{sp:{smash:{push:3,d:'Gros coup qui repousse de 3 cases, 1 fois par tour'}}}],['Impact brutal','Collisions : 7 dégâts par case au lieu de 5',{pushDmg:7}],['Fracas affaiblissant','Fracas retire 1 PM à la cible',{sp:{smash:{slow:1,d:'Gros coup qui repousse de 3 cases et retire 1 PM, 1 fois par tour'}}}]]}],
+ [{id:'berserk',n:'Berserker',ic:['spec',0],d:'Frappe plus fort, achève les blessés.',t:[['Fureur','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Rage','Critique 22 % au lieu de 12 %',{crit:.22}],['Exécution','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}],
+   ['Rage tenace','Rage guerrière : 3 tours',{sp:{rage:{buffT:3,d:'+35 % de dégâts pendant 3 tours (ne se cumule pas avec Aura)'}}}],
+   ['Jugement ardent','Jugement du lion : dégâts +25 %, ignore toute l’armure',{sp:{judge:{k:1.25,pierce:1,d:'Coup ultime : ignore toute l’armure et repousse d’une case. 1 fois par combat'}}}]]},
+  {id:'gardien',n:'Gardien',ic:['spec',1],d:'Encaisse et protège.',t:[['Robustesse','PV maximum ×1,15',{hpMul:1.15}],['Forteresse','Rempart réduit les dégâts de 65 %',{guardK:.35,sp:{guard:{d:'Dégâts reçus −65 % jusqu’à ton prochain tour'}}}],['Dernier rempart','Une fois par combat, reste à 1 PV au lieu d’être KO',{lastStand:1}],
+   ['Voix de fer','Provocation : ennemis à 5 cases ou moins',{sp:{taunt:{taunt:5,d:'Les ennemis à 5 cases ou moins ne visent que Kael à leur prochain tour'}}}],
+   ['Riposte totale','Contre-attaque : renvoie une Taillade entière',{sp:{counter:{counter:1,d:'Jusqu’à ton prochain tour, chaque ennemi qui frappe Kael au contact reçoit une Taillade entière'}}}]]},
+  {id:'briseur',n:'Briseur',ic:['spec',6],d:'Repousse et écrase contre les obstacles.',t:[['Onde de choc','Fracas repousse de 3 cases',{sp:{smash:{push:3,d:'Gros coup qui repousse de 3 cases, 1 fois par tour'}}}],['Impact brutal','Collisions : 7 dégâts par case au lieu de 5',{pushDmg:7}],['Fracas affaiblissant','Fracas retire 1 PM à la cible',{sp:{smash:{slow:1,d:'Gros coup qui repousse de 3 cases et retire 1 PM, 1 fois par tour'}}}],
+   ['Tourbillon fracassant','Tourbillon repousse les ennemis d’une case',{sp:{whirl:{push:1,d:'Frappe tous les ennemis collés à Kael et les repousse d’une case'}}}],
+   ['Jugement ravageur','Jugement du lion : repousse de 3 cases, dégâts +10 %',{sp:{judge:{push:3,k:1.1,d:'Coup ultime : ignore la moitié de l’armure et repousse de 3 cases. 1 fois par combat'}}}]]}],
  [{id:'tireur',n:'Tireur',ic:['spec',3],d:'Tire de plus loin et plus juste.',t:[['Œil de lynx','Portée de Tir : 7 au lieu de 6',{sp:{shot:{r:[2,7]}}}],['Précision','Critique 22 % au lieu de 12 %',{crit:.22}],['Flèche perforante','Tir ignore la moitié de l’armure',{sp:{shot:{pierce:.5}}}]]},
   {id:'chasseur',n:'Chasseur',ic:['spec',8],d:'Ralentit et piège ses proies.',t:[['Tir entravant','Tir retire 1 PM à la cible',{sp:{shot:{slow:1,d:'Flèche par-dessus les décors bas, retire 1 PM au prochain tour'}}}],['Volée affaiblissante','Volée retire 1 PM aux ennemis touchés',{sp:{volley:{slow:1,d:'Touche la case visée et les 4 autour, retire 1 PM aux ennemis touchés'}}}],['Piège naturel','Nouveau sort : Piège (10 dégâts, −1 PM)',{add:['trap']}]]},
   {id:'eclaireur',n:'Éclaireur',ic:['tal',2],d:'Bouge plus, esquive.',t:[['Agilité','4 PM au lieu de 3',{maxPM:4}],['Vent rapide','Bottes ailées : +3 PM',{sp:{boots:{pmBonus:3,d:'+3 PM pour ce tour'}}}],['Insaisissable','15 % de chances d’esquiver une attaque',{dodge:.15}]]}],
