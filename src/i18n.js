@@ -2,6 +2,7 @@
 // (DOM et textes flottants du combat) passent par ce dictionnaire : d'abord le texte entier, sinon chaque expression connue
 // (de la plus longue à la plus courte, en mots entiers). Les récits et les voix ont leur propre anglais (story.js, audio.js).
 // Ajouter une traduction : une ligne "français":"anglais" ; aucune autre modification nécessaire.
+import {EN_DESC} from './i18n-desc.js';
 export const EN={
 // ---------- camp, menus ----------
 "Partir à l’aventure":"Set off on an adventure","Camp":"Camp","Héros":"Heroes","Inventaire":"Inventory","Quêtes":"Quests","Chronique":"Chronicle","Réglages":"Settings",
@@ -122,6 +123,7 @@ Object.assign(EN,{"Épée courte":"Short sword","Hache de guerre":"War axe","Bou
 "Arc de l’aigle":"Eagle bow","Cuir du maître-archer":"Master archer's leather","Bracelet du faucon":"Falcon bracelet","Bottes du vent":"Wind boots","Sceptre de lumière":"Scepter of light","Robe du soleil levant":"Rising sun robe","Collier de pleine lune":"Full moon necklace","Livre de prières":"Prayer book","Bâton de vie":"Staff of life","Cape de la grande prêtresse":"High priestess's cloak",
 "Collier d’étoile":"Star necklace","Grimoire sacré":"Sacred grimoire","Bâton d’écorce runique":"Runic bark staff","Robe de l’érudit":"Scholar's robe","Anneau du mage":"Mage's ring","Livre d’études":"Study book","Sceptre arcanique":"Arcane scepter","Cape de l’arcaniste":"Arcanist's cloak","Anneau d’arcaniste":"Arcanist's ring","Grimoire d’arcane":"Arcane grimoire",
 "Sceptre de l’Éther":"Ether scepter","Bâton du serment commun":"Staff of the shared oath"});
+Object.assign(EN,EN_DESC); // V4.90 : descriptions des sorts et des talents
 // ---------- moteur ----------
 export const L={on:false};
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -132,7 +134,7 @@ function rx(){if(RX)return RX;const keys=Object.keys(EN).filter(k=>k.length>=2&&
 // traduit une chaîne (texte entier d'abord, sinon expression par expression) ; renvoie la chaîne telle quelle en français
 export function tr(s){if(!L.on||!s||typeof s!=='string')return s;const t=s.trim();if(!t)return s;
  if(EN[t]!=null)return s.replace(t,EN[t]);if(!/[A-Za-zÀ-ÿ]/.test(t))return s;
- return s.replace(rx(),m=>EN[m]??m).replace(/(\d) or\b/g,'$1 gold')}
+ return s.replace(rx(),m=>EN[m]??m).replace(/(\d) or\b(?! \d)/g,'$1 gold')}
 const ATTRS=['aria-label','title','placeholder'];
 function walk(n){if(n.nodeType===3){const v=tr(n.data);if(v!==n.data)n.data=v;return}
  if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.closest?.('#story'))return; // les récits ont déjà leur anglais

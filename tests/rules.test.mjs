@@ -1742,3 +1742,10 @@ test('V4.89 anglais de l’interface : dictionnaire, fragments, idempotence, fra
  const C=await import('../src/chronicle.js');for(const t of C.TROPHIES){assert.ok(I.EN[t.n],t.n);assert.ok(I.tr(t.d)!==t.d,t.d)}
  I.L.on=false;
 });
+
+test('V4.90 anglais des descriptions de sorts et de talents : tout est couvert', async()=>{
+ const I=await import('../src/i18n.js'),T=await import('../src/talents.js');I.L.on=true;
+ const all=[...Object.values(SP).map(x=>x.d),...T.SPECS.flat().flatMap(s=>[s.n,s.d,...s.t.flatMap(x=>[x[0],x[1],...Object.values(x[2]?.sp||{}).map(v=>v.d)])])].filter(Boolean);
+ for(const s of all)assert.ok(I.EN[s],'sans anglais : '+s);for(const v of Object.values(I.EN))assert.equal(I.tr(v),v,v);
+ assert.equal(I.tr('Niv 12 · 340 or'),'Lvl 12 · 340 gold');I.L.on=false;
+});

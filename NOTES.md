@@ -2,6 +2,12 @@
 - **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
+## V4.90 (28/11) : lot 7b (1re partie) — anglais des descriptions de sorts et de talents
+- **`src/i18n-desc.js`** (fusionné dans `EN`) : 202 textes (descriptions des 60 sorts et de leurs variantes de talents, 18 spécialisations, 90 talents avec leurs noms). Test : chaque description de sort et de talent a son anglais.
+- Correctif : « 2 or 3 » (anglais) n'est plus pris pour la monnaie.
+- **Reste du lot 7b** (à faire) : textes des 40 quêtes (titre, présentation, réplique de fin), astuces de boss et du tutoriel (`TIPS`, `HOW`, objectifs dans `ui.js`), effets d'objets composés. Puis QA finale (lot 7) et V5.0.
+- 172 tests OK.
+
 ## V4.89 (28/11) : lot 7a — anglais de l'interface (menus, combat, noms)
 - **`src/i18n.js`** : dictionnaire FR → EN (≈ 560 entrées : camp et menus, Chronique et 40 trophées, carte, combat, bilan, textes flottants, 12 régions et boss, 41 monstres, classes, emplacements, raretés, caractéristiques, 18 spécialisations, sorts, 120 objets). Quand `save.lang === 'en'`, un observateur traduit les textes affichés (texte entier, sinon expression par expression en mots entiers, « 340 or » → « 340 gold ») et les infobulles ; les textes flottants du combat passent par `say()`. Les récits (fenêtre `#story`) gardent leur propre anglais.
 - Réglages → Langue : passer en anglais traduit l'écran tout de suite ; revenir au français recharge la page (textes d'origine).
