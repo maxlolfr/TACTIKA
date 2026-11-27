@@ -1,3 +1,4 @@
+// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q40 : régions 9 à 12 pas encore jouables.
 // V4.55 : quêtes scénarisées (carte I, Q01 à Q18 de SCENARIO-TACTIKA.md). Un combat spécial par quête, dans une région déjà ouverte,
 // avec un objectif existant (survive / chief / élite / victoire). Récompense unique ; le combat reste rejouable sans bonus.
 // z : région · l : niveau ajouté à celui de la région · g : objectif · e : élite · r : 1 = objet garanti · need : héros à recruter
@@ -19,4 +20,10 @@ export const QUESTS=[
  {id:'Q15',z:4,l:2,g:'chief',r:1,t:'Dernière bannière',d:'Un capitaine garde la dernière bannière de la garde. Abats-le.',c:'Garrick : « Je croyais cette bannière perdue à jamais. »'},
  {id:'Q16',z:5,l:1,e:'qspider',r:1,t:'Araignée de quartz',d:'Une araignée de quartz géante rôde dans les cavernes. Borin en rêve depuis vingt ans.',c:'Borin : « J’en rêvais depuis vingt ans. »'},
  {id:'Q17',z:5,l:2,g:'survive',r:0,t:'Cristaux instables',d:'Des cristaux menacent d’exploser. Tiens le temps de les sécuriser.',c:'Elyndra : « Vous avez évité une catastrophe. »'},
- {id:'Q18',z:5,l:2,need:3,r:1,t:'Recherches interdites',d:'Orion a laissé des archives dans les cavernes. Protège le passage jusqu’à elles.',c:'Orion : « Il est temps de réparer mes erreurs. »'}];
+ {id:'Q18',z:5,l:2,need:3,r:1,t:'Recherches interdites',d:'Orion a laissé des archives dans les cavernes. Protège le passage jusqu’à elles.',c:'Orion : « Il est temps de réparer mes erreurs. »'},
+ {id:'Q19',z:6,l:1,r:1,t:'Forge éternelle',d:'Des fourneaux oubliés brûlent encore sous la forteresse. Dégage les lieux pour que Borin puisse les rallumer.',c:'Borin : « Quel héritage ! »'},
+ {id:'Q20',z:6,l:2,e:'obsid',r:0,t:'Métal vivant',d:'Un chevalier d’obsidienne vit dans le minerai de la forteresse. Orion veut comprendre ce qui l’anime : abats-le.',c:'Orion : « Les possibilités sont extraordinaires. »'},
+ {id:'Q21',z:6,l:2,e:'fireel',r:1,t:'Flammes prisonnières',d:'Une flamme vivante est enfermée dans la forteresse. Aelis te demande de la libérer.',c:'Aelis : « Les flammes sont libres. »'},
+ {id:'Q22',z:7,l:1,g:'survive',r:1,t:'Tombe interdite',d:'Des vagues de gardiens surgissent d’une tombe scellée. Tiens la position avant que Mira ne reparte avec le trésor.',c:'Mira : « Une histoire à raconter pendant des générations. »'},
+ {id:'Q23',z:7,l:2,r:0,t:'Sceptre perdu',d:'Le sceptre d’un ancien roi repose au fond du temple. Ezran veut qu’on nettoie le chemin pour le rapporter.',c:'Ezran : « Cette relique retrouvera sa place dans l’histoire. »'},
+ {id:'Q24',z:7,l:2,e:'anubis',r:1,t:'Mémoires du sable',d:'Une sentinelle antique garde les mémoires du temple. Elle ne laissera passer personne.',c:'Aelis : « À nous de ne pas répéter leurs erreurs. »'}];

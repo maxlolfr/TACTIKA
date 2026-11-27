@@ -250,7 +250,24 @@ export const ITEMS=[
  {id:'eq60',s:'equip',ic:49,n:'Grimoire violet',pr:215,who:2,heal:2,sl:'accessoire',lv:17,rr:2,src:'loot'},
  {id:'eq61',s:'equip',ic:50,n:'Cristal ardent',pr:70,who:2,dmg:1,sl:'accessoire',lv:6,rr:0,src:'shop'},
  {id:'eq62',s:'equip',ic:51,n:'Cristal de glace',pr:125,who:2,hp:6,sl:'accessoire',lv:11,rr:1,src:'loot'},
- {id:'eq63',s:'equip',ic:52,n:'Emblème ailé',pr:250,who:[0,1,2],hp:6,sl:'accessoire',lv:19,rr:2,src:'loot'}];
+ {id:'eq63',s:'equip',ic:52,n:'Emblème ailé',pr:250,who:[0,1,2],hp:6,sl:'accessoire',lv:19,rr:2,src:'loot'},
+ // V4.64 : équipement dédié de Nyra (4) et Lyria (5), TABLE-EQUIPEMENTS-NYRA-LYRIA.md (ChatGPT). Icônes réemployées, exclusifs (who 4 ou 5), paliers liés au recrutement (30 / 40), valeurs pilotes
+ {id:'eq64',s:'equip',ic:12,n:'Lame de l’ombre',pr:155,who:4,dmg:3,sl:'arme',lv:30,rr:1,src:'shop'},
+ {id:'eq65',s:'equip',ic:13,n:'Lame du crépuscule',pr:260,who:4,dmg:3,sl:'arme',lv:35,rr:2,src:'loot'},
+ {id:'eq66',s:'equip',ic:24,n:'Cuir des ombres',pr:150,who:4,hp:8,sl:'armure',lv:30,rr:1,src:'shop'},
+ {id:'eq67',s:'equip',ic:29,n:'Cape de la nuit',pr:245,who:4,dmg:2,sl:'armure',lv:35,rr:2,src:'loot'},
+ {id:'eq68',s:'equip',ic:36,n:'Bracelet du duelliste',pr:140,who:4,dmg:2,sl:'bijou',lv:30,rr:1,src:'shop'},
+ {id:'eq69',s:'equip',ic:31,n:'Anneau du voile',pr:230,who:4,hp:6,sl:'bijou',lv:35,rr:2,src:'loot'},
+ {id:'eq70',s:'equip',ic:38,n:'Bottes du rôdeur',pr:140,who:4,hp:6,sl:'accessoire',lv:30,rr:1,src:'shop'},
+ {id:'eq71',s:'equip',ic:40,n:'Gants de l’assassin',pr:235,who:4,dmg:2,sl:'accessoire',lv:35,rr:2,src:'loot'},
+ {id:'eq72',s:'equip',ic:12,n:'Épée du serment',pr:155,who:5,dmg:3,sl:'arme',lv:40,rr:1,src:'shop'},
+ {id:'eq73',s:'equip',ic:13,n:'Épée de l’aurore',pr:260,who:5,dmg:3,sl:'arme',lv:45,rr:2,src:'loot'},
+ {id:'eq74',s:'equip',ic:18,n:'Cuirasse de la sentinelle',pr:165,who:5,hp:8,sl:'armure',lv:40,rr:1,src:'shop'},
+ {id:'eq75',s:'equip',ic:19,n:'Armure du bastion',pr:270,who:5,hp:8,sl:'armure',lv:45,rr:2,src:'loot'},
+ {id:'eq76',s:'equip',ic:34,n:'Collier du serment',pr:145,who:5,hp:6,sl:'bijou',lv:40,rr:1,src:'shop'},
+ {id:'eq77',s:'equip',ic:35,n:'Collier de la lumière',pr:235,who:5,heal:2,sl:'bijou',lv:45,rr:2,src:'loot'},
+ {id:'eq78',s:'equip',ic:20,n:'Bouclier de la gardienne',pr:165,who:5,hp:8,sl:'accessoire',lv:40,rr:1,src:'shop'},
+ {id:'eq79',s:'equip',ic:47,n:'Relique de l’aurore',pr:245,who:5,heal:2,sl:'accessoire',lv:45,rr:2,src:'loot'}];
 // icône d'un objet ; héros qui peuvent le porter
 export const icOf=o=>[o.s||'items',o.ic];
 export const whoOf=o=>Array.isArray(o.who)?o.who:[o.who];

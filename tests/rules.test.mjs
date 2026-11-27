@@ -800,12 +800,12 @@ import {whoOf,icOf} from '../src/data.js';
 import {readFileSync} from 'node:fs';
 const J=id=>ITEMS.findIndex(o=>o.id===id),SV2=(o={})=>({lvl:10,gold:1000,xp:0,items:[],sp:[null,null,null],up:{},...o});
 test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes valides', () => {
- assert.equal(ITEMS.length,63);
+ assert.equal(ITEMS.length,79); // V4.64 : +16 (Nyra, Lyria), testés à part
  assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,whoOf(o).filter(i=>i<3)[0],o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
   [['Épée courte',60,0,'arme',2],['Hache de guerre',120,0,'arme',3],['Bouclier rond',90,0,'accessoire',8],['Heaume',70,0,'armure',6],['Arc long',60,1,'arme',2],
    ['Armure de cuir',70,1,'armure',6],['Bottes de cuir',50,1,'accessoire',4],['Bâton de saule',60,2,'arme',3],['Anneau de rubis',100,2,'bijou',2],['Amulette',70,2,'bijou',6]].map(a=>[...a,undefined,undefined,undefined]));
  const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
- ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
+ ITEMS.slice(10,63).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
   assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
  assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3,4,5]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1,4,5]);
 });
@@ -908,9 +908,9 @@ test('V4.17 : Château, 10 étapes, niveaux 13 à 15, survie au 8e, Chevalier no
 
 test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le butin', () => {
  const lv=[[3,6],[8,11],[16,19]];
- ITEMS.slice(22).forEach(o=>assert.ok(o.lv>=lv[o.rr][0]&&o.lv<=lv[o.rr][1],o.id));
+ ITEMS.slice(22,63).forEach(o=>assert.ok(o.lv>=lv[o.rr][0]&&o.lv<=lv[o.rr][1],o.id));
  const hi=SV2({lvl:19,gold:99999});
- ITEMS.forEach((o,j)=>{if(j<22)return;if(o.src==='loot')assert.ok(lootPool(hi).includes(j),o.id);else assert.equal(buy({...hi,items:[]},j),1,o.id)});
+ ITEMS.forEach((o,j)=>{if(j<22||j>=63)return;if(o.src==='loot')assert.ok(lootPool(hi).includes(j),o.id);else assert.equal(buy({...hi,items:[]},j),1,o.id)});
  assert.ok(lootPool(SV2({lvl:15})).every(j=>ITEMS[j].rr!==2||j<22),'aucun épique avant 16');
 });
 
@@ -1400,7 +1400,7 @@ test('Nyra et Lyria en combat : équipe de 3 avec les deux recrues, bons sprites
 import {QUESTS} from '../src/quests.js';
 import {questOpen,questDone,questFight} from '../src/rules.js';
 test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
- assert.equal(new Set(QUESTS.map(q=>q.id)).size,18);
+ assert.equal(new Set(QUESTS.map(q=>q.id)).size,24);
  const sv={lvl:50,z:{},items:[]};
  assert.equal(QUESTS.filter(q=>questOpen(sv,q)).length,3);
  for(const q of QUESTS){const F=questFight(q,sv);assert.equal(F.quest,q.id);assert.ok(ZONES[F.zi]);assert.equal(!!F.wave,q.g==='survive');assert.ok(q.t&&q.d&&q.c)}
@@ -1409,8 +1409,48 @@ test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
 
 // ---------- V4.59 équipement de Nyra et Lyria ----------
 test('Nyra et Lyria portent du matériel de Fenn et Kael, aucun objet ajouté', () => {
-  assert.equal(ITEMS.length, 63);
+  assert.equal(ITEMS.length, 79); // V4.64
   const c = ITEMS.find(o => o.n === 'Cuirasse à épaulières'), a = ITEMS.find(o => o.n === 'Arc long'), e = ITEMS.find(o => o.n === 'Épée courte'), h = ITEMS.find(o => o.n === 'Hache de guerre');
   assert.deepEqual(whoOf(c), [0, 5]); assert.deepEqual(whoOf(a), [1]); assert.deepEqual(whoOf(e), [0, 4, 5]); assert.deepEqual(whoOf(h), [0, 5]);
   for (const hero of [4, 5]) for (const sl of ['arme', 'armure', 'accessoire', 'bijou']) assert.ok(ITEMS.some(o => o.sl === sl && whoOf(o).includes(hero)), `héros ${hero} sans ${sl}`);
+});
+
+// ---------- V4.64 équipement dédié de Nyra (4) et Lyria (5), TABLE-EQUIPEMENTS-NYRA-LYRIA.md ----------
+test('V4.64 : eq64 à eq79, 79 ids uniques, exclusifs, 2 par emplacement et par héroïne', async () => {
+  const { ITEMS, whoOf, icOf } = await import('../src/data.js');
+  const at = JSON.parse(readFileSync(new URL('../assets/atlas.json', import.meta.url)));
+  assert.equal(ITEMS.length, 79); const ids = ITEMS.slice(10).map(o => o.id); assert.equal(new Set(ids).size, 69); // les 10 historiques n’ont pas d’id
+  ITEMS.slice(63).forEach((o, k) => {
+    assert.equal(o.id, 'eq' + (64 + k)); assert.deepEqual(whoOf(o), [k < 8 ? 4 : 5]);
+    assert.ok(at.equip[o.ic], o.id); assert.deepEqual(icOf(o), ['equip', o.ic]);
+    assert.equal([o.dmg, o.hp, o.heal].filter(Boolean).length, 1, 'une seule stat'); assert.ok(!o.pa && !o.pm);
+    assert.ok([1, 2].includes(o.rr)); assert.ok(['shop', 'loot'].includes(o.src));
+  });
+  for (const [h, lo] of [[4, 30], [5, 40]]) for (const sl of ['arme', 'armure', 'bijou', 'accessoire']) {
+    const l = ITEMS.slice(63).filter(o => whoOf(o)[0] === h && o.sl === sl);
+    assert.equal(l.length, 2, h + sl); assert.deepEqual(l.map(o => [o.lv, o.rr, o.src]), [[lo, 1, 'shop'], [lo + 5, 2, 'loot']]);
+  }
+});
+test('V4.64 : seuils 29/30, 34/35, 39/40, 44/45 ; marchand avant le butin ; objets des anciens héros inchangés', async () => {
+  const { ITEMS } = await import('../src/data.js'), { lootPool, shopStock, buy } = await import('../src/rules.js');
+  const J = id => ITEMS.findIndex(o => o.id === id), mk = l => ({ lvl: l, gold: 99999, items: [], z: {}, rr: {}, up: {} });
+  assert.equal(buy(mk(29), J('eq64')), 0); assert.equal(buy(mk(30), J('eq64')), 1);
+  assert.equal(buy(mk(39), J('eq72')), 0); assert.equal(buy(mk(40), J('eq72')), 1);
+  assert.ok(!lootPool(mk(34)).includes(J('eq65'))); assert.ok(lootPool(mk(35)).includes(J('eq65')));
+  assert.ok(!lootPool(mk(44)).includes(J('eq73'))); assert.ok(lootPool(mk(45)).includes(J('eq73')));
+  assert.equal(buy(mk(50), J('eq65')), 0, 'butin : pas au marchand');
+  for (let d = 0; d < 20; d++) assert.ok(!shopStock(mk(25), d).some(j => j >= 63), 'rien de Nyra/Lyria avant le niveau 30');
+});
+
+test('V4.64 : quêtes Q19 à Q24 (braise, sables) : ouvertes après la région précédente, cases brûlantes et dalles piégées reprises', async () => {
+  const { QUESTS } = await import('../src/quests.js'), { questOpen, questFight, zoneDone } = await import('../src/rules.js'), { ZONES, MON, zlen } = await import('../src/data.js');
+  const q = id => QUESTS.find(x => x.id === id), z = i => ({ [ZONES[i].id]: zlen(ZONES[i]) });
+  assert.equal(QUESTS.length, 24);
+  assert.equal(questOpen({ z: {} }, q('Q19')), false); assert.equal(questOpen({ z: z(5) }, q('Q19')), true);
+  assert.equal(questOpen({ z: z(5) }, q('Q22')), false); assert.equal(questOpen({ z: { ...z(5), ...z(6) } }, q('Q22')), true);
+  for (const id of ['Q19', 'Q20', 'Q21', 'Q22', 'Q23', 'Q24']) {
+    const Q = q(id), F = questFight(Q, {}); assert.equal(F.quest, id); assert.ok(F.lava, id + ' : lave ou dalles de la région');
+    assert.equal(!!F.wave, Q.g === 'survive'); if (Q.e) assert.ok(MON[Q.e], Q.e); assert.ok(F.lvl >= ZONES[Q.z].lvl);
+  }
+  assert.equal(questFight(q('Q23'), {}).lava.trap, 1, 'sables : dalles piégées');
 });

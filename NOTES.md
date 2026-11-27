@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.64 (27/11 soir) : équipement de Nyra et Lyria, quêtes Q19 à Q24
+- **Équipement** : `ITEMS` passe de 63 à 79 (eq64–eq79, `TABLE-EQUIPEMENTS-NYRA-LYRIA.md`, ChatGPT). Exclusifs (`who` 4 = Nyra, 5 = Lyria), 2 par emplacement et par héroïne, icônes de la planche `equip` réemployées, paliers 30/35 et 40/45 (palier 1 au marchand, palier 2 au butin), valeurs pilotes de la table. Boucle V4.59 inchangée (le prêt d'objets de Kael/Fenn continue). Le soin des deux colliers/reliques de Lyria s'applique à ses sorts de soin (`heal` → `healB`), jamais à l'absorption. Rien avant le niveau 30 au marchand ni au butin.
+- **Quêtes** : Q19–Q21 (Forteresse de braise), Q22–Q24 (Temple des sables) dans `quests.js`. `questFight` reprend maintenant les cases brûlantes / dalles piégées de la région (`Z.fights[3].lava`). Objectifs existants seulement (victoire, survie, élite). Q25–Q40 : régions 9 à 12 absentes de `ZONES` (images à recevoir).
+- **Régions 7 et 8** : déjà jouables depuis la campagne (V4.40, V4.42). Régions 9 à 12 et leurs boss : pas de code ni d'images dans le dépôt, rien recréé.
+- À vérifier avec l'équilibrage global : nombre d'ennemis des quêtes R7/R8 (le combat Q24 en aligne beaucoup), prix des 16 objets.
+- 153 tests OK, essai navigateur 844×390 (Taverne : 6 nouvelles quêtes visibles, Q24 lancée, dalles piégées actives, aucune erreur).
+
 ## V4.63 (27/11 soir) : haut du combat façon maquette Royal Arcane (HUD V2 seulement, `?hud=v1` inchangé)
 - `ui.js` (bloc `if(HUD2)`) : logo `#hlogo` (`assets/logo.webp`), flèches `#tlp` / `#tln` qui font défiler la frise `#tl` (cachées si tout tient, grisées aux bouts), boutons ♪ (`.son-m`, coupe la musique) et 🔊 (`.son-s`, coupe les bruitages) en SVG, `#hson` devient ⚙ Réglages (ouvre le panneau des volumes `#hvol`). `style.css`, fin de fichier : titre encadré or, tailles par format (portrait, paysage < 450 px, > 600 px).
 - Vérifié en Chromium 390×844, 844×390, 1024×768, 1440×900 : aucune erreur, flèches, coupure de la musique et panneau testés ; 150 tests OK. WebKit/Safari et Honor non testés (portrait : vérifier que logo et titre ne se serrent pas).
