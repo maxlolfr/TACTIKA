@@ -230,6 +230,7 @@ function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;const kin
 // mode test (V4.0.2) : ?fps dans l'adresse affiche les images par seconde (moyenne sur 1 s) et le plus long écart
 const FPS=/[?&]fps/.test(location.search)&&Object.assign(document.body.appendChild(document.createElement('div')),{id:'fps'});let fN=0,fT=0,fMax=0,fLast=0;
 if(FPS)FPS.style.cssText='position:fixed;left:4px;bottom:4px;z-index:99;background:#000a;color:#7f7;font:12px monospace;padding:2px 5px;border-radius:4px;pointer-events:none';
+const LIS=typeof location!=='undefined'&&/[?&]lis/.test(location.search); // test : rectangles des étiquettes (tools/shots.mjs)
 export function draw(now){
  requestAnimationFrame(draw);if(FPS){fN++;fMax=Math.max(fMax,now-(fLast||now));fLast=now;if(now-fT>1000){FPS.textContent=`${Math.round(fN*1000/(now-fT))} i/s · max ${Math.round(fMax)} ms`;fN=0;fT=now;fMax=0}}const{phase,cur,sel,busy,reachC}=G,S=G.s,units=S.units;if(!ground||phase==='camp')return;
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingQuality='high';
@@ -285,8 +286,12 @@ export function draw(now){
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  for(const u of ghost){const[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u);drawF(ctx,s,i,sx,sy+TH*.12-lift(u)-(u.hop||0),hgt(u)/rf,flip,u===cur||tg.includes(u)?.6:.35)} // silhouette derrière un décor
  // barres de vie (leurs rectangles servent à écarter les bulles d'attaque)
- const taken=[];
- for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-lift(u)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
+ const taken=[],LB=[],ovl=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1];
+ // V5.03 : barres placées de l'avant vers l'arrière ; une barre (avec ses icônes d'état) qui en chevauche une autre remonte d'un cran (4 au plus)
+ for(const u of units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy))){const[sx,sy]=scr(u.gx,u.gy),w=TW*.6,z=TW*.24,ni=[u.shield>0,u.buff,u.poison||u.k==='toxslime',u.burn].filter(Boolean).length;let y=sy-hgt(u)-lift(u)-4;
+  const box=()=>[sx-Math.max(w/2+1,ni*z/2+z/2),y-(ni?z+3:0)-(u.chief?18:1),sx+Math.max(w/2+(u.tag?16:1),ni*z/2),y+6];for(let k=0;k<4&&LB.some(o=>ovl(o,box()));k++)y-=Math.round(TW*.13);LB.push(box());u._by=y}
+ taken.push(...LB);
+ for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=u._by-(u.hop||0),w=TW*.6;
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
   {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8,u.burn&&15].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
  for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*(G.ex?.42:.12);ctx.save();ctx.font=`900 ${Math.round(TW*(HUD2?.17:.22))}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
@@ -304,6 +309,8 @@ export function draw(now){
   const[sx,sy]=scr(E.tap.x,E.tap.y);ctx.save();for(const[w,c]of[[6,'rgba(0,0,0,.75)'],[3,col]]){diamond(ctx,sx,sy,1+.05*Math.sin(now/140));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()}ctx.restore();
   if(!E.bad&&sel.sp.dmg&&!sel.sp.all&&!sel.sp.glyph)for(const p of hitCells(S,sel.sp,E,E.ap||cur)){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur,E),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
    ctx.save();ctx.font=`900 ${Math.max(HUD2?11:12,Math.round(TW*(HUD2?.17:.22)))}px system-ui`;ctx.textAlign='center';if(HUD2){const pw=ctx.measureText(t).width+10,ph=Math.max(16,TW*.24);ctx.fillStyle='rgba(8,14,26,.8)';ctx.beginPath();ctx.roundRect(ex-pw/2,y-ph*.72,pw,ph,ph/2);ctx.fill()}else{ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.strokeText(t,ex,y)}ctx.fillStyle=f.ko==='sure'?'#ff7a6a':'#ffe9a0';ctx.fillText(t,ex,y);ctx.restore()}}
+ // V5.03 : les bulles d'attaque évitent aussi la tête des héros
+ const HD=units.filter(u=>!u.dead&&u.team==='h').map(u=>{const[sx,sy]=scr(u.gx,u.gy),t=sy-hgt(u)-lift(u),hw=TW*.25;return[sx-hw,t,sx+hw,t+hgt(u)*.4]}),nB=taken.length;taken.push(...HD);
  // intentions : bulle au-dessus de chaque monstre
  if(G.intents&&!busy&&!E){ctx.font=`800 ${Math.round(TW*(HUD2?.16:.19))}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-lift(u)-TW*.3;const t=it.dmg.join('–'),h=TW*(HUD2?.23:.28),iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
   ctx.save();ctx.strokeStyle='rgba(255,74,58,.75)';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.lineDashOffset=-now/40;ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo((sx+tx)/2,Math.min(sy,ty)-TH,tx,ty);ctx.stroke();ctx.restore();
@@ -313,6 +320,7 @@ export function draw(now){
     const n=taken.filter(([a,b,c,d])=>cx-w/2<c&&cx+w/2>a&&top<d&&top+h>b).length;if(!best||n<best[0])best=[n,cx,top];if(!n)break}
    bx=best[1];y=best[2]+h*.75;taken.push([bx-w/2,best[2],bx+w/2,best[2]+h])}
   ctx.fillStyle='rgba(40,8,6,.85)';ctx.strokeStyle='#ff6b5a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(bx-w/2,y-h*.75,w,h,6);ctx.fill();ctx.stroke();dic(ctx,'ico',0,bx-w/2+4,y-h*.75+(h-iw)/2,iw);ctx.fillStyle='#ffd9d2';ctx.fillText(t,bx+iw/2,y)}}
+ if(LIS)window.__lis={bars:LB,heads:HD,bub:taken.slice(nB+HD.length)};
  // effets
  if(cur&&!cur.dead&&phase==='fight'){const[sx,sy]=scr(cur.gx,cur.gy),f=AT.parts[10],w=TW*.32,y=sy-hgt(cur)-lift(cur)-TW*.42+Math.sin(now/180)*4;ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,y-w*f[3]/f[2],w,w*f[3]/f[2])}
  ambient(now);
