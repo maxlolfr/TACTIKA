@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.24 (27/11) : lot 9, premier passage d'équilibrage de la carte I
+- Un ennemi de plus (aucun PV changé) : Prairie 5 (sanglier), Prairie 10 (gelée toxique), Côte 5 et Côte 10 (crabe).
+- 75 combats simulés (chef, survie, boss des 6 mondes). Standard : Côte 5 89 → 84 % de PV restants, Prairie 5 94 → 91 %, Prairie 10 85 → 82 %. La Prairie reste facile. Réglage fin après les tests de Max.
+
 ## V4.23 (27/11) : lot 8, finitions des Cavernes
 - Courbe : étape 1 = 3 golems (au lieu de 4), étape 2 = 2 golems + 2 chevaliers (au lieu de 3 + 2). Elles étaient plus dures que les étapes 3 à 6. Profil standard : PV restants 36 % → 70 % et 18 % → 67 %.
 - Carte d'explication du rayon du Titan à l'étape 10.
