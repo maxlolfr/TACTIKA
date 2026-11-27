@@ -1361,6 +1361,18 @@ test('V4.76 : mécaniques de boss : téléportation d’Aetherion, zones toxique
   B.hp=Math.floor(B.max/2);B.bt=0;r.bossTurn(s,B);assert.ok(s.lava&&s.lava.cold);
   const p=s.lava.next[0];h.x=h.gx=p.x;h.y=h.gy=p.y;delete h.slow;const hp0=h.hp;r.lavaTick(s);assert.equal(h.slow,1);assert.ok(h.hp<hp0&&h.hp>=hp0-Math.ceil(h.max*.07)-1);}
 });
+test('V4.77 : récompenses de Q37 à Q40 : attribuées, persistantes après sauvegarde, jamais en double',async()=>{
+ const r=await import('../src/rules.js'),{QUESTS}=await import('../src/quests.js'),{ITEMS}=await import('../src/data.js');
+ const save={lvl:60,items:[],q:{}},rng=()=>.5;
+ for(const id of['Q37','Q38','Q39','Q40']){const Q=QUESTS.find(x=>x.id===id);assert.equal(r.questDone(save,Q),false);
+  const before=save.items.length,got=r.grantQuest(save,Q,rng);save.q[id]=1;assert.deepEqual(got,Q.sig,id);assert.equal(save.items.length,before+Q.sig.length);for(const j of Q.sig)assert.ok(save.items.includes(j));
+  assert.deepEqual(r.grantQuest(save,Q,rng),[],id+' : pas de doublon même si on rappelle');assert.equal(save.items.length,before+Q.sig.length)}
+ assert.equal(new Set(save.items).size,save.items.length);assert.equal(save.items.length,7);
+ const back=JSON.parse(JSON.stringify(save));assert.deepEqual(back.items.slice().sort((a,b)=>a-b),[79,80,81,82,83,84,85]);assert.ok(['Q37','Q38','Q39','Q40'].every(id=>back.q[id]===1));
+ assert.equal(r.rarOf(back,79),2);
+ // une quête à objet de butin (r:1) donne un seul objet normal, aucun objet signature
+ const s2={lvl:60,items:[],q:{}},g2=r.grantQuest(s2,QUESTS.find(x=>x.id==='Q36'),rng);assert.equal(g2.length,1);assert.notEqual(ITEMS[g2[0]].src,'quest');
+});
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
