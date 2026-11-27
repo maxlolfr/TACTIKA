@@ -268,3 +268,79 @@ body.camp #exc{display:none}
  .ov>.ov-back{top:calc(env(safe-area-inset-top) + 8px);bottom:auto;left:max(10px,env(safe-area-inset-left));translate:none;min-width:0;padding:6px 14px;font-size:14px}
  #forge,#shop,#tav,#armes{padding-bottom:calc(env(safe-area-inset-bottom) + 16px)}
 }
+
+/* ===== V4.50 : APERÇU HUD V2 « Royal Arcane Compact » (?hud=v2 seulement ; le jeu normal ne change pas) ===== */
+.hud2{--ra-nuit:#131c29;--ra-nuit2:#1a2433;--ra-anth:#252d38;--ra-or:#b99a60;--ra-or2:#e9cf94;--ra-iv:#eadcc0;--ra-pa:#e9bb55;--ra-pm:#54b9e8;--ra-pv:#56b47b;--ra-mag:#9b7acb;--ra-dan:#d15b58}
+/* barre du haut : fine, sans logo */
+.hud2 #top{background:linear-gradient(#0a101ccc,#0a101c00);gap:6px}
+.hud2 #title{font-size:11px;color:var(--ra-iv);opacity:.9}
+.hud2 #top .son-m,.hud2 #top .son-s{display:none}
+.hud2 #top .btn{background:linear-gradient(#252d38,#161e2a)!important;border:1px solid #b99a6099!important;border-radius:9px!important;color:var(--ra-iv)!important;padding:5px 8px!important;font:700 12px system-ui;box-shadow:0 2px 4px #0008}
+.hud2 #hson{display:flex;align-items:center;justify-content:center;width:34px;height:32px;padding:0!important}
+.hud2 #hson[aria-expanded=true]{border-color:var(--ra-or2)!important;color:var(--ra-or2)!important}
+/* initiative : portraits plus grands, alliés / ennemis / boss distincts, héros actif mis en avant */
+.hud2 #tl{gap:5px;align-items:center;padding:4px 6px}
+.hud2 #tl canvas{width:42px;height:42px;border-width:2px;border-style:solid;background:radial-gradient(#2b3646,#0f1620);box-shadow:0 0 0 1px #000a,0 2px 4px #0008;transition:transform .15s}
+.hud2 #tl canvas.h{border-color:var(--ra-pm)}
+.hud2 #tl canvas.m{border-color:var(--ra-dan)}
+.hud2 #tl canvas.b{border-color:var(--ra-mag);box-shadow:0 0 0 2px var(--ra-or),0 0 8px #9b7acbaa}
+.hud2 #tl canvas.cur{outline:0;border-color:var(--ra-or2);border-width:3px;box-shadow:0 0 0 1px #5a4214,0 0 10px #e9cf94cc;transform:scale(1.12);margin:0 3px}
+/* panneau : bleu nuit, filet or fin, sans bois */
+.hud2 #panel{background:linear-gradient(180deg,var(--ra-nuit2),var(--ra-nuit) 60%,#0b1222)!important;color:var(--ra-iv);border-top:1px solid var(--ra-or)!important;box-shadow:inset 0 1px 0 #e9cf9433,0 -6px 18px #0007}
+.hud2 #who{font-size:13px;color:var(--ra-or2)}
+.hud2 #hpb{height:8px;border-radius:4px;background:#05080f;box-shadow:inset 0 0 0 1px #b99a6055}
+.hud2 #hpb i{background:linear-gradient(#6cc78f,#3a8a5c)}
+.hud2 #hpt{font-size:11px;color:var(--ra-iv)}
+.hud2 #who .pa,.hud2 #who .pm{display:inline-flex;align-items:center;gap:3px;padding:1px 7px 1px 3px;border-radius:9px;background:#0a1020;box-shadow:inset 0 0 0 1px #b99a6066;font-size:12px}
+.hud2 #who .pa img,.hud2 #who .pm img{width:16px;height:16px}
+/* cases de sort : cadre sombre et filet or (codé), icônes existantes conservées */
+.hud2 .sp{background:linear-gradient(#252d38,#161e2a)!important;border-radius:10px;padding:4px;box-shadow:inset 0 0 0 1px #b99a6099,0 2px 4px #0009}
+.hud2 .sp.sel{box-shadow:inset 0 0 0 2px var(--ra-or2),inset 0 0 10px #e9cf9466,0 2px 4px #0009;filter:none}
+.hud2 .sp:disabled{box-shadow:inset 0 0 0 1px #5b5f68,0 2px 4px #0009}
+.hud2 .sp b{background:linear-gradient(var(--ra-or2),var(--ra-or));color:#1a1206;box-shadow:0 1px 2px #000a;font-size:11px;padding:0 5px;top:-6px;right:-4px}
+.hud2 .sp b.up{background:#e07a2a;color:#fff}
+.hud2 .sp small{color:var(--ra-iv)!important;text-shadow:0 1px 2px #000}
+/* fin du tour : or, plus petite */
+.hud2 #end{background:linear-gradient(var(--ra-or2),var(--ra-or) 55%,#9a7428)!important;color:#1a1206!important;border:1px solid #fff3!important;border-radius:10px!important;box-shadow:0 2px 0 #5a4214,0 3px 8px #0008!important;padding:7px 12px!important;font:800 14px/1.1 system-ui;text-shadow:0 1px 0 #fff6}
+.hud2 #end small{font-size:9.5px}
+.hud2 #hint{color:#c9c0aa;font-size:11.5px}
+/* panneau audio flottant : au-dessus du jeu, ne déplace rien */
+#hvol{display:none}
+.hud2 #hvol.on{display:grid;position:fixed;z-index:20;gap:8px;width:min(260px,calc(100vw - 16px));padding:12px 12px 10px;border-radius:12px;background:linear-gradient(#1a2433f7,#131c29f7);border:1px solid var(--ra-or);box-shadow:inset 0 1px 0 #e9cf9433,0 10px 26px #000c;color:var(--ra-iv);font:700 12px system-ui}
+.hud2 #hvol label{display:grid;grid-template-columns:72px 1fr 40px;align-items:center;gap:6px}
+.hud2 #hvol b{text-align:right;font-weight:700;color:var(--ra-or2)}
+.hud2 #hvol input{accent-color:var(--ra-or);width:100%;height:26px}
+.hud2 #hvol .hx{justify-self:end;margin:-6px -4px -2px 0;width:28px;height:26px;border:0;border-radius:7px;background:#0a1020;color:var(--ra-iv);font-size:13px}
+
+/* téléphone droit : bandeau bas plus bas, 6 sorts sur une ligne, Fin du tour à droite du héros */
+@media (orientation:portrait){
+ .hud2 #panel{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:5px;padding:7px 10px calc(env(safe-area-inset-bottom) + 6px)}
+ .hud2 #who{grid-column:1;grid-row:1;flex-wrap:wrap;row-gap:4px}
+ .hud2 #pts{grid-column:1;margin:0}.hud2 #pts:empty{display:none}
+ .hud2 #row{display:contents}
+ .hud2 #end{grid-column:2;grid-row:1;align-self:center;margin:0;min-width:92px}
+ .hud2 #spells,.hud2 #spells:has(>:nth-child(5)){grid-column:1/-1;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:4px!important;min-height:0!important;align-content:start}
+ .hud2 #spells:has(>:nth-child(7)){grid-template-columns:repeat(7,minmax(0,1fr))!important}
+ .hud2 .sp,.hud2 #spells:has(>:nth-child(5))>.sp{width:100%;max-width:56px;min-width:0;justify-self:center}
+ .hud2 .sp small{font-size:9px}
+ .hud2 #exc,.hud2 #hint{grid-column:1/-1}
+ .hud2 #hint{height:auto;min-height:0;max-height:2.7em;overflow:hidden;margin:0;font-size:11px;line-height:1.3}
+ .hud2 #tl canvas{width:40px;height:40px}
+}
+/* paysage et grands écrans : colonne 20–22 %, contenu groupé en haut, aide courte */
+@media (orientation:landscape){
+ .hud2{--side:clamp(176px,21vw,300px)}
+ .hud2 #panel{gap:6px;justify-content:flex-start;border-top:0!important;border-left:1px solid var(--ra-or)!important;box-shadow:inset 1px 0 0 #e9cf9433,-6px 0 18px #0007}
+ .hud2 #spells{gap:6px!important;padding-top:2px}
+ .hud2 #hint{flex:0 1 auto;max-height:6.5em;order:3}
+ .hud2 #end{order:2;padding:8px!important}
+}
+@media (orientation:landscape) and (max-height:450px){.hud2 #tl canvas{width:38px;height:38px}.hud2 #hint{max-height:3.9em}.hud2 #panel{padding-top:calc(env(safe-area-inset-top) + 8px)}}
+@media (orientation:landscape) and (min-height:600px){.hud2 #tl canvas{width:52px;height:52px}.hud2 #top{padding-top:calc(env(safe-area-inset-top) + 8px)}.hud2 .sp{max-width:70px}.hud2 #who{font-size:15px}}
+@media (min-width:1000px) and (min-height:700px){.hud2{--side:clamp(220px,19vw,320px)}.hud2 #tl canvas{width:58px;height:58px}.hud2 .sp{max-width:76px}}
+/* cibles (vignettes d'ennemis) sous Fin du tour : rien ne bouge sous le doigt quand on choisit un sort */
+@media (orientation:landscape){.hud2 #pts{order:4}.hud2 #hint{order:5}.hud2 #tgt:empty{display:none}.hud2 #pts:not(:has(#tgt:not(:empty))){display:none}}
+/* V4.50 (dossier ZIP §5) : recharge en bas de la case, avec symbole, pour ne pas la confondre avec le coût (en haut à droite) */
+.hud2 .sp em{inset:auto auto 13px 50%;translate:-50% 0;padding:0 5px 0 3px;border-radius:8px;background:#0b1018e6;box-shadow:inset 0 0 0 1px var(--ra-mag);font:800 11px/16px system-ui;color:var(--ra-iv);white-space:nowrap}
+.hud2 .sp em::before{content:'⏱';margin-right:2px;font-size:10px}
+.hud2 #who .pa{color:var(--ra-pa)}.hud2 #who .pm{color:var(--ra-pm)}

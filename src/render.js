@@ -1,6 +1,6 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
-import {$} from './util.js';
+import {$,HUD2} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,VET_LVL,VET_FORCE} from './data.js';
 import {save} from './save.js';
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,hitCells,forecast,soak} from './rules.js';
@@ -80,7 +80,7 @@ export function layout(){
  const top=$('top').getBoundingClientRect().bottom;hudB=top;
  // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
  const x0=side?pad('top','paddingLeft')-10:0,x1=side?P.left:W,bot=side?H-Math.max(4,pad('panel','paddingBottom')-8):P.top,avail=bot-top;
- const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+(v?1:1.05)),130); // V4.0.5 : moins de marge réservée au-dessus du plateau
+ const fit=v=>Math.min((x1-x0)/((v?R/2+1:CMAX+1)+.3),avail/((v?CMAX+1:R/2+1)*ISO+(v?1:1.05)),HUD2?190:130); // V4.0.5 : moins de marge réservée au-dessus du plateau
  V=side&&fit(true)>fit(false)*1.05;TW=fit(V);TH=TW*ISO;
  const rows=V?CMAX+1:R/2+1,bh=rows*TH+1.1*TW,mid=R/4; // case centrale (mid,mid)
  ox=(x0+x1)/2-lat(mid,mid)*TW/2;oy=top+(avail-bh)/2+1.1*TW+rows*TH/2-depth(mid,mid)*TH/2;
@@ -228,7 +228,7 @@ export function draw(now){
  if(cur&&cur.team==='h'&&!busy&&phase==='fight'){
   if(G.mark&&Date.now()<G.mark.until){const[mx,my]=scr(G.mark.x,G.mark.y);diamond(ctx,mx,my,.92);ctx.fillStyle='rgba(255,60,60,.45)';ctx.fill();ctx.strokeStyle='#ff5a5a';ctx.lineWidth=3;ctx.stroke()}
   if(sel){const dim=sel.sp.zone&&G.ex&&!G.ex.bad;for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?(dim?'rgba(255,140,40,.3)':'rgba(255,140,40,.62)'):c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok&&!dim){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
-  else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle='rgba(220,240,255,.7)';ctx.lineWidth=1.5;ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy,TW*.075,TW*.075*ISO,0,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(10,50,110,.9)';ctx.stroke()}}
+  else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle=HUD2?'rgba(70,160,255,.26)':'rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle=HUD2?'rgba(200,230,255,.55)':'rgba(220,240,255,.7)';ctx.lineWidth=HUD2?1:1.5;ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy,TW*.075,TW*.075*ISO,0,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(10,50,110,.9)';ctx.stroke()}}
  if(sel&&cur&&!busy)for(const c of sel.cells)if(c.ok&&occ(S,c.x,c.y)){const[sx,sy]=scr(c.x,c.y),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.7+.3*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
  // cible visée par un monstre : losange rouge
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
