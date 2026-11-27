@@ -17,10 +17,17 @@ export const SP={
  mheal:{vx:'support',snd:'aelis_heal',n:'Soin collectif',pa:5,r:[0,3],t:'ally',heal:[7,9],splash:1,fx:4,cd:3,d:'Soigne l’allié visé et les alliés collés à lui (pas de résurrection)'},
  aura:{snd:'buff',n:'Aura',ic:6,pa:3,r:[0,3],t:'ally',buff:.3,fx:7,cd:3,d:'+30 % de dégâts à un allié, 2 tours'},
  // V4.33 : Orion (aperçu). Valeurs pilotes de ChatGPT (27/11), non validées
- arcane:{snd:'prism_burst',n:'Projectile arcanique',sn:'Arcane',pa:3,r:[1,5],t:'enemy',los:1,dmg:[11,15],proj:1,fx:0,d:'Trait de magie à distance'},
- flame:{snd:'crystal_amp',n:'Flamme',pa:3,r:[1,4],t:'enemy',los:1,dmg:[9,12],burn:[3,2],proj:1,fx:1,cd:2,d:'Dégâts + brûlure (3 par tour) pendant 2 tours'},
- frost:{snd:'crystal_amp',n:'Givre',pa:3,r:[1,4],t:'enemy',los:1,dmg:[8,11],slow:1,proj:1,fx:2,cd:2,d:'Dégâts et −1 PM au prochain tour de la cible'},
- fireball:{snd:'prism_burst',n:'Boule de feu',pa:5,r:[2,5],t:'cell',los:1,zone:1,side:.6,dmg:[16,21],proj:1,fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 autour. Épargne tes héros'}};
+ arcane:{snd:'prism_burst',n:'Projectile arcanique',sn:'Arcane',pa:3,r:[1,5],t:'enemy',los:1,dmg:[11,15],proj:1,orb:'#7fb8ff',fx:0,d:'Trait de magie à distance'},
+ flame:{snd:'crystal_amp',n:'Flamme',pa:3,r:[1,4],t:'enemy',los:1,dmg:[9,12],burn:[3,2],proj:1,orb:'#ff8a20',fx:1,cd:2,d:'Dégâts + brûlure (3 par tour) pendant 2 tours'},
+ frost:{snd:'crystal_amp',n:'Givre',pa:3,r:[1,4],t:'enemy',los:1,dmg:[8,11],slow:1,proj:1,orb:'#9fe4ff',fx:2,cd:2,d:'Dégâts et −1 PM au prochain tour de la cible'},
+ fireball:{snd:'prism_burst',n:'Boule de feu',pa:5,r:[2,5],t:'cell',los:1,zone:1,side:.6,dmg:[16,21],proj:1,orb:'#ff6a10',fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 autour. Épargne tes héros'},
+ // V4.37 : les 6 autres sorts d'Orion. wall : {tours, part des PV max d'Orion} (PV non donnés par ChatGPT : choix à confirmer)
+ icewall:{snd:'crystal_amp',n:'Mur de glace',sn:'Mur',pa:4,r:[1,4],t:'cell',free:1,los:1,wall:{turns:2,hp:.4},fx:2,cd:4,d:'Obstacle de glace sur une case libre, 2 tours. Les ennemis bloqués peuvent le casser'},
+ blink:{snd:'buff',n:'Téléportation courte',sn:'Saut',pa:3,r:[1,3],t:'cell',free:1,los:1,lob:1,blink:1,fx:7,cd:3,d:'Orion saute sur une case libre en vue, sans dépenser de PM'},
+ weaken:{snd:'poison',n:'Affaiblissement',sn:'Affaiblir',pa:3,r:[1,4],t:'enemy',los:1,weaken:[.2,2],fx:5,cd:3,d:'La cible inflige 20 % de dégâts en moins pendant 2 de ses tours (sans cumul)'},
+ nova:{snd:'prism_burst',n:'Explosion',pa:4,r:[0,0],t:'self',nova:1,dmg:[13,17],push:1,fx:7,cd:3,shake:1,d:'Frappe les ennemis collés à Orion et les repousse d’une case'},
+ glyph:{snd:'trap',n:'Glyphe',pa:4,r:[1,4],t:'cell',free:1,los:1,trap:1,glyph:1,dmg:[12,16],fx:1,cd:3,d:'Pose un glyphe sur une case libre : il explose sous le premier ennemi qui y entre. 3 tours, un seul à la fois'},
+ storm:{snd:'prism_burst',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'}};
 export const HER=[
  {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge'},
  {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot'},
@@ -29,7 +36,10 @@ export const SP5_LVL=5;
 export const TEAM_SIZE=3,DEF_TEAM=[0,1,2];
 // V4.33 : Orion, première recrue (niveau 20). PV ≈ 85 % de ceux de Fenn. Ajouté seulement en aperçu (et par les tests et le simulateur) :
 // en jeu normal il reste 3 héros. Ses objets : ceux que tous les héros peuvent porter. Talents : à venir.
-export const ORION={k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],sp5:'fireball'};
+// learn : sorts appris par niveau (7 au recrutement au niveau 20) ; SLOTS_SP : nombre de sorts emportés au combat
+export const SLOTS_SP=6;
+export const ALL_SPELLS=typeof location!=='undefined'&&location.search.includes('tous'); // &tous (aperçu) : les 10 sorts tout de suite
+export const ORION={k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],learn:[['fireball',5],['icewall',10],['blink',15],['weaken',20],['nova',25],['glyph',35],['storm',45]]};
 export function addOrion(){if(HER.length>3)return 3;HER.push(ORION);ATTR.int.who.push(3);ATTR.vit.who.push(3);ATTR.agi.who.push(3);
  for(const o of ITEMS)if(Array.isArray(o.who)&&o.who.length===3)o.who=[0,1,2,3];return 3}
 // V4.5b : ai = rôle de combat. tank : s'interpose devant les monstres fragiles et frappe le héros qui les menace · range : garde ses distances, recule s'il est collé · flank : contourne pour viser Fenn ou Aelis

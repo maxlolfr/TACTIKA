@@ -254,3 +254,5 @@ body.camp #exc{display:none}
 
 /* V4.27 : carte II sur écran horizontal, image 3:2 (après les règles paysage générales) */
 @media (orientation:landscape){#mapbox.m2{width:min(100vw,150vh);aspect-ratio:3/2;background-image:url(assets/world2-l.webp)}#mapbox.m2 .zone{left:var(--lx);top:var(--ly)}#mapbox.m2 .zone.edge b{white-space:nowrap;width:auto}}
+/* V4.37 : 5 boutons de sorts ou plus en portrait (potion comprise) → deux rangées, sans chevaucher « Fin du tour » */
+@media (orientation:portrait){#spells:has(>:nth-child(5)){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px 6px!important;justify-items:center;align-content:center}#spells:has(>:nth-child(5))>.sp{width:100%;max-width:58px;min-width:0}#panel.deux #spells{min-height:128px}}

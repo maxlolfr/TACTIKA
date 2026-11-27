@@ -6,7 +6,7 @@
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
 import {R7,addOrion,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
-import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
+import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,iceTick,hitCells,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
 
 if(process.env.NO_MHEAL)SP.mheal.pa=99;
 // TEAM=0,1,3 : équipe de combat (3 = Orion, V4.33)
@@ -21,9 +21,10 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
  if(sp.heal){if(!t)return 0;let v=0;for(const p of sp.splash?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c]){const a=occ(s,p.x,p.y);if(a&&a.team===u.team&&a.hp<a.max*.55)v+=Math.min(a.max-a.hp,sp.heal[1])*1.5}return v}
  if(sp.buff)return t&&t.hi===0&&!t.buff&&alive(s,'m').length>1?8:0;
  if(sp.shield)return alive(s,'m').filter(m=>man(m,u)<=2).length>=2?7:0;
- if(sp.pmBonus||sp.revive||sp.trap)return 0; // Renaissance et Piège : non joués par le simulateur
- const tg=sp.zone?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c];let v=0;
- for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(p===c?1:sp.side||1)*(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)+(sp.burn&&!fireproof(m)&&!m.burn?4:0)}
+ if(sp.weaken)return t&&!t.weak?6:0;
+ if(sp.pmBonus||sp.revive||sp.trap||sp.wall||sp.blink)return 0; // Glyphe, Mur et Saut non plus // Renaissance et Piège : non joués par le simulateur
+ const tg=hitCells(s,sp,c,u);let v=0;
+ for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.side&&(p.x!==c.x||p.y!==c.y)?sp.side:1)*(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)+(sp.burn&&!fireproof(m)&&!m.burn?4:0)}
  return v}
 // Meilleure action : {p (case d'où lancer), sp, c, v}.
 function best(s,u){const rc=reach(s,u,u.pm);let b=null;
@@ -48,7 +49,7 @@ function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIG
  const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);if(TEAM)save.team=TEAM;mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
  s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;
- while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;tally(s,lavaTick(s));if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
+ while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;iceTick(s);tally(s,lavaTick(s));if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
   beginTurn(u);if(u.poison||u.burn){poisonTick(s,u);if(outcome(s)||u.dead)continue}
   u.team==='h'?heroTurn(s,u):monTurn(s,u);endTurn(u);waveEmpty(s)}
  const win=outcome(s)==='win';

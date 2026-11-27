@@ -230,3 +230,4 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 /* V4.33 : choix de l'équipe (3 héros parmi ceux disponibles) */
 .v-team p{margin:0 0 6px}.v-team .v-actions{margin:0}
 .v-tabs:has(>:nth-child(4)){grid-template-columns:repeat(4,1fr);gap:5px}.v-tabs:has(>:nth-child(4)) button{flex-direction:column;gap:0;font-size:12px;line-height:1.1;min-width:0}
+.v-spell{flex-wrap:wrap}.v-spell>div{flex:1 1 150px;min-width:0}.v-spell>button{flex:none;margin-left:auto}

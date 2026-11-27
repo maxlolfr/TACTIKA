@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.37 (27/11) : les 10 sorts d'Orion et ses 6 sorts emportés (aperçu)
+- Sorts connus par niveau (`ORION.learn`) : 3 au départ, puis 5, 10, 15, 20, 25, 35, 45. 6 emportés au plus (`save.load`, choix sur la fiche : « Emporter » puis « Remplacer »). `?apercu=braise&tous` ouvre les 10 pour essayer.
+- Mur de glace : case `ice` bloquante (passage et vue), PV = 40 % des PV max d'Orion (**choix à confirmer**), disparaît au début du 2ᵉ tour de table suivant. Un monstre qui ne peut atteindre aucun héros frappe le mur collé à lui. Les renforts n'apparaissent pas dedans.
+- Téléportation (ligne de vue exigée, passe par-dessus les décors bas), Affaiblissement (−20 %, aussi sur Séisme et Rayon), Explosion (impossible sans ennemi collé), Glyphe (partage l'emplacement des pièges, disparaît si Orion tombe), Tempête (rayon 2, 1 fois par combat).
+- Corrigé : les sorts à distance d'Orion lançaient une flèche (boule de couleur) ; en portrait, 5 boutons ou plus chevauchaient « Fin du tour » (aussi pour les autres héros avec talent + potion) : deux rangées, hauteur réservée pour ne pas masquer le plateau.
+- Simulateur : le bot ne joue ni Mur, ni Saut, ni Glyphe ; Explosion, Affaiblissement et Tempête ne sont pas mesurés (niveaux 21 à 25 avec les 6 sorts par défaut). 80 combats de non-régression : chiffres de la V4.35 retrouvés à l'identique après rétablissement de l'ordre des cases des zones.
+
 ## V4.36 (27/11) : voix des héros
 21 répliques courtes en français (Kael, Fenn, Aelis), dossier `assets/audio/voix/`, détail dans `assets/audio/SONS.md`. `voice()` dans `src/audio.js` (jamais deux voix à la fois, délais anti-répétition, musique baissée), champ `vx` des sorts dans `src/data.js`, curseur « Volume voix ». Pas encore écouté ni essayé sur téléphone. Orion n'a pas de voix.
 

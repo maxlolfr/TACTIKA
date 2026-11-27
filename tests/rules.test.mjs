@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES,addOrion} from '../src/data.js';
 import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell,iceTick} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -973,7 +973,7 @@ test('Orion en combat : 3 unités, bons sorts, brûlure sans cumul et insensibil
   const H = s.units.filter(u => u.team === 'h');
   assert.deepEqual(H.map(u => u.k), ['warrior', 'mage', 'archer']);
   const o = H[1];
-  assert.deepEqual(o.sp, ['arcane', 'flame', 'frost', 'fireball']);
+  assert.deepEqual(o.sp, ['arcane', 'flame', 'frost', 'fireball', 'icewall', 'blink']);
   const m = s.units.find(u => u.team === 'm'); m.hp = m.max = 999;
   s.rng = () => .99;
   applySpell(s, o, o.S.flame, m); applySpell(s, o, o.S.flame, m);
@@ -995,4 +995,97 @@ test('Boule de feu : 60 % autour du centre, aperçu égal à l’effet, alliés 
   assert.equal(ami.hp, pv);
   assert.ok(999 - a.hp >= centre.dmg[0] && 999 - a.hp <= centre.dmg[1]);
   assert.ok(999 - b.hp >= autour.dmg[0] && 999 - b.hp <= autour.dmg[1]);
+});
+
+// V4.37 : les 6 autres sorts d'Orion et les 6 sorts emportés
+function terrain(load, lvl = 50) {
+  const s = arena(); s.round = 1;
+  const o = unit(s, 'h', 2, 5, { k: 'mage', hi: 3, hp: 100, max: 100, mult: 1, S: SP, sp: load, crit: 0.0001 });
+  s.rng = () => .5;
+  return { s, o };
+}
+const foe = (s, x, y, o = {}) => unit(s, 'm', x, y, { k: 'slime', hp: 200, max: 200, armor: 0, atk: { n: 'Attaque', pa: 4, r: [1, 1], t: 'enemy', dmg: [10, 10] }, maxPA: 4, pa: 4, ...o });
+
+test('sorts connus : 7 au recrutement (niveau 20), 10 au niveau 45, 6 emportés au plus', () => {
+  assert.deepEqual([1, 5, 20, 24, 25, 35, 45].map(lvl => knownSpells({ lvl }, 3).length), [3, 4, 7, 7, 8, 9, 10]);
+  assert.deepEqual(loadoutOf({ lvl: 20 }, 3), ['arcane', 'flame', 'frost', 'fireball', 'icewall', 'blink']);
+  for (const load of [undefined, null, 'x', { 3: null }, { 3: ['storm', 'storm', 'zzz'] }]) {
+    const l = loadoutOf({ lvl: 20, load }, 3);
+    assert.equal(l.length, 6); assert.equal(new Set(l).size, 6); assert.ok(!l.includes('storm'));
+  }
+  const s = { lvl: 20 };
+  assert.equal(swapSpell(s, 3, 'blink', 'storm'), 0, 'pas encore appris');
+  assert.equal(swapSpell(s, 3, 'blink', 'flame'), 0, 'déjà emporté');
+  assert.equal(swapSpell(s, 3, 'blink', 'weaken'), 1);
+  assert.deepEqual(loadoutOf(s, 3), ['arcane', 'flame', 'frost', 'fireball', 'icewall', 'weaken']);
+});
+test('mur de glace : bloque le passage et la vue, expire au bon tour de table', () => {
+  const { s, o } = terrain(['icewall']);
+  assert.ok(okTarget(s, o, SP.icewall, { x: 4, y: 5 }));
+  applySpell(s, o, SP.icewall, { x: 4, y: 5 });
+  const c = cell(s, 4, 5);
+  assert.deepEqual(c.ice, { hp: 40, max: 40, until: 3 });
+  assert.ok(!passable(s, 4, 5));
+  assert.ok(!los(s, o, { x: 6, y: 5 }));
+  assert.ok(!okTarget(s, o, SP.icewall, { x: 4, y: 5 }), 'pas de second mur sur la même case');
+  s.round = 2; iceTick(s); assert.ok(c.ice);
+  s.round = 3; iceTick(s); assert.ok(!c.ice && !c.block && passable(s, 4, 5));
+});
+test('mur de glace : un ennemi bloqué le frappe et le casse ; il ne frappe pas le mur s’il peut atteindre un héros', () => {
+  const { s, o } = terrain(['icewall']);
+  for (let y = 0; y < 12; y++) if (y !== 5) cell(s, 4, y).block = 1;
+  applySpell(s, o, SP.icewall, { x: 4, y: 5 });
+  const m = foe(s, 5, 5, { pm: 3, maxPM: 3 });
+  const a = aiStep(s, m);
+  assert.equal(a.type, 'cast'); assert.ok(a.target.ice);
+  for (let k = 0; k < 4; k++) applySpell(s, m, m.atk, a.target);
+  assert.ok(passable(s, 4, 5));
+  applySpell(s, o, SP.icewall, { x: 4, y: 5 });
+  Object.assign(o, { x: 5, y: 4 });
+  const b = aiStep(s, m);
+  assert.ok(!(b && b.target && b.target.ice));
+});
+test('téléportation : déplace Orion sans PM, refuse une case occupée', () => {
+  const { s, o } = terrain(['blink']); const m = foe(s, 3, 5);
+  assert.ok(!okTarget(s, o, SP.blink, m));
+  applySpell(s, o, SP.blink, { x: 2, y: 8 });
+  assert.deepEqual([o.x, o.y, o.pm], [2, 8, 3]);
+});
+test('affaiblissement : −20 % sans cumul, deux tours de la cible', () => {
+  const { s, o } = terrain(['weaken']); const m = foe(s, 4, 5);
+  applySpell(s, o, SP.weaken, m); applySpell(s, o, SP.weaken, m);
+  assert.deepEqual(m.weak, { pct: .2, turns: 2 });
+  const pv = o.hp; applySpell(s, m, { ...m.atk, r: [1, 9] }, o); assert.equal(pv - o.hp, 8);
+  assert.equal(m.hp, 200, 'aucun dégât');
+  endTurn(m); assert.ok(m.weak); endTurn(m); assert.equal(m.weak, undefined);
+});
+test('explosion : ennemis collés seulement, repoussés d’une case ; impossible sans ennemi collé', () => {
+  const { s, o } = terrain(['nova']);
+  assert.ok(!okTarget(s, o, SP.nova, o));
+  const a = foe(s, 3, 5), loin = foe(s, 4, 6), ami = unit(s, 'h', 2, 4);
+  assert.ok(okTarget(s, o, SP.nova, o));
+  const f = forecast(s, o, SP.nova, a, o);
+  applySpell(s, o, SP.nova, o);
+  assert.ok(200 - a.hp >= f.dmg[0] && 200 - a.hp <= f.dmg[1]);
+  assert.deepEqual([a.x, a.y, loin.hp, ami.hp, ami.y, o.hp], [4, 5, 200, 50, 4, 100]);
+});
+test('glyphe : un seul à la fois, un seul déclenchement, disparaît si Orion tombe', () => {
+  const { s, o } = terrain(['glyph']);
+  applySpell(s, o, SP.glyph, { x: 4, y: 5 }); applySpell(s, o, SP.glyph, { x: 5, y: 5 });
+  assert.deepEqual([o.trap.x, o.trap.y], [5, 5]);
+  const m = foe(s, 5, 5);
+  stepOn(s, m); assert.ok(200 - m.hp >= 12 && 200 - m.hp <= 16); assert.equal(m.slow, undefined); assert.equal(o.trap, undefined);
+  m.x = 9; applySpell(s, o, SP.glyph, { x: 5, y: 5 }); hurt(s, o, 999, 'x'); assert.equal(o.trap, undefined);
+});
+test('tempête : rayon 2, 50 % autour, alliés épargnés, une fois par combat', () => {
+  const { s, o } = terrain(['storm']);
+  const c = { x: 6, y: 5 }, a = foe(s, 6, 5), b = foe(s, 7, 6), hors = foe(s, 8, 6), ami = unit(s, 'h', 6, 7);
+  const centre = forecast(s, o, SP.storm, a, o, c), bord = forecast(s, o, SP.storm, b, o, c);
+  assert.ok(Math.abs(bord.dmg[1] - centre.dmg[1] / 2) <= 1);
+  payCost(o, SP.storm, c); applySpell(s, o, SP.storm, c);
+  assert.ok(200 - a.hp > 200 - b.hp && b.hp < 200);
+  assert.deepEqual([hors.hp, ami.hp], [200, 50]);
+  assert.equal(zoneCells(s, c, 2).length, 13);
+  for (let k = 0; k < 20; k++) beginTurn(o);
+  assert.ok(o.cd[SP.storm.n] > 0);
 });

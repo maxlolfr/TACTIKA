@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -13,7 +13,7 @@ import {renderHome} from './home.js';
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
  const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
-const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],arcane:['sico',14],flame:['sico',2],frost:['sico',3],fireball:['spells',8],charge:['spells5',0],pshot:['spells5',1],mheal:['spells5',2]};
+const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],arcane:['sico',14],flame:['sico',2],frost:['sico',3],fireball:['spells',8],icewall:['spells',9],blink:['spells',11],weaken:['sico',7],nova:['sico',13],glyph:['spells',13],storm:['spells',10],charge:['spells5',0],pshot:['spells5',1],mheal:['spells5',2]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
 const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
 const GOALS={survive:`<b>⏳ Objectif : survivre ${SURVIVE} tours</b><br>Garde au moins un héros debout jusqu’à la fin du ${SURVIVE}ᵉ tour. Tu n’as pas besoin de vaincre tous les monstres (le faire gagne aussi).`,
@@ -101,7 +101,7 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  if(!u||u.team!=='h'){if(o)$('hint').textContent=info(o);return}
  if(!G.endTurnResolve)return;
  if(G.sel){const sp=G.sel.sp,E=G.ex;
-  if(sp.t==='self'){if(same(c,u))return strike(u,sp,c);$('hint').textContent='Touche ton héros pour confirmer, ou retouche le sort pour l’annuler.';return}
+  if(sp.t==='self'&&!sp.nova){if(same(c,u))return strike(u,sp,c);$('hint').textContent='Touche ton héros pour confirmer, ou retouche le sort pour l’annuler.';return}
   if(E&&!E.bad&&(same(c,E.tap)||E.ap&&same(c,E.ap)&&!o))return E.ap?advance(u,sp,E):strike(u,sp,{x:E.x,y:E.y});
   return aim(u,c)}
  const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
@@ -109,13 +109,14 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
    $('hint').textContent=`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
   G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();autoEnd();return}
  if(G.plan){G.plan=null;render()}if(o){$('hint').textContent=info(o);return}
- const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
+ const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.ice?`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${cl.ice.until-G.s.round} tour(s))`:cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
 // ---------- carte de visée : qui, validité, effet réel ----------
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
 const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
 function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
  if(sp.burn&&f.dmg)out.push(fireproof(t)?'insensible au feu : pas de brûlure':`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`);
  if(sp.slow&&f.dmg)out.push('−1 PM au prochain tour');
+ if(sp.weaken)out.push(`${Math.round(sp.weaken[0]*100)} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
  if(f.dmg){out.push(`<b>${rg(f.dmg)} dégâts</b>${f.push?` + ${f.push} collision`:''} · critique ${Math.round(f.pc*100)} % : ${rg(f.crit)}${f.dodge?` · esquive ${Math.round(f.dodge*100)} %`:''}`);
   const why=[u.buff&&`bonus +${Math.round(u.buff.pct*100)} %`,f.combo&&`combo ×${f.combo}`,f.amp&&'cristal',t.shield>0&&'Rempart',t.armor&&`armure ${Math.round(t.armor*(1-(sp.pierce||0))*100)} %`].filter(Boolean);
   if(f.ko||why.length)out.push((f.ko?KO[f.ko]+' ':'')+why.join(' · '))}
@@ -128,13 +129,13 @@ function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.cla
  L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?'prisme':'case visée'}</strong>`);
  if(E.bad)L.push(`✗ ${E.bad}`);
  else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.chg?`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`:E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
-  if(sp.zone){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
+  if(sp.zone||sp.nova){const hit=hitCells(S,sp,E,from).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
    for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
    L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · ${sp.n} épargne tes héros`:'Aucun ennemi dans la zone')}
   else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit)L.push(`${o.n} : <b>+${rg(forecast(S,u,sp,o,from).heal)} PV</b>`);L.push('Cible et alliés collés à elle · pas de résurrection')}
   else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
   // prisme déclenché : effet à part, qui touche aussi les héros
-  const pc=sp.dmg&&(sp.zone?zoneCells(S,E):[E]).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
+  const pc=sp.dmg&&!sp.glyph&&hitCells(S,sp,E,from).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
   if(pc){const d=prismDmg(S,{...u,x:from.x,y:from.y},sp),who=prismHits(S,pc).map(p=>E.ap&&p.x===E.ap.x&&p.y===E.ap.y?u:occ(S,p.x,p.y)===u&&E.ap?null:occ(S,p.x,p.y)).filter(Boolean);
    L.push(`<span class="pz${who.some(o=>o.team==='h')?' danger':''}">◆ Prisme déclenché : ${who.length?who.map(o=>`${o.n} -${soak(o,d)}`).join(', '):'personne autour'}${who.some(o=>o.team==='h')?' — héros touché !':''}</span>`)}
   L.push('<i>Retouche au même endroit pour lancer</i>')}
@@ -153,6 +154,7 @@ export async function startFight(zi,i,F){
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
+ $('panel').classList.toggle('deux',S.units.some(h=>h.team==='h'&&h.sp.length>=5)); // V4.37 : hauteur des 2 rangées réservée avant de placer le plateau
  layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const vf=G.fid;setTimeout(()=>{if(G.fid===vf)say1(G.s.units.filter(u=>u.team==='h'),'start')},G.F.boss?2600:1500);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
