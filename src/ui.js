@@ -149,7 +149,7 @@ export async function startFight(zi,i,F){
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
- layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'forest',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave'};music(G.F.boss?(zid==='cristal'?'titan_boss':'boss'):i===2&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
+ layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'forest',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave'};music(G.F.boss?(zid==='cristal'?'titan_boss':'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------

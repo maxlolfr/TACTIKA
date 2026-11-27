@@ -378,7 +378,7 @@ test('taverne : contrats du jour stables, progression, récompense une seule foi
  const b=contracts(sv,501);assert.notEqual(b,a);assert.equal(b[0].p,0);
 });
 test('défi du jour : zone la plus avancée, sans boss', ()=>{
- const F=dailyFight({z:{prairie:4,bois:2}},10);assert.equal(F.zi,1);assert.equal(F.lvl,ZONES[1].lvl+4);assert.equal(F.boss,null);assert.equal(F.daily,1);
+ const F=dailyFight({z:{prairie:10,bois:2}},10);assert.equal(F.zi,1);assert.equal(F.lvl,ZONES[1].lvl+4);assert.equal(F.boss,null);assert.equal(F.daily,1);
  assert.equal(dailyFight({z:{}},10).zi,0);
 });
 
@@ -469,8 +469,8 @@ const Z6=ZONES.findIndex(z=>z.id==='cristal');
 const cry=(s,x,y,k)=>Object.assign(cell(s,x,y),{block:1,cry:k});
 
 test('région 6 : 10 combats, boss au dernier, ouverte après le Château', () => {
- assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),4);
- assert.ok(fightSpec(Z6,9,1).boss);assert.ok(!fightSpec(Z6,8,1).boss);assert.ok(fightSpec(0,3,1).boss);
+ assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),10);assert.equal(zlen(ZONES[1]),4);
+ assert.ok(fightSpec(Z6,9,1).boss);assert.ok(!fightSpec(Z6,8,1).boss);assert.ok(fightSpec(0,9,1).boss);assert.ok(!fightSpec(0,3,1).boss);
  assert.equal(fightSpec(Z6,4,1).goal,'chief');assert.equal(fightSpec(Z6,6,1).goal,'survive');assert.equal(fightSpec(Z6,0,1).goal,null);
  assert.equal(fightSpec(2,1,1).goal,'chief'); // anciennes zones inchangées
  const save={z:{chateau:4}};assert.ok(zoneDone(save,Z6-1));assert.ok(!zoneDone({z:{cristal:9}},Z6));assert.ok(zoneDone({z:{cristal:10}},Z6));
@@ -724,4 +724,23 @@ test('V4.7c : le combat utilise les valeurs des caractéristiques', () => {
  const s=newBattle(()=>.5),{hs,es}=genMap(s,7,0),sav=sv(11,{attr:[{agi:10}]}),st=[0,1,2].map(i=>heroStats(sav,i));
  mkUnits(s,{...FIGHT,lvl:11},hs,es,st);const k=s.units.find(u=>u.hi===0);
  assert.equal(k.crit,st[0].crit);assert.equal(k.dodge,st[0].dodge);assert.ok(k.dodge>0);assert.equal(k.max,st[0].hp);
+});
+
+// ---------- V4.9 : Prairie à 10 étapes ----------
+import {migratePrairie} from '../src/rules.js';
+test('Prairie : 10 étapes, boss à la 10e, niveaux 1 à 3, gelées et sangliers', ()=>{
+ const F=[...Array(10).keys()].map(i=>fightSpec(0,i,1));
+ assert.deepEqual(F.map(f=>!!f.boss),[...Array(9).fill(false),true]);assert.equal(F[0].lvl,1);assert.equal(F[9].lvl,3);
+ assert.deepEqual([F[4].goal,F[7].goal],['chief','survive']);assert.equal(F[7].wave.turns,5);
+ for(const f of F)for(const k of f.en)assert.ok(['slime','boar'].includes(k));
+ assert.equal(dailyFight({z:{}},10).cry,undefined);
+});
+test('Prairie : toutes les étapes se génèrent, bon nombre d’ennemis', ()=>{
+ for(let i=0;i<10;i++)for(let seed=1;seed<=20;seed++){const F=fightSpec(0,i,seed),s=newBattle(),g=genMap(s,seed,F.th);mkUnits(s,F,g.hs,g.es,HS);
+  assert.equal(s.units.filter(u=>u.team==='m').length,F.wave?3:F.en.length+(F.boss?1:0))}
+});
+test('Prairie : ancienne sauvegarde reprise une seule fois', ()=>{
+ const a=migratePrairie({z:{prairie:4},st:{prairie:[3,2,1,3]}});assert.equal(a.z.prairie,10);assert.equal(a.st.prairie[9],3);assert.equal(a.st.prairie[3],0);
+ const b=migratePrairie({z:{prairie:2},st:{prairie:[3,2]}});assert.equal(b.z.prairie,2);assert.deepEqual(b.st.prairie,[3,2]);
+ b.z.prairie=4;migratePrairie(b);assert.equal(b.z.prairie,4);
 });

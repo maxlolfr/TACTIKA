@@ -40,9 +40,13 @@ export const MON={
  prisbat:{ai:'range',snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
-const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6;
+const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar';
 export const ZONES=[
- {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}}},
+ {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar'],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}},
+  // V4.9 pilote : 10 étapes, niveaux 1 à 3, gelées et sangliers (le 1er monstre est le chef si goal='chief'). Chiffres de départ, à régler après les tests de Max
+  waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,'boar']]}},
+  fights:[{lvl:1,en:[SL,SL,SL]},{lvl:1,en:[SL,SL,BO]},{lvl:1,en:[SL,SL,SL,SL]},{lvl:2,en:[SL,BO,BO]},{lvl:2,en:[BO,SL,SL],goal:'chief'},
+   {lvl:2,en:[SL,SL,BO,BO]},{lvl:2,en:[SL,SL,SL,SL,BO]},{lvl:2,en:[SL,SL,BO],goal:'survive'},{lvl:3,en:[BO,BO,SL,SL,SL]},{lvl:3,en:[SL,SL,BO]}]},
  {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl',summon:{k:'wolf',n:2,hp:28,pm:5,dmg:[6,9],sn:'Loup de meute',snd:'bite'}},
   waves:{2:{turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,'wolf'],[5,2]]}}}, // V4.5a pilote : survie à renforts (3 + 1/2/1 élite/2)
  {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{2:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'}},
