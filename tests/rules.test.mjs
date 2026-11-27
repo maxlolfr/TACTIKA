@@ -1690,3 +1690,34 @@ test('V4.85 lot 5 : difficulté par région (DIFF) appliquée aux monstres et au
  assert.ok(Math.abs(b1.atk.dmg[1]/b0.atk.dmg[1]-save.dmg[6]*save.boss[6])<.1,'dégâts du boss');
  assert.equal(HER.find(h=>h.n==='Nyra').hp,48);assert.deepEqual(SP.hammer.dmg,[13,17]);assert.deepEqual(SP.smite.dmg,[14,18]);
 });
+
+test('V4.86 Chronique : 40 trophées, bestiaire, collection, records, sauvegarde additive', async()=>{
+ const C=await import('../src/chronicle.js');
+ const n={};for(const t of C.TROPHIES)n[t.t]=(n[t.t]||0)+1;assert.deepEqual(n,{b:15,a:15,o:9,p:1});
+ assert.equal(new Set(C.TROPHIES.map(t=>t.id)).size,40);assert.equal(C.TROPHIES.at(-1).id,'platine');
+ for(const k of C.BEASTS)assert.ok(k.startsWith('b:')||MON[k],k);assert.equal(C.BEASTS.filter(k=>k.startsWith('b:')).length,12);
+ // ancienne sauvegarde : seul ce qui se déduit de l'état est accordé, aucun compteur inventé
+ const old={lvl:12,items:[0,1,2],z:{prairie:10,bois:3},st:{prairie:[3,2]},q:{Q01:1},up:{}};C.cleanChron(old);
+ assert.deepEqual(old.cr.s,{});assert.equal(Object.keys(old.cr.co).length,3);
+ const got=C.checkTrophies(old,5);assert.ok(got.includes('prairie')&&got.includes('niv10')&&got.includes('etoiles1')&&got.includes('premier_pas'));assert.ok(!got.includes('bois')&&!got.includes('chasseur100'));
+ assert.deepEqual(C.checkTrophies(old,6),[],'pas de doublon');
+ // sauvegarde abîmée : nettoyée sans planter
+ const bad={lvl:1,items:[],cr:{s:{win:'x',kills:3},be:{inconnu:{k:2},slime:{k:'a'}},tr:{faux:1,premier_pas:7},co:[1]}};C.cleanChron(bad);
+ assert.deepEqual(bad.cr.s,{kills:3});assert.deepEqual(bad.cr.be,{slime:{k:0}});assert.deepEqual(bad.cr.tr,{premier_pas:7});assert.deepEqual(bad.cr.co,{});
+ // un combat : décompte, bestiaire, records, trios, héros marquant
+ const s={lvl:5,items:[],z:{},st:{}};C.cleanChron(s);const T=C.newTally(),k={team:'h',hi:1},m={team:'m'},h={team:'h'};
+ C.tally(T,[{type:'hurt',t:m,amt:30},{type:'hurt',t:h,amt:9},{type:'heal',t:h,amt:5}],k);C.tally(T,[{type:'hurt',t:m,amt:12}],{team:'m'});
+ assert.deepEqual([T.dmg,T.taken,T.heal,T.hit,T.by[1]],[42,9,5,30,30]);
+ let r=C.recordFight(s,{win:1,zi:0,boss:1,rounds:3,secs:90,team:[0,1,2],ko:0,kills:{slime:3},seen:['slime','boar'],T});
+ assert.equal(r.mvp,1);assert.deepEqual(r.recs,[],'premier combat : pas de « record battu »');
+ assert.ok(r.tr.includes('premier_pas')&&r.tr.includes('sans_faute')&&r.tr.includes('eclair'));
+ assert.deepEqual(s.cr.be.slime,{k:3});assert.deepEqual(s.cr.be.boar,{k:0});assert.deepEqual(s.cr.be['b:prairie'],{k:1});
+ assert.equal(s.cr.s.kills,3);assert.equal(s.cr.s.time,90);assert.equal(s.cr.tri['0-1-2'],1);
+ r=C.recordFight(s,{win:1,zi:0,rounds:2,secs:99999,team:[2,1,0],ko:2,kills:{slime:5},seen:[],T:{...C.newTally(),dmg:80,hit:31}});
+ assert.deepEqual(r.recs.map(x=>x.k).sort(),['dmg','fast','hit','kills']);assert.equal(s.cr.s.time,90+3600,'temps plafonné');assert.equal(s.cr.s.solo,1);
+ C.recordFight(s,{win:0,zi:0,rounds:5,team:[0,1,2],ko:3,kills:{},seen:[]});assert.equal(s.cr.s.loss,1);
+ // collection : un objet revendu reste découvert ; JSON aller-retour
+ s.items=[7];C.syncCollection(s);s.items=[];const back=JSON.parse(JSON.stringify(s));C.cleanChron(back);assert.equal(back.cr.co[7],1);
+ // complétion
+ const c=C.completion({z:{prairie:10},st:{prairie:Array(10).fill(3)},q:{Q01:1,Q02:1,Q03:1}},0);assert.equal(c.pct,100);
+});

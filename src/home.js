@@ -5,13 +5,14 @@ import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TE
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
+import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
+import {TROPHIES,TIER,REC,BEASTS,beastInfo,beastTraits,completion,checkTrophies,stars3,questsDone} from './chronicle.js';
 import {setSon,sonBtns,sfx,voice,setVol,setVoiceLang,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargement
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.85';
+export const VERSION='4.86';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -165,7 +166,7 @@ function build(){
  const chap=el('button','v-chap',`<b>${ch.t}</b><small>${ch.s}</small>`);chap.onclick=()=>root.querySelector('.v-cmd').classList.toggle('open');
  dock.append(cmdPanel(ch),chap,go);
  const nav=el('nav','v-nav');
- for(const[id,n,ic]of[['camp','Camp',['ficon',13]],['heros','Héros',['ui',21]],['inventaire','Inventaire',['ui',26]],['quetes','Quêtes',['ui',20]]]){
+ for(const[id,n,ic]of[['camp','Camp',['ficon',13]],['heros','Héros',['ui',21]],['inventaire','Inventaire',['ui',26]],['quetes','Quêtes',['ui',20]],['chronique','Chronique',['spells',6]]]){
   const b=el('button');b.dataset.tab=id;b.append(icon(...ic,34),el('span',null,n));const q=id==='quetes'?claimable():id==='heros'&&talentNews()?'!':0;if(q)b.append(el('u','v-badge',q));b.onclick=()=>fresh(id);nav.append(b)}
  dock.append(nav);C.append(dock);
  const P=el('section','v-panel');P.id='vpanel';C.append(P);
@@ -222,10 +223,10 @@ let hero=0,back=null,resume=null,slotOpen=null,inv={who:-1,sl:'',sel:null},draft
 export function show(t,from){const P=$('vpanel'),same=t===tab&&P.querySelector('.v-body'),scroll=same?same.scrollTop:0;
  if(from!==undefined)back=from;else if(t!==tab)back=null;tab=t;root.querySelectorAll('.v-nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===(t==='reglages'?'camp':t)));
  P.innerHTML='';P.classList.toggle('on',t!=='camp');root.classList.toggle('paneled',t!=='camp');if(t==='camp')return;
- const titles={heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther',entrainement:'Entraînement'};
+ const titles={heros:'Héros',inventaire:'Inventaire',quetes:'Quêtes',reglages:'Réglages',expe:'Cristal de l’Éther',entrainement:'Entraînement',chronique:'Chronique'};
  const head=el('div','v-head',`<h2>${titles[t]}</h2>`),x=el('button','v-x','✕');x.setAttribute('aria-label','Fermer');x.onclick=()=>show('camp');head.append(x);
  if(back){const to=back,r=el('button','v-x v-ret','‹');r.setAttribute('aria-label','Retour : '+titles[to]);r.onclick=()=>show(to,null);head.append(r)}P.append(head);
- const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe,entrainement})[t](body);body.scrollTop=scroll}
+ const body=el('div','v-body');P.append(body);({heros,inventaire,quetes,reglages,expe,entrainement,chronique})[t](body);body.scrollTop=scroll}
 // ouvrir un écran plein (Académie, Forge, Marchand) depuis un panneau : son bouton Retour y ramène
 const visit=fn=>()=>{resume=tab;fn()};
 // clic dans la barre du bas : on repart de zéro (aucun filtre, aucun emplacement ouvert)
@@ -317,6 +318,24 @@ function inventaire(P){
   info.append(wood('Voir la fiche de '+HER[f].n,()=>{hero=f;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
  R.append(info);
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
+// ---------- V4.86 : Chronique (trophées, régions, statistiques, bestiaire, collection) ----------
+let chTab='tro';
+function chronique(P){const cr=save.cr,tabs=[['tro','Trophées'],['reg','Régions'],['sta','Statistiques'],['bes','Bestiaire'],['col','Collection']];
+ const bar=el('div','v-tabs ch-tabs');for(const[id,n]of tabs){const b=el('button',chTab===id?'on':'',n);b.onclick=()=>{chTab=id;show('chronique')};bar.append(b)}P.append(bar);
+ const nb=o=>Object.keys(o||{}).length,fmt=v=>Math.round(v||0).toLocaleString('fr-FR');
+ if(chTab==='tro'){const got=TROPHIES.filter(t=>cr.tr[t.id]).length;P.append(el('p','ch-sum',`<b>${got} / ${TROPHIES.length}</b> trophées · ${['b','a','o','p'].map(k=>`<span style="color:${TIER[k].c}">${TIER[k].n} ${TROPHIES.filter(t=>t.t===k&&cr.tr[t.id]).length}/${TROPHIES.filter(t=>t.t===k).length}</span>`).join(' · ')}`));
+  for(const t of TROPHIES){const on=!!cr.tr[t.id],r=el('div','v-row ch-tro'+(on?'':' off')),m=el('span','tro-ic','🏆');m.style.color=TIER[t.t].c;r.append(m,el('div',null,`<b>${t.n}</b> <small style="color:${TIER[t.t].c}">${TIER[t.t].n}</small><br><small>${t.d}${on?' · obtenu le '+new Date(cr.tr[t.id]).toLocaleDateString('fr-FR'):''}</small>`));P.append(r)}}
+ if(chTab==='reg')ZONES.forEach((z,zi)=>{if(!unlocked(zi)&&!prog(z.id)){P.append(el('div','v-row ch-reg off',`<span class="tro-ic">🔒</span><div><b>${zi<6?'Carte I':'Carte II'} · région ${zi+1}</b><br><small>Pas encore découverte</small></div>`));return}
+  const c=completion(save,zi);P.append(el('div','v-row ch-reg',`<span class="ch-pct">${c.pct} %</span><div><b>${z.n}</b><span class="ch-bar"><i style="width:${c.pct}%"></i></span><small>Missions ${c.missions}/${c.of} · ★ ${c.stars}/${c.starsOf}${c.questsOf?` · quêtes ${c.quests}/${c.questsOf}`:''} · boss ${c.boss?'✓':'—'}</small></div>`))});
+ if(chTab==='sta'){const s=cr.s,h=Math.floor((s.time||0)/3600),mn=Math.round((s.time||0)%3600/60),fav=Object.entries(cr.hu).sort((a,b)=>b[1]-a[1])[0];
+  const rows=[['Temps de combat',`${h?h+' h ':''}${mn} min`],['Combats',fmt(s.fights)],['Victoires / défaites',`${fmt(s.win)} / ${fmt(s.loss)}`],['Boss vaincus',fmt(s.boss)],['Ennemis vaincus',fmt(s.kills)],['Dégâts infligés',fmt(s.dmg)],['Soins prodigués',fmt(s.heal)],['Dégâts subis',fmt(s.taken)],['Quêtes terminées',`${questsDone(save)}`],['Missions à 3 ★',`${stars3(save)}`],['Héros le plus engagé',fav?`${HER[fav[0]].n} (${fmt(fav[1])} combats)`:'—'],['Trios victorieux',`${nb(cr.tri)} / 20`],...Object.entries(REC).map(([k,n])=>[n,cr.rec[k]?fmt(cr.rec[k]):'—'])];
+  P.append(el('p','ch-sum','<small>Comptés depuis la version 4.86 : les combats plus anciens ne sont pas inventés.</small>'));
+  const t=el('div','v-row ch-sta');t.innerHTML=`<div>${rows.map(([a,b])=>`<p><span>${a}</span><b>${b}</b></p>`).join('')}</div>`;P.append(t)}
+ if(chTab==='bes'){P.append(el('p','ch-sum',`<b>${BEASTS.filter(k=>cr.be[k]).length} / ${BEASTS.length}</b> créatures découvertes`));const g=el('div','ch-grid');
+  for(const k of BEASTS){const on=cr.be[k],b=beastInfo(k),c=el('div','ch-beast'+(on?'':' off')+(b.boss?' boss':''));c.append(sprite(b.s,b.row*3,64));
+   c.append(el('div',null,on?`<b>${b.n}</b><small>${b.zone}</small><small>${beastTraits(k).join(' · ')}</small><small>Vaincu${b.boss?'':'s'} : ${on.k}</small>`:'<b>???</b><small>Pas encore rencontré</small>'));g.append(c)}P.append(g)}
+ if(chTab==='col'){P.append(el('p','ch-sum',`<b>${nb(cr.co)} / ${ITEMS.length}</b> équipements découverts (même revendus)`));const g=el('div','ch-grid col');
+  ITEMS.forEach((o,j)=>{const on=cr.co[j],c=el('div','ch-item'+(on?'':' off'));c.append(icon(...icOf(o),40));c.append(el('small',null,on?o.n:'???'));if(on)c.title=`${o.n} · ${whoName(o)}`;g.append(c)});P.append(g)}}
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
 const SKY_TXT={auto:'selon l’heure',jour:'jour',soir:'soir',nuit:'nuit'};
 function reglages(P){
@@ -329,7 +348,9 @@ function reglages(P){
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
 }
 
-export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;build();root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
+export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;const nt=checkTrophies(save);build();if(nt.length)trophyToast(nt);root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
+// V4.86 : notification discrète d'un trophée obtenu hors combat (niveau, recrutement, quête...)
+function trophyToast(ids){const t=TROPHIES.find(x=>x.id===ids[ids.length-1]),d=el('div','tro-toast',`<span style="color:${TIER[t.t].c}">🏆</span> <b>${t.n}</b>${ids.length>1?` <small>+${ids.length-1}</small>`:''}`);root.append(d);setTimeout(()=>d.remove(),4200)}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});
 // la barre du navigateur intégré peut apparaître ou disparaître sans événement resize au retour d'un combat
 if(window.ResizeObserver)new ResizeObserver(()=>fitHome()).observe($('camp'));

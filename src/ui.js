@@ -11,6 +11,7 @@ import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
+import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 
 // ---------- panneau de combat ----------
@@ -205,7 +206,7 @@ export async function startFight(zi,i,F){
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
  $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
- resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
+ resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
  $('panel').classList.toggle('deux',S.units.some(h=>h.team==='h'&&h.sp.length>=5)); // V4.37 : hauteur des 2 rangées réservée avant de placer le plateau
@@ -377,6 +378,14 @@ function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv
 // V4.36 : un héros au hasard parmi ceux qui ont une voix
 const say1=(list,line)=>{setVoiceLang(save.lang);const l=list.filter(u=>!u.dead&&VOICES[u.k]);if(l.length)voice(pick(Math.random,l).k,line,{force:true})};
 const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
+// V4.86 : Chronique : enregistre le combat (statistiques, bestiaire, records, trophées) et prépare le bilan enrichi
+function chron(win){const F=G.F,S=G.s,H=S.units.filter(u=>u.team==='h'),kills={},seen=new Set();
+ for(const u of S.units)if(u.team==='m'&&!u.boss){seen.add(u.k);if(u.dead&&!u.fled)kills[u.k]=(kills[u.k]||0)+1}
+ const r=recordFight(save,{win,zi:F.zi,boss:!!F.boss,daily:!!F.daily,quest:!!F.quest,wave:!!S.wave,rounds:S.round,secs:(Date.now()-(G.t0||Date.now()))/1000,team:H.map(u=>u.hi),ko:H.filter(u=>u.dead).length,kills,seen:[...seen],T:S.T});store();
+ const T=S.T||{dmg:0,heal:0},n=v=>Math.round(v).toLocaleString('fr-FR');
+ r.html=`<div class="bilan"><span>⏱ ${S.round} tour${S.round>1?'s':''}</span><span>⚔ ${n(T.dmg)} dégâts</span>${T.heal?`<span>✚ ${n(T.heal)} soins</span>`:''}${win&&r.mvp>=0?`<span class="mvp">★ ${HER[r.mvp].n}</span>`:''}</div>`+
+  (r.recs.length?`<div class="bilan rec">${r.recs.map(x=>`Nouveau record · ${REC[x.k]} : ${n(x.v)}`).join('<br>')}</div>`:'');return r}
+const trophyRow=id=>{const t=TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">Trophée ${TIER[t.t].n.toLowerCase()} : ${t.n}</b><br>${t.d}`]};
 function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
  LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>u.n.replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?'victory':'defeat');
@@ -389,9 +398,10 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   if(qNew){(save.q||(save.q={}))[Q.id]=1;const qg=Math.round((20+8*save.lvl)*2.5);save.gold+=qg;gold+=qg;up+=gainXp(save,15*save.lvl*2);xp+=15*save.lvl*2;
    const got=grantQuest(save,Q);qIt=got.length?got[0]:null;qSg.push(...got.slice(1))}
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
-  const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
+  const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
    <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+  Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
@@ -400,6 +410,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   for(const j of qSg)loot.push([icon(...icOf(ITEMS[j]),48),`<b style="color:${RARE[rarOf(save,j)].c}">${ITEMS[j].n}</b><br>${whoName(ITEMS[j])} : ${effet(ITEMS[j],rarOf(save,j))}`]);
   if(qIt!==null)loot.push([icon(...icOf(ITEMS[qIt]),48),`<b style="color:${RARE[rarOf(save,qIt)].c}">${ITEMS[qIt].n}</b><br>${whoName(ITEMS[qIt])} : ${effet(ITEMS[qIt],rarOf(save,qIt))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
+  for(const id of CH.tr)loot.push(trophyRow(id));
   for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
   const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);
@@ -409,8 +420,8 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
   if(first&&F.boss){const ev=bossWinEvents(save,zid);if(ev.length)setTimeout(()=>playStory(save,ev,store),2200)} // V4.80 : scènes de fin de région, une seule fois, jamais en farm ni en défaite
- }else{const L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
-  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':`Tour ${L.round}`} · ${L.ko} héros KO · ${L.left} ennemi${L.left>1?'s':''} encore debout${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?` · ${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`:''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div><ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
+ }else{const CH=chron(false),L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
+  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':`Tour ${L.round}`} · ${L.ko} héros KO · ${L.left} ennemi${L.left>1?'s':''} encore debout${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?` · ${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`:''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div>${CH.html}<ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
  // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi
  const acts=document.createElement('div');acts.className='ractions';let gone=false;
  const act2=(t,f,dark)=>{const b=document.createElement('button');b.className='btn'+(dark?' dark':'');b.textContent=t;b.onclick=()=>{if(gone)return;gone=true;f()};acts.append(b)};

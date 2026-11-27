@@ -3,6 +3,7 @@ import {ZONES,zlen,PREVIEW} from './data.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
+import {cleanChron} from './chronicle.js';
 import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateChateau} from './rules.js';
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
 // sauvegarde illisible ou abîmée : on garde les valeurs par défaut plutôt que de planter
@@ -16,7 +17,8 @@ migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migr
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
 save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
 cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids validés, anciennes sauvegardes : rien à rejouer)
+cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu
 export const prog=id=>save.z[id]||0,unlocked=zi=>!ZONES[zi].soon&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
 export function store(){try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}}
-export function resetSave(){for(const k of Object.keys(save))delete save[k];Object.assign(save,{v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:{},st:{},up:{},sp:cleanSp(),pot:0,attr:cleanAttr(null,1),p10:1,b10:1,c10:1,m10:1,h10:1,storySeen:{}});store()}
+export function resetSave(){for(const k of Object.keys(save))delete save[k];Object.assign(save,{v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:{},st:{},up:{},sp:cleanSp(),pot:0,attr:cleanAttr(null,1),p10:1,b10:1,c10:1,m10:1,h10:1,storySeen:{}});cleanChron(save);store()}

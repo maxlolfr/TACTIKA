@@ -263,3 +263,24 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 .v-eq i{color:#ffd98a}.v-eq small{color:#b9c6dd}.v-eq.vide{background:#0a1120;border-color:#4d5b78;color:#9fb0cc}.v-eq.vide i{color:#8fa0bf}
 .v-pick .v-row small{color:#b9c6dd}
 .v-diff.up{color:#7fe08a!important}.v-diff.down{color:#ff8f80!important}
+/* V4.86 : Chronique */
+.v-nav{grid-template-columns:repeat(5,1fr)}
+@media (max-width:380px){.v-nav span{font-size:10.5px;letter-spacing:0}}
+.ch-tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:8px}
+.ch-tabs button{font:600 13px/1 system-ui,sans-serif;padding:8px 11px;min-height:36px;border-radius:10px;border:1.5px solid #c9a24a88;background:#0b1430cc;color:#e9dcc0;cursor:pointer}
+.ch-tabs button.on{background:linear-gradient(#ffd26a,#c9902e);color:#2a1608;border-color:#ffd26a}
+.ch-sum{text-align:center;margin:4px 0 8px;color:#e9dcc0;font-size:13px}
+.ch-tro.off,.ch-reg.off{opacity:.55;filter:grayscale(.8)}
+.ch-tro small,.ch-reg small{opacity:.85}
+.ch-pct{flex:none;width:52px;text-align:center;font:700 16px/1 system-ui,sans-serif;color:#7a4a14}
+.ch-bar{display:block;height:7px;border-radius:4px;background:#0003;margin:4px 0 3px;overflow:hidden}.ch-bar i{display:block;height:100%;background:linear-gradient(90deg,#c9902e,#ffd26a)}
+.ch-sta>div p{display:flex;justify-content:space-between;gap:10px;margin:3px 0;border-bottom:1px dashed #a8742f55;padding-bottom:3px}
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ch-grid.col{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
+.ch-beast,.ch-item{background:linear-gradient(#fff3d6,#ecd3a3);color:#3a2010;border:2px solid #a8742f;border-radius:12px;padding:6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;min-width:0}
+.ch-beast.boss{border-color:#c9902e;box-shadow:inset 0 0 0 2px #ffd26a88}
+.ch-beast small,.ch-item small{display:block;font-size:11px;line-height:1.2;overflow-wrap:anywhere}
+.ch-beast.off canvas,.ch-item.off canvas{filter:brightness(0) opacity(.35)}
+.ch-item canvas{width:40px;height:40px}
+.tro-toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translateX(-50%);z-index:60;background:#0b1430ee;color:#fff3d6;border:1.5px solid #ffd26a;border-radius:14px;padding:8px 14px;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 4px 14px #0008;animation:troIn 4.2s ease forwards;pointer-events:none}
+@keyframes troIn{0%{opacity:0;transform:translate(-50%,-10px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
