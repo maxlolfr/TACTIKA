@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.65 (27/11 soir) : région 9, Marais des âmes (partielle), quêtes Q25 à Q27
+- **En jeu** : `R9` (carte II, 10 missions, niveaux 31 à 35, ouverte après le Pharaon), thème `THEMES[9]` (`sol_marais`, obstacles 44–51 = `deco6`, `DECO_W`, `LOW`), fond `assets/bg/marais.webp` (portrait, proportions d'origine 2:3, ajusté en « cover ») et `marais-l.webp`, musique `darkwood` / `boss_map2`. Images reçues de Max le 27/11 : crapaud venimeux (ChatGPT), 8 sols et 8 obstacles (Gemini), originaux sans perte dans `art/r9/`, découpe par `tools/prep_r9.py` (même méthode que `prep_r8.py`, étoile Gemini effacée).
+- **Monstres** : Crapaud venimeux (`toad`, poison 4×2, ralentit, valeurs provisoires). **Provisoire, à remplacer à la réception des planches** : spectre des marais = Fantôme existant (`ghost`) ; boss « Reine des marécages » = crapaud agrandi (`toadK`, mêmes poses, pas de mécanique propre) ; ent corrompu non codé. Quand les planches Reine A/B arrivent : nouvelle planche boss, changer `R9.boss.s`, ajouter les phases voulues.
+- **Quêtes** : Q25 Âmes errantes, Q26 Remède oublié, Q27 Cœur de la forêt (élite champignon) ; Q28–Q40 : régions 10 à 12 (images à recevoir : R10 trois monstres, Aetherion A/B, obstacles ; R11, R12 tout).
+- 154 tests OK ; essai navigateur 844×390 et 390×844 (mission, quête, boss) sans erreur. Safari et Honor non testés.
+
 ## V4.64 (27/11 soir) : équipement de Nyra et Lyria, quêtes Q19 à Q24
 - **Équipement** : `ITEMS` passe de 63 à 79 (eq64–eq79, `TABLE-EQUIPEMENTS-NYRA-LYRIA.md`, ChatGPT). Exclusifs (`who` 4 = Nyra, 5 = Lyria), 2 par emplacement et par héroïne, icônes de la planche `equip` réemployées, paliers 30/35 et 40/45 (palier 1 au marchand, palier 2 au butin), valeurs pilotes de la table. Boucle V4.59 inchangée (le prêt d'objets de Kael/Fenn continue). Le soin des deux colliers/reliques de Lyria s'applique à ses sorts de soin (`heal` → `healB`), jamais à l'absorption. Rien avant le niveau 30 au marchand ni au butin.
 - **Quêtes** : Q19–Q21 (Forteresse de braise), Q22–Q24 (Temple des sables) dans `quests.js`. `questFight` reprend maintenant les cases brûlantes / dalles piégées de la région (`Z.fights[3].lava`). Objectifs existants seulement (victoire, survie, élite). Q25–Q40 : régions 9 à 12 absentes de `ZONES` (images à recevoir).

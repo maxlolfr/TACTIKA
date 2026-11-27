@@ -1,4 +1,4 @@
-// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q40 : régions 9 à 12 pas encore jouables.
+// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q27 : région 9 (marais). Q28–Q40 : régions 10 à 12 pas encore jouables.
 // V4.55 : quêtes scénarisées (carte I, Q01 à Q18 de SCENARIO-TACTIKA.md). Un combat spécial par quête, dans une région déjà ouverte,
 // avec un objectif existant (survive / chief / élite / victoire). Récompense unique ; le combat reste rejouable sans bonus.
 // z : région · l : niveau ajouté à celui de la région · g : objectif · e : élite · r : 1 = objet garanti · need : héros à recruter
@@ -26,4 +26,7 @@ export const QUESTS=[
  {id:'Q21',z:6,l:2,e:'fireel',r:1,t:'Flammes prisonnières',d:'Une flamme vivante est enfermée dans la forteresse. Aelis te demande de la libérer.',c:'Aelis : « Les flammes sont libres. »'},
  {id:'Q22',z:7,l:1,g:'survive',r:1,t:'Tombe interdite',d:'Des vagues de gardiens surgissent d’une tombe scellée. Tiens la position avant que Mira ne reparte avec le trésor.',c:'Mira : « Une histoire à raconter pendant des générations. »'},
  {id:'Q23',z:7,l:2,r:0,t:'Sceptre perdu',d:'Le sceptre d’un ancien roi repose au fond du temple. Ezran veut qu’on nettoie le chemin pour le rapporter.',c:'Ezran : « Cette relique retrouvera sa place dans l’histoire. »'},
- {id:'Q24',z:7,l:2,e:'anubis',r:1,t:'Mémoires du sable',d:'Une sentinelle antique garde les mémoires du temple. Elle ne laissera passer personne.',c:'Aelis : « À nous de ne pas répéter leurs erreurs. »'}];
+ {id:'Q24',z:7,l:2,e:'anubis',r:1,t:'Mémoires du sable',d:'Une sentinelle antique garde les mémoires du temple. Elle ne laissera passer personne.',c:'Aelis : « À nous de ne pas répéter leurs erreurs. »'},
+ {id:'Q25',z:8,l:1,r:1,t:'Âmes errantes',d:'Des âmes sans repos hantent le marais. Chasse ce qui les retient pour qu’Aelis puisse les libérer.',c:'Aelis : « Elles peuvent enfin partir. »'},
+ {id:'Q26',z:8,l:2,r:0,t:'Remède oublié',d:'Nyra cherche des plantes rares au cœur du marais. Dégage le chemin des crapauds qui les gardent.',c:'Nyra : « Voilà un changement agréable. »'},
+ {id:'Q27',z:8,l:2,e:'shroom',r:1,t:'Cœur de la forêt',d:'Un champignon géant étouffe le marais. Fenn veut qu’on l’abatte pour que la vie reprenne.',c:'Fenn : « La vie est sacrément obstinée. »'}];
