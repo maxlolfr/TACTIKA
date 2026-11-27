@@ -397,3 +397,11 @@ body.camp #exc{display:none}
 
 /* V4.56 : noms de sorts lisibles dans le cadre (pastille sombre, points de suspension) */
 .hud2 .sp small{left:4px;right:4px;bottom:4px;padding:0 2px;border-radius:5px;background:#0b1018d9;text-align:center;text-overflow:ellipsis;font-size:8.5px;line-height:12px}
+
+/* V4.58 : grands écrans en paysage (Honor Magic, tablettes) : 2 sorts par rangée, cases plus grandes, la colonne a la place */
+@media (orientation:landscape) and (min-height:600px){
+ .hud2 #spells,.hud2 #spells:has(>:nth-child(5)),.hud2 #spells:has(>:nth-child(7)){grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px 12px!important;padding:6px 6px 2px;justify-items:center}
+ .hud2 .sp,.hud2 #spells:has(>:nth-child(5))>.sp{max-width:min(112px,100%);width:100%}
+ .hud2 .sp small{font-size:11px;line-height:15px;bottom:5px;left:5px;right:5px}
+ .hud2 .sp b{font-size:13px;padding:0 6px;top:-7px;right:-5px}
+}
