@@ -1644,3 +1644,14 @@ test('V4.80 scénario V2 : données complètes FR/EN, déclencheurs, une seule f
   // aucune scène hors région connue ; sauvegarde réaliste sérialisable
   assert.deepEqual(bossWinEvents(f, 'inconnue'), []); assert.deepEqual(JSON.parse(JSON.stringify(f)).storySeen, f.storySeen);
 });
+
+test('V4.81 audio V5 : chaque son et musique déclaré existe, chaque snd de sort est connu', async()=>{
+ const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8');
+ const grab=k=>[...A.match(new RegExp(k+"=\\[([^\\]]*)\\]"))[1].matchAll(/'(\w+)'/g)].map(m=>m[1]);
+ const S=grab('SNDS'),M=grab('MUSICS');
+ for(const n of S.filter(x=>x!=='victory'&&x!=='defeat'))assert.ok(fs.existsSync(new URL('../assets/audio/bruitages/'+n+'.mp3',import.meta.url)),'bruitage manquant '+n);
+ for(const n of M)assert.ok(fs.existsSync(new URL('../assets/audio/musique/'+n+'.mp3',import.meta.url)),'musique manquante '+n);
+ for(const n of ['sands','swamp','skycitadel','frost','sanctuary','elite2','final_boss','ending','boss_v2','ember'])assert.ok(M.includes(n),n);
+ const D=fs.readFileSync(new URL('../src/data.js',import.meta.url),'utf8');
+ for(const m of D.matchAll(/snd:'(\w+)'/g))assert.ok(S.includes(m[1])||['slash'].includes(m[1]),'snd inconnu '+m[1]);
+});

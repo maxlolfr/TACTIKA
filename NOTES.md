@@ -1,3 +1,4 @@
+- **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
 ## V4.80 (27/11 nuit) : lot 3 de la feuille de route V5.0 — scénario V2 intégré (texte seul)
