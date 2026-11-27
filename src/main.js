@@ -12,5 +12,5 @@ if(HUD2)document.documentElement.classList.add('hud2');
 
 (async()=>{
  try{await loadAssets()}catch(e){$('load').textContent='Impossible de charger les images ('+e+')';return}
- $('load').remove();skin();setLang(save.lang);camp(); // V4.89 : anglais de l'interfacerequestAnimationFrame(draw);
+ $('load').remove();skin();setLang(save.lang);camp();requestAnimationFrame(draw); // V4.89 : anglais de l'interface (V4.91 : l'appel du dessin avait été avalé par ce commentaire = plateau noir)
 })();

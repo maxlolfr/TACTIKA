@@ -1,0 +1,48 @@
+// V5.0 : anglais des 40 quêtes (titre, description, réplique de fin). Les clés françaises sont lues dans quests.js : aucune recopie,
+// donc aucun risque de faute de frappe. Une quête sans traduction fait échouer tests/tips.test.mjs.
+import {QUESTS} from './quests.js';
+const T={
+Q01:['Missing Merchant','Ezran the merchant never came home. His cart is surrounded on the road: hold out long enough to bring him back.','Ezran: “You’ve just saved far more than a cargo.”'],
+Q02:['Farm Under Siege','Monsters are prowling around the farm. Garrick asks you to hold it until reinforcements arrive.','Garrick: “Now that’s a victory that counts.”'],
+Q03:['Strange Jelly','An abnormal jelly is draining the Ether from the meadow. Elyndra wants it eliminated.','Elyndra: “This jelly was absorbing Ether without being able to control it.”'],
+Q04:['Fenn’s Trail','Fenn left markers in the dark wood. Follow them and clear the way.','Fenn: “I’m not the only one protecting this forest.”'],
+Q05:['The Last Tree','A young sacred tree is under threat. Protect it while the sap rises.','Aelis: “The forest has not lost all hope.”'],
+Q06:['Lost Pack','A panicked pack is following a leader. Take it down to set the pack free.','Fenn: “The pack is free.”'],
+Q07:['Ghost Ship','A haunted wreck has run aground on the coast. Drive out whatever haunts it.','Mira: “The first round is on me.”'],
+Q08:['Sunken Treasure','The tide has uncovered a treasure. Hold the beach while it is recovered.','Ezran: “And for once, nobody stole it.”'],
+Q09:['Smugglers','A gang is plundering the coast. Take down their leader.','Kael: “Someone else is pulling the strings.”'],
+Q10:['Trapped Miner','An old friend of Borin is stuck in a tunnel. Secure the exit.','Borin: “My old friend is alive.”'],
+Q11:['Ancient Runes','Runes are surfacing in the rock. Clear the area so Elyndra can study them.','Elyndra: “These runes could change how we understand history.”'],
+Q12:['Sleeping Giant','A golem is waking in the mountains. Darius wants it stopped before it comes down.','Darius: “Brute force is not enough.”'],
+Q13:['Broken Oath','Fallen soldiers wander the castle. Free them from their broken oath.','Kael: “Your oath will not be forgotten.”'],
+Q14:['Forgotten Soldiers','Graves are being desecrated. Hold the position while Aelis lays them to rest.','Aelis: “This time, the silence is a peaceful one.”'],
+Q15:['The Last Banner','A captain guards the Guard’s last banner. Take him down.','Garrick: “I thought this banner was lost forever.”'],
+Q16:['Quartz Spider','A giant quartz spider prowls the caverns. Borin has dreamed of it for twenty years.','Borin: “I’ve been dreaming of this for twenty years.”'],
+Q17:['Unstable Crystals','Crystals are about to explode. Hold out long enough to secure them.','Elyndra: “You’ve prevented a disaster.”'],
+Q18:['Forbidden Research','Orion left archives in the caverns. Protect the passage leading to them.','Orion: “It’s time to make up for my mistakes.”'],
+Q19:['Eternal Forge','Forgotten furnaces still burn beneath the fortress. Clear the place so Borin can relight them.','Borin: “What a legacy!”'],
+Q20:['Living Metal','An obsidian knight lives in the fortress ore. Orion wants to understand what animates it: take it down.','Orion: “The possibilities are extraordinary.”'],
+Q21:['Imprisoned Flames','A living flame is trapped in the fortress. Aelis asks you to set it free.','Aelis: “The flames are free.”'],
+Q22:['Forbidden Tomb','Waves of guardians rise from a sealed tomb. Hold the position before Mira leaves with the treasure.','Mira: “A story to tell for generations.”'],
+Q23:['Lost Scepter','An ancient king’s scepter lies deep in the temple. Ezran wants the path cleared so he can bring it back.','Ezran: “This relic will find its place in history again.”'],
+Q24:['Memories of the Sand','An ancient sentinel guards the temple’s memories. It will let no one pass.','Aelis: “It’s up to us not to repeat their mistakes.”'],
+Q25:['Wandering Souls','Restless souls haunt the swamp. Drive off what holds them so Aelis can set them free.','Aelis: “They can finally move on.”'],
+Q26:['Forgotten Remedy','Nyra is looking for rare plants in the heart of the swamp. Clear the path of the toads that guard them.','Nyra: “Now that’s a pleasant change.”'],
+Q27:['Heart of the Forest','A giant mushroom is smothering the swamp. Fenn wants it taken down so life can return.','Fenn: “Life is awfully stubborn.”'],
+Q28:['Broken Wings','A wounded griffin is trapped in the citadel. Protect it from the sentinels until it can take flight again.','Kael: “We did what was right.”'],
+Q29:['Celestial Messenger','A messenger of the guardians is fleeing with a message for Orion. Catch him before he leaves the citadel.','Orion: “Time is running out for us.”'],
+Q30:['Astral Archives','An astral sentinel guards the guardians’ sealed archives. Lyria wants these secrets hidden no longer.','Lyria: “No more secrets.”'],
+Q31:['Lost Expedition','Survivors of an expedition are stranded in the snow. Hold the position while Garrick brings them back.','Garrick: “No treasure is worth more.”'],
+Q32:['Fire Under the Ice','Orion has detected heat sources under the ice. Clear the wolves guarding them so he can study them.','Orion: “I take back what I said about the impossible.”'],
+Q33:['The Last Guardian','A frost elemental still guards a forgotten oath. Lyria wants to face it in order to carry it herself.','Lyria: “From now on, we will carry its oath.”'],
+Q34:['Reflections of the Past','In the snow, old enemies seem to live again. Face what you used to be.','Kael: “We are no longer the adventurers we were at the start.”'],
+Q35:['Lost Fragments','Pieces of equipment are scattered across the ice. Secure the area while they are gathered.','Orion: “Every fragment counts.”'],
+Q36:['Last Light','A last glimmer of Ether flickers in the sanctuary. Aelis is protecting it: hold the position until it is safe.','Aelis: “This light will survive.”'],
+Q37:['Honor Regained','Garrick has found the archives of the Guard knights. Kael wants to face those who still wear their dark armor.','Kael: “My past no longer defines me.”'],
+Q38:['Inner Voice','A swamp wraith whispers to Aelis in her own voice. She must purify it to stop hearing it.','Aelis: “This voice is mine.”'],
+Q39:['Six Fates, One Oath','The six heroes face together the chief who guards the elders’ oath. Fenn, Orion, Nyra and Lyria each carry a part of the pact.','Nyra: “In the end, just one family.”'],
+Q40:['A Village for Tomorrow','The village has grown thanks to you: forge, market, academy, tavern. Defend it one last time while everyone celebrates the victory.','Mira: “You also gave us a future.”']};
+// dictionnaire plat « français entier » → « anglais entier », fusionné dans EN (i18n.js)
+export const EN_Q={};
+for(const q of QUESTS){const e=T[q.id];if(!e)continue;EN_Q[q.t]=e[0];EN_Q[q.d]=e[1];EN_Q[q.c]=e[2]}
+export const QUESTS_EN_MISSING=QUESTS.filter(q=>!T[q.id]).map(q=>q.id);
