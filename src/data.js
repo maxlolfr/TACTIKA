@@ -332,8 +332,8 @@ export const THEMES=[
  {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]},
  // V4.67 : sols et obstacles R10 (Gemini). Sols : 0 grès poreux, 1 marbre crème, 2 dalles blanches, 3 briques bicolores, 4 marbre gris, 5 sable doré, 6 dalles à filets d'or, 7 pavés. Obstacles 52 balustrade, 53 éboulis, 54 colonne couchée, 55 aile de pierre, 56 vasque, 57 piédestal, 58 colonne brisée, 59 statue d'ange
  {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]},
- // V4.68 : R11, sols et obstacles provisoires (Monts gris) ; à remplacer par les planches de Gemini
- {n:'Terres du Givre Éternel',ts:'sol_mont',g:[0,1,3,0,1,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]}];
+ // V4.68 : R11, obstacles provisoires (Monts gris), à remplacer par la planche de Gemini. V4.69 : sols R11 (Gemini) : 0 et 5 neige, 1 et 6 dalles sombres poudrées, 2 dalles sur terre, 3 pavés sombres, 4 dalles grises, 7 pavés givrés
+ {n:'Terres du Givre Éternel',ts:'sol_givre',g:[0,1,1,2,4,5,6,6,3,7,0,4],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
 export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
