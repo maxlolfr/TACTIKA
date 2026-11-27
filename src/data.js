@@ -77,10 +77,9 @@ export const ZONES=[
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},
    {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2},tip:'beam'}]}];
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
-// Coordonnées proposées (commande C2-01), à recaler sur l'image reçue. DOCK = point de départ de la route.
-export const DOCK={x:50,y:91};
-export const MAP2=[{n:'Forteresse de braise',x:27,y:76},{n:'Temple des sables',x:72,y:66},{n:'Marais des âmes',x:29,y:52},
- {n:'Citadelle céleste',x:73,y:39},{n:'Terres du Givre Éternel',x:29,y:24},{n:'Sanctuaire de l’Éther',x:55,y:10}];
+// Coordonnées en % de assets/world2.webp (image C2-01) : repères posés sur les lieux peints.
+export const MAP2=[{n:'Forteresse de braise',x:20,y:64},{n:'Temple des sables',x:78,y:63},{n:'Marais des âmes',x:23,y:41},
+ {n:'Citadelle céleste',x:79,y:31},{n:'Terres du Givre Éternel',x:20,y:18},{n:'Sanctuaire de l’Éther',x:61,y:13}];
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
 // V4.7a : sl = emplacement (arme, armure, bijou, accessoire). Seul l'objet équipé dans chaque emplacement donne son bonus (save.eq).
