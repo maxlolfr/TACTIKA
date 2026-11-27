@@ -1,7 +1,7 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,MAP2,DOCK,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
+import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
@@ -259,8 +259,8 @@ function mapTabs(){const T=$('maptabs');T.innerHTML='';[1,2].forEach(n=>{const b
 function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${txt}</small>`;
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
-function secondMap(L){L.insertAdjacentHTML('beforeend',road([DOCK,...MAP2]));
- MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock';b.style.left=z.x+'%';b.style.top=z.y+'%';
+function secondMap(L){
+ MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock'+(z.x<22?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
   b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>Bientôt</small>`;b.onclick=()=>mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');

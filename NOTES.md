@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.26 (27/11) : image de la carte II (C2-01)
+- `assets/world2.webp` (1024×1536, taille reçue), chargée seulement à l'ouverture de la carte II. Repères recalés (`MAP2`), tracé provisoire retiré.
+
 ## V4.25 (27/11) : lot 10, première partie : sélecteur Carte I / Carte II
 - Boutons en bas à gauche de l'écran Carte. Carte II verrouillée jusqu'au Titan prismatique (`map2Open`), avec message d'explication.
 - Carte II : 6 régions « Bientôt » (`MAP2`, `DOCK` dans data.js), hors de `ZONES` : aucune mission, sauvegarde inchangée.
