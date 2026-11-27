@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.23 (27/11) : lot 8, finitions des Cavernes
+- Courbe : étape 1 = 3 golems (au lieu de 4), étape 2 = 2 golems + 2 chevaliers (au lieu de 3 + 2). Elles étaient plus dures que les étapes 3 à 6. Profil standard : PV restants 36 % → 70 % et 18 % → 67 %.
+- Carte d'explication du rayon du Titan à l'étape 10.
+- Simulateur : accepte « monde.étape » (ex. `5.0`, dès 0). 49 combats pour ce lot.
+
 ## V4.22 (27/11) : 41 équipements (63 objets au total)
 - eq23 à eq63 selon la table du studio (`TABLE-EQUIPEMENTS-42.md`), lancés sur demande de Max sans attendre l'arbitrage ChatGPT : les 5 points restent aux valeurs proposées (réglables ensuite). Bouclier de bois (armures case 4) écarté.
 - Planche `equip` : 53 icônes à 160 px, 9 colonnes ; étoiles Gemini et restes de gant / ceinture effacés (`tools/prep_equip.py`).
