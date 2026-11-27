@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.10 (27/11/2026) : village vivant (lot 1 de la direction ChatGPT)
+- Chat, chien, 2 poules, mésange (posée et en vol), fermier, villageoise, fontaine, banc, bannière, charrette, lanterne, trophée (après une région terminée). `PLACES` dans home.js, images par `tools/prep_vie.py`.
+- Poses immobiles et petits gestes (CSS) ; pas de marche. Affichage seul, aucune règle ni récompense.
+- Lumière jour / soir / nuit selon l'heure, réglable (`save.sky`, `skyOf`). La peinture d'origine sert de soir.
+- Non placés : enclume, étal, mannequin (déjà peints). Pas encore d'ambiance sonore.
+- 90 tests ; navigateur automatique 375×667, 430×860, 905×980, 1280×800.
+
 ## V4.9 (27/11/2026) : Prairie à 10 étapes (pilote)
 - `ZONES[0].fights` : 9 combats + Roi Gelée, niveaux 1 à 3, gelées et sangliers ; étape 5 « abattre le chef », étape 8 survie (5 tours, `waves`).
 - Sauvegarde : `migratePrairie` (une fois, `save.p10`). Boss déjà battu = 10/10, ses étoiles passent à l'étape 10, les nouvelles étapes restent rejouables ; sinon étapes gagnées gardées.

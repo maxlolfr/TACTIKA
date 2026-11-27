@@ -2,14 +2,14 @@
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,attrOf,ptsLeft,spendAttr,resetAttr} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.9';
+export const VERSION='4.10';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -50,6 +50,23 @@ const PNJ={caserne:['garrick',300,365],taverne:['mira',402,369],forge:['borin',3
 // pieds [x,y,miroir] dans chaque peinture ; npc = hauteur d'une case de 370 px en pixels logiques
 // Cristal de l'Éther : [largeur, hauteur] des 5 images
 const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]];
+// V4.10 : village vivant (décor seulement). Images `tools/prep_vie.py` : [largeur, hauteur d'une case, nombre de poses]
+const VIE={chat:[149,152,3],chien:[146,153,3],poule:[125,142,3],mesange:[126,142,4],fermier:[194,302,1],villageoise:[170,292,1],
+ banc:[300,263,1],banniere:[158,300,1],charrette:[300,294,1],fontaine:[285,300,1],lanterne:[197,300,1],trophee:[197,300,1]};
+// [nom, x, y des pieds, hauteur, miroir] en pixels logiques de chaque peinture ; le trophée apparaît après la première région terminée
+const PLACES={
+ p:[['fontaine',468,722,150],['banc',322,722,92,true],['banniere',255,712,122],['fermier',345,790,132],['villageoise',575,792,128,true],
+  ['poule',318,642,56],['poule',372,622,50,true],['chat',618,695,64,true],['chien',262,1100,80],['charrette',715,1105,128],['lanterne',405,1285,128],
+  ['mesange',335,668,40],['trophee',165,668,104]],
+ l:[['fontaine',765,452,100],['banc',400,556,64],['banniere',742,300,80],['fermier',420,602,96],['villageoise',1105,668,92,true],
+  ['poule',300,590,36],['poule',348,612,32,true],['chat',1068,400,40,true],['chien',610,780,50],['charrette',1150,732,92,true],['lanterne',335,720,96],
+  ['mesange',410,528,24],['trophee',470,372,70]]};
+function life(stage,Q,k,pc){
+ const add=(n,x,y,h,flip,cls)=>{const[w0,h0,poses]=VIE[n],w=h*w0/h0,e=el('i',`v-vie ${cls||n}${flip?' flip':''}`);e.dataset.vie=n;e.style.cssText=pc(x-w/2,y-h,w,h);
+  const im=el('i');im.style.cssText=`background-image:url(assets/vie/${n}.webp);background-size:${poses*100}% 100%;animation-delay:${-((x+y)%97)/9}s`;e.append(im);stage.append(e)};
+ for(const[n,x,y,h,flip]of[...PLACES[k]].sort((a,b)=>a[2]-b[2]))if(n!=='trophee'||ZONES.some((_,i)=>zoneDone(save,i)))add(n,x,y,h,flip);
+ add('mesange',0,Q.h*(k==='p'?.2:.16),k==='p'?44:34,false,'vol'); // elle traverse le ciel de temps en temps
+}
 let tab='camp',A=null,root=null;
 const today=()=>A.today();
 // ---------- notifications ----------
@@ -73,6 +90,8 @@ function scene(k){
  for(const[x,y,r,k]of Q.glow){const g=el('i','v-glow '+k);g.style.cssText=pc(x-r,y-r,r*2,r*2);g.style.animationDelay=-((x*7+y)%31)/10+'s';stage.append(g)}
  for(const[x,y,k]of Q.smoke)for(let i=0;i<4;i++){const s=el('i','v-smoke');s.style.cssText=pc(x-26*k,y-26*k,52*k,52*k);s.style.animationDelay=-i*1.1+'s';stage.append(s)}
  {const w=el('i','v-water');w.style.cssText=pc(...Q.water);stage.append(w)}
+ stage.dataset.sky=skyOf(save.sky,new Date().getHours());
+ life(stage,Q,k,pc);
  // Cristal de l'Éther → Expéditions
  {const st=crystalState(save),[w,h]=CRY[st-1].map(v=>v*Q.ck[st===5?1:0]);
   const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
@@ -274,9 +293,10 @@ function inventaire(P){
  R.append(info);
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
+const SKY_TXT={auto:'selon l’heure',jour:'jour',soir:'soir',nuit:'nuit'};
 function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
- const r2=el('div','v-actions'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const r2=el('div','v-actions'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
  P.append(el('div','v-card v-how',A.HOW));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
