@@ -230,7 +230,7 @@ test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer
 test('étoiles : le détail est juste (rapide mais avec un KO)', () => {
  const s=arena();unit(s,'h',0,0,{hp:10});unit(s,'h',1,0);s.round=3;
  assert.deepEqual(starList(s,false),[true,true,false]);assert.equal(stars(s,false),2);
- assert.equal(fightSpec(2,2,1).wave.add[2][2],'knightB');assert.equal(fightSpec(1,7,1).wave.add[2][2],'wolf'); // survie généralisée
+ assert.equal(fightSpec(2,7,1).wave.add[2][2],'knightB');assert.equal(fightSpec(1,7,1).wave.add[2][2],'wolf'); // survie généralisée
 });
 test('carte : jamais d\'échec, même sur 300 graines', () => {
  for(let seed=0;seed<300;seed++)assert.ok(genMap(newBattle(),seed*7919,seed%THEMES.length),'graine '+seed);
@@ -469,10 +469,10 @@ const Z6=ZONES.findIndex(z=>z.id==='cristal');
 const cry=(s,x,y,k)=>Object.assign(cell(s,x,y),{block:1,cry:k});
 
 test('région 6 : 10 combats, boss au dernier, ouverte après le Château', () => {
- assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),10);assert.equal(zlen(ZONES[1]),10);assert.equal(zlen(ZONES[2]),4);
+ assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),10);assert.equal(zlen(ZONES[1]),10);assert.equal(zlen(ZONES[2]),10);assert.equal(zlen(ZONES[3]),4);
  assert.ok(fightSpec(Z6,9,1).boss);assert.ok(!fightSpec(Z6,8,1).boss);assert.ok(fightSpec(0,9,1).boss);assert.ok(!fightSpec(0,3,1).boss);
  assert.equal(fightSpec(Z6,4,1).goal,'chief');assert.equal(fightSpec(Z6,6,1).goal,'survive');assert.equal(fightSpec(Z6,0,1).goal,null);
- assert.equal(fightSpec(2,1,1).goal,'chief'); // anciennes zones inchangées
+ assert.equal(fightSpec(3,1,1).goal,'chief'); // zones non changées
  const save={z:{chateau:4}};assert.ok(zoneDone(save,Z6-1));assert.ok(!zoneDone({z:{cristal:9}},Z6));assert.ok(zoneDone({z:{cristal:10}},Z6));
 });
 
@@ -871,4 +871,15 @@ test('V4.14 : Bois sombre, 10 étapes, niveaux 4 à 6, objectifs, boss au 10e', 
 test('V4.14 : sauvegarde, Bois terminé reste terminé, progression partielle gardée', () => {
  const a=migrateBois({z:{prairie:10,bois:4},st:{bois:[3,2,3,1]}});assert.equal(a.z.bois,10);assert.deepEqual([a.st.bois[3],a.st.bois[9]],[0,1]);assert.ok(zoneDone(a,1));
  const b=migrateBois({z:{bois:2},st:{}});assert.equal(b.z.bois,2);assert.equal(migrateBois({z:{bois:4},b10:1}).z.bois,4,'une seule fois');
+});
+
+// ---------- V4.15 : lot 5, Côte dorée à 10 étapes ----------
+import {migrateCote} from '../src/rules.js';
+test('V4.15 : Côte dorée, 10 étapes, niveaux 7 à 9, survie au 8e, Crabe royal au 10e', () => {
+ const F=[...Array(10).keys()].map(i=>fightSpec(2,i,1));
+ assert.deepEqual(F.map(f=>!!f.boss),[...Array(9).fill(false),true]);assert.deepEqual(F.map(f=>f.lvl),[7,7,7,8,8,8,8,9,9,9]);
+ assert.deepEqual(F.map(f=>f.goal),[null,null,null,null,'chief',null,null,'survive',null,null]);assert.equal(F[7].wave.add[2][2],'knightB');
+ for(let i=0;i<10;i++)for(let seed=1;seed<=10;seed++){const f=fightSpec(2,i,seed),s=newBattle(),g=genMap(s,seed,f.th);mkUnits(s,f,g.hs,g.es,HS);
+  assert.equal(s.units.filter(u=>u.team==='m').length,f.wave?f.wave.start:f.en.length+(f.boss?1:0))}
+ const a=migrateCote({z:{plage:4},st:{plage:[3,2,3,1]}});assert.equal(a.z.plage,10);assert.deepEqual([a.st.plage[3],a.st.plage[9]],[0,1]);assert.equal(migrateCote({z:{plage:2}}).z.plage,2);
 });

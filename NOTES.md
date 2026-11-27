@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.15 (27/11/2026) : Côte dorée à 10 étapes (lot 5, liste ChatGPT)
+- Niveaux 7,7,7,8,8,8,8,9,9,9 : introduction à l'armure (conseil Tir perforant), crabes et mouettes, obstacles, mouettes rapides, chevalier bleu (chef), formation de crabes, mixte, **survie à renforts** (8e, élite de renfort = Chevalier bleu ; pas de protection de zone), garde du Crabe royal, Crabe royal.
+- `migrateCote` (drapeau `c10`). Test « zones inchangées » déplacé sur les Monts.
+- 105 tests. Simulateur : 75 combats (c5, survie 8, boss) : 15/15 victoires aux 3 profils ; sous-équipé : survie 8 PV restants 51 %.
+
 ## V4.14 (27/11/2026) : Bois sombre à 10 étapes (lot 4, liste ChatGPT)
 - Niveaux 4,4,4,5,5,5,5,6,6,6 : chauves-souris, loups en meute, champignons (conseil), attaques aériennes, chef de meute, mixte, formation (champignons derrière les loups), survie à renforts (8e), épreuve combinée, Loup alpha (+ loup, champignon, chauve-souris).
 - `migrateBois` (même règle que la Prairie, drapeau `b10`) : Bois terminé → 10/10, étoiles du boss à l'étape 10.
