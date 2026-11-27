@@ -378,7 +378,7 @@ export const slowFor=(sp,t)=>sp.slow>1&&!t.boss?sp.slow:1;
 export const slowedPM=u=>u.slow?Math.max(u.slow>1?1:0,u.maxPM-u.slow):u.maxPM;
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;delete u.counter;delete u.evade;if(u.ward&&--u.ward.turns<=0)delete u.ward;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.counter;delete u.evade;if(u.ward&&--u.ward.turns<=0)delete u.ward;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0&&--u.shield<=0&&u.bs==='frost')u.shieldBroke=1}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
@@ -426,7 +426,7 @@ export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lav
   // V4.76 : zones toxiques (Reine des marécages : poison 4 × 2) et fissures de givre (Roi du Givre : −6 % PV et −1 PM), cases marquées un tour à l'avance comme les braises, héros seulement
   if(L.toxic||L.cold){if(u&&u.team==='h'){if(L.toxic){u.poison={d:4,turns:2};ev.push({type:'status',t:u,text:'Empoisonné',color:'#9be15d'})}else{const e=hurt(s,u,u.max*.06,'lava',false,1);if(e)ev.push(e);if(!u.dead){u.slow=Math.max(u.slow||0,1);ev.push({type:'status',t:u,text:'−1 PM',color:'#8fd8ff'})}}}continue}
   if(u&&(L.trap?u.team==='h':!fireproof(u))){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e);if(L.trap&&!u.dead)u.slow=u.slow||1}}
- ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
+ ev.push({type:'snd',n:L.trap?'sands_trap':L.cold?'frost_crack':L.toxic?'poison':'ember_eruption',v:.8},{type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
 // V4.37 : mur de glace. Il disparaît au début du tour de table s.round>=until (même si Orion est tombé)
 export function melt(c){delete c.ice;delete c.block}
 export function iceTick(s){const ev=[];for(const c of s.map.values())if(c.ice&&s.round>=c.ice.until){melt(c);ev.push({type:'fx',x:c.x,y:c.y,i:3,w:.8,sh:'fxi'})}return ev}
@@ -490,8 +490,8 @@ export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
  if(u.bs==='astral'){const H=s.units.filter(h=>h.team!==u.team&&!h.dead).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0],cs=H?DIRS.map(d=>cell(s,H.x+d[0],H.y+d[1])).filter(c=>c&&passable(s,c.x,c.y)&&!occ(s,c.x,c.y)):[];
-  if(cs.length){const c=pick(s.rng,cs),from={x:u.x,y:u.y};u.x=u.gx=c.x;u.y=u.gy=c.y;ev.push({type:'status',t:u,text:'Téléportation !',color:'#ffd65a',snd:'boss_phase'},{type:'fx',x:from.x,y:from.y,i:5,w:1.3},{type:'fx',x:c.x,y:c.y,i:5,w:1.5},...stepOn(s,u))}}
- if(u.bs==='breaker'){u.sunder={pct:.3,turns:2};u.pm=0;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Défense brisée ! +30 %',color:'#ffd65a',snd:'guard'})} // V4.78 : fenêtre de vulnérabilité, il s'agenouille (ne bouge pas) et subit +30 % pendant le tour des héros
+  if(cs.length){const c=pick(s.rng,cs),from={x:u.x,y:u.y};u.x=u.gx=c.x;u.y=u.gy=c.y;ev.push({type:'status',t:u,text:'Téléportation !',color:'#ffd65a',snd:'aetherion_shift'},{type:'fx',x:from.x,y:from.y,i:5,w:1.3},{type:'fx',x:c.x,y:c.y,i:5,w:1.5},...stepOn(s,u))}}
+ if(u.bs==='breaker'){u.sunder={pct:.3,turns:2};u.pm=0;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Défense brisée ! +30 %',color:'#ffd65a',snd:'breaker_expose'})} // V4.78 : fenêtre de vulnérabilité, il s'agenouille (ne bouge pas) et subit +30 % pendant le tour des héros
  if(u.bs==='frost'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:3,w:1.5,sh:'fxi'},{type:'status',t:u,text:'Bouclier de glace',color:'#9fd8ff',snd:'guard'})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
   if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6*weakK(u));
