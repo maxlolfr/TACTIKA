@@ -78,7 +78,7 @@ export const rarOf=(save,j)=>ITEMS[j]?.rr??((save.rr&&save.rr[j])||0);
 export const fits=(j,i)=>whoOf(ITEMS[j]).includes(i);
 export const lvOf=j=>ITEMS[j].lv||1;
 // objets que le butin peut donner : non possédés, pas réservés au marchand, niveau atteint
-export const lootPool=save=>ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='shop'&&lvOf(j)<=(save.lvl||1));
+export const lootPool=save=>ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='shop'&&ITEMS[j].src!=='quest'&&lvOf(j)<=(save.lvl||1));
 export const lootRare=(j,rng,good)=>ITEMS[j].rr??rollRare(rng,good);
 // rareté d'un objet trouvé : 70 % commun, 25 % rare, 5 % épique ; au moins rare pour un boss ou le défi du jour
 export function rollRare(rng,good){const x=rng();return x<.05?2:good||x<.3?1:0}
@@ -88,7 +88,7 @@ export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j
  save.gold-=c;(save.up||(save.up={}))[j]=upLvl(save,j)+1;return save.up[j]}
 // ---------- marchand (V2.6a) ----------
 // Stock du jour : SHOP_N objets non possédés, mélangés selon le jour (même stock toute la journée).
-export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='loot'&&lvOf(j)<=(save.lvl||1)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
+export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='loot'&&ITEMS[j].src!=='quest'&&lvOf(j)<=(save.lvl||1)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
 export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save.gold<o.pr||o.src==='loot'||lvOf(j)>(save.lvl||1))return 0;save.gold-=o.pr;save.items.push(j);return 1}
 // revente : moitié du prix + moitié de l'or mis dans la forge
 export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr*(ITEMS[j].rr!=null?1:RARE[rarOf(save,j)].k)+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
@@ -530,7 +530,7 @@ function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}
 
 // ---------- quêtes (V4.55) ----------
-export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.need==null||recruited(save,q.need));
+export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.after==null||zoneDone(save,q.after))&&(q.need==null||recruited(save,q.need)); // V4.75 : after = région à terminer en plus (Q40)
 export const questDone=(save,q)=>!!(save.q&&save.q[q.id]);
 export function questFight(q,save){const Z=ZONES[q.z],F={zi:q.z,i:-1,quest:q.id,lvl:Z.lvl+q.l,pool:Z.pool,boss:null,elite:q.e,goal:q.g||null,seed:q.z*131+ +q.id.slice(1)*17,th:Z.th[+q.id.slice(1)%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined,lava:Z.fights?.[3]?.lava}; // V4.64 : cases brûlantes ou dalles piégées de la région (R7, R8)
  if(F.goal==='survive')F.wave=defWave(Z,+q.id.slice(1)%zlen(Z));return F}

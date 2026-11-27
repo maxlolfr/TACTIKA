@@ -381,9 +381,9 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   let gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(F.daily?2:F.quest?1:first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)*(G.s.cleared?1.25:1)),xp=G.s.killedXp;save.gold+=gold;let up=gainXp(save,xp);
   const free=lootPool(save);let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=lootRare(it,Math.random,F.daily||F.boss);if(r&&ITEMS[it].rr==null)(save.rr||(save.rr={}))[it]=r}
   if(!F.daily&&!F.quest)best[F.i]=Math.max(best[F.i]||0,st);if(first)save.z[zid]=F.i+1;
-  const Q=F.quest&&QUESTS.find(q=>q.id===F.quest),qNew=Q&&!questDone(save,Q);let qIt=null;
+  const Q=F.quest&&QUESTS.find(q=>q.id===F.quest),qNew=Q&&!questDone(save,Q);let qIt=null;const qSg=[];
   if(qNew){(save.q||(save.q={}))[Q.id]=1;const qg=Math.round((20+8*save.lvl)*2.5);save.gold+=qg;gold+=qg;up+=gainXp(save,15*save.lvl*2);xp+=15*save.lvl*2;
-   const fr=lootPool(save);if(Q.r&&fr.length&&true){qIt=pick(Math.random,fr);save.items.push(qIt);const rr=lootRare(qIt,Math.random,1);if(rr&&ITEMS[qIt].rr==null)(save.rr||(save.rr={}))[qIt]=rr}}
+   const fr=lootPool(save);for(const j of Q.sig||[])if(!save.items.includes(j)){save.items.push(j);if(qIt===null)qIt=j;else qSg.push(j)}if(Q.r&&fr.length&&true){qIt=pick(Math.random,fr);save.items.push(qIt);const rr=lootRare(qIt,Math.random,1);if(rr&&ITEMS[qIt].rr==null)(save.rr||(save.rr={}))[qIt]=rr}}
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
@@ -393,6 +393,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon(...icOf(ITEMS[it]),48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${whoName(ITEMS[it])} : ${effet(ITEMS[it],rarOf(save,it))}`]);
   if(qNew)loot.push([icon('bld',3,48),`<b>Quête terminée : ${Q.t}</b><br>+${Math.round((20+8*save.lvl)*2.5)} or, +${15*save.lvl*2} XP`]);
+  for(const j of qSg)loot.push([icon(...icOf(ITEMS[j]),48),`<b style="color:${RARE[rarOf(save,j)].c}">${ITEMS[j].n}</b><br>${whoName(ITEMS[j])} : ${effet(ITEMS[j],rarOf(save,j))}`]);
   if(qIt!==null)loot.push([icon(...icOf(ITEMS[qIt]),48),`<b style="color:${RARE[rarOf(save,qIt)].c}">${ITEMS[qIt].n}</b><br>${whoName(ITEMS[qIt])} : ${effet(ITEMS[qIt],rarOf(save,qIt))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);

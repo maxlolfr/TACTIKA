@@ -800,7 +800,7 @@ import {whoOf,icOf} from '../src/data.js';
 import {readFileSync} from 'node:fs';
 const J=id=>ITEMS.findIndex(o=>o.id===id),SV2=(o={})=>({lvl:10,gold:1000,xp:0,items:[],sp:[null,null,null],up:{},...o});
 test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes valides', () => {
- assert.equal(ITEMS.length,79); // V4.64 : +16 (Nyra, Lyria), testés à part
+ assert.equal(ITEMS.filter(o=>o.src!=='quest').length,79); // V4.64 (hors objets signature V4.75) : +16 (Nyra, Lyria), testés à part
  assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,whoOf(o).filter(i=>i<3)[0],o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
   [['Épée courte',60,0,'arme',2],['Hache de guerre',120,0,'arme',3],['Bouclier rond',90,0,'accessoire',8],['Heaume',70,0,'armure',6],['Arc long',60,1,'arme',2],
    ['Armure de cuir',70,1,'armure',6],['Bottes de cuir',50,1,'accessoire',4],['Bâton de saule',60,2,'arme',3],['Anneau de rubis',100,2,'bijou',2],['Amulette',70,2,'bijou',6]].map(a=>[...a,undefined,undefined,undefined]));
@@ -1329,6 +1329,18 @@ test('V4.73 : région 12 (Sanctuaire de l’Éther) : 10 missions niveaux 46 à 
  const{QUESTS}=await import('../src/quests.js'),q36=QUESTS.find(x=>x.id==='Q36');assert.equal(q36.z,11);assert.equal(r.questOpen({z:{[R11.id]:10}},q36),true);assert.equal(r.questOpen({z:{}},q36),false);
  const qf=r.questFight(q36,{});assert.equal(qf.goal,'survive');assert.equal(qf.lvl,47);assert.equal(qf.zi,11);
 });
+test('V4.75 : quêtes Q37 à Q40, objets signature uniquement en récompense',async()=>{
+ const {ITEMS,HER,ZONES,zlen}=await import('../src/data.js'),r=await import('../src/rules.js'),{QUESTS}=await import('../src/quests.js'),q=id=>QUESTS.find(x=>x.id===id);
+ const sig=ITEMS.map((o,j)=>o.src==='quest'?j:-1).filter(j=>j>=0);assert.deepEqual(sig,[79,80,81,82,83,84,85]);
+ assert.deepEqual(QUESTS.filter(x=>x.sig).flatMap(x=>x.sig).sort((a,b)=>a-b),sig);
+ for(const j of sig){assert.equal(ITEMS[j].rr,2);assert.ok(ITEMS[j].lv>=1)}
+ const full=lvl=>({lvl,items:[],z:Object.fromEntries(ZONES.map(z=>[z.id,zlen(z)]))});
+ assert.deepEqual(r.lootPool(full(60)).filter(j=>sig.includes(j)),[]);for(let d=0;d<30;d++)assert.deepEqual(r.shopStock(full(60),d).filter(j=>sig.includes(j)),[]);
+ assert.equal(r.questOpen({lvl:60,z:{}},q('Q37')),false);assert.equal(r.questOpen({lvl:60,z:{[ZONES[4].id]:zlen(ZONES[4])}},q('Q37')),true);
+ assert.equal(r.questFight(q('Q37'),{}).elite,'knightN');assert.equal(r.questFight(q('Q38'),{}).elite,'wraith');assert.equal(r.questFight(q('Q39'),{}).goal,'chief');
+ const s40={lvl:60,z:Object.fromEntries(ZONES.slice(0,11).map(z=>[z.id,zlen(z)]))};assert.equal(r.questOpen(s40,q('Q40')),false);s40.z[ZONES[11].id]=zlen(ZONES[11]);assert.equal(r.questOpen(s40,q('Q40')),true);
+ assert.equal(r.questFight(q('Q40'),{}).goal,'survive');assert.equal(r.questFight(q('Q40'),{}).lvl,ZONES[11].lvl+4);
+});
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
@@ -1456,7 +1468,7 @@ test('Nyra et Lyria en combat : équipe de 3 avec les deux recrues, bons sprites
 import {QUESTS} from '../src/quests.js';
 import {questOpen,questDone,questFight} from '../src/rules.js';
 test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
- assert.equal(new Set(QUESTS.map(q=>q.id)).size,36);
+ assert.equal(new Set(QUESTS.map(q=>q.id)).size,40);
  const sv={lvl:50,z:{},items:[]};
  assert.equal(QUESTS.filter(q=>questOpen(sv,q)).length,3);
  for(const q of QUESTS){const F=questFight(q,sv);assert.equal(F.quest,q.id);assert.ok(ZONES[F.zi]);assert.equal(!!F.wave,q.g==='survive');assert.ok(q.t&&q.d&&q.c)}
@@ -1465,7 +1477,7 @@ test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
 
 // ---------- V4.59 équipement de Nyra et Lyria ----------
 test('Nyra et Lyria portent du matériel de Fenn et Kael, aucun objet ajouté', () => {
-  assert.equal(ITEMS.length, 79); // V4.64
+  assert.equal(ITEMS.filter(o => o.src !== 'quest').length, 79); // V4.64 (hors objets signature V4.75)
   const c = ITEMS.find(o => o.n === 'Cuirasse à épaulières'), a = ITEMS.find(o => o.n === 'Arc long'), e = ITEMS.find(o => o.n === 'Épée courte'), h = ITEMS.find(o => o.n === 'Hache de guerre');
   assert.deepEqual(whoOf(c), [0, 5]); assert.deepEqual(whoOf(a), [1]); assert.deepEqual(whoOf(e), [0, 4, 5]); assert.deepEqual(whoOf(h), [0, 5]);
   for (const hero of [4, 5]) for (const sl of ['arme', 'armure', 'accessoire', 'bijou']) assert.ok(ITEMS.some(o => o.sl === sl && whoOf(o).includes(hero)), `héros ${hero} sans ${sl}`);
@@ -1475,15 +1487,15 @@ test('Nyra et Lyria portent du matériel de Fenn et Kael, aucun objet ajouté', 
 test('V4.64 : eq64 à eq79, 79 ids uniques, exclusifs, 2 par emplacement et par héroïne', async () => {
   const { ITEMS, whoOf, icOf } = await import('../src/data.js');
   const at = JSON.parse(readFileSync(new URL('../assets/atlas.json', import.meta.url)));
-  assert.equal(ITEMS.length, 79); const ids = ITEMS.slice(10).map(o => o.id); assert.equal(new Set(ids).size, 69); // les 10 historiques n’ont pas d’id
-  ITEMS.slice(63).forEach((o, k) => {
+  assert.equal(ITEMS.filter(o => o.src !== 'quest').length, 79); const ids = ITEMS.filter(o => o.src !== 'quest').slice(10).map(o => o.id); assert.equal(new Set(ids).size, 69); // les 10 historiques n’ont pas d’id
+  ITEMS.slice(63, 79).forEach((o, k) => {
     assert.equal(o.id, 'eq' + (64 + k)); assert.deepEqual(whoOf(o), [k < 8 ? 4 : 5]);
     assert.ok(at.equip[o.ic], o.id); assert.deepEqual(icOf(o), ['equip', o.ic]);
     assert.equal([o.dmg, o.hp, o.heal].filter(Boolean).length, 1, 'une seule stat'); assert.ok(!o.pa && !o.pm);
     assert.ok([1, 2].includes(o.rr)); assert.ok(['shop', 'loot'].includes(o.src));
   });
   for (const [h, lo] of [[4, 30], [5, 40]]) for (const sl of ['arme', 'armure', 'bijou', 'accessoire']) {
-    const l = ITEMS.slice(63).filter(o => whoOf(o)[0] === h && o.sl === sl);
+    const l = ITEMS.slice(63, 79).filter(o => whoOf(o)[0] === h && o.sl === sl);
     assert.equal(l.length, 2, h + sl); assert.deepEqual(l.map(o => [o.lv, o.rr, o.src]), [[lo, 1, 'shop'], [lo + 5, 2, 'loot']]);
   }
 });
@@ -1501,7 +1513,7 @@ test('V4.64 : seuils 29/30, 34/35, 39/40, 44/45 ; marchand avant le butin ; obje
 test('V4.64 : quêtes Q19 à Q24 (braise, sables) : ouvertes après la région précédente, cases brûlantes et dalles piégées reprises', async () => {
   const { QUESTS } = await import('../src/quests.js'), { questOpen, questFight, zoneDone } = await import('../src/rules.js'), { ZONES, MON, zlen } = await import('../src/data.js');
   const q = id => QUESTS.find(x => x.id === id), z = i => ({ [ZONES[i].id]: zlen(ZONES[i]) });
-  assert.equal(QUESTS.length, 36);
+  assert.equal(QUESTS.length, 40);
   assert.equal(questOpen({ z: {} }, q('Q19')), false); assert.equal(questOpen({ z: z(5) }, q('Q19')), true);
   assert.equal(questOpen({ z: z(5) }, q('Q22')), false); assert.equal(questOpen({ z: { ...z(5), ...z(6) } }, q('Q22')), true);
   for (const id of ['Q19', 'Q20', 'Q21', 'Q22', 'Q23', 'Q24']) {

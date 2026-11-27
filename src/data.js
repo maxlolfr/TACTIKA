@@ -319,7 +319,15 @@ export const ITEMS=[
  {id:'eq76',s:'equip',ic:34,n:'Collier du serment',pr:145,who:5,hp:6,sl:'bijou',lv:40,rr:1,src:'shop'},
  {id:'eq77',s:'equip',ic:35,n:'Collier de la lumière',pr:235,who:5,heal:2,sl:'bijou',lv:45,rr:2,src:'loot'},
  {id:'eq78',s:'equip',ic:20,n:'Bouclier de la gardienne',pr:165,who:5,hp:8,sl:'accessoire',lv:40,rr:1,src:'shop'},
- {id:'eq79',s:'equip',ic:47,n:'Relique de l’aurore',pr:245,who:5,heal:2,sl:'accessoire',lv:45,rr:2,src:'loot'}];
+ {id:'eq79',s:'equip',ic:47,n:'Relique de l’aurore',pr:245,who:5,heal:2,sl:'accessoire',lv:45,rr:2,src:'loot'},
+  // V4.75 : objets signature (src 'quest' : ni boutique ni butin, uniquement en récompense des quêtes Q37 à Q40). Icônes réutilisées, aucun nouvel art. Épiques, un cran au-dessus des objets de butin.
+  {id:'sg79',s:'equip',ic:13,n:'Lame de l’honneur',pr:300,who:0,dmg:4,sl:'arme',lv:20,rr:2,src:'quest'},
+  {id:'sg80',s:'equip',ic:17,n:'Sceptre de la voix claire',pr:300,who:2,heal:3,sl:'arme',lv:33,rr:2,src:'quest'},
+  {id:'sg81',s:'equip',ic:15,n:'Arc du serment commun',pr:300,who:1,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'},
+  {id:'sg82',s:'equip',ic:35,n:'Orbe du serment commun',pr:300,who:[0,1,2,3,4,5],dmg:3,sl:'bijou',lv:38,rr:2,src:'quest'},
+  {id:'sg83',s:'equip',ic:12,n:'Lames du serment commun',pr:300,who:4,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'},
+  {id:'sg84',s:'equip',ic:12,n:'Épée du serment commun',pr:300,who:5,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'},
+  {id:'sg85',s:'equip',ic:47,n:'Médaille du village',pr:300,who:[0,1,2,3,4,5],hp:8,sl:'accessoire',lv:45,rr:2,src:'quest'}];
 // icône d'un objet ; héros qui peuvent le porter
 export const icOf=o=>[o.s||'items',o.ic];
 export const whoOf=o=>Array.isArray(o.who)?o.who:[o.who];
