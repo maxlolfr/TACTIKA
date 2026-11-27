@@ -2,6 +2,12 @@
 - **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
+## V4.88 (28/11) : lot 6 polish — introduction des boss, transitions, option « Effets réduits »
+- **Carte d'introduction des boss** (`bossCard`, ui.js) : au début de chaque combat de boss (pas en défi du jour), cartouche bleu nuit et or avec portrait, région, nom et une phrase sur son style (« Se téléporte », « Brise toute défense »… sans chiffres). Disparaît seule (2,4 s, 1,4 s en animations rapides) ou d'un toucher ; le combat n'attend pas.
+- **Transitions** : fondu de 0,22 s à l'ouverture des écrans (carte, résultat, forge, marchand…).
+- **Réglages → « ✨ Effets réduits »** (`save.lowfx`) : 3 particules au lieu de 12 par impact, plus de secousse d'écran, animations CSS coupées (confort et FPS sur petits appareils). `prefers-reduced-motion` respecté.
+- Pas de mesure de FPS ni d'essai visuel (navigateur refusé ici) : à juger par Max sur l'Honor. Aucune mécanique touchée. 170 tests OK.
+
 ## V4.87 (28/11) : nouvelle carte du monde I (image 2052 de Max), interface des deux cartes harmonisée
 - **Image** : `art/carte1/carte1-v2-2052.png` (original 1536×1024, sans perte) → `assets/world1-l.webp` (462 Ko, même poids que la carte II). L'ancienne `assets/world.webp` n'est plus utilisée (gardée).
 - **Marqueurs repositionnés** (`x`/`y` des 6 régions de la carte I, en % de l'image) : Prairie 38/74 (prés à côté du village), Bois 21/47 (grand arbre lumineux), Côte 76/55 (plage), Monts 50/20 (route de montagne), Château 77/19 (porte du château), Cavernes 24/26 (grotte de cristal). Niveaux, boss, portraits, étoiles, déblocages et progression inchangés (test).
