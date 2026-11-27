@@ -10,7 +10,7 @@ import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.52';
+export const VERSION='4.53';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -177,7 +177,7 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
  P.append(el('h3',null,'Commandement'));
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
  P.append(el('h4',null,'Équipe'));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
- const todo=[[recruited(save,3)&&!save.orionVu,'Orion a rejoint le camp : choisis ton équipe','recrue'],[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
+ const todo=[...[[3,'orionVu'],[4,'nyraVu'],[5,'lyriaVu']].map(([i,k])=>[recruited(save,i)&&!save[k],`${HER[i].n} a rejoint le camp : choisis ton équipe`,'recrue'+i]),[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
  if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
  if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
  P.append(row('💎 <b>Cristal de l’Éther</b> : expéditions et revanches',()=>show('expe')));
@@ -191,7 +191,7 @@ function expe(P){
  ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions v-mgrid');
   for(let i=0;i<done;i++){const F=fightSpec(zi,i,0),b=wood(`${i+1}${F.goal==='survive'?' ⏳':F.goal==='chief'?' ♛':''} ${'★'.repeat((save.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
  if(!any)P.append(el('p','v-empty','Gagne ton premier combat pour ouvrir les expéditions.'))}
-function open(id){if(id==='recrue'){save.orionVu=1;store();hero=3;show('heros');return}if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
+function open(id){if(id.startsWith('recrue')){const i=+id.slice(6)||3;save[['','','','orionVu','nyraVu','lyriaVu'][i]]=1;store();hero=i;show('heros');return}if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
 
 // ---------- mise en place de la scène : les 6 bâtiments toujours visibles entre la barre du haut et le bas ----------
 export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'))return;

@@ -165,7 +165,10 @@ const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
  healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0]),
  // V4.33 : Orion, sans planche de marche (pose fixe qui glisse)
- mage:{...P9('orion9',['orion9',[0,0,0,0]],['orion9',[0,0,0,0]],['orion9',0]),still:1}};
+ mage:{...P9('orion9',['orion9',[0,0,0,0]],['orion9',[0,0,0,0]],['orion9',0]),still:1},
+ // V4.53 / V4.54 : Nyra et Lyria, même principe (pas de planche de marche)
+ rogue:{...P9('nyra9',['nyra9',[0,0,0,0]],['nyra9',[0,0,0,0]],['nyra9',0]),still:1},
+ paladin:{...P9('lyria9',['lyria9',[0,0,0,0]],['lyria9',[0,0,0,0]],['lyria9',0]),still:1}};
 // V4.32 : héros « vétérans » dès le niveau 25 (ou avec &veterans).
 // Pas de planche de marche : la pose de repos glisse avec le petit rebond de chaque case.
 const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','aelisV']].map(([k,n])=>{const still=[n,[0,0,0,0]];return[k,{...P9(n,still,still,[n,0]),vet:1}]}));

@@ -46,7 +46,29 @@ export const SP={
  counter:{vx:'support',snd:'guard',n:'Contre-attaque',sn:'Contre',pa:2,r:[0,0],t:'self',counter:.6,fx:7,cd:3,d:'Jusqu’à ton prochain tour, chaque ennemi qui frappe Kael au contact reçoit 60 % d’une Taillade'},
  rage:{vx:'support',snd:'buff',n:'Rage guerrière',sn:'Rage',pa:2,r:[0,0],t:'self',buff:.35,buffT:2,fx:7,cd:4,d:'+35 % de dégâts pendant 2 tours (ne se cumule pas avec Aura)'},
  judge:{vx:'sig',snd:'kael_charge',n:'Jugement du lion',sn:'Jugement',pa:6,r:[1,1],t:'enemy',dmg:[30,38],pierce:.5,push:1,fx:7,cd:99,shake:1,d:'Coup ultime : ignore la moitié de l’armure et repousse d’une case. 1 fois par combat'},
- storm:{snd:'prism_burst',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'}};
+ storm:{snd:'prism_burst',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'},
+ // V4.53 : les 10 sorts de Nyra (assassin). Valeurs provisoires de Claude, non équilibrées
+ dagger:{snd:'slash',n:'Dague',pa:2,r:[1,1],t:'enemy',dmg:[8,11],fx:0,d:'Coup de dague rapide au corps à corps'},
+ backstab:{snd:'slash',n:'Frappe de dos',sn:'Dos',pa:3,r:[1,1],t:'enemy',dmg:[11,15],flk:1.5,fx:7,d:'Dégâts ×1,5 si un autre héros touche la cible'},
+ shadow:{vx:'support',snd:'buff',n:'Pas d’ombre',sn:'Ombre',pa:2,r:[1,4],t:'cell',free:1,los:1,lob:1,blink:1,fx:7,cd:3,d:'Nyra saute sur une case libre en vue, sans dépenser de PM'},
+ toxin:{snd:'poison',n:'Poison',pa:3,r:[1,2],t:'enemy',los:1,dmg:[5,7],poison:[5,3],proj:1,fx:5,cd:2,d:'Lame empoisonnée : dégâts + poison (5 par tour) pendant 3 tours'},
+ smoke:{vx:'sig',snd:'poison',n:'Fumigène',sn:'Fumi.',pa:4,r:[1,4],t:'cell',los:1,lob:1,zone:1,side:1,dmg:[3,4],weaken:[.25,2],fx:5,cd:3,d:'Nuage de rayon 1 : petits dégâts, les ennemis infligent 25 % de dégâts en moins pendant 2 tours'},
+ mark:{vx:'support',snd:'buff',n:'Marque',pa:2,r:[1,5],t:'enemy',los:1,sunder:[.25,2],mk:1,fx:7,cd:3,d:'La cible subit +25 % de dégâts pendant 2 tours'},
+ twin:{vx:'sig',snd:'slash',n:'Lame double',sn:'Double',pa:4,r:[1,1],t:'enemy',dmg:[8,11],twice:2,fx:7,cd:2,d:'Deux coups de dague d’affilée'},
+ evade:{vx:'support',snd:'dodge',n:'Esquive active',sn:'Esquive',pa:2,r:[0,0],t:'self',evade:.5,fx:7,cd:4,d:'50 % de chances d’esquiver chaque attaque jusqu’à ton prochain tour'},
+ execute:{vx:'sig',snd:'slash',n:'Exécution',sn:'Exécut.',pa:4,r:[1,1],t:'enemy',dmg:[14,18],exe:[.35,2],fx:7,cd:3,shake:1,d:'Dégâts ×2 sur une cible sous 35 % de ses PV'},
+ dance:{vx:'sig',snd:'prism_burst',n:'Danse des ombres',sn:'Danse',pa:6,r:[0,0],t:'self',nova:1,dmg:[22,28],fx:7,cd:99,shake:1,d:'Frappe tous les ennemis collés à Nyra. 1 fois par combat'},
+ // V4.54 : les 10 sorts de Lyria (paladine). Valeurs provisoires de Claude, non équilibrées
+ hammer:{snd:'smash',n:'Marteau',pa:3,r:[1,1],t:'enemy',dmg:[11,15],fx:0,d:'Coup de marteau sacré au corps à corps'},
+ protect:{vx:'support',snd:'guard',n:'Protection',sn:'Protec.',pa:3,r:[0,4],t:'ally',shield:1,fx:7,cd:3,d:'Rempart sur un allié : dégâts réduits jusqu’à son prochain tour'},
+ light:{vx:'support',snd:'aelis_heal',n:'Lumière',pa:3,r:[0,4],t:'ally',heal:[10,14],fx:4,cd:1,d:'Soigne un allié'},
+ intercept:{vx:'support',snd:'guard',n:'Interception',sn:'Intercep.',pa:2,r:[0,0],t:'self',taunt:3,shield:1,fx:7,cd:4,d:'Rempart sur Lyria ; les ennemis à 3 cases ou moins ne visent qu’elle à leur prochain tour'},
+ purge:{vx:'support',snd:'aelis_heal',n:'Purge',pa:2,r:[0,4],t:'ally',heal:[4,6],cleanse:1,fx:4,cd:2,d:'Retire poison, brûlure, entrave, malédiction, affaiblissement et armure brisée ; petit soin'},
+ smite:{vx:'sig',snd:'prism_burst',n:'Impact sacré',sn:'Impact',pa:4,r:[1,4],t:'cell',los:1,lob:1,zone:1,side:.6,dmg:[12,16],fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 cases voisines'},
+ aegis:{vx:'support',snd:'guard',n:'Aura défensive',sn:'Égide',pa:4,r:[0,0],t:'self',all:1,ward:[.15,2],fx:7,cd:4,d:'Tous les héros reçoivent un bouclier de 15 % de leurs PV max, 2 tours'},
+ rescue:{vx:'support',snd:'aelis_heal',n:'Soin de secours',sn:'Secours',pa:4,r:[0,4],t:'ally',heal:[22,28],fx:4,cd:4,d:'Gros soin sur un allié'},
+ oath:{vx:'support',snd:'buff',n:'Serment',pa:3,r:[0,0],t:'self',all:1,buff:.2,buffT:2,fx:7,cd:5,d:'+20 % de dégâts à tous les héros, 2 tours'},
+ bastion:{vx:'sig',snd:'guard',n:'Bastion',pa:6,r:[0,0],t:'self',all:1,shield:1,fx:7,cd:99,shake:1,d:'Rempart sur tous les héros. 1 fois par combat'}};
 export const HER=[
  {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge',
   learn:[['charge',5],['whirl',10],['sunder',15],['taunt',20],['counter',25],['rage',35],['judge',45]]},
@@ -62,6 +84,11 @@ export const TEAM_SIZE=3,DEF_TEAM=[0,1,2];
 export const SLOTS_SP=6;
 export const ALL_SPELLS=typeof location!=='undefined'&&location.search.includes('apercu=braise')&&location.search.includes('tous'); // &tous (aperçu) : les 10 sorts tout de suite
 export const ORION={at:20,k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],learn:[['fireball',5],['icewall',10],['blink',15],['weaken',20],['nova',25],['glyph',35],['storm',45]]};
+// V4.53 : Nyra (assassin, niveau 30) ; V4.54 : Lyria (paladine, niveau 40). Mêmes règles qu'Orion : PV ≈ 90 % de ceux de Fenn pour Nyra, 93 % de Kael pour Lyria
+export const NYRA={at:30,k:'rogue',n:'Nyra',cls:'Assassin',hp:40,init:16,sp:['dagger','backstab','shadow'],learn:[['toxin',5],['smoke',10],['mark',15],['twin',20],['evade',25],['execute',35],['dance',45]]};
+export const LYRIA={at:40,k:'paladin',n:'Lyria',cls:'Paladine',hp:58,init:9,sp:['hammer','protect','light'],learn:[['intercept',5],['purge',10],['smite',15],['aegis',20],['rescue',25],['oath',35],['bastion',45]]};
+export function addRecruit(h,attrs){if(HER.includes(h))return HER.indexOf(h);const i=HER.length;HER.push(h);for(const a of attrs)ATTR[a].who.push(i);
+ for(const o of ITEMS)if(Array.isArray(o.who)&&o.who.length===i)o.who=[...Array(i+1).keys()];return i}
 export function addOrion(){if(HER.length>3)return 3;HER.push(ORION);ATTR.int.who.push(3);ATTR.vit.who.push(3);ATTR.agi.who.push(3);
  for(const o of ITEMS)if(Array.isArray(o.who)&&o.who.length===3)o.who=[0,1,2,3];return 3}
 // V4.5b : ai = rôle de combat. tank : s'interpose devant les monstres fragiles et frappe le héros qui les menace · range : garde ses distances, recule s'il est collé · flank : contourne pour viser Fenn ou Aelis
@@ -267,4 +294,4 @@ export const PA_CARRY={per:2,max:2};
 export const PA_RULE={recast:1};
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
 
-addOrion(); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister
+addOrion();addRecruit(NYRA,['for','vit','agi']);addRecruit(LYRIA,['for','int','vit']); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister

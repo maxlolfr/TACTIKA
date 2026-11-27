@@ -9,9 +9,12 @@ from PIL import Image
 from scipy import ndimage
 ROOT = os.path.join(os.path.dirname(__file__), '..')
 SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, '..', 'game-studio-ai/docs/studio/art/tactika/heros-v5')
-SHEETS = {'orion9': ('or01-orion-1803', 'fenn9'), 'kaelV': ('kael-veteran-1806', 'kael9'), 'fennV': ('fenn-veteran-1810', 'fenn9'), 'aelisV': ('aelis-veteran-1811', 'aelis9')}
+SHEETS = {'orion9': ('or01-orion-1803', 'fenn9'), 'kaelV': ('kael-veteran-1806', 'kael9'), 'fennV': ('fenn-veteran-1810', 'fenn9'), 'aelisV': ('aelis-veteran-1811', 'aelis9'),
+          'nyra9': ('nyra-1804', 'fenn9'), 'lyria9': ('lyria-1805', 'fenn9')}
+ONLY = os.environ.get('ONLY')  # ex. ONLY=nyra9,lyria9 : ne refait que ces planches
 fp = os.path.join(ROOT, 'assets', 'atlas.json'); atlas = json.load(open(fp))
 for name, (src, old) in SHEETS.items():
+    if ONLY and name not in ONLY.split(','): continue
     img = np.array(Image.open(os.path.join(SRC, src + '.png')).convert('RGB')).astype(float); H, W, _ = img.shape
     M = np.median(np.concatenate([img[:4].reshape(-1, 3), img[-4:].reshape(-1, 3)]), 0)
     d = np.abs(img - M).sum(2); al = np.clip((d - 80) / 110, 0, 1)
