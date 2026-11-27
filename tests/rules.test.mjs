@@ -916,7 +916,7 @@ test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le bu
 
 test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans toucher aux zones',async()=>{
  const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
- assert.equal(ZONES.length,11);assert.equal(map2Open({z:{}}),false);
+ assert.equal(ZONES.length,12);assert.equal(map2Open({z:{}}),false);
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
  assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
@@ -1312,6 +1312,20 @@ test('V4.68 : région 11 (Terres du Givre) : 10 missions, boss Roi du Givre (gel
  const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===18));
  const q=id=>QUESTS.find(x=>x.id===id);for(const id of['Q31','Q32','Q33','Q34','Q35'])assert.equal(q(id).z,10);assert.equal(r.questOpen({z:{[R10.id]:10}},q('Q31')),true);assert.equal(r.questOpen({z:{}},q('Q31')),false);
  assert.equal(r.questFight(q('Q33'),{}).elite,'frostel');
+});
+test('V4.73 : région 12 (Sanctuaire de l’Éther) : 10 missions niveaux 46 à 50, boss Briseur primordial (fracas)',async()=>{
+ const {ZONES,R11,R12,MON,THEMES,DEC,LOW,DECO_W,zlen,MAP2,HER}=await import('../src/data.js'),r=await import('../src/rules.js');
+ const at=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
+ assert.equal(ZONES[11],R12);assert.equal(zlen(R12),10);assert.equal(R12.th[0],12);assert.ok(MAP2.some(m=>m.n===R12.n));
+ for(const n of['etherbeast','etherknight','sanctguard','breaker'])assert.equal(at[n].length,6,n);assert.equal(at.sol_eter.length,8);assert.equal(at.deco9.length,9);
+ assert.deepEqual(DEC(68),['deco9',0]);assert.deepEqual(DEC(76),['deco9',8]);assert.deepEqual(DEC(67),['deco8',7]);
+ assert.ok(THEMES[12].g.every(i=>at.sol_eter[i]));assert.ok(THEMES[12].obs.every(o=>at[DEC(o)[0]][DEC(o)[1]]&&DECO_W[o]>0));assert.ok(LOW.has(73)&&!LOW.has(76));
+ for(const f of R12.fights){assert.ok(f.lvl>=46&&f.lvl<=50);for(const k of f.en)assert.ok(MON[k],k)}
+ assert.equal(R12.boss.s,'breaker');assert.equal(MON[R12.boss.summon.k].s,'etherbeast');
+ const F=r.fightSpec(11,9,1),s=r.newBattle(r.mulberry(5)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:50,items:[],up:{},sp:[null,null,null]},i)));
+ const B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.ok(B&&B.bs==='breaker'&&B.s==='breaker');B.hp=B.max;assert.deepEqual(r.bossTurn(s,B),[]);assert.ok(!h.sunder);
+ B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.25);assert.equal(h.sunder.pct,.15);assert.equal(h.sunder.turns,2);assert.deepEqual(r.bossTurn(s,B),[]);
+ const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===20));
 });
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
