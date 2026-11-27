@@ -1125,3 +1125,105 @@ test('Gel profond : −2 PM, au moins 1 restant, boss à −1, jamais affaibli p
     beginTurn(m); assert.equal(m.pm, maxPM);
   }
 });
+
+// V4.39 : maîtrise des sorts d'Orion (après addOrion)
+import {MASTERY,MAST_COST,mastPts,nextPtLvl,hasMastery,rankOf,mastLeft,mastSpent,canRaise,raise,resetMast,cleanMast,mastered,mastTxt} from '../src/mastery.js';
+const ORION_SP = ['arcane', 'flame', 'frost', 'fireball', 'icewall', 'blink', 'weaken', 'nova', 'glyph', 'storm'];
+test('maîtrise : seuls les 10 sorts d’Orion, les autres héros n’en ont pas', () => {
+  assert.deepEqual(Object.keys(MASTERY).sort(), [...ORION_SP].sort());
+  assert.deepEqual([0, 1, 2, 3].map(hasMastery), [false, false, false, true]);
+  for (const h of HER.slice(0, 3)) for (const id of [...h.sp, h.sp5]) assert.equal(MASTERY[id], undefined);
+});
+test('maîtrise : points (1 tous les 2 niveaux, 24 au niveau 50), coûts 2 puis 3', () => {
+  assert.deepEqual([1, 2, 3, 20, 21, 49, 50].map(mastPts), [0, 0, 1, 9, 10, 24, 24]);
+  assert.deepEqual([20, 21, 49].map(nextPtLvl), [21, 23, 51]);
+  assert.deepEqual(MAST_COST, [0, 0, 2, 5]);
+  assert.ok(mastPts(50) < ORION_SP.length * MAST_COST[3], 'impossible de tout maîtriser');
+});
+test('maîtrise : les 10 sorts aux 3 rangs (bonus par rapport au rang I, sans cumul)', () => {
+  const v = id => [1, 2, 3].map(r => mastered({ ...SP[id] }, id, r));
+  for (const id of ['arcane', 'flame', 'frost', 'fireball', 'nova', 'glyph', 'storm']) {
+    assert.deepEqual(v(id).map(s => s.k || 1), [1, 1.05, 1.1], id);
+    assert.deepEqual(v(id).map(s => [s.pa, s.cd, s.r, s.zone, s.side, s.burn]), v(id).map(() => [SP[id].pa, SP[id].cd, SP[id].r, SP[id].zone, SP[id].side, SP[id].burn]), id + ' : coût, recharge, portée, zone inchangés');
+  }
+  assert.deepEqual(v('icewall').map(s => +s.wall.hp.toFixed(3)), [.4, .46, .52]);
+  assert.deepEqual(v('blink').map(s => s.r), [[1, 3], [1, 4], [1, 5]]);
+  assert.ok(v('blink').every(s => s.free && s.los && s.lob && s.pa === 3 && s.cd === 3), 'restrictions de la téléportation gardées');
+  assert.deepEqual(v('weaken').map(s => s.weaken), [[.2, 2], [.22, 2], [.24, 2]]);
+  assert.match(v('weaken')[2].d, /24 %/);
+  assert.equal(SP.weaken.weaken[0], .2, 'sort de base non modifié');
+  for (const r of [0, 4, '3', null]) assert.equal(mastered(SP.arcane, 'arcane', r), SP.arcane, 'rang invalide = rang I');
+  assert.equal(mastered(SP.slash, 'slash', 3), SP.slash);
+  assert.deepEqual(['arcane', 'flame', 'icewall', 'blink', 'weaken'].map(id => mastTxt(id, 3)), ['+10 % dégâts', '+10 % dégâts directs', '+30 % PV du mur', '+2 cases de portée', 'réduction 24 % au lieu de 20 %']);
+});
+test('maîtrise et les 15 talents : additifs, jamais appliqués deux fois', () => {
+  for (const voie of ['pyro', 'cryo', 'arcaniste']) {
+    const tal = orion(40, voie);
+    for (const id of ORION_SP) {
+      const t = { ...SP[id], ...tal[id] }, m = mastered(t, id, 3), M = MASTERY[id];
+      if (M[0] === 'dmg') assert.equal(+m.k.toFixed(3), +((t.k || 1) + .1).toFixed(3), `${voie} ${id}`);
+      if (M[0] === 'wall') assert.equal(+m.wall.hp.toFixed(3), +(t.wall.hp + .12).toFixed(3));
+      if (M[0] === 'range') assert.deepEqual(m.r, [1, t.r[1] + 2]);
+      if (M[0] === 'weak') assert.deepEqual(m.weaken, [.24, t.weaken[1]]);
+      for (const k of ['pa', 'cd', 'burn', 'slow', 'side', 'zone', 'free', 'los']) assert.deepEqual(m[k], t[k], `${voie} ${id} ${k}`);
+    }
+  }
+  assert.equal(+mastered({ ...SP.frost, ...orion(40, 'cryo').frost }, 'frost', 3).k.toFixed(3), 1.2, 'Givre mordant + rang III = +20 %, pas +21 %');
+  assert.equal(+mastered({ ...SP.icewall, ...orion(40, 'cryo').icewall }, 'icewall', 3).wall.hp.toFixed(3), .6);
+  assert.deepEqual(mastered({ ...SP.blink, ...orion(40, 'arcaniste').blink }, 'blink', 3).r, [1, 6]);
+  assert.deepEqual(mastered({ ...SP.flame, ...orion(40, 'pyro').flame }, 'flame', 3).burn, [4, 3], 'brûlure non touchée');
+});
+test('maîtrise : achat, budget, sorts pas encore appris, remise à zéro', () => {
+  const s = { lvl: 21, items: [], up: {} };
+  assert.equal(mastLeft(s, 3), 10);
+  assert.equal(raise(s, 0, 'slash'), 0, 'Kael : pas de maîtrise');
+  assert.equal(raise(s, 3, 'glyph'), 0, 'Glyphe appris au niveau 35');
+  assert.equal(raise(s, 3, 'storm'), 0);
+  assert.equal(raise(s, 3, 'arcane'), 1); assert.equal(raise(s, 3, 'arcane'), 1); assert.equal(raise(s, 3, 'arcane'), 0, 'rang III maximum');
+  assert.deepEqual([rankOf(s, 3, 'arcane'), mastSpent(s, 3), mastLeft(s, 3)], [3, 5, 5]);
+  assert.equal(raise(s, 3, 'flame'), 1); assert.equal(raise(s, 3, 'flame'), 1);
+  assert.equal(mastLeft(s, 3), 0); assert.equal(canRaise(s, 3, 'frost'), false);
+  assert.equal(heroStats(s, 3).mast.arcane, 3);
+  resetMast(s, 3); assert.equal(mastLeft(s, 3), 10); assert.equal(rankOf(s, 3, 'arcane'), 1);
+  const t = { lvl: 50, items: [], up: {} };
+  for (const id of ORION_SP) { raise(t, 3, id); raise(t, 3, id) }
+  assert.equal(mastSpent(t, 3), 24); assert.ok(ORION_SP.some(id => rankOf(t, 3, id) < 3), 'pas tout au rang III');
+});
+test('maîtrise : sauvegardes anciennes, abîmées, idempotence', () => {
+  for (const ms of [undefined, null, 'x', [], {}, { 3: null }, { 3: 'a' }]) {
+    const s = { lvl: 30, items: [], ms }; cleanMast(s); assert.equal(s.ms, undefined, JSON.stringify(ms));
+  }
+  const s = { lvl: 21, items: [], ms: { 3: { arcane: 3, flame: 4, glyph: 2, slash: 2, nope: 3, frost: '2', fireball: 2 }, 7: { x: 1 } } };
+  cleanMast(s); assert.deepEqual(s.ms, { 3: { arcane: 3, fireball: 2 }, 7: { x: 1 } }, 'héros absent laissé tel quel');
+  const avant = JSON.stringify(s); cleanMast(s); assert.equal(JSON.stringify(s), avant, 'deux fois = pareil');
+  const trop = { lvl: 5, items: [], ms: { 3: { arcane: 3 } } }; cleanMast(trop); assert.equal(trop.ms, undefined, 'budget dépassé : points rendus');
+  const vrai = { lvl: 30, items: [], sp: [null, null, null] }, v = JSON.stringify(vrai); cleanMast(vrai); assert.equal(JSON.stringify(vrai), v, 'sauvegarde sans maîtrise inchangée');
+});
+test('maîtrise en combat : appliquée une fois, aperçu = effet, armure et insensibilité gardées', () => {
+  const st = { lvl: 50, items: [], up: {}, team: [0, 3, 1], sp: [null, null, null, 'cryo'], load: { 3: ['arcane', 'frost', 'icewall', 'blink', 'weaken', 'flame'] }, ms: { 3: { frost: 3, icewall: 3, blink: 3, weaken: 3, flame: 2 } } };
+  const s = newBattle(); s.pot = 0;
+  const F = fightSpec(0, 0, 7), { hs, es } = genMap(s, F.seed, F.th, F.cry);
+  mkUnits(s, F, hs, es, HER.map((_, i) => heroStats(st, i)), teamOf(st));
+  const o = s.units.find(u => u.k === 'mage');
+  assert.deepEqual([+o.S.frost.k.toFixed(3), +o.S.icewall.wall.hp.toFixed(3), o.S.blink.r, o.S.weaken.weaken, +o.S.flame.k.toFixed(3), o.S.arcane.k], [1.2, .6, [1, 5], [.24, 2], 1.05, undefined]);
+  const k = s.units.find(u => u.k === 'warrior');
+  assert.deepEqual(Object.keys(k.S).map(id => k.S[id].k), Object.keys(k.S).map(id => SP[id].k), 'Kael inchangé');
+  const { s: a, o: m } = terrain(['frost']), cible = foe(a, 4, 5, { armor: .3, boss: 1 });
+  const sp = mastered(SP.frost, 'frost', 3), f = forecast(a, m, sp, cible), b = forecast(a, m, SP.frost, cible);
+  const nu = foe(a, 4, 6); assert.ok(f.dmg[1] >= b.dmg[1] && f.dmg[1] < forecast(a, m, sp, nu).dmg[1], 'armure du boss toujours appliquée');
+  assert.deepEqual(forecast(a, m, sp, nu).dmg, [Math.round(8 * 1.1), Math.round(11 * 1.1)]);
+  a.rng = () => .5; applySpell(a, m, sp, cible); assert.ok(200 - cible.hp >= f.dmg[0] && 200 - cible.hp <= f.dmg[1]);
+  const { s: c, o: p } = terrain(['flame']), feu = foe(c, 4, 5, { k: 'fireel' });
+  applySpell(c, p, mastered(SP.flame, 'flame', 3), feu); assert.equal(feu.burn, undefined, 'insensible au feu');
+  const w = foe(c, 6, 5); applySpell(c, p, mastered(SP.weaken, 'weaken', 3), w); assert.deepEqual(w.weak, { pct: .24, turns: 2 });
+  const g = mastered(SP.glyph, 'glyph', 3); applySpell(c, p, g, { x: 3, y: 7 }); assert.equal(p.trap.glyph.sp.k, 1.1, 'le glyphe garde son rang');
+});
+test('maîtrise : la téléportation garde ligne de vue et case libre', () => {
+  const { s, o } = terrain(['blink']), sp = mastered(SP.blink, 'blink', 3);
+  foe(s, 7, 5);
+  assert.ok(!okTarget(s, o, sp, { x: 7, y: 5 }), 'case occupée');
+  assert.ok(okTarget(s, o, sp, { x: 2, y: 10 }), '5 cases');
+  assert.ok(!okTarget(s, o, sp, { x: 2, y: 11 }), '6 cases : trop loin');
+  cell(s, 2, 7).block = 1;
+  assert.ok(!okTarget(s, o, sp, { x: 2, y: 9 }), 'décor haut : pas de ligne de vue');
+});
