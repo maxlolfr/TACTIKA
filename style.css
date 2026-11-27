@@ -488,3 +488,25 @@ body.camp #exc{display:none}
 #forge .sub,#shop .sub,#tav .sub{background:#070b16b8;border-radius:12px;padding:6px 12px;border:1px solid #b99a6088}
 #result .ractions .btn.dark{min-width:120px}
 #forge .loot,#shop .loot,#tav .loot,.ov .frow{flex:none}
+
+/* ===== V4.63 : haut du combat façon maquette Royal Arcane (HUD V2) : logo, titre encadré, flèches de la frise, ♪ / 🔊 / ⚙ ===== */
+#hlogo,.tlarr{display:none}
+.hud2 #hlogo{display:block;flex:none;height:30px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 3px #000c);pointer-events:none}
+.hud2 #title{flex:none;text-align:center;line-height:1.25;padding:3px 10px;border:1px solid var(--ra-or);border-radius:10px;background:linear-gradient(#1a2433e6,#0f1622e6);box-shadow:inset 0 0 0 1px #e9cf9422,0 2px 6px #0008;max-width:190px;white-space:pre-line}
+.hud2 #top .son-m,.hud2 #top .son-s,.hud2 #hson{display:flex;align-items:center;justify-content:center;width:34px;height:32px;padding:0!important;flex:none;color:var(--ra-or2)!important}
+.hud2 #top .son-m svg,.hud2 #top .son-s svg,.hud2 #hson svg{display:block}
+.hud2 #flee{flex:none}
+.hud2 .tlarr{display:block;flex:none;width:22px;height:34px;padding:0;border:0;background:none;color:var(--ra-or2);font:900 30px/30px Georgia,serif;text-shadow:0 2px 4px #000c;cursor:pointer}
+.hud2 .tlarr[hidden]{display:none}
+.hud2 .tlarr:disabled{opacity:.3;cursor:default}
+.hud2 #tl{scroll-behavior:smooth}
+@media (orientation:portrait){
+ .hud2 #hlogo{height:26px}
+ .hud2 #title{flex:1 1 0;min-width:0;max-width:none;font-size:11px}
+ .hud2 #tlp,.hud2 #tln{order:9}
+ .hud2 #tl{flex:1 1 0;min-width:0}
+ .hud2 #top:has(#tlp:not([hidden])) #tl{flex:1 0 calc(100% - 64px)}
+ .hud2 #top:has(#tlp[hidden]) #tl{flex:1 0 100%}
+}
+@media (orientation:landscape) and (max-height:450px){.hud2 #hlogo{height:24px}.hud2 #title{max-width:120px;font-size:10px;padding:2px 6px}.hud2 #top .son-m,.hud2 #top .son-s,.hud2 #hson{width:30px;height:28px}.hud2 .tlarr{width:16px}}
+@media (orientation:landscape) and (min-height:600px){.hud2 #hlogo{height:40px}.hud2 #title{font-size:13px;max-width:230px}.hud2 #top .son-m,.hud2 #top .son-s,.hud2 #hson{width:40px;height:38px}}

@@ -423,8 +423,20 @@ addEventListener('resize',relayout);addEventListener('orientationchange',relayou
 // V4.50 : aperçu HUD V2 — un seul haut-parleur en combat ; un toucher ouvre un petit panneau flottant (musique, voix, bruitages).
 // Mêmes réglages que le menu (landeVol / landeSon) : réglage immédiat, mémorisé, sans toucher au plateau.
 if(HUD2){
- const b=document.createElement('button');b.id='hson';b.className='btn dark';b.innerHTML='<img src="assets/hud2/ic-son.webp" alt="" width="22" height="22">';b.setAttribute('aria-label','Volume');b.setAttribute('aria-expanded','false');
+ const b=document.createElement('button');b.id='hson';b.className='btn dark';b.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>';b.setAttribute('aria-label','Réglages');b.setAttribute('aria-expanded','false');
  $('flee').before(b);
+ // V4.63 : barre du haut façon maquette Royal Arcane : logo, ♪ musique, 🔊 bruitages (coupure), ⚙ réglages (volumes), flèches de la frise
+ const sm=document.querySelector('#top .son-m'),ss=document.querySelector('#top .son-s');
+ sm.setAttribute('aria-label','Musique');ss.setAttribute('aria-label','Bruitages');
+ sm.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9 3v11.2A3.5 3.5 0 1 0 11 17.4V7.6l8-1.8v6.4A3.5 3.5 0 1 0 21 15.4V3z" transform="translate(-1 0)"/></svg>';
+ ss.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9.5v5h3.6L11 18.5v-13L6.6 9.5zM14 8.2a5 5 0 0 1 0 7.6l-1.2-1.4a3 3 0 0 0 0-4.8zM16.6 5.6a8.6 8.6 0 0 1 0 12.8l-1.3-1.5a6.6 6.6 0 0 0 0-9.8z"/></svg>';
+ sonBtns();
+ const lg=document.createElement('img');lg.id='hlogo';lg.src='assets/logo.webp';lg.alt='Tactika';lg.width=120;lg.height=45;$('top').prepend(lg);
+ const ap=document.createElement('button'),an=document.createElement('button');ap.id='tlp';an.id='tln';ap.className=an.className='tlarr';ap.setAttribute('aria-label','Tours précédents');an.setAttribute('aria-label','Tours suivants');ap.textContent='‹';an.textContent='›';
+ $('tl').before(ap);$('tl').after(an);
+ const tl=$('tl'),arr=()=>{const m=tl.scrollWidth-tl.clientWidth>2;ap.hidden=an.hidden=!m;ap.disabled=tl.scrollLeft<=1;an.disabled=tl.scrollLeft>=tl.scrollWidth-tl.clientWidth-1};
+ ap.onclick=()=>tl.scrollBy({left:-tl.clientWidth*.7,behavior:'smooth'});an.onclick=()=>tl.scrollBy({left:tl.clientWidth*.7,behavior:'smooth'});
+ tl.addEventListener('scroll',arr,{passive:true});addEventListener('resize',arr);new MutationObserver(()=>requestAnimationFrame(arr)).observe(tl,{childList:true});requestAnimationFrame(arr);
  const P=document.createElement('div');P.id='hvol';P.setAttribute('role','dialog');P.setAttribute('aria-label','Volume');
  const K={g:'Général',m:'Musique',v:'Voix',s:'Bruitages'},MX={g:100,m:VOLMAX,v:VOLMAX,s:VOLMAX};
  P.innerHTML='<button class="hx" aria-label="Fermer">✕</button>'+Object.entries(K).map(([k,n])=>`<label data-k="${k}"><button type="button" class="mu" aria-label="Couper : ${n}"><img src="assets/hud2/ic-son.webp" alt="" width="20" height="20"></button><span>${n}</span><input type="range" min="0" max="${MX[k]}" step="5" data-k="${k}"><b></b></label>`).join('');
