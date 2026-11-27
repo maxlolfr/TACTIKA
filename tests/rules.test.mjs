@@ -801,13 +801,13 @@ import {readFileSync} from 'node:fs';
 const J=id=>ITEMS.findIndex(o=>o.id===id),SV2=(o={})=>({lvl:10,gold:1000,xp:0,items:[],sp:[null,null,null],up:{},...o});
 test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes valides', () => {
  assert.equal(ITEMS.length,63);
- assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,o.who,o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
+ assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,whoOf(o).filter(i=>i<3)[0],o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
   [['Épée courte',60,0,'arme',2],['Hache de guerre',120,0,'arme',3],['Bouclier rond',90,0,'accessoire',8],['Heaume',70,0,'armure',6],['Arc long',60,1,'arme',2],
    ['Armure de cuir',70,1,'armure',6],['Bottes de cuir',50,1,'accessoire',4],['Bâton de saule',60,2,'arme',3],['Anneau de rubis',100,2,'bijou',2],['Amulette',70,2,'bijou',6]].map(a=>[...a,undefined,undefined,undefined]));
  const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
   assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
- assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3,4,5]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
+ assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3,4,5]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1,4,5]);
 });
 test('V4.12 : rareté fixe, valeurs du moteur, revente au prix final', () => {
  const sv=SV2({items:[J('eq18'),J('eq12')],rr:{[J('eq18')]:0,[J('eq12')]:2}}); // save.rr ignoré pour les nouveaux
@@ -1405,4 +1405,12 @@ test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
  assert.equal(QUESTS.filter(q=>questOpen(sv,q)).length,3);
  for(const q of QUESTS){const F=questFight(q,sv);assert.equal(F.quest,q.id);assert.ok(ZONES[F.zi]);assert.equal(!!F.wave,q.g==='survive');assert.ok(q.t&&q.d&&q.c)}
  assert.equal(questDone({q:{Q01:1}},QUESTS[0]),true);assert.equal(questDone({},QUESTS[0]),false);
+});
+
+// ---------- V4.59 équipement de Nyra et Lyria ----------
+test('Nyra et Lyria portent du matériel de Fenn et Kael, aucun objet ajouté', () => {
+  assert.equal(ITEMS.length, 63);
+  const c = ITEMS.find(o => o.n === 'Cuirasse à épaulières'), a = ITEMS.find(o => o.n === 'Arc long'), e = ITEMS.find(o => o.n === 'Épée courte'), h = ITEMS.find(o => o.n === 'Hache de guerre');
+  assert.deepEqual(whoOf(c), [0, 5]); assert.deepEqual(whoOf(a), [1]); assert.deepEqual(whoOf(e), [0, 4, 5]); assert.deepEqual(whoOf(h), [0, 5]);
+  for (const hero of [4, 5]) for (const sl of ['arme', 'armure', 'accessoire', 'bijou']) assert.ok(ITEMS.some(o => o.sl === sl && whoOf(o).includes(hero)), `héros ${hero} sans ${sl}`);
 });
