@@ -80,7 +80,7 @@ export const ZONES=[
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
 export const MAP2=[{n:'Forteresse de braise',x:20,y:64,lx:23,ly:69},{n:'Temple des sables',x:78,y:63,lx:73,ly:69},
  {n:'Marais des âmes',x:23,y:41,lx:21,ly:45},{n:'Citadelle céleste',x:79,y:31,lx:76,ly:32},
- {n:'Terres du Givre Éternel',x:20,y:18,lx:25,ly:21},{n:'Sanctuaire de l’Éther',x:61,y:13,lx:52,ly:19}];
+ {n:'Terres du Givre Éternel',x:20,y:18,lx:25,ly:21},{n:'Sanctuaire de l’Éther',x:61,y:13,lx:52,ly:22}];
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
 // V4.7a : sl = emplacement (arme, armure, bijou, accessoire). Seul l'objet équipé dans chaque emplacement donne son bonus (save.eq).
