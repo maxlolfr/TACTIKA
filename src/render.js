@@ -30,6 +30,9 @@ export function zoneAssets(F){const want=new Set([THEMES[F.th].ts].filter(Boolea
 // ---------- images ----------
 export function drawF(c,s,i,x,y,sc,flip,alpha){const f=AT[s][i];c.save();c.globalAlpha=alpha??1;c.translate(x,y);if(flip)c.scale(-1,1);
  c.drawImage(IMG[s],f[0],f[1],f[2],f[3],-f[4]*sc,-f[5]*sc,f[2]*sc,f[3]*sc);c.restore()}
+// V4.86 : portrait d'une planche (bestiaire), sans la garder en mémoire du combat : l'image est relue depuis le cache du navigateur
+export function sprite(s,i,px){const d=2,c=document.createElement('canvas');c.width=c.height=px*d;c.style.width=c.style.height=px+'px';const f=AT[s]?.[i]||AT[s==='slimeT'?'slimeN':s]?.[i];if(!f)return c;
+ const im=new Image();im.onload=()=>{const k=Math.min(px*d/f[2],px*d/f[3]),g=c.getContext('2d');if(s==='slimeT')g.filter='hue-rotate(250deg) saturate(1.4)';g.drawImage(im,f[0],f[1],f[2],f[3],(px*d-f[2]*k)/2,px*d-f[3]*k,f[2]*k,f[3]*k)};im.src='assets/'+(s==='slimeT'?'slimeN':s)+'.webp';return c}
 const UIC={};export function uiURL(i){if(UIC[i])return UIC[i];const f=AT.ui[i],c=document.createElement('canvas');c.width=f[2];c.height=f[3];c.getContext('2d').drawImage(IMG.ui,f[0],f[1],f[2],f[3],0,0,f[2],f[3]);return UIC[i]=c.toDataURL()}
 export function logoURL(){const f=AT.logo[0],c=document.createElement('canvas');c.width=f[2];c.height=f[3];c.getContext('2d').drawImage(IMG.logo,f[0],f[1],f[2],f[3],0,0,f[2],f[3]);return c.toDataURL()}
 export function skin(){const st=document.createElement('style');st.textContent=`.btn{background:url(${uiURL(5)}) center/100% 100% no-repeat;box-shadow:none;border-radius:0;text-shadow:0 1px 0 #fff6;padding:14px 22px}.btn:active{background-image:url(${uiURL(7)})}

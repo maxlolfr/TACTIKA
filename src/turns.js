@@ -4,9 +4,11 @@ import {wait,tween} from './util.js';
 import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick,iceTick} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
 import {sfx,voice} from './audio.js';
+import {tally} from './chronicle.js';
 
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
-export function play(events){for(const e of events){switch(e.type){
+export function play(events){if(G.s?.T)tally(G.s.T,events,G.cur); // V4.86 : dégâts, soins et records du bilan
+ for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w,550,e.sh||'fx');break;
  case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='burn'?'#ff9030':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
   if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx(t.bs==='beam'?'titan_death':t.boss?'boss_death':'death'),150)}
