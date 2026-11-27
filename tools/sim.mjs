@@ -4,7 +4,12 @@
 //         node tools/sim.mjs [campagnes]   (campagne entière : très coûteux, seulement avec l'accord de Max)
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
-import {SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
+import {SP,HER,ZONES,ITEMS,zlen,PA_RULE,DIFF} from '../src/data.js';
+// V4.85 : DH=1.2 DD=1.1 multiplient la difficulté de toutes les régions (essais de réglage seulement) ; BH/BD idem pour les seuls boss
+for(const[k,e]of[['hp','DH'],['dmg','DD']])if(process.env[e])DIFF[k]=DIFF[k].map(v=>v*+process.env[e]);
+if(process.env.DZ)for(const e of process.env.DZ.split(',')){const[z,h,d]=e.split(/[=/]/).map(Number);DIFF.hp[z]=h;DIFF.dmg[z]=d??h} // DZ=3=1.3/1.2,4=1.4 : une région
+if(process.env.BZ)for(const e of process.env.BZ.split(',')){const[z,b]=e.split('=').map(Number);DIFF.boss[z]=b} // BZ=3=0.8 : facteur du boss d'une région
+if(process.env.BH||process.env.BD)for(const z of ZONES)if(z.boss)z.boss={...z.boss,hp:z.boss.hp*(+process.env.BH||1),dmg:z.boss.dmg*(+process.env.BD||1)};
 import {raise} from '../src/mastery.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
 import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,iceTick,hitCells,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
@@ -30,6 +35,7 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
  if(sp.shield)return alive(s,'m').filter(m=>man(m,u)<=2).length>=2?7:0;
  if(sp.weaken)return t&&!t.weak?6:0;
  if(sp.pmBonus||sp.revive||sp.trap||sp.wall||sp.blink)return 0; // Glyphe, Mur et Saut non plus // Renaissance et Piège : non joués par le simulateur
+ if(!sp.dmg)return 0; // V4.85 : sorts utilitaires de Nyra et Lyria (esquive, marque, fumée, interception...) non joués par le bot
  const tg=hitCells(s,sp,c,u);let v=0;
  for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.side&&(p.x!==c.x||p.y!==c.y)?sp.side:1)*(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)+(sp.burn&&!fireproof(m)&&!m.burn?4:0)}
  return v}
@@ -68,6 +74,7 @@ function reward(save,r){const{F,s}=r,z=ZONES[F.zi].id,first=(save.z[z]||0)===F.i
  const free=lootPool(save);if(free.length&&Math.random()<(F.boss&&first?1:first?.5:.15))save.items.push(pick(Math.random,free));
  best[F.i]=Math.max(best[F.i]||0,r.st);if(first)save.z[z]=F.i+1}
 
+// V4.85 : en mode pilote, Nyra emporte ses sorts de dégâts (load[4]) : le bot ne joue ni Fumigène, ni Marque, ni Pas d'ombre
 // ---------- mode pilote (V4.5) : 3 missions × 3 profils × graines fixes ----------
 // sous = niveau −2, sans objet ni talent · std = niveau de la mission, 4 objets communs, Gardien/Tireur/Guérisseuse · opti = niveau +2, 10 objets rares forge 2, Berserker/Tireur/Enchanteresse
 const PROF={sous:{dl:-2,items:[],rr:0,up:0,sp:[null,null,null]},std:{dl:0,items:[0,4,7,5],rr:0,up:0,sp:['gardien','tireur','guerisseuse']},opti:{dl:2,items:[...ITEMS.keys()],rr:1,up:2,sp:['berserk','tireur','enchant']}};
@@ -80,13 +87,15 @@ PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:n
 // soin (mesure du cumul des soins) : tout le catalogue, forge 2, Guérisseuse, Aelis tout en Intelligence. NO_MHEAL=1 retire Soin collectif.
 PROF.soin={...PROF.cat,up:2,attr:(n,i)=>i===2?{int:n}:PROF.std.attr(n,i)};
 PROF.mid={...PROF.std,items:ITEMS.map((x,j)=>j).filter(j=>!ITEMS[j].src||ITEMS[j].src==='shop'),up:1}; // V4.84 : joueur « moyen » tardif = objets de la boutique jusqu'à son niveau (std n'a que 4 objets de départ)
-for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
+// V4.85 : « faible » = joueur sous-équipé réaliste : 1 niveau de retard, objets de boutique avec 6 niveaux de retard, sans forge, points répartis
+PROF.faible={...PROF.std,dl:-1,items:PROF.mid.items,lag:+(process.env.LAG??6),up:+(process.env.UP??0)};
+for(const p of Object.values(PROF))p.it=L=>{const lvl=Math.max(1,L-(p.lag||0));return p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl)};
 const PIL={h5:['Château 5 (chevalier rouge)',4,4],h8:['Château 8 (survie)',4,7],h10:['Chevalier noir (boss)',4,9],m5:['Monts 5 (chevalier rouge)',3,4],m8:['Monts 8 (survie)',3,7],m10:['Golem ancien (boss)',3,9],c5:['Côte 5 (chevalier)',2,4],c8:['Côte 8 (survie)',2,7],c10:['Crabe royal (boss)',2,9],p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 8 (survie)',1,7],loup:['Loup alpha (boss)',1,9],b5:['Bois 5 (chef)',1,4],b7:['Bois 7 (formation)',1,6],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const q=m.split('.').map(Number),[name,zi,i]=PIL[m]||[ZONES[q[0]].n+' '+(q[1]+1),q[0],q[1]]; // « monde.étape » : monde dès 0, étape dès 0
   for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,(LV||(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i))+p.dl),R=[];
-  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&HER.map((_,i)=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:[...p.sp,k==='sous'?null:ORSPEC],z:{},st:{}};if(k!=='sous')mastFill(save);R.push(fight(save,zi,i,g*7919,g*97))}
+  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&HER.map((_,i)=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:k==='sous'?[null,null,null,null,null,null]:[...p.sp,ORSPEC,k==='opti'?'ombre':'duelliste',k==='opti'?'justiciere':'sentinelle'],z:{},st:{},load:{4:['dagger','backstab','toxin','twin','execute','dance']}};if(k!=='sous')mastFill(save);const G=g+(+process.env.SEED0||0);R.push(fight(save,zi,i,G*7919,G*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
  console.log('\n| Héros · sort | Lancers | Lancers/combat | PA | Dégâts/PA | Soins/PA |\n|---|---|---|---|---|---|');for(const[k,[n,pa,d,h]]of Object.entries(SPL).sort())console.log(`| ${k} | ${n} | ${f(n/FIGHTS)} | ${pa} | ${f(d/(pa||1))} | ${f(h/(pa||1))} |`);
