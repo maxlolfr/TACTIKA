@@ -123,8 +123,11 @@ export const MON={
  mummy:{ai:'tank',snd:'smash',n:'Gardien momifié',s:'mummy',row:0,hp:56,pm:2,init:8,dmg:[11,14],armor:.15,h:1.1,xp:26,curse:1},
  scorp:{ai:'flank',snd:'bite',n:'Scorpion doré',s:'scorp',row:0,hp:38,pm:5,init:13,dmg:[9,12],poison:[4,2],h:.75,xp:22},
  anubis:{ai:'range',snd:'poison',n:'Sentinelle antique',s:'anubis',row:0,hp:40,pm:3,init:10,dmg:[9,12],r:[1,4],los:1,fx:5,h:1.15,xp:24,imm:1,curse:1},
- // V4.64, région 9 (valeurs provisoires de Claude). Crapaud venimeux : poison 4 × 2 tours, ralentit (planche ChatGPT, tools/prep_r9.py). Le spectre est le Fantôme existant, en attendant sa planche.
- toad:{ai:'tank',snd:'bite',n:'Crapaud venimeux',s:'toad',row:0,hp:50,pm:3,init:9,dmg:[10,13],armor:.1,poison:[4,2],slow:1,h:.8,xp:28}};
+ // V4.64, région 9 (valeurs provisoires de Claude). Crapaud venimeux : poison 4 × 2 tours, ralentit (planche ChatGPT, tools/prep_r9.py). V4.66 : ent corrompu, spectre des marais et clone de la Reine ont leurs planches.
+ toad:{ai:'tank',snd:'bite',n:'Crapaud venimeux',s:'toad',row:0,hp:50,pm:3,init:9,dmg:[10,13],armor:.1,poison:[4,2],slow:1,h:.8,xp:28},
+ ent:{ai:'tank',snd:'smash',n:'Ent corrompu',s:'ent',row:0,hp:64,pm:2,init:7,dmg:[12,16],armor:.2,h:1.25,xp:30},
+ wraith:{ai:'range',snd:'poison',n:'Spectre des marais',s:'wraith',row:0,hp:30,pm:4,init:12,dmg:[8,11],r:[1,3],los:1,fx:5,h:.95,xp:20,fly:1},
+ queenling:{ai:'flank',snd:'bite',n:'Clone de la Reine',s:'queen',row:0,hp:14,pm:4,init:10,dmg:[5,7],poison:[2,2],h:.55,xp:0}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB',KR='knightR',KN='knightN',GO='golem',GB='goblin',GH='ghost',SK='skel';
@@ -178,14 +181,13 @@ export const R8={id:'sables',map:2,n:'Temple des sables',x:78,y:63,th:[8],lvl:26
   {lvl:29,en:[MU,MU,SC,AN,AN],lava:T(5)},{lvl:29,en:[SC,AN,SC],lava:T(4),goal:'survive'},{lvl:30,en:[MU,AN,AN,SC,SC],lava:{n:5,trap:1,hot:1},goal:'chief'},
   {lvl:30,en:[SC,AN],lava:T(4),tip:'tomb'}]};
 ZONES.push(R8);
-// V4.64 : Marais des âmes, 10 missions (région 9, carte II), après le Pharaon. Niveaux 31 à 35. Crapauds venimeux (poison, ralentissement) et Fantômes (en attendant le spectre des marais).
-// Boss provisoire : « Reine des marécages » = crapaud agrandi (planche `toadK`), remplacé à la réception des planches de la Reine. Ent corrompu : pas encore de planche.
-const TD='toad',GS='ghost';
-export const R9={id:'marais',map:2,n:'Marais des âmes',x:23,y:41,th:[9],lvl:31,pool:[TD,GS],boss:{k:TD,s:'toadK',n:'Reine des marécages',hp:3.8,dmg:1.3,h:1.5},
+// V4.64 : Marais des âmes, 10 missions (région 9, carte II), après le Pharaon. Niveaux 31 à 35. V4.66 : crapauds venimeux, ents corrompus, spectres des marais ; boss Reine des marécages (`bs:'swamp'`, planche `queen`, clones fragiles sous la moitié de ses PV).
+const TD='toad',EN='ent',WR='wraith';
+export const R9={id:'marais',map:2,n:'Marais des âmes',x:23,y:41,th:[9],lvl:31,pool:[TD,EN,WR],boss:{k:TD,s:'queen',n:'Reine des marécages',hp:3.8,dmg:1.3,h:1.5,bs:'swamp',summon:{k:'queenling',n:2,hp:14,pm:4,dmg:[5,7],sn:'Clone de la Reine',snd:'bite'}},
  waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,TD]]}},
- fights:[{lvl:31,en:[TD,TD,GS]},{lvl:31,en:[TD,GS,GS,GS]},{lvl:32,en:[TD,TD,TD,GS]},{lvl:32,en:[GS,GS,GS,TD,TD]},
-  {lvl:33,en:[TD,TD,GS,GS],goal:'chief'},{lvl:33,en:[TD,TD,TD,GS,GS]},{lvl:34,en:[GS,GS,GS,GS,TD,TD]},{lvl:34,en:[TD,GS,TD],goal:'survive'},
-  {lvl:35,en:[TD,TD,TD,GS,GS],goal:'chief'},{lvl:35,en:[TD,GS]}]};
+ fights:[{lvl:31,en:[TD,TD,WR]},{lvl:31,en:[EN,WR,WR]},{lvl:32,en:[TD,TD,EN,WR]},{lvl:32,en:[WR,WR,WR,TD,EN]},
+  {lvl:33,en:[EN,TD,WR,WR],goal:'chief'},{lvl:33,en:[TD,TD,TD,WR,WR]},{lvl:34,en:[WR,WR,WR,EN,TD,TD]},{lvl:34,en:[TD,EN,TD],goal:'survive'},
+  {lvl:35,en:[EN,TD,TD,WR,WR],goal:'chief'},{lvl:35,en:[TD,WR],tip:'swamp'}]};
 ZONES.push(R9);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
