@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick} from './rules.js';
+import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick,iceTick} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
 import {sfx,voice} from './audio.js';
 
@@ -26,8 +26,8 @@ export function play(events){for(const e of events){switch(e.type){
 
 export async function cast(u,sp,c){const S=G.s; // l'état du combat en cours, même si on fuit pendant l'animation
  payCost(u,sp,c);keepInView(c.x,c.y);
- pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self'||sp.t==='dead'||sp.trap)?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);if(u.team==='h'&&sp.vx)voice(u.k,sp.vx,{chance:.6});
- if(sp.proj){addProj(u,c);await wait(260);sfx('arrowhit',.8)}
+ pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self'||sp.t==='dead'||sp.trap||sp.wall||sp.blink)?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);if(u.team==='h'&&sp.vx)voice(u.k,sp.vx,{chance:.6});
+ if(sp.proj){addProj(u,c,sp.orb);await wait(260);if(!sp.orb)sfx('arrowhit',.8)}
  else if(sp.charge){const d=chargeDest(S,u,sp,c);if(d){u.walk=1;let st=0;for(const[x,y]of d.path){const x0=u.gx,y0=u.gy;st++;await tween(110,t=>{u.gx=x0+(x-x0)*t;u.gy=y0+(y-y0)*t;u.wf=st*2+(t<.5?0:1)})}u.walk=0}}
  else if(sp.r[1]===1&&sp.t==='enemy'){const dx=(c.x-u.x)*.35,dy=(c.y-u.y)*.35;await tween(110,t=>{u.gx=u.x+dx*t;u.gy=u.y+dy*t});tween(160,t=>{u.gx=u.x+dx*(1-t);u.gy=u.y+dy*(1-t)})}
  else await wait(180);
@@ -54,7 +54,7 @@ async function ai(u,id){
 }
 export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne boucle s'arrête si un autre combat commence
  while(G.phase==='fight'&&G.fid===id){
-  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;const burn=lavaTick(S);if(burn.length){play(burn);await wait(700);if(G.fid!==id||end())return}hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;play(iceTick(S));const burn=lavaTick(S);if(burn.length){play(burn);await wait(700);if(G.fid!==id||end())return}hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);keepInView(u.x,u.y);hooks.renderTL();hooks.render();
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison||u.burn){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}

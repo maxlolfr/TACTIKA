@@ -3,7 +3,7 @@ import {G} from './game.js';
 import {$} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,PREVIEW,VET_LVL,VET_FORCE} from './data.js';
 import {save} from './save.js';
-import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast,soak} from './rules.js';
+import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,hitCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
@@ -119,6 +119,10 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
   diamond(g,sx,sy,.8);g.fillStyle='rgba(60,230,215,.16)';g.fill();g.setLineDash([5,4]);g.strokeStyle='rgba(120,255,240,.85)';g.lineWidth=2;g.stroke();g.setLineDash([]);chevron(g,sx,sy,TW*.09)}
  for(const m of S.map.values())if(m.block&&m.d!=null){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.94);g.fillStyle='rgba(12,14,6,.42)';g.fill();g.beginPath();g.ellipse(sx,sy+TH*.12,TW*.34,TH*.26,0,0,7);g.fillStyle='rgba(0,0,0,.4)';g.fill()}
 }
+// V4.37 : mur de glace (cristaux existants), barre de PV et tours restants
+function iceWall(c,m){const[x,y]=scr(m.x,m.y),z=TW*1.05,i=m.ice,left=i.until-G.s.round;diamond(c,x,y,.92);c.fillStyle='rgba(120,200,255,.35)';c.fill();c.strokeStyle='#bfe8ff';c.lineWidth=2;c.stroke();
+ dic(c,'fxi',3,x-z/2,y+TH*.25-z,z);const w=TW*.5,by=y-z*.82;c.fillStyle='#000c';c.fillRect(x-w/2-1,by-1,w+2,6);c.fillStyle='#8fd4ff';c.fillRect(x-w/2,by,w*i.hp/i.max,4);
+ c.save();c.font=`900 ${Math.round(TW*.2)}px system-ui`;c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';c.strokeText('⏳'+left,x,by-4);c.fillStyle='#fff';c.fillText('⏳'+left,x,by-4);c.restore()}
 function chevron(c,x,y,z){c.beginPath();c.moveTo(x-z,y+z*.2);c.lineTo(x,y-z*.7);c.lineTo(x+z,y+z*.2);c.lineWidth=2.5;c.strokeStyle='rgba(220,255,250,.9)';c.stroke()}
 // cristaux dessinés par le code (en attendant C6-09) : turquoise = éclats dressés, violet = losange taillé ; éteint = gris et tours restants
 function shard(c,x,y,w,h,col){c.beginPath();c.moveTo(x-w/2,y);c.lineTo(x-w/2,y-h*.75);c.lineTo(x,y-h);c.lineTo(x+w/2,y-h*.75);c.lineTo(x+w/2,y);c.closePath();
@@ -196,7 +200,7 @@ const dic=(c,s,i,x,y,w)=>{const f=AT[s][i],k=w/Math.max(f[2],f[3]);c.drawImage(I
 // V4.0.4 : effets du Titan — rayon prismatique (traits lumineux de l'origine vers chaque case, colonnes de lumière) et onde de choc
 export const addBeam=(o,cells)=>fx.push({beam:1,o,cells,t0:performance.now(),dur:750});
 export const addWave=u=>fx.push({wave:1,x:u.gx,y:u.gy,t0:performance.now(),dur:700});
-export const addProj=(a,b)=>fx.push({proj:1,a:{x:a.x,y:a.y},b,t0:performance.now(),dur:260});
+export const addProj=(a,b,orb)=>fx.push({proj:1,orb,a:{x:a.x,y:a.y},b,t0:performance.now(),dur:260});
 export const shake=ms=>{shakeT=performance.now()+ms};
 // impacts : zoom bref vers un point, éclats de particules (coup critique, KO, collision)
 let punchE=0,punchP=null;export const punch=(u,k=.05,ms=220)=>{punchE=performance.now()+ms;punchP={x:u.gx,y:u.gy,k,ms}};
@@ -232,7 +236,7 @@ export function draw(now){
  // cible examinée : empreinte de la zone (rouge, distincte des centres orange)
  const E=sel&&cur&&!busy&&phase==='fight'?G.ex:null,exU=E?occ(S,E.tap.x,E.tap.y):null;
  if(E&&!E.bad&&sel.sp.splash)for(const p of zoneCells(S,E)){const o=occ(S,p.x,p.y);if(!o||o.team!==cur.team)continue;const[sx,sy]=scr(p.x,p.y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(90,220,110,.45)';ctx.fill();ctx.strokeStyle='#c8ffcf';ctx.lineWidth=2.5;ctx.stroke()}
- if(E&&!E.bad&&sel.sp.zone)for(const p of zoneCells(S,E)){const[sx,sy]=scr(p.x,p.y),mid=p.x===E.x&&p.y===E.y;diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(235,40,30,.55)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=mid?3.5:1.8;ctx.setLineDash(mid?[]:[6,4]);ctx.stroke();ctx.setLineDash([]);if(mid){diamond(ctx,sx,sy,.4);ctx.stroke()}}
+ if(E&&!E.bad&&(sel.sp.zone||sel.sp.nova))for(const p of hitCells(S,sel.sp,E,E.ap||cur)){const[sx,sy]=scr(p.x,p.y),mid=p.x===E.x&&p.y===E.y;diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(235,40,30,.55)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=mid?3.5:1.8;ctx.setLineDash(mid?[]:[6,4]);ctx.stroke();ctx.setLineDash([]);if(mid){diamond(ctx,sx,sy,.4);ctx.stroke()}}
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // aperçu de déplacement : trajet, case d'arrivée et coût
  const plan=!cur||busy||phase!=='fight'?null:sel?E&&(E.chg||E.ap)||null:G.plan;
@@ -248,7 +252,7 @@ export function draw(now){
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
  const pv=[];if(sel&&sel.sp.dmg&&cur&&!busy)for(const m of S.map.values())if(prismOn(S,m)&&(G.ex&&!G.ex.bad?m.x===G.ex.x&&m.y===G.ex.y||sel.sp.zone&&man(G.ex,m)<=1:sel.cells.some(c=>c.ok&&(c.x===m.x&&c.y===m.y||sel.sp.zone&&man(c,m)<=1)))){const d=prismDmg(S,cur,sel.sp);
   for(const p of prismHits(S,m)){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#c98bff',.3);const o=occ(S,p.x,p.y);if(o)pv.push([o,soak(o,d)])}}
- if(E&&!E.bad&&sel.sp.zone)for(const p of zoneCells(S,E)){const[sx,sy]=scr(p.x,p.y);diamond(ctx,sx,sy,.66);ctx.strokeStyle='#ff2d1f';ctx.lineWidth=3;ctx.stroke()}
+ if(E&&!E.bad&&(sel.sp.zone||sel.sp.nova))for(const p of hitCells(S,sel.sp,E,E.ap||cur)){const[sx,sy]=scr(p.x,p.y);diamond(ctx,sx,sy,.66);ctx.strokeStyle='#ff2d1f';ctx.lineWidth=3;ctx.stroke()}
  // objets triés par profondeur
  const L=[];for(const m of S.map.values())if(m.block)L.push({z:depth(m.x,m.y),m});for(const o of outer)L.push({z:depth(o.x,o.y),m:o});
  for(const u of units)if(!u.dead||u.team==='h'||now-u.deadT<(BS.includes(u.s)?1800:600))L.push({z:depth(u.gx,u.gy)+.01,u});
@@ -256,9 +260,9 @@ export function draw(now){
  const tg=sel&&cur&&!busy?units.filter(u=>!u.dead&&sel.cells.some(c=>c.ok&&c.x===u.x&&c.y===u.y)):[];
  const focus=exU?[exU]:tg;
  const hides=u=>u!==exU&&!focus.includes(u)&&focus.some(t=>{const dz=depth(u.gx,u.gy)-depth(t.gx,t.gy);return dz>0&&dz<=3&&Math.abs(lat(u.gx,u.gy)-lat(t.gx,t.gy))<=1.2});
- for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,'spells5',3,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
+ for(const h of units)if(h.trap){const[sx,sy]=scr(h.trap.x,h.trap.y),z=TW*.5;ctx.globalAlpha=.6+.25*Math.sin(now/300);dic(ctx,h.trap.glyph?'spells':'spells5',h.trap.glyph?13:3,sx-z/2,sy-z*.6,z);ctx.globalAlpha=1} // piège posé
  const ghost=new Set();
- for(const o of L){if(o.m){if(o.m.cry){crystal(ctx,o.m,now);continue}if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
+ for(const o of L){if(o.m){if(o.m.cry){crystal(ctx,o.m,now);continue}if(o.m.ice){iceWall(ctx,o.m);continue}if(o.m.d==null)continue;const[sx,sy]=scr(o.m.x,o.m.y),[ds,di]=DEC(o.m.d),f=AT[ds][di],c0=lat(o.m.x,o.m.y);for(const u of units){const d=depth(u.gx,u.gy);if(!u.dead&&d<o.z&&d>=o.z-3&&Math.abs(lat(u.gx,u.gy)-c0)<=1.5)ghost.add(u)}
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*(o.m.block?DK[o.m.d]??.84:1)*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':u.elite?'#ffd65a':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
@@ -281,13 +285,13 @@ export function draw(now){
   const t=plan.chg?`Charge · ${plan.cost} case${plan.cost>1?'s':''}`:plan.sp?`${plan.cost} PM puis ${plan.sp.n}`:`${plan.cost} PM · ${plan.foes.length?'🎯 '+plan.foes.length:'aucune cible'}`;ctx.save();ctx.font=`800 ${Math.max(12,Math.round(TW*.2))}px system-ui`;ctx.textAlign='center';const w=ctx.measureText(t).width+16,by=ey+TH*.62,bx=Math.max(w/2+4,Math.min(W-w/2-4,ex));
   ctx.fillStyle='rgba(8,20,40,.92)';ctx.strokeStyle=plan.foes.length?'#ffa040':'#8aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(bx-w/2,by-11,w,22,8);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.fillText(t,bx,by+5);ctx.restore()}
  // trajet de poussée prévu
- if(sel&&sel.sp.push&&cur&&!busy)for(const c of sel.cells){const o=c.ok&&occ(S,c.x,c.y);if(!o)continue;const p=pushPlan(S,cur,o,sel.sp.push),[ax,ay]=scr(o.x,o.y),[bx,by]=scr(p.to.x,p.to.y);
+ if(sel&&sel.sp.push&&!sel.sp.nova&&cur&&!busy)for(const c of sel.cells){const o=c.ok&&occ(S,c.x,c.y);if(!o)continue;const p=pushPlan(S,cur,o,sel.sp.push),[ax,ay]=scr(o.x,o.y),[bx,by]=scr(p.to.x,p.to.y);
   ctx.save();ctx.strokeStyle='#fff';ctx.fillStyle='#fff';ctx.lineWidth=3;ctx.globalAlpha=.9;if(p.to.x!==o.x||p.to.y!==o.y){ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();const a=Math.atan2(by-ay,bx-ax);ctx.beginPath();ctx.moveTo(bx+Math.cos(a)*8,by+Math.sin(a)*8);ctx.lineTo(bx+Math.cos(a+2.4)*10,by+Math.sin(a+2.4)*10);ctx.lineTo(bx+Math.cos(a-2.4)*10,by+Math.sin(a-2.4)*10);ctx.fill()}
   if(p.left){ctx.font=`900 ${Math.round(TW*.24)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='-'+p.k*p.left,z=TW*.3;dic(ctx,'fxi',1,bx-ctx.measureText(t).width/2-z-2,by-TH*.1-z*.85,z);ctx.strokeText(t,bx,by-TH*.1);ctx.fillStyle='#ffa040';ctx.fillText(t,bx,by-TH*.1)}ctx.restore()}
  if(E){const col=E.bad?'#ff5a4a':'#fff27a';
   if(exU){const[sx,sy]=scr(exU.gx,exU.gy),[s,i,flip,rf]=frameOf(exU);ctx.save();ctx.shadowColor=col;ctx.shadowBlur=TW*.22*dpr;const draw1=()=>drawF(ctx,s,i,sx,sy+TH*.12-lift(exU),hgt(exU)/rf,flip,.92);draw1();draw1();ctx.restore()}
   const[sx,sy]=scr(E.tap.x,E.tap.y);ctx.save();for(const[w,c]of[[6,'rgba(0,0,0,.75)'],[3,col]]){diamond(ctx,sx,sy,1+.05*Math.sin(now/140));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()}ctx.restore();
-  if(!E.bad&&sel.sp.dmg&&!sel.sp.all)for(const p of sel.sp.zone?zoneCells(S,E):[E]){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur,E),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
+  if(!E.bad&&sel.sp.dmg&&!sel.sp.all&&!sel.sp.glyph)for(const p of hitCells(S,sel.sp,E,E.ap||cur)){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur,E),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
    ctx.save();ctx.font=`900 ${Math.max(12,Math.round(TW*.22))}px system-ui`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.strokeText(t,ex,y);ctx.fillStyle=f.ko==='sure'?'#ff7a6a':'#ffe9a0';ctx.fillText(t,ex,y);ctx.restore()}}
  // intentions : bulle au-dessus de chaque monstre
  if(G.intents&&!busy&&!E){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-lift(u)-TW*.3;const t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);
@@ -309,6 +313,7 @@ export function draw(now){
    ctx.restore();continue}
   if(e.wave){const[sx,sy]=scr(e.x,e.y),r=TW*(.3+3.2*t);ctx.save();ctx.globalAlpha=(1-t)*.9;for(const[k,c,w]of[[1,'#c98bff',TW*.16*(1-t)+2],[.82,'#ffffff',3]]){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.ellipse(sx,sy,r*k,r*k*ISO,0,0,7);ctx.stroke()}ctx.restore();continue}
   if(e.proj){const[ax,ay]=scr(e.a.x,e.a.y),[bx,by]=scr(e.b.x,e.b.y),x=ax+(bx-ax)*t,y=ay+(by-ay)*t-TW*.6-Math.sin(t*Math.PI)*TW*.4;
+   if(e.orb){const r=TW*.2,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'#fff');g.addColorStop(.4,e.orb);g.addColorStop(1,e.orb+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();continue} // V4.37 : sorts d'Orion, pas de flèche
    const f=AT.fx[6];ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(by-ay-Math.PI*Math.cos(t*Math.PI)*TW*.4,bx-ax));ctx.drawImage(IMG.fx,f[0],f[1],f[2],f[3],-TW*.45,-TW*.45*f[3]/f[2],TW*.9,TW*.9*f[3]/f[2]);ctx.restore();continue}
   const[sx,sy]=scr(e.x,e.y),f=AT[e.sh||'fx'][e.i],s=(e.w||1.3)*TW/f[2]*(.7+.4*Math.min(1,t*3));
   ctx.save();ctx.globalAlpha=t<.6?1:1-(t-.6)/.4;ctx.drawImage(IMG[e.sh||'fx'],f[0],f[1],f[2],f[3],sx-f[2]*s/2,sy+TH*.3-f[3]*s+(e.dy||0)*TW,f[2]*s,f[3]*s);ctx.restore()}

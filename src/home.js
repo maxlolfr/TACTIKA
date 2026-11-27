@@ -1,15 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
-import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam} from './rules.js';
+import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
 import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf,SPECS} from './talents.js';
 
-export const VERSION='4.36';
+export const VERSION='4.37';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -282,9 +282,20 @@ function heros(P){
   const act=el('div','v-actions');act.append(own.length?wood('Voir dans l’inventaire',()=>{inv={who:hero,sl:slotOpen,sel:g[slotOpen]};show('inventaire','heros')},'dk sm'):wood('Le Marchand',visit(A.shop),'sm'));box.append(act);L.append(box)}
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${!SPECS[hero]?'Ses talents arriveront plus tard.':sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`));if(SPECS[hero])tl.append(wood('Académie',visit(A.armes),'sm'));R.append(tl);
  {const n=ptsLeft(save,hero),a=attrOf(save,hero),tr=el('div','v-card v-row');tr.append(icon('spells',0,42),el('div',null,`<b>${n?`${n} point${n>1?'s':''} à répartir`:'Caractéristiques'}</b><small>${Object.keys(ATTR).filter(k=>ATTR[k].who.includes(hero)).map(k=>ATTR[k].n+' '+a[k]).join(' · ')}</small>`),wood('Entraînement',()=>{draft={};show('entrainement','heros')},'sm'));R.append(tr)}
+ if(h.learn)return learnList(R,h);
  R.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(h.sp5?[h.sp5]:[]),...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},lock=id===h.sp5&&save.lvl<5,row=el('div','v-row'+(lock?' v-lock':''));row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}${S.cd?` · recharge ${S.cd} tours`:''}${lock?' · <b>s’ouvre au niveau 5</b>':''}</small>`));R.append(row)}
 }
+// V4.37 : héros à apprentissage (Orion) : sorts emportés, sorts en réserve (échange en deux touches), sorts à venir
+let incoming=null;
+function learnList(R,h){const i=hero,load=loadoutOf(save,i),known=knownSpells(save,i),rest=known.filter(id=>!load.includes(id)),later=h.learn.filter(([id])=>!known.includes(id));
+ if(!rest.includes(incoming))incoming=null;
+ const line=(id,note,btn,cls='')=>{const S=A.SP[id],row=el('div','v-row v-spell'+cls);row.dataset.sp=id;row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.cd?S.cd>50?' · 1 fois par combat':` · recharge ${S.cd} tours`:''}${note||''}</small>`));if(btn)row.append(btn);R.append(row)};
+ R.append(el('h4',null,`Sorts emportés · ${load.length}/${SLOTS_SP}`));
+ if(incoming)R.append(el('p','v-empty',`<b>${A.SP[incoming].n}</b> : touche « Remplacer » sur le sort à laisser au camp.`));
+ for(const id of load)line(id,'',incoming&&wood('Remplacer',()=>{swapSpell(save,i,id,incoming);incoming=null;store();show('heros')},'sm'));
+ if(rest.length){R.append(el('h4',null,'En réserve'));for(const id of rest)line(id,'',wood(incoming===id?'Annuler':'Emporter',()=>{incoming=incoming===id?null:id;show('heros')},incoming===id?'dk sm':'sm'))}
+ if(later.length){R.append(el('h4',null,'À apprendre'));for(const[id,l]of later)line(id,` · <b>au niveau ${l}</b>`,null,' v-lock')}}
 // V4.7b : filtres par héros et par emplacement ; en filtrant, seuls les objets correspondants restent
 function inventaire(P){
  const chips=(label,list,cur,set)=>{const r=el('div','v-chips');r.setAttribute('role','group');r.setAttribute('aria-label',label);for(const[v,n]of list){const b=el('button',v===cur?'on':'',n);b.setAttribute('aria-pressed',v===cur);b.onclick=()=>{set(v);inv.sel=null;show('inventaire')};r.append(b)}return r};

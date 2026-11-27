@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,TEAM_SIZE,DEF_TEAM,whoOf} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -117,6 +117,12 @@ const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(sav
 export const teamOf=save=>{const t=save?.team;return Array.isArray(t)&&t.length===TEAM_SIZE&&new Set(t).size===TEAM_SIZE&&t.every(i=>Number.isInteger(i)&&HER[i])?t:[...DEF_TEAM]};
 // le héros `inn` prend la place de `out` (même rang). Renvoie 1 si l'échange est fait.
 export function swapTeam(save,out,inn){const t=[...teamOf(save)],k=t.indexOf(out);if(k<0||!HER[inn]||t.includes(inn))return 0;t[k]=inn;save.team=t;return 1}
+// V4.37 : sorts connus d'un héros à apprentissage (Orion), et les SLOTS_SP emportés (save.load[i], nettoyé à la lecture)
+export const knownSpells=(save,i)=>{const h=HER[i];return[...h.sp,...(h.learn||[]).filter(([,l])=>ALL_SPELLS||(save.lvl||1)>=l).map(([id])=>id)]};
+export function loadoutOf(save,i){const known=knownSpells(save,i),out=[...new Set(Array.isArray(save.load?.[i])?save.load[i]:[])].filter(id=>known.includes(id)).slice(0,SLOTS_SP);
+ for(const id of known)if(out.length<SLOTS_SP&&!out.includes(id))out.push(id);return out}
+// le sort `inn` (connu, non emporté) prend la place de `out`. Renvoie 1 si l'échange est fait.
+export function swapSpell(save,i,out,inn){const l=loadoutOf(save,i),k=l.indexOf(out);if(k<0||l.includes(inn)||!knownSpells(save,i).includes(inn))return 0;l[k]=inn;(save.load||(save.load={}))[i]=l;return 1}
 // ordre de distribution automatique du matériel : l'équipe d'abord, la réserve ensuite
 const gearOrder=save=>[...HER.keys()].sort((a,b)=>teamOf(save).includes(b)-teamOf(save).includes(a)||a-b);
 export function gearAll(save){const G=HER.map(()=>({})),used=new Set(),ok=(j,i,sl)=>ITEMS[j]?.sl===sl&&save.items.includes(j)&&fits(j,i)&&lvOf(j)<=(save.lvl||1)&&!used.has(j);
@@ -146,7 +152,7 @@ export function resetAttr(save,i){if(save.attr)save.attr[i]=attrOf({},i)}
 export function heroStats(save,i){const h=HER[i],it=Object.values(gear(save,i)).filter(j=>j!=null),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i),A=attrOf(save,i),bonus=f=>Object.keys(ATTR).reduce((s,k)=>s+(ATTR[k].who.includes(i)?(ATTR[k][f]||0)*attrEff(A[k]):0),0);
  const crit=tal.crit||.12,dodge=tal.dodge||0;
- return{lvl:save.lvl,hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
+ return{lvl:save.lvl,spells:h.learn?loadoutOf(save,i):null,hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
   crit:Math.min(Math.max(CRIT_CAP,crit),crit+bonus('crit')),dodge:Math.min(Math.max(DODGE_CAP,dodge),dodge+bonus('dodge')),tal}}
 // ce que changerait l'objet j s'il était équipé : [[nom, avant, après]] pour les seules valeurs qui bougent (ne modifie rien)
 export function compare(save,j,i){if(i==null){const h=holder(save,j);i=h>=0?h:whoOf(ITEMS[j])[0]}const c={...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq}};
@@ -166,7 +172,7 @@ function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*
 // hstats = heroStats de chaque héros (par numéro) ; team = les 3 qui combattent. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+ team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...(st.spells||[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[])]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
@@ -198,6 +204,7 @@ export function losBlock(s,a,b,ign,lob){const n=Math.max(Math.abs(b.x-a.x),Math.
   if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(wall(c,lob))return{x,y,u:null};const o=occ(s,x,y);if(o&&o!==ign)return{x,y,u:o}}return null}
 // Pourquoi une cible n'est pas valable (même règles que okTarget) : {t:'texte court',at:{x,y}|undefined}, ou null si elle l'est
 export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
+ if(sp.nova&&c.x===from.x&&c.y===from.y)return{t:'Aucun ennemi collé à toi'};
  if(d>sp.r[1])return{t:`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:`Trop près, portée min. ${sp.r[0]}`};
  if(sp.los&&d>1&&!los(s,from,c,u,sp.lob)){const b=losBlock(s,from,c,u,sp.lob);return{t:b?(b.u?`${b.u.n} bloque le tir`:sp.lob?'Un obstacle haut bloque le tir':'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
  if(sp.charge&&o&&o.team!==u.team)return{t:'Aucun chemin libre jusqu’à une case voisine'};
@@ -205,7 +212,7 @@ export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;c
  if(sp.t==='ally')return{t:!o?'Personne ici':'Ce n’est pas un allié'};
  if(sp.t==='dead')return{t:'Aucun héros à relever ici'};if(sp.free)return{t:'Case occupée ou bloquée'};return okTarget(s,u,sp,c,from)?null:{t:'Cible invalide'}}
 export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u,sp.lob))return 0;const o=occ(s,c.x,c.y);
- if(sp.t==='self')return c.x===from.x&&c.y===from.y;if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
+ if(sp.t==='self')return c.x===from.x&&c.y===from.y&&(!sp.nova||s.units.some(f=>!f.dead&&f.team!==u.team&&man(f,from)===1));if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
  if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return sp.t==='enemy'&&sp.dmg&&!sp.charge&&prismOn(s,cell(s,c.x,c.y))?1:0;return sp.t==='enemy'?o.team!==u.team&&(!sp.charge||!!chargeDest(s,u,sp,c,from)):o.team===u.team}
 // V4.11 Charge : case libre voisine de t la plus proche de `from`, en au plus portée max − 1 pas, sans traverser obstacle, eau ni unité.
 // Ne coûte aucun PM. {x,y,path:[[x,y],…]} ou null.
@@ -227,7 +234,7 @@ export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,
 export function targetsFrom(s,u,from){const foes=s.units.filter(o=>!o.dead&&o.team!==u.team),all=new Set(),list=[];
  for(const id of u.sp){const sp=u.S[id];if(!sp.dmg||u.pa<costOf(u,sp)||u.cd[sp.n]>0)continue;
   const cells=sp.zone?[...s.map.values()].filter(c=>okTarget(s,u,sp,c,from)):null;
-  const hit=foes.filter(f=>sp.zone?cells.some(c=>man(c,f)<=1):okTarget(s,u,sp,f,from));
+  const hit=foes.filter(f=>sp.nova?man(from,f)===1:sp.zone?cells.some(c=>man(c,f)<=sp.zone):okTarget(s,u,sp,f,from));
   if(hit.length){list.push({sp,n:hit.length});for(const f of hit)all.add(f)}}
  return{foes:[...all],list}}
 // ---------- première mission guidée (V3.0e) ----------
@@ -244,8 +251,10 @@ export function guideSetup(s){const f=s.units.find(u=>u.k==='archer'),m=s.units.
 // ---------- dégâts, sorts ----------
 // Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât.
 export function soak(t,amt,pen=0){if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));return Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))))}
+// V4.37 : part des dégâts qu'inflige encore une unité affaiblie
+export const weakK=u=>u.weak?1-u.weak.pct:1;
 // Dégâts d'un sort avant bouclier et armure, pour un tirage `roll`
-const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*cb*(cr?1.5:1);
+const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*weakK(u)*cb*(cr?1.5:1);
 const healing=(u,roll,amp)=>Math.round((roll+(u.healB||0))*(u.mult||1)*(u.healMul||1)*amp);
 // nombre de héros ayant frappé t, u compris (palier de combo)
 const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u.id]).size:0;
@@ -262,16 +271,19 @@ export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={a
  const kills=d=>d+out.push>=t.hp&&!t.lastStand;
  out.ko=kills(out.dmg[0])&&!out.dodge?'sure':kills(out.dmg[1])?'maybe':kills(out.crit[1])?'crit':null;return out}
 // cases touchées par un sort de zone visant c
-export const zoneCells=(s,c)=>[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))].filter(p=>cell(s,p.x,p.y));
+export function zoneCells(s,c,rad=1){const out=[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]; // rayon 1 : ordre d'origine (mêmes tirages)
+ for(let dx=-rad;dx<=rad;dx++)for(let dy=-rad;dy<=rad;dy++){const d=Math.abs(dx)+Math.abs(dy);if(d>1&&d<=rad)out.push({x:c.x+dx,y:c.y+dy})}return out.filter(p=>cell(s,p.x,p.y))}
+// cases frappées par un sort de dégâts visant c, lancé depuis `from` (Explosion : les 4 voisines du lanceur)
+export const hitCells=(s,sp,c,from)=>sp.nova?DIRS.map(d=>({x:from.x+d[0],y:from.y+d[1]})).filter(p=>cell(s,p.x,p.y)):sp.zone?zoneCells(s,c,sp.zone):[c];
 // sort de zone : meilleur centre autorisé qui touche l'unité t (le plus d'ennemis, puis le plus proche de t), ou null
 export function zoneCenter(s,u,sp,t,from=u){let best=null,bs=-1e9;
- for(const c of zoneCells(s,t)){if(!okTarget(s,u,sp,c,from))continue;const n=zoneCells(s,c).filter(p=>{const o=occ(s,p.x,p.y);return o&&o.team!==u.team}).length,sc=n*10-man(c,t);if(sc>bs){bs=sc;best=c}}
+ for(const c of zoneCells(s,t,sp.zone)){if(!okTarget(s,u,sp,c,from))continue;const n=zoneCells(s,c,sp.zone).filter(p=>{const o=occ(s,p.x,p.y);return o&&o.team!==u.team}).length,sc=n*10-man(c,t);if(sc>bs){bs=sc;best=c}}
  return best&&{x:best.x,y:best.y}}
 // Renvoie un événement, ou null si la cible est déjà morte.
 export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);
  let saved=false;if(t.lastStand&&amt>=t.hp){amt=t.hp-1;t.lastStand=0;saved=true} // Dernier rempart : une fois par combat
  if(t.team==='h'&&(src==='quake'||src==='beam'))s.sigHit=1; // V4.5f : attaque signature subie
- t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else t.wasKO=1}
+ t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else{t.wasKO=1;if(t.trap?.glyph)delete t.trap}}
  const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};
  if(killed&&t.poison&&t.poison.spread){e.spread=[];for(const[dx,dy]of DIRS){const o=occ(s,t.x+dx,t.y+dy); // Contagion : ne se propage pas plus loin
   if(o&&o.team===t.team&&!(o.poison&&o.poison.d*o.poison.turns>=12)){o.poison={d:6,turns:2};e.spread.push(o)}}}if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
@@ -289,13 +301,18 @@ export function payCost(u,sp,c){u.pa-=costOf(u,sp);(u.casts||(u.casts={}))[sp.n]
 // Applique l'effet d'un sort sur la case c (après payCost). Renvoie la liste d'événements.
 export function applySpell(s,u,sp,c){
  if(u.team==='m'&&sp.dmg){const o=occ(s,c.x,c.y);if(o&&o.team!==u.team)s.focus={id:o.id,r:s.round}} // V4.5b : les autres monstres achèvent la même cible s'ils l'atteignent
+ if(sp.glyph){u.trap={x:c.x,y:c.y,left:3,glyph:{sp,amp:ampAt(s,u)}};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Glyphe posé',color:'#ffd65a'}]}
  if(sp.trap){u.trap={x:c.x,y:c.y,left:3};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Piège posé',color:'#ffa040'}]}
+ if(sp.wall){const k=cell(s,c.x,c.y),hp=Math.round(u.max*sp.wall.hp);k.block=1;k.ice={hp,max:hp,until:s.round+sp.wall.turns};return[{type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'fxi'},{type:'status',t:u,text:'Mur de glace',color:'#9fd8ff'}]}
+ if(sp.blink){const from={x:u.x,y:u.y};u.x=u.gx=c.x;u.y=u.gy=c.y;return[{type:'fx',x:from.x,y:from.y,i:sp.fx,w:1.2},{type:'fx',x:c.x,y:c.y,i:sp.fx,w:1.4},...stepOn(s,u)]}
+ const ice=u.team==='m'&&sp.dmg&&cell(s,c.x,c.y)?.ice;
+ if(ice){const k=cell(s,c.x,c.y),d=Math.max(1,Math.round(ri(s.rng,...sp.dmg)*weakK(u)));ice.hp-=d;if(ice.hp<=0)melt(k);return[{type:'fx',x:c.x,y:c.y,i:3,w:1,sh:'fxi'},{type:'status',t:{gx:c.x,gy:c.y,x:c.x,y:c.y},text:ice.hp>0?`Mur -${d}`:'Mur brisé !',color:'#9fd8ff',snd:'hit'}]}
  if(sp.revive)return revive(s,u,c);
  if(sp.potion){if(!(s.pot>0))return[];s.pot--;const g=Math.min(Math.round(u.max*.4),u.max-u.hp);u.hp+=g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.3},{type:'heal',t:u,amt:g}]}
- const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone||sp.splash?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c];
+ const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.nova?hitCells(s,sp,c,u):sp.zone?[c,...zoneCells(s,c,sp.zone).slice(1)]:sp.splash?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c];
  if(sp.charge){const d=chargeDest(s,u,sp,c);if(!d)return[];u.x=u.gx=d.x;u.y=u.gy=d.y;face(u,c.x,c.y)} // amplificateur : case de départ
  for(const p of tg){const t=occ(s,p.x,p.y);
-  if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else if(sp.splash&&p!==c&&(!t||t.team!==u.team))continue;else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
+  if(sp.zone||sp.nova){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else if(sp.splash&&p!==c&&(!t||t.team!==u.team))continue;else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
   if(sp.dmg&&t.dodge&&t.team!==u.team&&rng()<t.dodge){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
@@ -305,6 +322,7 @@ export function applySpell(s,u,sp,c){
   if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
+  if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
   if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
@@ -344,7 +362,7 @@ export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.l
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
-export function endTurn(u){u.carry=carryPA(u);if(u.buff&&--u.buff.turns<=0)delete u.buff}
+export function endTurn(u){u.carry=carryPA(u);if(u.weak&&--u.weak.turns<=0)delete u.weak;if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
 // objectifs (V2.6d) : s.goal = 'chief' (abattre le chef suffit) ou 'survive' (tenir jusqu'au début du tour SURVIVE+1)
 export const SURVIVE=4;
@@ -365,7 +383,7 @@ export function wavePlan(s){const w=s.wave;if(!w)return;const due=w.q.filter(q=>
  w.next=due.slice(0,cs.length).map((q,i)=>({x:cs[i].x,y:cs[i].y,q}))}
 // début de tour : les renforts annoncés arrivent ; renvoie les nouveaux monstres
 export function waveTick(s){const w=s.wave;if(!w)return[];const out=[];
- for(const c of w.next){if(occ(s,c.x,c.y)||liveM(s).length>=w.cap)continue;w.q.splice(w.q.indexOf(c.q),1);
+ for(const c of w.next){if(occ(s,c.x,c.y)||!passable(s,c.x,c.y)||liveM(s).length>=w.cap)continue;w.q.splice(w.q.indexOf(c.q),1);
   const t=c.q.elite||pick(s.rng,w.F.pool),u=monUnit(w.F,t,c,'m'+s.units.length,s.rng,null,!!c.q.elite);u.reinf=1;u.init=0;u.xp=Math.round(u.xp/2);
   const same=s.units.filter(o=>o.team==='m'&&o.k===t).length;if(same){u.tag=String.fromCharCode(65+same);u.n+=' '+u.tag}
   s.units.push(u);s.order.push(u);out.push(u)}
@@ -386,6 +404,9 @@ export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passabl
 export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lavaMark(s);return[]}
  const ev=[];for(const p of L.next){ev.push({type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&!fireproof(u)){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e)}}
  ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
+// V4.37 : mur de glace. Il disparaît au début du tour de table s.round>=until (même si Orion est tombé)
+export function melt(c){delete c.ice;delete c.block}
+export function iceTick(s){const ev=[];for(const c of s.map.values())if(c.ice&&s.round>=c.ice.until){melt(c);ev.push({type:'fx',x:c.x,y:c.y,i:3,w:.8,sh:'fxi'})}return ev}
 export const onLava=(s,p)=>!!s.lava&&s.lava.next.some(c=>c.x===p.x&&c.y===p.y);
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
  if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>(s.surv||SURVIVE))return'win';if(!m&&s.wave){if(s.wave.q.length)return null;s.cleared=1}return m?null:'win'}
@@ -415,6 +436,9 @@ export function aiStep(s,u){
   // cristal turquoise : s'il peut frapper depuis une case amplifiée à sa portée, il y va d'abord
   if(t&&ampAt(s,u)===1&&rc){const k=[...rc.dist.keys()].find(k=>{const[x,y]=k.split(',').map(Number);return ampAt(s,{x,y})>1&&hits({x,y})});if(k)return{type:'move',to:k,prev:rc.prev}}
   if(t)return{type:'cast',sp,target:t}}
+ // bloqué par un mur de glace : s'il ne peut atteindre aucun héros ce tour-ci, il frappe le mur collé à lui
+ const ice=u.pa>=sp.pa&&sp.r[0]<=1&&DIRS.map(([dx,dy])=>cell(s,u.x+dx,u.y+dy)).find(c=>c?.ice);
+ if(ice&&!(rc&&[...rc.dist.keys()].some(k=>{const[x,y]=k.split(',').map(Number);return hits({x,y})})))return{type:'cast',sp,target:{x:ice.x,y:ice.y,gx:ice.x,gy:ice.y,n:'le mur de glace',ice:1}};
  if(u.pm<=0)return null;
  let best=null,bs=1e9;
  // champ de distance vers les héros (les autres monstres sont ignorés)
@@ -438,7 +462,7 @@ export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
-  if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6);
+  if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6*weakK(u));
   for(const h of s.units)if(h.team!==u.team&&!h.dead&&Math.abs(h.x-u.x)+Math.abs(h.y-u.y)<=3){ev.push({type:'fx',x:h.x,y:h.y,i:7,w:1.2});const e=hurt(s,h,d,'quake');if(e)ev.push(e)}}
  return ev}
 // ---------- V4.0c : Titan prismatique ----------
@@ -450,7 +474,7 @@ export function beamCells(s,u){const ph=beamPhase(u),heroes=s.units.filter(h=>h.
  for(const d of dirs)for(let k=1;k<=6;k++){const x=u.x+d[0]*k,y=u.y+d[1]*k,c=cell(s,x,y);if(!c)break;
   if(c.block){if(ph===3&&prismOn(s,c)){pr.push(c);cells.push(...prismHits(s,c).filter(p=>passable(s,p.x,p.y)))}break}cells.push({x,y})}
  return{by:u,o:{x:u.x,y:u.y},cells:cells.filter((p,i)=>cells.findIndex(q=>q.x===p.x&&q.y===p.y)===i),pr}}
-export const beamDmg=u=>Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*(u.dmgMul||1));
+export const beamDmg=u=>Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*(u.dmgMul||1)*weakK(u));
 function beamTurn(s,u,ev){const ph=beamPhase(u);
  if(ph!==(u.ph||1)){u.ph=ph;ev.push({type:'wave',t:u},{type:'status',t:u,text:`Phase ${ph} !`,color:'#c98bff',snd:'titan_roar'},{type:'shake',ms:450})}
  u.bt=(u.bt||0)+1;
@@ -461,14 +485,16 @@ function beamTurn(s,u,ev){const ph=beamPhase(u);
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
 export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
- for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k)),amp:k>1,from:{x:u.x,y:u.y}};break}
+ for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k*weakK(u))),amp:k>1,from:{x:u.x,y:u.y}};break}
   const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
  Object.assign(u,keep);return r}
 
 // ---------- V2.5c : piège (Chasseur) et renaissance (Guérisseuse) ----------
 // Piège posé par un héros : u.trap={x,y,left} (3 de ses tours). Déclenché par un ennemi qui y entre (marche ou poussée).
 export const trapAt=(s,x,y,team)=>s.units.find(h=>h.trap&&h.trap.x===x&&h.trap.y===y&&h.team!==team);
-function spring(s,u,h,x,y){delete h.trap;const ev=[{type:'fx',x,y,i:1,w:1.1,sh:'fxi'},{type:'status',t:u,text:'Piège !',color:'#ffa040',snd:'trap'}],e=hurt(s,u,10,'trap');if(e)ev.push(e);if(!u.dead)u.slow=1;return ev}
+function spring(s,u,h,x,y){const g=h.trap.glyph;delete h.trap;
+ if(g){const ev=[{type:'fx',x,y,i:1,w:1.3,sh:'fxi'},{type:'status',t:u,text:'Glyphe !',color:'#ffd65a',snd:'trap'}],e=hurt(s,u,power(h,g.sp,u,ri(s.rng,...g.sp.dmg),g.amp,1,false),'trap');if(e)ev.push(e);return ev}
+ const ev=[{type:'fx',x,y,i:1,w:1.1,sh:'fxi'},{type:'status',t:u,text:'Piège !',color:'#ffa040',snd:'trap'}],e=hurt(s,u,10,'trap');if(e)ev.push(e);if(!u.dead)u.slow=1;return ev}
 // à appeler après chaque case parcourue : renvoie les événements (vide si pas de piège)
 export function stepOn(s,u){const h=trapAt(s,u.x,u.y,u.team);return h?spring(s,u,h,u.x,u.y):[]}
 const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o.y===c.y);
