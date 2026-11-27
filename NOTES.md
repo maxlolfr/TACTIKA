@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V4.79 (27/11 nuit) : lot 2 « gel RPG » de la feuille de route V5.0 — 120 équipements
+- **Audit** : 60 sorts (10 par héros) et 90 talents (6 héros × 3 voies × 5 paliers) cohérents : aucun sort ou talent orphelin, aucune référence cassée. Trois entrées de `SP` ne sont attribuées à aucun héros (`trap`, `revive`, `potion`) : données historiques inoffensives, conservées. Trou réel : **Orion n'avait ni arme ni armure**, et Kael/Fenn/Aelis n'avaient plus rien entre les niveaux 20 et 45.
+- **34 entrées** (`ITEMS` 86 → 120, ids `eq87` à `eq119` + `sg119`, aucune renumérotation) : Kael, Fenn et Aelis 8 chacun (paliers 25 marchand rare, 35 butin épique) ; Orion 9 dédiés (paliers 20 marchand, 30 butin, arme 40 butin « Sceptre de l'Éther ») ; signature d'Orion **Bâton du serment commun** (index 119, lv 38, dégâts +4), offerte par Q39 avec les trois autres (`sig:[81,82,83,84,119]`). Icônes de la planche `equip` réemployées, une seule stat par objet, valeurs pilotes jusqu'au lot 5.
+- **Exclusifs** : `who` 0 à 3. La boucle de prêt V4.59 s'arrête maintenant à l'index 85 : les nouveaux objets ne sont jamais prêtés à Nyra ni Lyria.
+- **Sauvegarde** : aucun changement de format ; les objets s'ajoutent à la fin. Une partie où Q39 est déjà faite ne reçoit pas rétroactivement le Bâton (la quête reste rejouable sans bonus).
+- Tests : 162 (161 + `V5.0 lot 2`), anciens tests bornés aux 86 premiers objets.
+- Reste du lot 2 : synergies chiffrées et valeurs définitives au lot 5 (équilibrage). Suite : lot 3, scénario V2.
+
 ## V4.78 (27/11 nuit) : Briseur primordial, fenêtre de vulnérabilité
 - `BOSS_P.breaker` = [4, 0] : tous les 4 tours le Briseur s'agenouille (« Défense brisée ! +30 % », il ne bouge pas, `sunder` 30 % sur 2 tours, couvre le tour des héros). La phase à 50 % (Fracas, armure brisée équipe, 2 éclats) reste. Astuce `TIPS.breaker` mise à jour. 161 tests OK. Audit des 12 boss : `docs/studio/tactika/AUDIT-BOSS-V4.78.md` du dépôt studio.
 - Reste pour le lot 1 de la feuille de route V5.0 : ancrages destructibles d'Aetherion, rupture tactique du bouclier du Roi du Givre, éventuelle 3e phase du Briseur.
