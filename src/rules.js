@@ -269,7 +269,7 @@ const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u
 // part des dégâts d'un sort de zone sur la case p quand on vise `at` (1 au centre ; sp.side autour)
 const sideK=(sp,at,p)=>sp.side&&at&&(at.x!==p.x||at.y!==p.y)?sp.side:1;
 export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={amp:amp>1};
- if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(Math.round(healing(u,r,amp)*(t.curse?CURSE_K:1)),t.max-t.hp));
+ if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(Math.round(healing(u,r,amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),t.max-t.hp));
  if(!sp.dmg||t.team===u.team)return out;
  const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr)*side,sp.pierce||0);
  out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=t.dodge||0;out.combo=n>1?n:0;out.push=0;
@@ -324,7 +324,7 @@ export function applySpell(s,u,sp,c){
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
   if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
-  if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
+  if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:n>2?'Enraciné':`−${n} PM`,color:'#c9a0ff'})}
   if(sp.curse&&!t.dead&&t.team!==u.team){t.curse=2;ev.push({type:'status',t,text:'Maudit : soins −50 %',color:'#d6b14a'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}

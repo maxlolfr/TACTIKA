@@ -1,11 +1,16 @@
 // V4.39 : maîtrise des sorts (spec : docs/studio/tactika/mecaniques/V4.39-maitrise.md du studio).
 // Table par identifiant de sort : [type, bonus rang II, bonus rang III, libellé]. Les bonus sont comptés par rapport au rang I
-// et ne se cumulent pas entre rangs. Ajouter un héros = ajouter ses sorts ici. Seul Orion en a pour l'instant.
+// et ne se cumulent pas entre rangs. Ajouter un héros = ajouter ses sorts ici. Orion depuis la V4.39 ; Kael, Fenn, Aelis (sorts de dégâts, soins, bouclier) depuis la V4.45.
 import {SP,HER} from './data.js';
 import {knownSpells} from './rules.js';
 export const MASTERY={
  arcane:['dmg',.05,.1],flame:['dmg',.05,.1,'dégâts directs'],frost:['dmg',.05,.1],fireball:['dmg',.05,.1,'dégâts directs'],
- icewall:['wall',.15,.3],blink:['range',1,2],weaken:['weak',.02,.04],nova:['dmg',.05,.1],glyph:['dmg',.05,.1],storm:['dmg',.05,.1]};
+ icewall:['wall',.15,.3],blink:['range',1,2],weaken:['weak',.02,.04],nova:['dmg',.05,.1],glyph:['dmg',.05,.1],storm:['dmg',.05,.1],
+ // V4.45 : Kael, Fenn, Aelis, valeurs proposées par Max et ChatGPT (dégâts directs +5/+10 %, soins individuels +5/+10 %, collectifs +3/+6 %, protections +10/+20 %).
+ // Sorts utilitaires (Rempart, Provocation, Contre-attaque, Rage, Bottes, Repli, Piège, Aura, Purification) : en attente des valeurs de ChatGPT.
+ slash:['dmg',.05,.1],smash:['dmg',.05,.1],charge:['dmg',.05,.1],whirl:['dmg',.05,.1],sunder:['dmg',.05,.1,'dégâts directs'],judge:['dmg',.05,.1],
+ shot:['dmg',.05,.1],volley:['dmg',.05,.1],pshot:['dmg',.05,.1],venomarrow:['dmg',.05,.1,'dégâts directs'],icearrow:['dmg',.05,.1],blastarrow:['dmg',.05,.1],rain:['dmg',.05,.1],
+ venom:['dmg',.05,.1,'dégâts directs'],roots:['dmg',.05,.1],moon:['dmg',.05,.1],heal:['heal',.05,.1],mheal:['heal',.03,.06],bless:['heal',.03,.06],ward:['ward',.1,.2]};
 export const MAST_COST=[0,0,2,5]; // points dépensés pour atteindre le rang r (II = 2, III = 2 + 3)
 export const mastPts=lvl=>Math.max(0,Math.floor(((lvl||1)-1)/2)); // 1 point tous les 2 niveaux gagnés, 24 au niveau 50
 export const nextPtLvl=lvl=>lvl%2?lvl+2:lvl+1;
@@ -27,6 +32,8 @@ export function cleanMast(save){const v=save.ms;if(!v||typeof v!=='object'||Arra
 // sort `sp` (talents déjà appliqués) au rang r. Additif sur la base du rang I : le talent et la maîtrise ne se multiplient jamais.
 export function mastered(sp,id,r){const m=MASTERY[id];if(!m||(r!==2&&r!==3))return sp;const v=m[r-1],b=SP[id];
  if(m[0]==='dmg')return{...sp,k:(sp.k||1)+v}; // dégâts directs (sp.k) : brûlure et poison inchangés
+ if(m[0]==='heal')return{...sp,hk:(sp.hk||1)+v}; // V4.45 : soins du sort
+ if(m[0]==='ward')return{...sp,ward:[sp.ward[0]+b.ward[0]*v,sp.ward[1]]};
  if(m[0]==='wall')return{...sp,wall:{...sp.wall,hp:sp.wall.hp+b.wall.hp*v}};
  if(m[0]==='range')return{...sp,r:[sp.r[0],sp.r[1]+v]};
  if(m[0]==='weak'){const p=Math.round((sp.weaken[0]+v)*100)/100;return{...sp,weaken:[p,sp.weaken[1]],d:sp.d.replace(/\d+ %/,Math.round(p*100)+' %')}}
@@ -34,4 +41,4 @@ export function mastered(sp,id,r){const m=MASTERY[id];if(!m||(r!==2&&r!==3))retu
 export const masteredFor=(save,i,id,sp)=>mastered(sp,id,rankOf(save,i,id));
 // texte du bonus d'un rang (par rapport au rang I)
 export function mastTxt(id,r){const m=MASTERY[id];if(!m||r<2)return'effet de base';const v=m[r-1];
- return m[0]==='range'?`+${v} case${v>1?'s':''} de portée`:m[0]==='weak'?`réduction ${Math.round((SP[id].weaken[0]+v)*100)} % au lieu de ${Math.round(SP[id].weaken[0]*100)} %`:`+${Math.round(v*100)} % ${m[3]||(m[0]==='wall'?'PV du mur':'dégâts')}`}
+ return m[0]==='range'?`+${v} case${v>1?'s':''} de portée`:m[0]==='weak'?`réduction ${Math.round((SP[id].weaken[0]+v)*100)} % au lieu de ${Math.round(SP[id].weaken[0]*100)} %`:`+${Math.round(v*100)} % ${m[3]||{wall:'PV du mur',heal:'soins',ward:'bouclier'}[m[0]]||'dégâts'}`}

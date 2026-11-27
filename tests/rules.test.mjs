@@ -1130,10 +1130,13 @@ test('Gel profond : −2 PM, au moins 1 restant, boss à −1, jamais affaibli p
 // V4.39 : maîtrise des sorts d'Orion (après addOrion)
 import {MASTERY,MAST_COST,mastPts,nextPtLvl,hasMastery,rankOf,mastLeft,mastSpent,canRaise,raise,resetMast,cleanMast,mastered,mastTxt} from '../src/mastery.js';
 const ORION_SP = ['arcane', 'flame', 'frost', 'fireball', 'icewall', 'blink', 'weaken', 'nova', 'glyph', 'storm'];
-test('maîtrise : seuls les 10 sorts d’Orion, les autres héros n’en ont pas', () => {
-  assert.deepEqual(Object.keys(MASTERY).sort(), [...ORION_SP].sort());
-  assert.deepEqual([0, 1, 2, 3].map(hasMastery), [false, false, false, true]);
-  for (const h of HER.slice(0, 3)) for (const id of [...h.sp, h.sp5]) assert.equal(MASTERY[id], undefined);
+test('maîtrise (V4.45) : Orion entier, Kael/Fenn/Aelis sauf les sorts utilitaires en attente de ChatGPT', () => {
+  for (const id of ORION_SP) assert.ok(MASTERY[id], id);
+  assert.deepEqual([0, 1, 2, 3].map(hasMastery), [true, true, true, true]);
+  for (const id of ['guard','taunt','counter','rage','boots','dodge','trap','aura','cleanse','revive']) assert.equal(MASTERY[id], undefined, id);
+  for (const id in MASTERY) assert.ok(SP[id], id);
+  const h = mastered(SP.heal, 'heal', 3); assert.equal(h.hk, 1.1); assert.equal(mastered(SP.mheal, 'mheal', 2).hk, 1.03);
+  assert.deepEqual(mastered(SP.ward, 'ward', 3).ward, [.25 * 1.2, 2]); assert.equal(mastTxt('ward', 2), '+10 % bouclier'); assert.equal(mastTxt('heal', 3), '+10 % soins');
 });
 test('maîtrise : points (1 tous les 2 niveaux, 24 au niveau 50), coûts 2 puis 3', () => {
   assert.deepEqual([1, 2, 3, 20, 21, 49, 50].map(mastPts), [0, 0, 1, 9, 10, 24, 24]);
@@ -1154,7 +1157,7 @@ test('maîtrise : les 10 sorts aux 3 rangs (bonus par rapport au rang I, sans cu
   assert.match(v('weaken')[2].d, /24 %/);
   assert.equal(SP.weaken.weaken[0], .2, 'sort de base non modifié');
   for (const r of [0, 4, '3', null]) assert.equal(mastered(SP.arcane, 'arcane', r), SP.arcane, 'rang invalide = rang I');
-  assert.equal(mastered(SP.slash, 'slash', 3), SP.slash);
+  assert.equal(mastered(SP.guard, 'guard', 3), SP.guard, 'Rempart : en attente');
   assert.deepEqual(['arcane', 'flame', 'icewall', 'blink', 'weaken'].map(id => mastTxt(id, 3)), ['+10 % dégâts', '+10 % dégâts directs', '+30 % PV du mur', '+2 cases de portée', 'réduction 24 % au lieu de 20 %']);
 });
 test('maîtrise et les 15 talents : additifs, jamais appliqués deux fois', () => {
@@ -1177,7 +1180,7 @@ test('maîtrise et les 15 talents : additifs, jamais appliqués deux fois', () =
 test('maîtrise : achat, budget, sorts pas encore appris, remise à zéro', () => {
   const s = { lvl: 21, items: [], up: {} };
   assert.equal(mastLeft(s, 3), 10);
-  assert.equal(raise(s, 0, 'slash'), 0, 'Kael : pas de maîtrise');
+  assert.equal(raise(s, 0, 'guard'), 0, 'Rempart : pas de maîtrise (en attente)');
   assert.equal(raise(s, 3, 'glyph'), 0, 'Glyphe appris au niveau 35');
   assert.equal(raise(s, 3, 'storm'), 0);
   assert.equal(raise(s, 3, 'arcane'), 1); assert.equal(raise(s, 3, 'arcane'), 1); assert.equal(raise(s, 3, 'arcane'), 0, 'rang III maximum');
