@@ -1302,7 +1302,7 @@ test('V4.68 : région 11 (Terres du Givre) : 10 missions, boss Roi du Givre (gel
  const {ZONES,R10,R11,MON,THEMES,DEC,zlen,MAP2,HER}=await import('../src/data.js'),r=await import('../src/rules.js'),{QUESTS}=await import('../src/quests.js');
  const at=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  assert.equal(ZONES[10],R11);assert.equal(zlen(R11),10);assert.equal(R11.th[0],11);assert.ok(MAP2.some(m=>m.n===R11.n));
- for(const n of['polarwolf','yeti','frostel','frostking'])assert.equal(at[n].length,6,n);
+ for(const n of['polarwolf','yeti','frostel','frostking'])assert.equal(at[n].length,6,n);assert.equal(at.deco8.length,8);assert.deepEqual(DEC(60),['deco8',0]);assert.deepEqual(DEC(59),['deco7',7]);
  assert.ok(THEMES[11].g.every(i=>at[THEMES[11].ts][i]));assert.ok(THEMES[11].obs.every(o=>at[DEC(o)[0]][DEC(o)[1]]));
  for(const f of R11.fights){assert.ok(f.lvl>=41&&f.lvl<=45);for(const k of f.en)assert.ok(MON[k],k)}
  assert.equal(R11.boss.s,'frostking');assert.equal(MON[R11.boss.summon.k].s,'frostking');

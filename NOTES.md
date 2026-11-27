@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.70 (27/11 nuit) : obstacles et fond paysage de la région 11 (Gemini) : R11 complète côté images
+- 8 obstacles reçus (`art/r11/r11-obstacles-gemini.webp`, planche 3168 px, échelle .278 pour la même taille que R9/R10) -> `assets/deco8.webp`, obstacles 60 à 67 (`DEC`, `DECO_W`, `LOW` : rocher, tronc, éboulis, sarcophage, traîneau, muret bas ; pilier et monolithe hauts), `THEMES[11].obs`. Fond paysage : 2 versions reçues (`r11-givre-l-A`, `-B`), la B (centre le plus dégagé) est en jeu (`givre-l.webp`, étoile effacée) ; la A reste archivée. Le fond portrait (forêt et porte en ruine) ne montre pas le même lieu que le paysage (palais de glace) : à harmoniser si Max le souhaite.
+- 157 tests OK ; essai navigateur 844×390 et 390×844 sans erreur ni 404.
+
 ## V4.69 (27/11 nuit) : sols de la région 11 (Gemini)
 - 8 sols reçus de Max (`art/r11/r11-sols-gemini.webp`), découpe par `tools/prep_r11.py` -> `assets/sol_givre.webp` (même méthode que R9 et R10) ; `THEMES[11].ts = 'sol_givre'`. Reste provisoire pour R11 : obstacles (Monts gris) et fond paysage (recadrage du fond portrait).
 
