@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
 
@@ -173,7 +173,7 @@ function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*
  const hp=Math.round(m.hp*sc*(boss?B.hp:1)*ek),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)*(elite?1.2:1)));
  return{id,team:'m',k:t,boss:boss?1:undefined,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
   cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:(boss?m.h*B.h:m.h)*(elite?1.15:1),xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)*(elite?2:1)),
-  atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,fx:m.fx??0,proj:m.r?1:0}}}
+  atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,curse:m.curse,fx:m.fx??0,proj:m.r?1:0}}}
 
 // hstats = heroStats de chaque héros (par numéro) ; team = les 3 qui combattent. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
@@ -269,7 +269,7 @@ const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u
 // part des dégâts d'un sort de zone sur la case p quand on vise `at` (1 au centre ; sp.side autour)
 const sideK=(sp,at,p)=>sp.side&&at&&(at.x!==p.x||at.y!==p.y)?sp.side:1;
 export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={amp:amp>1};
- if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(healing(u,r,amp),t.max-t.hp));
+ if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(Math.round(healing(u,r,amp)*(t.curse?CURSE_K:1)),t.max-t.hp));
  if(!sp.dmg||t.team===u.team)return out;
  const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr)*side,sp.pierce||0);
  out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=t.dodge||0;out.combo=n>1?n:0;out.push=0;
@@ -324,8 +324,9 @@ export function applySpell(s,u,sp,c){
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
   if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
-  if(sp.heal){const v=healing(u,ri(rng,...sp.heal),amp),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
+  if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:`−${n} PM`,color:'#c9a0ff'})}
+  if(sp.curse&&!t.dead&&t.team!==u.team){t.curse=2;ev.push({type:'status',t,text:'Maudit : soins −50 %',color:'#d6b14a'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
   if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}
@@ -367,7 +368,7 @@ export const slowFor=(sp,t)=>sp.slow>1&&!t.boss?sp.slow:1;
 export const slowedPM=u=>u.slow?Math.max(u.slow>1?1:0,u.maxPM-u.slow):u.maxPM;
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
@@ -411,7 +412,7 @@ export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passabl
  const mid=[...s.map.values()].filter(c=>c.x+c.y>=4&&c.x+c.y<=14&&free(c));for(let g=0;g<60&&out.length<L.n&&mid.length;g++)add(pick(s.rng,mid));
  L.next=out.map(c=>({x:c.x,y:c.y}))}
 export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lavaMark(s);return[]}
- const ev=[];for(const p of L.next){ev.push({type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&!fireproof(u)){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e)}}
+ const ev=[];for(const p of L.next){ev.push(L.trap?{type:'fx',x:p.x,y:p.y,i:7,w:1.1}:{type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&(L.trap?u.team==='h':!fireproof(u))){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e);if(L.trap&&!u.dead)u.slow=u.slow||1}}
  ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
 // V4.37 : mur de glace. Il disparaît au début du tour de table s.round>=until (même si Orion est tombé)
 export function melt(c){delete c.ice;delete c.block}
@@ -466,6 +467,7 @@ const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:BOSS_P[u.bs];
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'boss_phase'},{type:'shake',ms:300})}return ev}
+ if(u.bs==='tomb'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Malédiction du tombeau !',color:'#d6b14a',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.curse=2;ev.push({type:'status',t:h,text:'Maudit',color:'#d6b14a'})}}return ev}
  if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
@@ -510,5 +512,5 @@ const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o
 // case où le héros relevé réapparaît : la sienne si libre, sinon une voisine libre
 function reviveSpot(s,h){if(!occ(s,h.x,h.y))return{x:h.x,y:h.y};for(const[dx,dy]of DIRS){const x=h.x+dx,y=h.y+dy;if(passable(s,x,y)&&!occ(s,x,y))return{x,y}}return null}
 function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
- h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.buff;delete h.carry;h.shield=0;
+ h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.buff;delete h.carry;h.shield=0;
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}

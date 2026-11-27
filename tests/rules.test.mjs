@@ -916,7 +916,7 @@ test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le bu
 
 test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans toucher aux zones',async()=>{
  const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
- assert.equal(ZONES.length,7);assert.equal(map2Open({z:{}}),false);
+ assert.equal(ZONES.length,8);assert.equal(map2Open({z:{}}),false);
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
  assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
@@ -1252,4 +1252,23 @@ test('V4.41 : Fenn a 10 sorts, appris par niveau, 6 places dont celle du Piège'
   assert.equal(slotsOf(t, 1), 5);
   const st = heroStats(t, 1);
   assert.equal(st.spells.length + st.tal.add.length, 6);
+});
+
+test('V4.42 : région 8 après R7, pièges (12 % et −1 PM, monstres épargnés), malédiction (soins −50 %), Pharaon',async()=>{
+ const r=await import('../src/rules.js'),{ZONES,R8,MON,HER,THEMES,DEC,CURSE_K}=await import('../src/data.js');
+ assert.equal(ZONES[7],R8);assert.equal(R8.fights.length,10);assert.equal(THEMES[R8.th[0]].ts,'sol_sables');assert.deepEqual(DEC(43),['deco5',7]);
+ for(const f of R8.fights){assert.ok(f.lava.trap&&f.lava.n>0);for(const k of f.en)assert.ok(MON[k])}
+ const F=r.fightSpec(7,1,1),s=r.newBattle(r.mulberry(5)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:26,items:[],up:{},sp:[null,null,null]},i)));
+ const h=s.units.find(u=>u.team==='h'),m=s.units.find(u=>u.team==='m'),hp=h.hp,mhp=m.hp;
+ s.lava.next=[{x:h.x,y:h.y},{x:m.x,y:m.y}];r.lavaTick(s);
+ assert.equal(h.hp,hp-Math.round(h.max*.12));assert.equal(h.slow,1);assert.equal(m.hp,mhp,'le gardien ne déclenche pas le piège');
+ const mu=s.units.find(u=>u.k==='mummy');assert.ok(mu.atk.curse);
+ h.hp=1;h.curse=2;const healer=s.units.find(u=>u.team==='h'&&u.S&&Object.values(u.S).some(sp=>sp.heal&&sp.t!=='enemy'));
+ if(healer){const id=Object.keys(healer.S).find(k=>healer.S[k].heal&&healer.S[k].t!=='enemy'),sp=healer.S[id],fc=r.forecast(s,healer,sp,h);if(fc&&fc.heal){h.curse=0;const fn=r.forecast(s,healer,sp,h);assert.ok(fc.heal[1]<=Math.round(fn.heal[1]*CURSE_K)+1)}}
+ h.curse=2;r.beginTurn(h);assert.equal(h.curse,1);
+ const B={...m,bs:'tomb',hp:10,max:100,team:'m'};h.curse=0;r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(h.curse,2);assert.equal(s.lava.hot,1);
+});
+test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
+ const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
+ for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
 });
