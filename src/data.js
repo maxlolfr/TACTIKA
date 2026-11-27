@@ -71,7 +71,7 @@ export const ZONES=[
   // V4.17 (lot 7) : 10 étapes, niveaux 13 à 15. Étape 8 = survie, élite de renfort : Chevalier sombre.
   fights:[{lvl:13,en:[GB,GB,SK]},{lvl:13,en:[GB,GH,GH]},{lvl:13,en:[SK,SK,GH]},{lvl:14,en:[GB,GB,GB,GH]},{lvl:14,en:[KR,SK,GH],goal:'chief'},
    {lvl:14,en:[SK,SK,KB,GB]},{lvl:14,en:[SK,GB,GB,GH,GH]},{lvl:15,en:[SK,GB,GH],goal:'survive'},{lvl:15,en:[KN,SK,SK,GH,GB]},{lvl:15,en:[SK,GB,GH],tip:'rage'}]},
- {id:'cristal',n:'Cavernes de cristal',x:14,y:33,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'crygolem',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat'],
+ {id:'cristal',n:'Cavernes de cristal',x:14,y:33,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'titan',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat','titan'],
   fights:[{lvl:16,en:[CG,CG,CG,CG],cry:{a:1},tip:'amp'},{lvl:16,en:[CG,CG,CG,'knightB','knightB'],cry:{a:2}},{lvl:17,en:[CG,CG,QS,QS,QS],cry:{a:2}},
    {lvl:17,en:[CG,CG,QS,QS,QS],cry:{p:1},tip:'prism'},{lvl:18,en:[CG,QS,QS,QS,QS],cry:{a:1,p:1},goal:'chief'},{lvl:18,en:[CG,CG,PB,PB,PB,PB],cry:{a:2}},
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},
@@ -119,12 +119,12 @@ export const THEMES=[
  {n:'Plage',ts:'sol_plage',g:[0,1,2,3],obs:[3,4,2,8],water:3},
  {n:'Monts gris',ts:'sol_mont',g:[0,1,2,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]},
  {n:'Château en ruine',ts:'sol_chateau',g:[0,1,1,3],obs:[12,13,14,15,16,17,18,22],noflower:1,out:[12,13,22,16,14]},
- {n:'Cavernes de cristal',ts:'tiles5',g:[0,0,8,8,11,11,3,4],obs:[20,21,19,4,3],noflower:1,out:[20,21,19,4],cave:1}];
+ {n:'Cavernes de cristal',ts:'tiles5',g:[0,0,1,1,5,5,6,2,3,7],obs:[24,25,26,27,28,29],noflower:1,out:[24,25,27,26],cave:1}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23]);
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29]);
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95];
-export const DEC=d=>d<12?['deco',d]:['deco2',d-12],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9];
+export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:['deco3',d-24],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles
