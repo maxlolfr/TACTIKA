@@ -375,3 +375,22 @@ body.camp #exc{display:none}
 .hud2 #panel::before{content:'';position:absolute;inset:0;border:20px solid transparent;border-image:url(assets/hud2/panel-frame.webp) 58 stretch;pointer-events:none;z-index:1}
 /* V4.51 : portrait — les vignettes de cibles flottent au-dessus du panneau (elles recouvraient la ligne du héros) */
 @media (orientation:portrait){.hud2 #pts{position:static}}
+
+/* ===== V4.52 : HUD V2 lot 2 — statuts, fiche au toucher, infobulle de sort, volume général et coupures (aperçu seulement) ===== */
+.hud2 #who .stt{display:inline-flex;flex-wrap:wrap;gap:3px;align-items:center}
+.hud2 .ch{display:inline-flex;align-items:center;gap:2px;height:20px;padding:0 5px 0 3px;border-radius:10px;background:#0a1020;box-shadow:inset 0 0 0 1px var(--c,#b99a60);font:800 11px/1 system-ui;color:var(--ra-iv)}
+.hud2 .ch i{font-style:normal;font-size:12px}
+#ufiche{position:fixed;z-index:25;width:min(220px,calc(100vw - 12px));padding:9px 11px 8px;border-radius:12px;background:linear-gradient(#1a2433f7,#131c29f7);border:1px solid #b99a60;box-shadow:inset 0 1px 0 #e9cf9433,0 10px 26px #000c;color:#eadcc0;font:600 12px/1.35 system-ui}
+#ufiche .fn{display:block;font-size:14px;margin-bottom:5px}#ufiche .fh{color:#8fd0ff}#ufiche .fm{color:#ff9a8a}
+#ufiche .fb{height:7px;border-radius:4px;background:#05080f;box-shadow:inset 0 0 0 1px #b99a6055;margin-bottom:4px;overflow:hidden}#ufiche .fb i{display:block;height:100%;background:linear-gradient(#6cc78f,#3a8a5c)}
+#ufiche .fl{display:flex;gap:8px;flex-wrap:wrap;color:#d9cdb0}#ufiche .fz{opacity:.6;margin-top:3px}
+#ufiche .pa{color:#e9bb55}#ufiche .pm{color:#54b9e8}
+#ufiche .fs{display:flex;gap:6px;align-items:baseline;margin-top:4px}#ufiche .fs i{font-style:normal;width:16px;text-align:center}#ufiche small{opacity:.7}
+#sptip{position:fixed;z-index:25;width:min(230px,calc(100vw - 12px));padding:8px 10px;border-radius:11px;background:linear-gradient(#1a2433f9,#131c29f9);border:1px solid #b99a60;box-shadow:0 8px 22px #000b;color:#eadcc0;font:600 12px/1.35 system-ui;pointer-events:none}
+#sptip b{color:#e9cf94;font-size:13px}#sptip .tc{color:#e9bb55;font-weight:800}#sptip .td{margin-top:3px;color:#c9c0aa;font-weight:500}#sptip .tw{margin-top:4px;color:#ffa070;font-weight:800}
+.hud2 #hvol label{grid-template-columns:30px 66px 1fr 40px}
+.hud2 #hvol .mu{display:flex;align-items:center;justify-content:center;width:30px;height:28px;padding:0;border:1px solid #b99a6099;border-radius:8px;background:#0a1020}
+.hud2 #hvol .mu img{width:20px;height:20px;display:block}
+.hud2 #hvol label.off .mu{border-color:#5b5f68}.hud2 #hvol label.off .mu img{opacity:.35;filter:grayscale(1)}
+.hud2 #hvol label.off span,.hud2 #hvol label.off b{opacity:.5}
+.hud2 #hvol label:first-of-type{padding-bottom:6px;border-bottom:1px solid #b99a6044}
