@@ -732,7 +732,8 @@ test('Prairie : 10 étapes, boss à la 10e, niveaux 1 à 3, gelées et sangliers
  const F=[...Array(10).keys()].map(i=>fightSpec(0,i,1));
  assert.deepEqual(F.map(f=>!!f.boss),[...Array(9).fill(false),true]);assert.equal(F[0].lvl,1);assert.equal(F[9].lvl,3);
  assert.deepEqual([F[4].goal,F[7].goal],['chief','survive']);assert.equal(F[7].wave.turns,5);
- for(const f of F)for(const k of f.en)assert.ok(['slime','boar'].includes(k));
+ for(const f of F)for(const k of f.en)assert.ok(['slime','boar','toxslime'].includes(k));
+ for(const i of [0,1,2,3])assert.ok(!F[i].en.includes('toxslime'),'étapes 1 à 4 : pas de gelée toxique');for(let i=4;i<10;i++)assert.ok(F[i].en.includes('toxslime'));
  assert.equal(dailyFight({z:{}},10).cry,undefined);
 });
 test('Prairie : toutes les étapes se génèrent, bon nombre d’ennemis', ()=>{
@@ -846,4 +847,13 @@ test('V4.12 : Soin collectif, lanceur adjacent, PV plafonnés, un seul coût', (
  const s=arena(),ae=unit(s,'h',2,1,{hp:40,max:46,healMul:1.2}),t=unit(s,'h',2,0,{hp:45,max:50});
  payCost(ae,SP.mheal,t);applySpell(s,ae,SP.mheal,{x:2,y:0});
  assert.deepEqual([t.hp,ae.hp,ae.pa,ae.cd['Soin collectif']],[50,46,1,3]); // 8 × 1,2 = 10 → plafonné à 50 ; lanceur collé soigné une fois
+});
+
+test('V4.13 : gelée toxique, poison 2 × 2 tours, marque distincte', () => {
+ const s=arena(),t=unit(s,'m',1,0),h=unit(s,'h',0,0,{hp:50,max:50,dir:0});
+ const F={lvl:2,pool:['toxslime'],boss:null,en:['toxslime']};mkUnits(s,F,[{x:0,y:5},{x:1,y:5},{x:2,y:5}],[{x:5,y:5}],HS);
+ const m=s.units.find(u=>u.team==='m'&&u.k==='toxslime');assert.equal(m.s,'slimeT');assert.deepEqual(m.atk.poison,[2,2]);assert.ok(m.atk.dmg[1]<=6);
+ const k=s.units.find(u=>u.team==='h'),sp=m.atk;m.x=k.x+1;m.y=k.y;payCost(m,sp,k);const hp=k.hp;applySpell(s,m,sp,k);
+ assert.ok(k.hp<hp);assert.deepEqual([k.poison.d,k.poison.turns],[2,2]);
+ const ev=poisonTick(s,k);assert.ok(ev.length&&k.poison.turns===1);
 });

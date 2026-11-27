@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.13 (27/11/2026) : Prairie plus variée, gelée toxique
+- `MON.toxslime` « Gelée toxique » : planche de la gelée recolorée en violet au chargement (`slimeT`, `tint` dans render.js), crâne ☠ au-dessus de sa barre, 24 PV, 3-5 dégâts, poison 2 × 2 tours. Dans `pool` de la Prairie.
+- Étapes 1 à 4 inchangées. Étapes 5 à 10 : une ou deux gelées toxiques (chef 5, 6, 7, survie 8, 9, boss 10), conseils affichés une fois (étape 5 : gelée toxique ; étape 10 : Roi Gelée et ses 2 gelées).
+- Aucun PV augmenté. 102 tests. Simulateur pilote : 90 combats au total (dont 60 avec des héros trop forts, non représentatifs) ; au niveau de la mission, seule la survie 8 change (PV restants 84 → 74 %).
+- `tools/sim.mjs` : missions p5, p8, p10 et niveau des héros = niveau du combat quand il est fixé.
+
 ## V4.12 (27/11/2026) : 12 nouveaux équipements (lot 3, table ChatGPT eq11-eq22)
 - 22 objets (10 historiques inchangés, index 10-21 = eq11-eq22). Champs : `id`, `s:'equip'` (planche assets/equip.webp, `tools/prep_equip.py`), `lv` requis, `rr` rareté fixe, `src` shop|loot, `who` liste si partagé.
 - `gearAll` : choix du joueur puis meilleur objet libre, héros 0→2 : un seul porteur, jamais de doublon. `equip(save,j,i)` transfère, `holder`, `compare(save,j,i)`.

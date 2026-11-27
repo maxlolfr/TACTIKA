@@ -65,10 +65,10 @@ PROF.opti.attr=(n,i)=>({[main(i)]:n});
 // V4.12 (lot 3) : anc = les 10 objets historiques, communs, sans forge ; cat = tout le catalogue permis au niveau (raretés fixes des nouveaux), sans forge
 PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:null};
 for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
-const PIL={bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
+const PIL={p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
- for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,ZONES[zi].lvl+i+p.dl),R=[];
+ for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i)+p.dl),R=[];
   for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&[0,1,2].map(i=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
