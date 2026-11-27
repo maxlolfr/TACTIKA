@@ -147,29 +147,29 @@ export const MON={
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB',KR='knightR',KN='knightN',GO='golem',GB='goblin',GH='ghost',SK='skel';
 export const ZONES=[
- {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar',TX],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}},
+ {id:'prairie',n:'Prairie de Lande',x:38,y:74,th:[0,2],lvl:1,pool:['slime','boar',TX],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}},
   // V4.9 pilote : 10 étapes, niveaux 1 à 3, gelées et sangliers (le 1er monstre est le chef si goal='chief'). Chiffres de départ, à régler après les tests de Max
   waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,'boar']]}},
   fights:[{lvl:1,en:[SL,SL,SL]},{lvl:1,en:[SL,SL,BO]},{lvl:1,en:[SL,SL,SL,SL]},{lvl:2,en:[SL,BO,BO]},{lvl:2,en:[BO,SL,TX,BO],goal:'chief',tip:'tox'},
    {lvl:2,en:[TX,SL,BO,BO]},{lvl:2,en:[SL,SL,TX,TX,BO]},{lvl:2,en:[SL,TX,BO],goal:'survive'},{lvl:3,en:[BO,BO,TX,SL,TX]},{lvl:3,en:[TX,SL,BO,TX],tip:'king'}]},
- {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl',summon:{k:'wolf',n:2,hp:28,pm:5,dmg:[6,9],sn:'Loup de meute',snd:'bite'}},
+ {id:'bois',n:'Bois sombre',x:21,y:47,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl',summon:{k:'wolf',n:2,hp:28,pm:5,dmg:[6,9],sn:'Loup de meute',snd:'bite'}},
   // V4.14 (lot 4, liste ChatGPT) : 10 étapes, niveaux 4 à 6. Survie à renforts (V4.5a) déplacée en 8e étape.
   waves:{7:{turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,'wolf'],[5,2]]}},
   fights:[{lvl:4,en:[BA,BA,WO]},{lvl:4,en:[WO,WO,WO]},{lvl:4,en:[SH,SH,WO],tip:'shroom'},{lvl:5,en:[BA,BA,BA,SH]},{lvl:5,en:[WO,WO,WO,BA],goal:'chief'},
    {lvl:5,en:[WO,SH,BA,SH]},{lvl:5,en:[SH,SH,SH,WO,WO]},{lvl:6,en:[WO,SH,BA],goal:'survive'},{lvl:6,en:[WO,WO,SH,SH,BA,BA]},{lvl:6,en:[WO,SH,BA]}]},
- {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{7:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'},
+ {id:'plage',n:'Côte dorée',x:76,y:55,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{7:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'},
   // V4.15 (lot 5, liste ChatGPT) : 10 étapes, niveaux 7 à 9. Étape 8 = survie (pas de protection de zone), élite de renfort : Chevalier bleu.
   fights:[{lvl:7,en:[CR,CR,SL],tip:'armor'},{lvl:7,en:[CR,GU,GU]},{lvl:7,en:[CR,CR,GU]},{lvl:8,en:[GU,GU,GU,SL]},{lvl:8,en:[KB,CR,GU,CR],goal:'chief'},
    {lvl:8,en:[CR,CR,CR,GU]},{lvl:8,en:[KB,CR,GU,SL]},{lvl:9,en:[CR,GU,SL],goal:'survive'},{lvl:9,en:[CR,CR,KB,GU]},{lvl:9,en:[CR,GU,SL,CR]}]},
- {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{7:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'},
+ {id:'mont',n:'Monts gris',x:50,y:20,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{7:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'},
   // V4.16 (lot 6, liste ChatGPT) : 10 étapes, niveaux 10 à 12. Étape 8 = survie, élite de renfort : Chevalier rouge.
   fights:[{lvl:10,en:[GO,GU,GU]},{lvl:10,en:[GO,WO,WO]},{lvl:10,en:[KB,GO,WO]},{lvl:11,en:[GO,GO,GU]},{lvl:11,en:[KR,GO,WO],goal:'chief'},
    {lvl:11,en:[GO,GO,KB,CR]},{lvl:11,en:[GO,GO,WO,GU,GU]},{lvl:12,en:[GO,WO,GU],goal:'survive'},{lvl:12,en:[GO,GO,KR,WO,GU]},{lvl:12,en:[GO,WO,GU],tip:'quake'}]},
- {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],elite:{7:'knightN'},boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35,bs:'rage'},
+ {id:'chateau',n:'Château en ruine',x:77,y:19,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],elite:{7:'knightN'},boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35,bs:'rage'},
   // V4.17 (lot 7) : 10 étapes, niveaux 13 à 15. Étape 8 = survie, élite de renfort : Chevalier sombre.
   fights:[{lvl:13,en:[GB,GB,SK]},{lvl:13,en:[GB,GH,GH]},{lvl:13,en:[SK,SK,GH]},{lvl:14,en:[GB,GB,GB,GH]},{lvl:14,en:[KR,SK,GH],goal:'chief'},
    {lvl:14,en:[SK,SK,KB,GB]},{lvl:14,en:[SK,GB,GB,GH,GH]},{lvl:15,en:[SK,GB,GH],goal:'survive'},{lvl:15,en:[KN,SK,SK,GH,GB]},{lvl:15,en:[SK,GB,GH],tip:'rage'}]},
- {id:'cristal',n:'Cavernes de cristal',x:14,y:33,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'titan',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat','titan'],
+ {id:'cristal',n:'Cavernes de cristal',x:24,y:26,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'titan',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat','titan'],
   fights:[{lvl:16,en:[CG,CG,CG],cry:{a:1},tip:'amp'},{lvl:16,en:[CG,CG,'knightB','knightB'],cry:{a:2}},{lvl:17,en:[CG,CG,QS,QS,QS],cry:{a:2}},
    {lvl:17,en:[CG,CG,QS,QS,QS],cry:{p:1},tip:'prism'},{lvl:18,en:[CG,QS,QS,QS,QS],cry:{a:1,p:1},goal:'chief'},{lvl:18,en:[CG,CG,PB,PB,PB,PB],cry:{a:2}},
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},

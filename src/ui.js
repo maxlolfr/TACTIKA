@@ -356,20 +356,22 @@ function mapTabs(){const T=$('maptabs');T.innerHTML='';[1,2].forEach(n=>{const b
 function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${txt}</small>`;
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
-function secondMap(L){
- MAP2.forEach((z,i)=>{const zi=ZONES.findIndex(q=>q.map===2&&q.n===z.n),b=document.createElement('button');b.className='zone'+(zi<0?' lock':'')+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
-  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>${zi<0?'Bientôt':!unlocked(zi)?'🔒 Bats le boss précédent':`${prog(ZONES[zi].id)}/${zlen(ZONES[zi])}`}</small>`;b.onclick=()=>zi>=0?unlocked(zi)&&zoneSheet(zi):mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
+// V4.87 : un seul marqueur pour les deux cartes (portrait du boss, nom, progression, étoiles) ; pos = {x,y} (et lx,ly : paysage de la carte II)
+function zoneBtn(L,zi,pos,num){const z=ZONES[zi],ok=zi>=0&&!z.soon&&unlocked(zi),p=zi>=0?prog(z.id):0,b=document.createElement('button');
+ b.className='zone'+(ok?'':' lock')+((pos.x<12||pos.x>88)?' edge':'');for(const[k,v]of[['x',pos.x],['y',pos.y],['lx',pos.lx??pos.x],['ly',pos.ly??pos.y]])b.style.setProperty('--'+k,v+'%');
+ const B=z?.boss&&MON[z.boss.k];if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,52));else b.insertAdjacentHTML('beforeend',`<span class="q">${num}</span>`);
+ const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',`Région ${num} : ${z?z.n:pos.n}`);
+ b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
+ b.onclick=()=>zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
+function secondMap(L){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),z,i+7))}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
- if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');$('mapbox').classList.toggle('m2',mapNo===2);mapTabs();
- if(mapNo===2)return secondMap(L);
- L.insertAdjacentHTML('beforeend',road(ZONES.filter(z=>!z.map)));
- ZONES.filter(z=>!z.map).forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
-  const B=z.boss?MON[z.boss.k]:null;if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,46));else b.insertAdjacentHTML('beforeend','<span class="q">?</span>');
-  b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?' · '+starsOf(z.id).reduce((a,b)=>a+b,0)+'/'+3*zlen(z)+' ★':''}</small>`);
-  b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
- const cz=L.querySelectorAll('.zone:not(.lock)');cz[cz.length-1]?.scrollIntoView({block:'center'});
+ if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');$('mapbox').classList.toggle('m2',mapNo===2);$('mapbox').classList.toggle('m1',mapNo===1);M.classList.toggle('m1',mapNo===1);mapTabs();
+ if(mapNo===2)secondMap(L);
+ else{L.insertAdjacentHTML('beforeend',road(ZONES.filter(z=>!z.map)));ZONES.forEach((z,zi)=>{if(!z.map)zoneBtn(L,zi,z,zi+1)})}
+ // la région en cours au centre de l'écran (carte I en portrait : défilement horizontal)
+ const cz=L.querySelectorAll('.zone:not(.lock)');requestAnimationFrame(()=>cz[cz.length-1]?.scrollIntoView({block:'center',inline:'center'}));
 }
 function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
