@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.33 (27/11) : audio, premier lot de la carte II
+Musiques `map2` (carte II), `ember` et `boss_map2` (aperçu Braise, à la place des sons provisoires). Bruitages `boss_phase`, `boss_death`, `quest_complete`, `star_earned` ; ambiance `village_ambience` en boucle au village (volume des bruitages). Les musiques des six premières régions ne bougent pas.
+
 ## V4.32 (27/11) : vraies images de la région 7 et héros vétérans (aperçu seulement)
 - `?apercu=braise` : élémentaire, chevalier d'obsidienne, salamandre, Ignaros (`tools/prep_r7.py`), 8 dalles (`sol_braise` : `TILE_N=8 TILE_W=512 python3 tools/cut_tiles.py r7-09-dalles-gemini-1822.png sol_braise`) et 6 obstacles (`deco4`, 30 à 35 ; charbon et chariot bas). Originaux : studio, `art/tactika/r7-planches/`. Le recolorage provisoire (`PH`) est supprimé.
 - Héros vétérans (`tools/prep_heros.py`) : en aperçu dès le niveau 25 (`VET_LVL`), ou tout de suite avec `&veterans`. Pas de marche : pose fixe qui glisse avec le rebond existant.

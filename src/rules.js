@@ -153,7 +153,7 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 // Un monstre de la mission F (niveau F.lvl) sur la case p ; B = boss de zone ; elite (V4.5a) : PV ×1,5, dégâts ×1,2, anneau doré
 function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*(n-1),ek=elite?1.5:1;
  const hp=Math.round(m.hp*sc*(boss?B.hp:1)*ek),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)*(elite?1.2:1)));
- return{id,team:'m',k:t,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
+ return{id,team:'m',k:t,boss:boss?1:undefined,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
   cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:(boss?m.h*B.h:m.h)*(elite?1.15:1),xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)*(elite?2:1)),
   atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,fx:m.fx??0,proj:m.r?1:0}}}
 
@@ -421,8 +421,8 @@ export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'S
 const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:BOSS_P[u.bs];
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
- if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'kael_charge'},{type:'shake',ms:300})}return ev}
- if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'kael_charge'},{type:'shake',ms:350})}return ev}
+ if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'boss_phase'},{type:'shake',ms:300})}return ev}
+ if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}

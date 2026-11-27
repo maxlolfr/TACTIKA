@@ -1,11 +1,11 @@
 // Audio : Web Audio, fichiers ElevenLabs dans assets/audio/<nom>.mp3, sons synthétisés de secours.
-export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal','push','collision','combo_2','combo_3','trap','dodge','crystal_amp','prism_burst','beam_charge','beam_fire','golem_smash','spider_bite','bat_shriek','titan_roar','titan_death','chest_open','loot_rare','boss_intro'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle','cave','titan_boss','coast','mountain','castle','village','boss_v2','darkwood'];
+export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buff','hit','bite','slime','death','step','click','turn','coin','levelup','victory','defeat','critical','enemy_warning','kael_charge','aelis_heal','push','collision','combo_2','combo_3','trap','dodge','crystal_amp','prism_burst','beam_charge','beam_fire','golem_smash','spider_bite','bat_shriek','titan_roar','titan_death','chest_open','loot_rare','boss_intro','boss_phase','boss_death','quest_complete','star_earned','village_ambience'],MUSICS=['camp','battle','boss','main_theme','forest','elite_battle','cave','titan_boss','coast','mountain','castle','village','boss_v2','darkwood','map2','ember','boss_map2'];
 // tant qu'un nouveau fichier manque, on joue son équivalent existant
-const FALL={darkwood:'forest',village:'main_theme',boss_v2:'boss',main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle',golem_smash:'smash',spider_bite:'bite',bat_shriek:'poison',titan_roar:'enemy_warning',titan_death:'death',chest_open:'coin',loot_rare:'levelup',boss_intro:'enemy_warning',titan_boss:'boss',coast:'battle',mountain:'battle',castle:'battle'};
+const FALL={map2:'camp',ember:'cave',boss_map2:'boss_v2',boss_phase:'kael_charge',boss_death:'death',quest_complete:'coin',star_earned:'coin',darkwood:'forest',village:'main_theme',boss_v2:'boss',main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle',golem_smash:'smash',spider_bite:'bite',bat_shriek:'poison',titan_roar:'enemy_warning',titan_death:'death',chest_open:'coin',loot_rare:'levelup',boss_intro:'enemy_warning',titan_boss:'boss',coast:'battle',mountain:'battle',castle:'battle'};
 // V4.0.3 : sons rangés dans assets/audio/musique (musiques, victoire, défaite) et assets/audio/bruitages ; catalogue : assets/audio/SONS.md
 const dir=n=>MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
 // V4.31 : volume réglable (curseurs des Réglages, 0 à 150 %) et plus fort à 100 % ; TRIM remonte les deux fichiers les plus faibles (mesurés vers -17 et -16 LUFS, les autres entre -14 et -12)
-const GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4};
+const AMB=.3,GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
@@ -20,7 +20,7 @@ function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
  // limiteur en sortie : évite la saturation quand le volume est poussé
  const lim=c.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.25;lim.connect(c.destination);
  AU.mix=c.createGain();AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);
- for(const n of SNDS)load(n).catch(()=>{});
+ for(const n of SNDS)load(n).then(()=>{if(n==='village_ambience')ambience()}).catch(()=>{});
  if(AU.want)music(AU.want,1)}
 const load=n=>fetch('assets/audio/'+dir(n)+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>AU.c.decodeAudioData(b,ok,ko))).then(b=>AU.buf[n]=b);
 // V4.20 : une musique n'est chargée qu'au moment de la jouer (décodée, une minute pèse environ 20 Mo en mémoire)
@@ -37,7 +37,11 @@ document.addEventListener('visibilitychange',()=>{if(!AU.c)return;document.hidde
 export function setSon(k){AU.on[k]=AU.on[k]?0:1;try{localStorage.setItem('landeSon',JSON.stringify(AU.on))}catch(e){}
  apply(k);sonBtns()}
 export function sonBtns(){document.querySelectorAll('.son-m').forEach(b=>b.style.opacity=AU.on.m?1:.35);document.querySelectorAll('.son-s').forEach(b=>b.style.opacity=AU.on.s?1:.35)}
-export function music(n,force){AU.want=n;const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
+// V4.33 : ambiance du village sous le thème d'origine ; elle passe par le volume des bruitages (pas de son de secours)
+function ambience(){const c=AU.c;if(!c)return;const on=AU.want==='main_theme',b=AU.buf.village_ambience;
+ if(on&&b&&!AU.amb){const s=c.createBufferSource(),g=c.createGain();s.buffer=b;s.loop=true;g.gain.value=0;g.gain.setTargetAtTime(AMB,c.currentTime,1);s.connect(g);g.connect(AU.s);s.start();s.g=g;AU.amb=s}
+ else if(!on&&AU.amb){const o=AU.amb;AU.amb=null;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000)}}
+export function music(n,force){AU.want=n;ambience();const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
  const w=lost[n]?FALL[n]:n,k=AU.buf[w]?w:null;
  if(!k){musicLoad(w);return} // l'ancienne musique continue pendant le chargement
  if(AU.src){const o=AU.src;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000);AU.src=null}
