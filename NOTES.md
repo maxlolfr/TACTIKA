@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.34 (27/11) : niveaux des nouveaux sons
+D'après les mesures des fichiers publiés : ambiance du village, étoiles et quête remontées ; `map2`, `ember`, `boss_map2` baissées au niveau des autres musiques. Non écouté.
+
 ## V4.33 (27/11) : audio, premier lot de la carte II
 Musiques `map2` (carte II), `ember` et `boss_map2` (aperçu Braise, à la place des sons provisoires). Bruitages `boss_phase`, `boss_death`, `quest_complete`, `star_earned` ; ambiance `village_ambience` en boucle au village (volume des bruitages). Les musiques des six premières régions ne bougent pas.
 

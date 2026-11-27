@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.j
 import {setSon,sonBtns,sfx,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.33';
+export const VERSION='4.34';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
