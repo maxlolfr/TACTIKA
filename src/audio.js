@@ -5,7 +5,7 @@ const FALL={map2:'camp',ember:'cave',boss_map2:'boss_v2',boss_phase:'kael_charge
 // V4.0.3 : sons rangés dans assets/audio/musique (musiques, victoire, défaite) et assets/audio/bruitages ; catalogue : assets/audio/SONS.md
 const dir=n=>MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
 // V4.31 : volume réglable (curseurs des Réglages, 0 à 150 %) et plus fort à 100 % ; TRIM remonte les deux fichiers les plus faibles (mesurés vers -17 et -16 LUFS, les autres entre -14 et -12)
-const AMB=.3,GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4};
+const AMB=4,GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
