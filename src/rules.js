@@ -254,7 +254,7 @@ export function soak(t,amt,pen=0){if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5)
 // V4.37 : part des dégâts qu'inflige encore une unité affaiblie
 export const weakK=u=>u.weak?1-u.weak.pct:1;
 // Dégâts d'un sort avant bouclier et armure, pour un tirage `roll`
-const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*weakK(u)*cb*(cr?1.5:1);
+const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*weakK(u)*(sp.k||1)*cb*(cr?1.5:1); // sp.k : bonus de dégâts d'un talent sur ce sort
 const healing=(u,roll,amp)=>Math.round((roll+(u.healB||0))*(u.mult||1)*(u.healMul||1)*amp);
 // nombre de héros ayant frappé t, u compris (palier de combo)
 const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u.id]).size:0;
@@ -319,7 +319,7 @@ export function applySpell(s,u,sp,c){
   if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=healing(u,ri(rng,...sp.heal),amp),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
-  if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
+  if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:`−${n} PM`,color:'#c9a0ff'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
   if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}
@@ -336,7 +336,7 @@ export const ampAt=(s,p)=>DIRS.some(([dx,dy])=>cell(s,p.x+dx,p.y+dy)?.cry==='a')
 // Prisme : violet, allumé sauf pendant les 2 tours de table qui suivent son déclenchement
 export const prismOn=(s,c)=>!!c&&c.cry==='p'&&!(c.off>s.round);
 // 70 % des dégâts moyens du sort (bonus du lanceur et amplificateur compris ; ni tirage, ni critique, ni combo)
-export const prismDmg=(s,u,sp)=>Math.round(((sp.dmg[0]+sp.dmg[1])/2+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.buff?1+u.buff.pct:1)*ampAt(s,u)*PRISM);
+export const prismDmg=(s,u,sp)=>Math.round(((sp.dmg[0]+sp.dmg[1])/2+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.buff?1+u.buff.pct:1)*(sp.k||1)*ampAt(s,u)*PRISM);
 // Cases et unités touchées si le prisme c éclate (aperçu et effet)
 export const prismHits=(s,c)=>DIRS.map(([dx,dy])=>({x:c.x+dx,y:c.y+dy})).filter(p=>cell(s,p.x,p.y));
 export function prismFire(s,u,c,amt){c.off=s.round+PRISM_OFF;const ev=[{type:'fx',x:c.x,y:c.y,i:3,w:1.2,sh:'crystals'},{type:'status',t:u,text:'Prisme !',color:'#c98bff',snd:'prism_burst'},{type:'shake',ms:200}];
@@ -356,9 +356,12 @@ export function push(s,t,p){const ev=[{type:'push',t,to:p.to}],dx=Math.sign(p.to
  return ev.filter(Boolean)}
 
 // ---------- tours ----------
+// ralentissement : −1 PM ; −2 (Gel profond) laisse au moins 1 PM et reste à −1 sur un boss
+export const slowFor=(sp,t)=>sp.slow>1&&!t.boss?sp.slow:1;
+export const slowedPM=u=>u.slow?Math.max(u.slow>1?1:0,u.maxPM-u.slow):u.maxPM;
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
@@ -484,7 +487,7 @@ function beamTurn(s,u,ev){const ph=beamPhase(u);
  else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
-export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;let r=null;
+export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=slowedPM(u);let r=null;
  for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k*weakK(u))),amp:k>1,from:{x:u.x,y:u.y}};break}
   const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
  Object.assign(u,keep);return r}
@@ -494,7 +497,7 @@ export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.bac
 export const trapAt=(s,x,y,team)=>s.units.find(h=>h.trap&&h.trap.x===x&&h.trap.y===y&&h.team!==team);
 function spring(s,u,h,x,y){const g=h.trap.glyph;delete h.trap;
  if(g){const ev=[{type:'fx',x,y,i:1,w:1.3,sh:'fxi'},{type:'status',t:u,text:'Glyphe !',color:'#ffd65a',snd:'trap'}],e=hurt(s,u,power(h,g.sp,u,ri(s.rng,...g.sp.dmg),g.amp,1,false),'trap');if(e)ev.push(e);return ev}
- const ev=[{type:'fx',x,y,i:1,w:1.1,sh:'fxi'},{type:'status',t:u,text:'Piège !',color:'#ffa040',snd:'trap'}],e=hurt(s,u,10,'trap');if(e)ev.push(e);if(!u.dead)u.slow=1;return ev}
+ const ev=[{type:'fx',x,y,i:1,w:1.1,sh:'fxi'},{type:'status',t:u,text:'Piège !',color:'#ffa040',snd:'trap'}],e=hurt(s,u,10,'trap');if(e)ev.push(e);if(!u.dead)u.slow=u.slow||1;return ev}
 // à appeler après chaque case parcourue : renvoie les événements (vide si pas de piège)
 export function stepOn(s,u){const h=trapAt(s,u.x,u.y,u.team);return h?spring(s,u,h,u.x,u.y):[]}
 const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o.y===c.y);

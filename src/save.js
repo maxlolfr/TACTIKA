@@ -14,4 +14,4 @@ migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migr
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
 export const prog=id=>save.z[id]||0,unlocked=zi=>!ZONES[zi].soon&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
 export function store(){try{localStorage.setItem(KEY,JSON.stringify(save))}catch(e){}}
-export function resetSave(){for(const k of Object.keys(save))delete save[k];Object.assign(save,{v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:{},st:{},up:{},sp:[null,null,null],pot:0,attr:cleanAttr(null,1),p10:1,b10:1,c10:1,m10:1,h10:1});store()}
+export function resetSave(){for(const k of Object.keys(save))delete save[k];Object.assign(save,{v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:{},st:{},up:{},sp:cleanSp(),pot:0,attr:cleanAttr(null,1),p10:1,b10:1,c10:1,m10:1,h10:1});store()}

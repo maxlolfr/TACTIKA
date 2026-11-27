@@ -2,12 +2,12 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,VOICES,music,duck,setSon,sonBtns} from './audio.js';
-import {SPECS,TIER,DONE,specOf} from './talents.js';
+import {SPECS,tiersFor,specOf} from './talents.js';
 import {renderHome} from './home.js';
 
 // ---------- panneau de combat ----------
@@ -115,7 +115,7 @@ const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
 const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
 function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
  if(sp.burn&&f.dmg)out.push(fireproof(t)?'insensible au feu : pas de brûlure':`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`);
- if(sp.slow&&f.dmg)out.push('−1 PM au prochain tour');
+ if(sp.slow&&f.dmg)out.push(`−${slowFor(sp,t)} PM au prochain tour`);
  if(sp.weaken)out.push(`${Math.round(sp.weaken[0]*100)} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
  if(f.dmg){out.push(`<b>${rg(f.dmg)} dégâts</b>${f.push?` + ${f.push} collision`:''} · critique ${Math.round(f.pc*100)} % : ${rg(f.crit)}${f.dodge?` · esquive ${Math.round(f.dodge*100)} %`:''}`);
   const why=[u.buff&&`bonus +${Math.round(u.buff.pct*100)} %`,f.combo&&`combo ×${f.combo}`,f.amp&&'cristal',t.shield>0&&'Rempart',t.armor&&`armure ${Math.round(t.armor*(1-(sp.pierce||0))*100)} %`].filter(Boolean);
@@ -200,14 +200,16 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
    r.append(b);F.append(r)}});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{F.classList.remove('on');camp()};F.append(back)}
 // ---------- maître d'armes (V2.5a) ----------
+// niveau auquel Orion apprendra le sort que ce talent améliore, s'il ne le connaît pas encore (sinon 0)
+const waits=(i,m)=>Math.max(0,...Object.keys(m?.sp||{}).map(id=>(HER[i].learn||[]).find(([s,l])=>s===id&&!knownSpells(save,i).includes(id))?.[1]||0));
 let armH=-1;
 function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=Math.max(0,HER.findIndex((_,i)=>SPECS[i]&&!specOf(save,i)));A.classList.add('on');A.innerHTML='';
- A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux 3, 7 et 11.</div>`);
- const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{if(!SPECS[i])return; /* Orion : talents à venir */const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
+ A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`);
+ const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
  HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon(...x.ic,56));
-   c.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b> <small>${x.d}</small>`+x.t.map(([tn,td],k)=>{const lv=TIER[k],ok=save.lvl>=lv&&k<DONE;return`<p class="${ok?'':'off'}"><em>${save.lvl<lv?'🔒 niv '+lv:k>=DONE?'à venir':on?'✓ actif':'niv '+lv}</em> <b>${tn}</b> : ${td}</p>`}).join('')+'</div>');
+   c.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b> <small>${x.d}</small>`+x.t.map(([tn,td],k)=>{const lv=tiersFor(i)[k],ok=save.lvl>=lv,w=waits(i,x.t[k][2]);return`<p class="${ok?'':'off'}"><em>${!ok?'🔒 niv '+lv:on&&!w?'✓ actif':'niv '+lv}</em> <b>${tn}</b> : ${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</p>`}).join('')+'</div>');
    const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('buff',.7);armes()};c.append(b);row.append(c)}
   A.append(row)});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
