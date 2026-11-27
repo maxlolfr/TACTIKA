@@ -122,7 +122,9 @@ export const MON={
  // V4.42, région 8 (valeurs provisoires de Claude). curse = malédiction : soins reçus −50 % pendant 2 tours. Images : tools/prep_r8.py
  mummy:{ai:'tank',snd:'smash',n:'Gardien momifié',s:'mummy',row:0,hp:56,pm:2,init:8,dmg:[11,14],armor:.15,h:1.1,xp:26,curse:1},
  scorp:{ai:'flank',snd:'bite',n:'Scorpion doré',s:'scorp',row:0,hp:38,pm:5,init:13,dmg:[9,12],poison:[4,2],h:.75,xp:22},
- anubis:{ai:'range',snd:'poison',n:'Sentinelle antique',s:'anubis',row:0,hp:40,pm:3,init:10,dmg:[9,12],r:[1,4],los:1,fx:5,h:1.15,xp:24,imm:1,curse:1}};
+ anubis:{ai:'range',snd:'poison',n:'Sentinelle antique',s:'anubis',row:0,hp:40,pm:3,init:10,dmg:[9,12],r:[1,4],los:1,fx:5,h:1.15,xp:24,imm:1,curse:1},
+ // V4.64, région 9 (valeurs provisoires de Claude). Crapaud venimeux : poison 4 × 2 tours, ralentit (planche ChatGPT, tools/prep_r9.py). Le spectre est le Fantôme existant, en attendant sa planche.
+ toad:{ai:'tank',snd:'bite',n:'Crapaud venimeux',s:'toad',row:0,hp:50,pm:3,init:9,dmg:[10,13],armor:.1,poison:[4,2],slow:1,h:.8,xp:28}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
 const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB',KR='knightR',KN='knightN',GO='golem',GB='goblin',GH='ghost',SK='skel';
@@ -176,6 +178,15 @@ export const R8={id:'sables',map:2,n:'Temple des sables',x:78,y:63,th:[8],lvl:26
   {lvl:29,en:[MU,MU,SC,AN,AN],lava:T(5)},{lvl:29,en:[SC,AN,SC],lava:T(4),goal:'survive'},{lvl:30,en:[MU,AN,AN,SC,SC],lava:{n:5,trap:1,hot:1},goal:'chief'},
   {lvl:30,en:[SC,AN],lava:T(4),tip:'tomb'}]};
 ZONES.push(R8);
+// V4.64 : Marais des âmes, 10 missions (région 9, carte II), après le Pharaon. Niveaux 31 à 35. Crapauds venimeux (poison, ralentissement) et Fantômes (en attendant le spectre des marais).
+// Boss provisoire : « Reine des marécages » = crapaud agrandi (planche `toadK`), remplacé à la réception des planches de la Reine. Ent corrompu : pas encore de planche.
+const TD='toad',GS='ghost';
+export const R9={id:'marais',map:2,n:'Marais des âmes',x:23,y:41,th:[9],lvl:31,pool:[TD,GS],boss:{k:TD,s:'toadK',n:'Reine des marécages',hp:3.8,dmg:1.3,h:1.5},
+ waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,TD]]}},
+ fights:[{lvl:31,en:[TD,TD,GS]},{lvl:31,en:[TD,GS,GS,GS]},{lvl:32,en:[TD,TD,TD,GS]},{lvl:32,en:[GS,GS,GS,TD,TD]},
+  {lvl:33,en:[TD,TD,GS,GS],goal:'chief'},{lvl:33,en:[TD,TD,TD,GS,GS]},{lvl:34,en:[GS,GS,GS,GS,TD,TD]},{lvl:34,en:[TD,GS,TD],goal:'survive'},
+  {lvl:35,en:[TD,TD,TD,GS,GS],goal:'chief'},{lvl:35,en:[TD,GS]}]};
+ZONES.push(R9);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
@@ -288,12 +299,14 @@ export const THEMES=[
  // V4.32 : dalles et obstacles R7-09 / R7-10 (Gemini)
  {n:'Forteresse de braise',ts:'sol_braise',g:[0,0,0,0,5,5,6,6,2,7,3],obs:[30,31,32,33,34,35],noflower:1,out:[30,31,32,30]},
  // V4.42 : sols et obstacles R8 (Gemini), une grande dalle par case. Sols : 0-1 grès, 2 hiéroglyphes, 3-4 sable, 5 pierre sombre, 6-7 dalles d'or
- {n:'Temple des sables',ts:'sol_sables',g:[0,0,1,1,3,3,4,2,5,6,7],obs:[36,37,38,39,40,41,42,43],noflower:1,out:[36,39,40,37,42]}];
+ {n:'Temple des sables',ts:'sol_sables',g:[0,0,1,1,3,3,4,2,5,6,7],obs:[36,37,38,39,40,41,42,43],noflower:1,out:[36,39,40,37,42]},
+ // V4.64 : sols et obstacles R9 (Gemini). Sols : 0-1 dalles vert-gris, 2 dalles moussues, 3 ardoise lisse, 4 boue sombre, 5 terre brune, 6 ardoise bleue, 7 planches. Obstacles 44 souche, 45 tronc, 46 éboulis, 47 rocher, 48 muret, 49 racines, 50 statue, 51 arche
+ {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41]);
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8];
-export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:['deco5',d-36],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72]; // V4.64 : 44 à 51 = obstacles R9 (deco6)
+export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles
