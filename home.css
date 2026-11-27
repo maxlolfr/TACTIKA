@@ -1,3 +1,8 @@
+/* V5.01 : polices hébergées (SIL OFL 1.1, voir assets/fonts/LICENSE-*.txt) : plus d'appel à Google Fonts, le jeu s'affiche pareil hors connexion */
+@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url(assets/fonts/nunito-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(assets/fonts/nunito-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:900;font-display:swap;src:url(assets/fonts/nunito-latin-900-normal.woff2) format('woff2')}
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/lilita-one-latin-400-normal.woff2) format('woff2')}
 /* Accueil V3.1 : village interactif. Les animations ne touchent qu'à transform et opacity (fluides sur mobile). */
 :root{--f-title:'Lilita One','Trebuchet MS',system-ui,sans-serif;--f-text:'Nunito',system-ui,sans-serif;--wood:#4a2a17;--wood2:#2b170c;--rim:#d9a54a;--cream:#fff1cf}
 #camp.ov{padding:0;overflow:hidden;overflow:clip;display:none;background:#23182f;font-family:var(--f-text)}
