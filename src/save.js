@@ -14,6 +14,7 @@ save.attr=cleanAttr(save.attr,save.lvl); // caractéristiques (V4.7c) : absentes
 if(!save.z)save.z={prairie:Math.min(4,save.fight-1)}; // reprise des anciennes sauvegardes
 migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migrateChateau(save);
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
+save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
 cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids validés, anciennes sauvegardes : rien à rejouer)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu
 export const prog=id=>save.z[id]||0,unlocked=zi=>!ZONES[zi].soon&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));

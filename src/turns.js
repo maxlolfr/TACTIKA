@@ -17,6 +17,7 @@ export function play(events){for(const e of events){switch(e.type){
   if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
  case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
  case 'status':say(e.t,e.text,e.color);if(e.snd)sfx(e.snd,.8);break;
+ case 'snd':sfx(e.n,e.v||.8);break;
  case 'shake':shake(e.ms);break;
  case 'beam':addBeam(e.from,e.cells);break;
  case 'wave':addWave(e.t);punch(e.t,.07,320);break;
@@ -55,7 +56,7 @@ async function ai(u,id){
 export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne boucle s'arrête si un autre combat commence
  while(G.phase==='fight'&&G.fid===id){
   const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;play(iceTick(S));const burn=lavaTick(S);if(burn.length){play(burn);await wait(700);if(G.fid!==id||end())return}hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
-  beginTurn(u);keepInView(u.x,u.y);hooks.renderTL();hooks.render();
+  beginTurn(u);if(u.shieldBroke){delete u.shieldBroke;sfx('frost_shield_break',.9)}keepInView(u.x,u.y);hooks.renderTL();hooks.render();
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison||u.burn){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}

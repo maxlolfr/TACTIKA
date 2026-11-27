@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES,addOrion} from '../src/data.js';
 import {talentFx,cleanSp,SPECS,tiersOf} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell,iceTick} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,lavaTick,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell,iceTick} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -1667,4 +1667,12 @@ test('V4.82 narration : fichiers vo_ présents, FR et EN, une réplique par fich
  const fs=await import('node:fs'),m=await import('../src/story.js');
  assert.equal(m.VO.size,48);
  for(const n of m.VO){assert.ok(fs.existsSync(new URL('../assets/audio/voix/'+n+'.mp3',import.meta.url)),n);const[,id,i,lg]=n.match(/^vo_(.+)_(\d+)_(fr|en)$/);assert.ok(m.SC[id]&&m.SC[id][+i-1],'réplique inconnue '+n);assert.ok(m.VO.has('vo_'+id+'_'+i+'_'+(lg==='fr'?'en':'fr')),'version manquante '+n)}
+});
+test('V4.83 bruitages : tous les sons déclarés sont déclenchés quelque part, zones de sol avec leur son', async()=>{
+ const fs=await import('node:fs'),au=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),SN=[...au.match(/SNDS=\[([^\]]*)\]/)[1].matchAll(/'([^']+)'/g)].map(m=>m[1]),src=['rules','turns','ui','home','story','render','data'].map(f=>fs.readFileSync(new URL('../src/'+f+'.js',import.meta.url),'utf8')).join('\n');
+ const dyn=new Set(['combo_2','combo_3','village_ambience']); // combo_ + n, ambiance chargée par son nom
+ for(const n of SN)if(!dyn.has(n))assert.ok(src.includes("'"+n+"'"),'son jamais déclenché : '+n);
+ for(const [k,n] of [['trap','sands_trap'],['cold','frost_crack'],['toxic','poison'],[null,'ember_eruption']]){
+  const s=arena();unit(s,'h',3,3);s.lava={n:2,next:[{x:5,y:5}]};if(k)s.lava[k]=1;
+  const ev=lavaTick(s);assert.ok(ev.some(e=>e.type==='snd'&&e.n===n),n)}
 });
