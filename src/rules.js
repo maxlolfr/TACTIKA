@@ -286,7 +286,7 @@ export function zoneCenter(s,u,sp,t,from=u){let best=null,bs=-1e9;
  for(const c of zoneCells(s,t,sp.zone)){if(!okTarget(s,u,sp,c,from))continue;const n=zoneCells(s,c,sp.zone).filter(p=>{const o=occ(s,p.x,p.y);return o&&o.team!==u.team}).length,sc=n*10-man(c,t);if(sc>bs){bs=sc;best=c}}
  return best&&{x:best.x,y:best.y}}
 // Renvoie un événement, ou null si la cible est déjà morte.
-export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);
+export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);let ward=0;if(t.ward){ward=Math.min(t.ward.hp,amt);t.ward.hp-=ward;amt-=ward;if(t.ward.hp<=0)delete t.ward;if(!amt){return{type:'status',t,text:`Bouclier −${ward}`,color:'#9fd8ff'}}}
  let saved=false;if(t.lastStand&&amt>=t.hp){amt=t.hp-1;t.lastStand=0;saved=true} // Dernier rempart : une fois par combat
  if(t.team==='h'&&(src==='quake'||src==='beam'))s.sigHit=1; // V4.5f : attaque signature subie
  t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else{t.wasKO=1;if(t.trap?.glyph)delete t.trap}}
@@ -322,10 +322,10 @@ export function applySpell(s,u,sp,c){
   if(!t)continue;
   if(sp.dmg&&t.dodge&&t.team!==u.team&&rng()<t.dodge){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
-  if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:`−${n} PM`,color:'#c9a0ff'})}
+  if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:n>2?'Enraciné':`−${n} PM`,color:'#c9a0ff'})}
   if(sp.curse&&!t.dead&&t.team!==u.team){t.curse=2;ev.push({type:'status',t,text:'Maudit : soins −50 %',color:'#d6b14a'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
@@ -334,6 +334,8 @@ export function applySpell(s,u,sp,c){
   if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}
   if(sp.taunt){let n=0;for(const m of s.units)if(m.team!==u.team&&!m.dead&&man(m,u)<=sp.taunt){m.taunt=u.id;n++}ev.push({type:'status',t,text:n?`Provocation (${n})`:'Personne à portée',color:'#ff7a5a'})}
   if(sp.counter){t.counter=sp.counter;ev.push({type:'status',t,text:'Contre-attaque prête',color:'#ffd65a'})}
+  if(sp.ward){t.ward={hp:Math.round(t.max*sp.ward[0]),turns:sp.ward[1]};ev.push({type:'status',t,text:`Bouclier ${t.ward.hp}`,color:'#9fd8ff'})}
+  if(sp.cleanse){const had=['poison','burn','slow','curse','weak','sunder'].filter(k=>t[k]);for(const k of had)delete t[k];if(had.length)ev.push({type:'status',t,text:'Purifié',color:'#bfffc8'})}
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
   if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
@@ -372,7 +374,7 @@ export const slowFor=(sp,t)=>sp.slow>1&&!t.boss?sp.slow:1;
 export const slowedPM=u=>u.slow?Math.max(u.slow>1?1:0,u.maxPM-u.slow):u.maxPM;
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;delete u.counter;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.counter;if(u.ward&&--u.ward.turns<=0)delete u.ward;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
@@ -516,5 +518,5 @@ const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o
 // case où le héros relevé réapparaît : la sienne si libre, sinon une voisine libre
 function reviveSpot(s,h){if(!occ(s,h.x,h.y))return{x:h.x,y:h.y};for(const[dx,dy]of DIRS){const x=h.x+dx,y=h.y+dy;if(passable(s,x,y)&&!occ(s,x,y))return{x,y}}return null}
 function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
- h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.counter;delete h.buff;delete h.carry;h.shield=0;
+ h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.counter;delete h.ward;delete h.sunder;delete h.buff;delete h.carry;h.shield=0;
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}
