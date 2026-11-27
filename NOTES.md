@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.75 (27/11 nuit) : quêtes Q37 à Q40, objets signature (design proposé par Claude, à valider par Max/ChatGPT)
+- **Objets signature** (7, indices 79 à 85 de `ITEMS`, `src:'quest'`, épiques, icônes réutilisées, aucun nouvel art) : ni boutique ni butin (`lootPool` et `shopStock` les excluent), uniquement en récompense. Q37 Lame de l'honneur (Kael, arme, dégâts +4) ; Q38 Sceptre de la voix claire (Aelis, arme, soin +3) ; Q39 Arc (Fenn), Lames (Nyra), Épée (Lyria) du serment commun (dégâts +4) et Orbe du serment commun (bijou, dégâts +3, partagé par les six : Orion n'a pas d'objet exclusif, règle de V4.5x) ; Q40 Médaille du village (accessoire, PV +8, les six).
+- **Quêtes** : Q37 Honneur retrouvé (z 5, après le Château, élite chevalier sombre), Q38 Voix intérieure (z 9, après le Marais, élite spectre des marais), Q39 Six destins, un seul serment (z 10, après la Citadelle, Lyria recrutée, objectif chef, 4 objets d'un coup), Q40 Un village pour demain (z 11, après le Sanctuaire : nouveau champ `after`, objectif survie). Champ `sig` = objets garantis (affichés sur l'écran de victoire). Pas de palier de village codé : la quête Q40 est un combat de survie, la « célébration » reste à écrire.
+- 159 tests OK (nouveau test V4.75 ; les comptages d'objets et de quêtes passent à 79 + 7 et 40). Essai navigateur 844×390 des quatre quêtes sans erreur ni 404.
+
 ## V4.74 (27/11 nuit) : quête Q36 « Dernière lumière » (région 12)
 - `Q36` (z 11, niveau 47, objectif survie, objet garanti) : ouverte après les Terres du Givre (même règle que Q31 à Q35). Aucune règle nouvelle. 158 tests OK ; essai navigateur 844×390 sans erreur.
 - **Reste** : Q37 Honneur retrouvé (signature Kael), Q38 Voix intérieure (signature Aelis), Q39 Six destins (signatures), Q40 Un village pour demain : elles demandent des objets « signature », des conditions d'arcs de compagnons et des paliers de village, donc de nouvelles règles et une spécification (ChatGPT/Max). Non commencées.
