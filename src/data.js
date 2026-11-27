@@ -52,8 +52,8 @@ export const ZONES=[
  {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar',TX],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}},
   // V4.9 pilote : 10 étapes, niveaux 1 à 3, gelées et sangliers (le 1er monstre est le chef si goal='chief'). Chiffres de départ, à régler après les tests de Max
   waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,'boar']]}},
-  fights:[{lvl:1,en:[SL,SL,SL]},{lvl:1,en:[SL,SL,BO]},{lvl:1,en:[SL,SL,SL,SL]},{lvl:2,en:[SL,BO,BO]},{lvl:2,en:[BO,SL,TX],goal:'chief',tip:'tox'},
-   {lvl:2,en:[TX,SL,BO,BO]},{lvl:2,en:[SL,SL,TX,TX,BO]},{lvl:2,en:[SL,TX,BO],goal:'survive'},{lvl:3,en:[BO,BO,TX,SL,TX]},{lvl:3,en:[TX,SL,BO],tip:'king'}]},
+  fights:[{lvl:1,en:[SL,SL,SL]},{lvl:1,en:[SL,SL,BO]},{lvl:1,en:[SL,SL,SL,SL]},{lvl:2,en:[SL,BO,BO]},{lvl:2,en:[BO,SL,TX,BO],goal:'chief',tip:'tox'},
+   {lvl:2,en:[TX,SL,BO,BO]},{lvl:2,en:[SL,SL,TX,TX,BO]},{lvl:2,en:[SL,TX,BO],goal:'survive'},{lvl:3,en:[BO,BO,TX,SL,TX]},{lvl:3,en:[TX,SL,BO,TX],tip:'king'}]},
  {id:'bois',n:'Bois sombre',x:33,y:50,th:[1],lvl:4,pool:['bat','wolf','shroom'],boss:{k:'wolf',s:'wolfK',n:'Loup alpha',hp:2.6,dmg:1.4,h:1.45,bs:'howl',summon:{k:'wolf',n:2,hp:28,pm:5,dmg:[6,9],sn:'Loup de meute',snd:'bite'}},
   // V4.14 (lot 4, liste ChatGPT) : 10 étapes, niveaux 4 à 6. Survie à renforts (V4.5a) déplacée en 8e étape.
   waves:{7:{turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,'wolf'],[5,2]]}},
@@ -61,8 +61,8 @@ export const ZONES=[
    {lvl:5,en:[WO,SH,BA,SH]},{lvl:5,en:[SH,SH,SH,WO,WO]},{lvl:6,en:[WO,SH,BA],goal:'survive'},{lvl:6,en:[WO,WO,SH,SH,BA,BA]},{lvl:6,en:[WO,SH,BA]}]},
  {id:'plage',n:'Côte dorée',x:76,y:53,th:[3],lvl:7,pool:['crab','gull','slime','shroom'],elite:{7:'knightB'},boss:{k:'crab',s:'crabK',n:'Crabe royal',hp:2.8,dmg:1.4,h:1.7,bs:'shell'},
   // V4.15 (lot 5, liste ChatGPT) : 10 étapes, niveaux 7 à 9. Étape 8 = survie (pas de protection de zone), élite de renfort : Chevalier bleu.
-  fights:[{lvl:7,en:[CR,CR,SL],tip:'armor'},{lvl:7,en:[CR,GU,GU]},{lvl:7,en:[CR,CR,GU]},{lvl:8,en:[GU,GU,GU,SL]},{lvl:8,en:[KB,CR,GU],goal:'chief'},
-   {lvl:8,en:[CR,CR,CR,GU]},{lvl:8,en:[KB,CR,GU,SL]},{lvl:9,en:[CR,GU,SL],goal:'survive'},{lvl:9,en:[CR,CR,KB,GU]},{lvl:9,en:[CR,GU,SL]}]},
+  fights:[{lvl:7,en:[CR,CR,SL],tip:'armor'},{lvl:7,en:[CR,GU,GU]},{lvl:7,en:[CR,CR,GU]},{lvl:8,en:[GU,GU,GU,SL]},{lvl:8,en:[KB,CR,GU,CR],goal:'chief'},
+   {lvl:8,en:[CR,CR,CR,GU]},{lvl:8,en:[KB,CR,GU,SL]},{lvl:9,en:[CR,GU,SL],goal:'survive'},{lvl:9,en:[CR,CR,KB,GU]},{lvl:9,en:[CR,GU,SL,CR]}]},
  {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{7:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'},
   // V4.16 (lot 6, liste ChatGPT) : 10 étapes, niveaux 10 à 12. Étape 8 = survie, élite de renfort : Chevalier rouge.
   fights:[{lvl:10,en:[GO,GU,GU]},{lvl:10,en:[GO,WO,WO]},{lvl:10,en:[KB,GO,WO]},{lvl:11,en:[GO,GO,GU]},{lvl:11,en:[KR,GO,WO],goal:'chief'},
