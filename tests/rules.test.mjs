@@ -2,7 +2,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {SP,HER,MON,ZONES,ITEMS,THEMES,addOrion} from '../src/data.js';
-import {talentFx,cleanSp,SPECS} from '../src/talents.js';
+import {talentFx,cleanSp,SPECS,tiersOf} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
  hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell,iceTick} from '../src/rules.js';
 
@@ -278,7 +278,7 @@ test('talents : rien avant le niveau 3, sauvegarde validée', () => {
  const s=team(['berserk','eclaireur','druide'],2),[k,f,a]=s.units;
  assert.equal(k.dmgMul,1);assert.equal(f.maxPM,3);assert.deepEqual(a.S.venom.poison,SP.venom.poison);
  assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null]);
- assert.equal(SPECS.flat().length,9);
+ assert.equal(SPECS.flat().length,12);
 });
 test('talents Kael : Fureur ×1,15, Robustesse PV ×1,15, Onde de choc 3 cases', () => {
  const s=team(['berserk',null,null]),k=s.units[0],t=unit(s,'m',5,5,{hp:99,max:99});k.dmgB=0;k.mult=1;s.rng=()=>.5;
@@ -1088,4 +1088,40 @@ test('tempête : rayon 2, 50 % autour, alliés épargnés, une fois par combat',
   assert.equal(zoneCells(s, c, 2).length, 13);
   for (let k = 0; k < 20; k++) beginTurn(o);
   assert.ok(o.cd[SP.storm.n] > 0);
+});
+
+// V4.38 : talents d'Orion (ces tests viennent après addOrion)
+const orion = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [null, null, null, voie] }, 3).tal.sp;
+test('talents d’Orion : 5 paliers aux niveaux 3, 7, 11, 25 et 40, une seule voie', () => {
+  assert.deepEqual([2, 3, 7, 11, 24, 25, 40].map(l => tiersOf(l, 3)), [0, 1, 2, 3, 3, 4, 5]);
+  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 0)), [0, 3, 3], 'les autres héros gardent 3 paliers');
+  assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null], 'ancienne sauvegarde à 3 entrées');
+  assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null]);
+  assert.deepEqual(orion(50, null), {});
+  assert.equal(orion(50, 'pyro').frost, undefined);
+});
+test('talents d’Orion : valeurs cumulées par palier', () => {
+  assert.deepEqual(orion(24, 'pyro').flame.burn, [4, 2]);
+  const p = orion(40, 'pyro');
+  assert.deepEqual([p.flame.burn, p.flame.r, p.flame.k, p.fireball.side, p.fireball.k], [[4, 3], [1, 5], 1.1, .7, 1.1]);
+  assert.deepEqual(orion(11, 'cryo').icewall.wall, { turns: 2, hp: .48 });
+  const c = orion(40, 'cryo');
+  assert.deepEqual([c.frost.r, c.frost.k, c.frost.slow, c.icewall.wall], [[1, 5], 1.1, 2, { turns: 3, hp: .48 }]);
+  const a = orion(40, 'arcaniste');
+  assert.deepEqual([a.arcane.r, a.blink.r, a.weaken.weaken, a.glyph.k, a.storm.side], [[1, 6], [1, 4], [.2, 3], 1.1, .6]);
+  assert.equal(SP.frost.slow, 1, 'les sorts de base ne sont pas modifiés');
+});
+test('bonus de sort +10 % : aperçu et effet', () => {
+  const { s, o } = terrain(['frost']), m = foe(s, 4, 5);
+  const base = forecast(s, o, SP.frost, m).dmg, plus = forecast(s, o, { ...SP.frost, k: 1.1 }, m).dmg;
+  assert.deepEqual([base, plus], [[8, 11], [9, 12]]);
+});
+test('Gel profond : −2 PM, au moins 1 restant, boss à −1, jamais affaibli par un −1', () => {
+  const gel = { ...SP.frost, slow: 2 };
+  for (const [maxPM, boss, attendu] of [[4, 0, 2], [3, 0, 1], [2, 0, 1], [4, 1, 3]]) {
+    const { s, o } = terrain(['frost']), m = foe(s, 4, 5, { maxPM, pm: maxPM, boss });
+    applySpell(s, o, gel, m); applySpell(s, o, SP.frost, m);
+    beginTurn(m); assert.equal(m.pm, attendu, `${maxPM} PM, boss ${boss}`);
+    beginTurn(m); assert.equal(m.pm, maxPM);
+  }
 });

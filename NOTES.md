@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.38 (27/11) : talents d'Orion (aperçu)
+- 3 voies à 5 paliers (niveaux 3, 7, 11, 25, 40), valeurs pilotes de ChatGPT, non validées : Pyromancien, Cryomancien, Arcaniste. Choix à l'Académie, une seule voie. Les 3 autres héros gardent 3 paliers.
+- Lectures à confirmer : « bonus feu +10 % plafonné » = +10 % fixe sur les dégâts directs de Flamme et Boule de feu (pas la brûlure). « Givre −2 PM, plancher 1 » : boss à −1 ; un −1 reçu ensuite ne réduit pas le gel.
+- Paliers sans effet tant que le sort n'est pas appris (Glyphe au niveau 35 pour le palier 25, Tempête au 45 pour le palier 40) : l'Académie le dit.
+- Technique : champ de sort `k` (bonus de dégâts), `sp.slow` peut valoir 2, `cleanSp` suit le nombre de héros (3 en jeu normal).
+- Pas d'équilibrage mesuré.
+
 ## V4.37 (27/11) : les 10 sorts d'Orion et ses 6 sorts emportés (aperçu)
 - Sorts connus par niveau (`ORION.learn`) : 3 au départ, puis 5, 10, 15, 20, 25, 35, 45. 6 emportés au plus (`save.load`, choix sur la fiche : « Emporter » puis « Remplacer »). `?apercu=braise&tous` ouvre les 10 pour essayer.
 - Mur de glace : case `ice` bloquante (passage et vue), PV = 40 % des PV max d'Orion (**choix à confirmer**), disparaît au début du 2ᵉ tour de table suivant. Un monstre qui ne peut atteindre aucun héros frappe le mur collé à lui. Les renforts n'apparaissent pas dedans.
