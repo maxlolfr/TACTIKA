@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,SP5_LVL} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -114,7 +114,7 @@ export function resetAttr(save,i){if(save.attr)save.attr[i]=attrOf({},i)}
 export function heroStats(save,i){const h=HER[i],it=Object.values(gear(save,i)).filter(j=>j!=null),m=1+.1*(save.lvl-1);
  const sum=k=>it.reduce((a,j)=>a+itemVal(ITEMS[j],k,upLvl(save,j),rarOf(save,j)),0);const tal=talentFx(save,i),A=attrOf(save,i),bonus=f=>Object.keys(ATTR).reduce((s,k)=>s+(ATTR[k].who.includes(i)?(ATTR[k][f]||0)*attrEff(A[k]):0),0);
  const crit=tal.crit||.12,dodge=tal.dodge||0;
- return{hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
+ return{lvl:save.lvl,hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
   crit:Math.min(Math.max(CRIT_CAP,crit),crit+bonus('crit')),dodge:Math.min(Math.max(DODGE_CAP,dodge),dodge+bonus('dodge')),tal}}
 // ce que changerait l'objet j s'il était équipé : [[nom, avant, après]] pour les seules valeurs qui bougent (ne modifie rien)
 export function compare(save,j){const i=ITEMS[j].who,a=heroStats(save,i),b=heroStats({...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq,[i+':'+ITEMS[j].sl]:j}},i);
@@ -133,7 +133,7 @@ function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*
 // hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+ HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
@@ -166,18 +166,25 @@ export function losBlock(s,a,b,ign,lob){const n=Math.max(Math.abs(b.x-a.x),Math.
 export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
  if(d>sp.r[1])return{t:`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:`Trop près, portée min. ${sp.r[0]}`};
  if(sp.los&&d>1&&!los(s,from,c,u,sp.lob)){const b=losBlock(s,from,c,u,sp.lob);return{t:b?(b.u?`${b.u.n} bloque le tir`:sp.lob?'Un obstacle haut bloque le tir':'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
+ if(sp.charge&&o&&o.team!==u.team)return{t:'Aucun chemin libre jusqu’à une case voisine'};
  if(sp.t==='enemy')return{t:!o?'Personne ici':o.team===u.team?`${o.n} est un allié`:'Cible invalide'};
  if(sp.t==='ally')return{t:!o?'Personne ici':'Ce n’est pas un allié'};
  if(sp.t==='dead')return{t:'Aucun héros à relever ici'};if(sp.free)return{t:'Case occupée ou bloquée'};return okTarget(s,u,sp,c,from)?null:{t:'Cible invalide'}}
 export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u,sp.lob))return 0;const o=occ(s,c.x,c.y);
  if(sp.t==='self')return c.x===from.x&&c.y===from.y;if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
- if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return sp.t==='enemy'&&sp.dmg&&prismOn(s,cell(s,c.x,c.y))?1:0;return sp.t==='enemy'?o.team!==u.team:o.team===u.team}
+ if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return sp.t==='enemy'&&sp.dmg&&!sp.charge&&prismOn(s,cell(s,c.x,c.y))?1:0;return sp.t==='enemy'?o.team!==u.team&&(!sp.charge||!!chargeDest(s,u,sp,c,from)):o.team===u.team}
+// V4.11 Charge : case libre voisine de t la plus proche de `from`, en au plus portée max − 1 pas, sans traverser obstacle, eau ni unité.
+// Ne coûte aucun PM. {x,y,path:[[x,y],…]} ou null.
+export function chargeDest(s,u,sp,t,from=u){const st=K(from.x,from.y),dist=new Map([[st,0]]),prev=new Map(),q=[[from.x,from.y]],max=sp.r[1]-1;let end=null;
+ while(q.length){const[x,y]=q.shift(),d=dist.get(K(x,y));if(d>0&&man({x,y},t)===1){end=K(x,y);break}if(d>=max)continue;
+  for(const[dx,dy]of DIRS){const nx=x+dx,ny=y+dy,k=K(nx,ny);if(dist.has(k)||!passable(s,nx,ny))continue;const o=occ(s,nx,ny);if(o&&o!==u)continue;dist.set(k,d+1);prev.set(k,K(x,y));q.push([nx,ny])}}
+ if(!end)return null;const path=[];for(let k=end;k!==st;k=prev.get(k))path.unshift(k.split(',').map(Number));return{x:path.at(-1)[0],y:path.at(-1)[1],path}}
 export function selCells(s,u,sp){const out=[];for(const c of s.map.values()){const d=man(u,c);if(d<sp.r[0]||d>sp.r[1])continue;
  out.push({x:c.x,y:c.y,los:!sp.los||d<=1||los(s,u,c,u,sp.lob),ok:okTarget(s,u,sp,c)})}return out}
 
 // V4.1 : cible hors d'atteinte → meilleure case (dans les PM) d'où lancer le sort sur c, ou null.
 // Le moins de PM possible, puis une case amplifiée, puis la plus éloignée de la cible.
-export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,c,from)){if(u.pa<costOf(u,sp)||u.cd[sp.n]>0||ok(u))return null;let best=null,bs=null;
+export function approach(s,u,sp,c,rc=reach(s,u,u.pm),ok=(from)=>okTarget(s,u,sp,c,from)){if(sp.charge||u.pa<costOf(u,sp)||u.cd[sp.n]>0||ok(u))return null;let best=null,bs=null;
  for(const[k,cost]of rc.dist){if(!cost)continue;const[x,y]=k.split(',').map(Number),from={x,y};if(!ok(from))continue;
   const sc=cost*1000-(ampAt(s,from)>1?100:0)-man(from,c);if(!best||sc<bs){bs=sc;best={k,x,y,cost}}}
  return best}
@@ -249,9 +256,10 @@ export function applySpell(s,u,sp,c){
  if(sp.trap){u.trap={x:c.x,y:c.y,left:3};return[{type:'fx',x:c.x,y:c.y,i:3,w:.9,sh:'sico'},{type:'status',t:u,text:'Piège posé',color:'#ffa040'}]}
  if(sp.revive)return revive(s,u,c);
  if(sp.potion){if(!(s.pot>0))return[];s.pot--;const g=Math.min(Math.round(u.max*.4),u.max-u.hp);u.hp+=g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.3},{type:'heal',t:u,amt:g}]}
- const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c];
+ const ev=[],rng=s.rng,amp=ampAt(s,u),tg=sp.all?s.units.filter(o=>!o.dead&&o.team===u.team).map(o=>({x:o.x,y:o.y})):sp.zone||sp.splash?[c,...DIRS.map(d=>({x:c.x+d[0],y:c.y+d[1]}))]:[c];
+ if(sp.charge){const d=chargeDest(s,u,sp,c);if(!d)return[];u.x=u.gx=d.x;u.y=u.gy=d.y;face(u,c.x,c.y)} // amplificateur : case de départ
  for(const p of tg){const t=occ(s,p.x,p.y);
-  if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
+  if(sp.zone){ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:.9});if(!t||t.team===u.team)continue}else if(sp.splash&&p!==c&&(!t||t.team!==u.team))continue;else ev.push({type:'fx',x:p.x,y:p.y,i:sp.fx,w:sp.fx===7?1.4:1.3});
   if(!t)continue;
   if(sp.dmg&&t.dodge&&t.team!==u.team&&rng()<t.dodge){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}

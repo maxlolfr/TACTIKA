@@ -751,3 +751,44 @@ test('village : lumière selon l\'heure, ou choix du joueur', ()=>{
  assert.deepEqual([5,6,16,17,19,20,23].map(h=>skyOf(undefined,h)),['nuit','jour','jour','soir','soir','nuit','nuit']);
  assert.equal(skyOf('nuit',12),'nuit');assert.equal(skyOf('auto',12),'jour');assert.equal(skyOf('n’importe',12),'jour');
 });
+
+// ---------- V4.11 : trois sorts du niveau 5 ----------
+import {chargeDest} from '../src/rules.js';
+import {SP5_LVL} from '../src/data.js';
+const H5=(lvl)=>[0,1,2].map(i=>({hp:HER[i].hp,dmg:0,heal:0,mult:1,lvl}));
+test('V4.11 : Charge, Tir perforant, Soin collectif s’ouvrent au niveau 5', () => {
+ assert.deepEqual(HER.map(h=>h.sp5),['charge','pshot','mheal']);
+ for(const id of ['charge','pshot','mheal'])assert.ok(SP[id]);
+ assert.deepEqual([SP.charge.pa,SP.charge.cd,SP.charge.r,SP.charge.dmg],[4,2,[2,3],[8,11]]);
+ assert.deepEqual([SP.pshot.pa,SP.pshot.cd,SP.pshot.r,SP.pshot.dmg,SP.pshot.pierce],[4,2,[2,6],[11,14],1]);
+ assert.deepEqual([SP.mheal.pa,SP.mheal.cd,SP.mheal.r,SP.mheal.heal],[5,3,[0,3],[7,9]]);
+ for(const[l,has]of[[SP5_LVL-1,false],[SP5_LVL,true]]){const s=newBattle(()=>.5),g=genMap(s,5,0);mkUnits(s,FIGHT,g.hs,g.es,H5(l));
+  const hs=s.units.filter(u=>u.team==='h');assert.deepEqual(hs.map(u=>u.sp.includes(HER[u.hi].sp5)),[has,has,has])}
+ const sv={lvl:5,xp:0,items:[],sp:[null,null,null]};assert.equal(heroStats(sv,0).lvl,5);
+});
+test('V4.11 : Charge avance sans PM jusqu’à une case voisine et frappe', () => {
+ const s=arena(),k=unit(s,'h',0,0),m=unit(s,'m',3,0,{hp:40,max:40});
+ assert.ok(okTarget(s,k,SP.charge,m));assert.deepEqual(chargeDest(s,k,SP.charge,m),{x:2,y:0,path:[[1,0],[2,0]]});
+ payCost(k,SP.charge,m);applySpell(s,k,SP.charge,{x:3,y:0});
+ assert.deepEqual([k.x,k.y,k.pm,k.pa,k.cd.Charge],[2,0,3,2,2]);assert.ok(m.hp<40&&m.hp>=40-11);
+ const near=unit(s,'m',2,1);assert.ok(!okTarget(s,k,SP.charge,near),'au contact : portée min. 2');
+});
+test('V4.11 : Charge ne traverse ni unité ni obstacle, ni avance automatique', () => {
+ const s=arena(),k=unit(s,'h',0,0),m=unit(s,'m',2,0);unit(s,'m',1,0); // le seul chemin court passe par (1,0)
+ s.map.get(K(1,1)).block=1;
+ assert.equal(chargeDest(s,k,SP.charge,m),null);assert.ok(!okTarget(s,k,SP.charge,m));
+ const far=unit(s,'m',6,0);assert.equal(approach(s,k,SP.charge,far),null);
+ const before=JSON.stringify([k.x,k.y]);assert.deepEqual(applySpell(s,k,SP.charge,m),[]);assert.equal(JSON.stringify([k.x,k.y]),before);
+});
+test('V4.11 : Tir perforant ignore toute l’armure, une seule cible', () => {
+ const s=arena(),f=unit(s,'h',0,0,{crit:0}),a=unit(s,'m',4,0,{hp:80,max:80,armor:.25}),b=unit(s,'m',4,4,{hp:80,max:80});
+ const fa=forecast(s,f,SP.pshot,a),fb=forecast(s,f,SP.pshot,b);assert.deepEqual(fa.dmg,fb.dmg);assert.deepEqual(fa.dmg,[11,14]);
+ const nb=unit(s,'m',5,0,{hp:80,max:80});applySpell(s,f,SP.pshot,{x:4,y:0});assert.equal(nb.hp,80);assert.ok(a.hp<80);
+});
+test('V4.11 : Soin collectif soigne la cible et les alliés collés, sans résurrection, sans Aura', () => {
+ const s=arena(),ae=unit(s,'h',0,0,{buff:{pct:.3,turns:2}}),t=unit(s,'h',2,0,{hp:20}),adj=unit(s,'h',3,0,{hp:20}),far=unit(s,'h',6,6,{hp:20}),
+  ko=unit(s,'h',2,1,{hp:0,dead:true}),foe=unit(s,'m',1,0,{hp:20});
+ assert.ok(okTarget(s,ae,SP.mheal,t));assert.ok(okTarget(s,ae,SP.mheal,ae),'portée 0 : sur soi');
+ applySpell(s,ae,SP.mheal,{x:2,y:0});
+ assert.deepEqual([t.hp,adj.hp,far.hp,ko.hp,ko.dead,foe.hp],[28,28,20,0,true,20]); // 7–9 → 8 avec rng 0,5 ; Aura ignorée
+});

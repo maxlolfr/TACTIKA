@@ -1,8 +1,8 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen,SLOTS} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn} from './rules.js';
+import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL} from './data.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -13,7 +13,7 @@ import {renderHome} from './home.js';
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
  const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
-const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['sico',12],revive:['sico',14],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6]};
+const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['sico',12],revive:['sico',14],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],charge:['ico',2],pshot:['spells',3],mheal:['spells',13]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
 const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
 const GOALS={survive:`<b>⏳ Objectif : survivre ${SURVIVE} tours</b><br>Garde au moins un héros debout jusqu’à la fin du ${SURVIVE}ᵉ tour. Tu n’as pas besoin de vaincre tous les monstres (le faire gagne aussi).`,
@@ -87,7 +87,7 @@ const same=(a,b)=>a&&b&&a.x===b.x&&a.y===b.y;
 const foeOf=(u,sp,o)=>o&&o!==u&&(sp.t==='ally'?o.team===u.team:(sp.t==='enemy'||sp.t==='cell'&&!sp.free)&&o.team!==u.team);
 // ce que viserait un appui sur la case c
 function examine(u,sp,c){const S=G.s,o=occ(S,c.x,c.y),E={tap:{x:c.x,y:c.y},x:c.x,y:c.y};
- if(G.sel.cells.some(s=>s.ok&&same(s,c)))return E;
+ if(G.sel.cells.some(s=>s.ok&&same(s,c))){if(!sp.charge)return E;const d=chargeDest(S,u,sp,c);return{...E,chg:{x:d.x,y:d.y,path:d.path,cost:d.path.length,foes:[],sp,chg:1}}}
  if(sp.zone&&foeOf(u,sp,o)){const z=zoneCenter(S,u,sp,o);if(z)return{...E,...z,indirect:1}}
  if(foeOf(u,sp,o)){const via=sp.zone?from=>!!zoneCenter(S,u,sp,o,from):undefined,ap=approach(S,u,sp,c,G.reachC,via);
   if(ap){const z=sp.zone&&zoneCenter(S,u,sp,o,ap);return{...E,...(z||{}),why:whyNot(S,u,sp,c)?.t,at:whyNot(S,u,sp,c)?.at,ap:{...ap,path:pathTo(u,ap.k,G.reachC.prev),sp,foes:[o]}}}}
@@ -124,10 +124,11 @@ function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.cla
  const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[];
  L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?'prisme':'case visée'}</strong>`);
  if(E.bad)L.push(`✗ ${E.bad}`);
- else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
+ else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.chg?`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`:E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
   if(sp.zone){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
    for(const o of hit){const f=forecast(S,u,sp,o,from);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
    L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · la Volée épargne tes héros`:'Aucun ennemi dans la zone')}
+  else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit)L.push(`${o.n} : <b>+${rg(forecast(S,u,sp,o,from).heal)} PV</b>`);L.push('Cible et alliés collés à elle · pas de résurrection')}
   else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
   // prisme déclenché : effet à part, qui touche aussi les héros
   const pc=sp.dmg&&(sp.zone?zoneCells(S,E):[E]).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
@@ -269,7 +270,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
    <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('coin',.5,1.3),d*1000+200));
-  const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
+  const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon('items',ITEMS[it].ic,48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${effet(ITEMS[it],rarOf(save,it))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);

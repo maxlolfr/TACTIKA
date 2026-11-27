@@ -14,12 +14,12 @@ const avg=a=>(a.reduce((x,y)=>x+y,0)/a.length)||0;
 
 // Valeur d'un sort sur la case c (0 = inutile).
 function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
- if(sp.heal){if(!t)return 0;const miss=t.max-t.hp;return t.hp<t.max*.55?Math.min(miss,15)*1.5:0}
+ if(sp.heal){if(!t)return 0;let v=0;for(const p of sp.splash?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c]){const a=occ(s,p.x,p.y);if(a&&a.team===u.team&&a.hp<a.max*.55)v+=Math.min(a.max-a.hp,sp.heal[1])*1.5}return v}
  if(sp.buff)return t&&t.hi===0&&!t.buff&&alive(s,'m').length>1?8:0;
  if(sp.shield)return alive(s,'m').filter(m=>man(m,u)<=2).length>=2?7:0;
  if(sp.pmBonus)return 0;
  const tg=sp.zone?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c];let v=0;
- for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)}
+ for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)}
  return v}
 // Meilleure action : {p (case d'où lancer), sp, c, v}.
 function best(s,u){const rc=reach(s,u,u.pm);let b=null;

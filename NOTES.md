@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.11 (27/11/2026) : trois sorts du niveau 5 (lot 2, spec ChatGPT)
+- `HER[].sp5` ouvert à `SP5_LVL`=5 (heroStats donne `lvl`, mkUnits l'ajoute). Kael **Charge** (4 PA, recharge 2, portée 2-3, 8-11) : `chargeDest` = case libre voisine la plus proche en ≤ 2 pas, sans traverser obstacle, eau ni unité ; aucun PM ; jamais d'avance automatique (`approach` renvoie null) ; aperçu du trajet ; amplificateur pris sur la case de départ.
+- Fenn **Tir perforant** (4 PA, recharge 2, portée 2-6, 11-14, `pierce:1` = 100 % de l'armure ignorée, une cible, en cloche comme Tir). Distinct du talent Flèche perforante (Tir, 50 %).
+- Aelis **Soin collectif** (5 PA, recharge 3, portée 0-3, 7-9 à la cible et aux alliés collés, `splash`) : pas de résurrection, Aura sans effet (elle ne touche que les dégâts). Talent « Lumière bienfaitrice », cristal et équipement de soin s'appliquent.
+- 95 tests. Simulateur pilote (loup, monts3, golem, 5 graines, 45 + 45 combats) : léger gain, rien d'excessif.
+
 ## V4.10 (27/11/2026) : village vivant (lot 1 de la direction ChatGPT)
 - Chat, chien, 2 poules, mésange (posée et en vol), fermier, villageoise, fontaine, banc, bannière, charrette, lanterne, trophée (après une région terminée). `PLACES` dans home.js, images par `tools/prep_vie.py`.
 - Poses immobiles et petits gestes (CSS) ; pas de marche. Affichage seul, aucune règle ni récompense.

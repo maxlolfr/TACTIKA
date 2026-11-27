@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.10';
+export const VERSION='4.11';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -272,7 +272,7 @@ function heros(P){
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',visit(A.armes),'sm'));R.append(tl);
  {const n=ptsLeft(save,hero),a=attrOf(save,hero),tr=el('div','v-card v-row');tr.append(icon('spells',0,42),el('div',null,`<b>${n?`${n} point${n>1?'s':''} à répartir`:'Caractéristiques'}</b><small>${Object.keys(ATTR).filter(k=>ATTR[k].who.includes(hero)).map(k=>ATTR[k].n+' '+a[k]).join(' · ')}</small>`),wood('Entraînement',()=>{draft={};show('entrainement','heros')},'sm'));R.append(tr)}
  R.append(el('h4',null,'Sorts'));
- for(const id of[...h.sp,...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},row=el('div','v-row');row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}</small>`));R.append(row)}
+ for(const id of[...h.sp,...(h.sp5?[h.sp5]:[]),...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},lock=id===h.sp5&&save.lvl<5,row=el('div','v-row'+(lock?' v-lock':''));row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}${S.cd?` · recharge ${S.cd} tours`:''}${lock?' · <b>s’ouvre au niveau 5</b>':''}</small>`));R.append(row)}
 }
 // V4.7b : filtres par héros et par emplacement ; en filtrant, seuls les objets correspondants restent
 function inventaire(P){
