@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.22 (27/11) : 41 équipements (63 objets au total)
+- eq23 à eq63 selon la table du studio (`TABLE-EQUIPEMENTS-42.md`), lancés sur demande de Max sans attendre l'arbitrage ChatGPT : les 5 points restent aux valeurs proposées (réglables ensuite). Bouclier de bois (armures case 4) écarté.
+- Planche `equip` : 53 icônes à 160 px, 9 colonnes ; étoiles Gemini et restes de gant / ceinture effacés (`tools/prep_equip.py`).
+- Correctif : la fiche d'un objet partagé n'est plus écrasée par ses boutons.
+- Simulateur : 45 combats (Château 5, 8, 10 ; profils anc, cat, opti) : 45 victoires ; catalogue contre 10 anciens objets : +3 à +7 points de PV restants. Les épiques (niveau 16 à 19) ne sont pas dans les profils anc et cat (niveau 14-15).
+
 ## V4.21 (27/11) : musique du Bois sombre
 Nouvelle musique de 90 s `darkwood` pour les combats ordinaires du Bois (la Prairie garde `forest`).
 
