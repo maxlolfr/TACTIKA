@@ -5,11 +5,11 @@ import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D} f
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
-import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
+import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
 import {setSon,sonBtns,sfx,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.31';
+export const VERSION='4.32';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -120,7 +120,7 @@ function place1(Q,W){const[hw,hh]=Q.hero;W.b.style.cssText=`left:${(W.x-hw/2)/Q.
 function paint(W,walk){let s,k,ref,flip=W.flip;
  if(walk){const w=walkFrames(HER[W.i].k,walk.back);s=w[0];k=w[1][Math.floor(W.t/.16)%4];ref=AT[s][w[1][0]][3];flip=walk.left}
  else{[s,k]=heroFrame(HER[W.i].k);ref=AT[s][k][3]}
- const key=s+k+flip;if(key===W.key)return;W.key=key;W.b.classList.toggle('walk',!!walk);W.g.clearRect(0,0,260,316);drawF(W.g,s,k,130,300,284/ref,flip)}
+ const key=s+k+flip;if(key===W.key)return;W.key=key;W.b.classList.toggle('walk',!!walk);W.b.classList.toggle('glide',!!walk&&isVet());W.g.clearRect(0,0,260,316);drawF(W.g,s,k,130,300,284/ref,flip)}
 // avance un héros de dt secondes ; vitesse proportionnelle à sa taille dans la peinture
 function step(Q,W,dt){
  if(W.wait>0){W.wait-=dt;return}
