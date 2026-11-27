@@ -137,6 +137,11 @@ export const MON={
  yeti:{ai:'tank',snd:'smash',n:'Yéti',s:'yeti',row:0,hp:82,pm:2,init:8,dmg:[14,18],armor:.2,h:1.3,xp:40},
  frostel:{ai:'tank',snd:'smash',n:'Élémentaire de givre',s:'frostel',row:0,hp:66,pm:2,init:9,dmg:[11,15],armor:.25,slow:1,h:1.2,xp:38},
  frostclone:{ai:'flank',snd:'slash',n:'Éclat de givre',s:'frostking',row:0,hp:18,pm:4,init:10,dmg:[6,8],slow:1,h:.55,xp:0},
+ // V4.73, région 12 (valeurs provisoires de Claude). Planches ChatGPT, tools/prep_r12.py. Éclat d'éther = clone fragile du Briseur (planche `etherbeast`).
+ etherbeast:{ai:'flank',snd:'bite',n:'Aberration d’Éther',s:'etherbeast',row:0,hp:64,pm:5,init:14,dmg:[14,18],h:.95,xp:44},
+ etherknight:{ai:'tank',snd:'slash',n:'Chevalier de l’Éther',s:'etherknight',row:0,hp:74,pm:3,init:12,dmg:[15,19],armor:.2,h:1.2,xp:46},
+ sanctguard:{ai:'tank',snd:'smash',n:'Gardien du Sanctuaire',s:'sanctguard',row:0,hp:96,pm:2,init:8,dmg:[16,20],armor:.3,h:1.3,xp:50},
+ etherclone:{ai:'flank',snd:'bite',n:'Éclat d’éther',s:'etherbeast',row:0,hp:20,pm:4,init:10,dmg:[7,9],h:.55,xp:0},
  queenling:{ai:'flank',snd:'bite',n:'Clone de la Reine',s:'queen',row:0,hp:14,pm:4,init:10,dmg:[5,7],poison:[2,2],h:.55,xp:0}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
@@ -215,6 +220,14 @@ export const R11={id:'givre',map:2,n:'Terres du Givre Éternel',x:20,y:18,th:[11
   {lvl:43,en:[YT,PW,PW,FE2],goal:'chief'},{lvl:43,en:[YT,YT,FE2,PW,PW]},{lvl:44,en:[PW,PW,PW,FE2,FE2,YT]},{lvl:44,en:[YT,FE2,PW],goal:'survive'},
   {lvl:45,en:[YT,YT,FE2,PW,PW],goal:'chief'},{lvl:45,en:[YT,FE2],tip:'frost'}]};
 ZONES.push(R11);
+// V4.73 : Sanctuaire de l'Éther, 10 missions (région 12, carte II), après les Terres du Givre. Niveaux 46 à 50. Aberrations, chevaliers de l'Éther, gardiens du Sanctuaire ; boss Briseur primordial (`bs:'breaker'`, planche `breaker`) : sous la moitié de ses PV, coups +25 %, équipe à armure brisée (+15 % de dégâts subis, 2 tours) et 2 éclats d'éther fragiles. Valeurs provisoires, pas d'équilibrage.
+const AB='etherbeast',EK='etherknight',SG='sanctguard';
+export const R12={id:'eter',map:2,n:'Sanctuaire de l’Éther',x:61,y:13,th:[12],lvl:46,pool:[AB,EK,SG],boss:{k:SG,s:'breaker',n:'Briseur primordial',hp:4.2,dmg:1.35,h:1.7,bs:'breaker',summon:{k:'etherclone',n:2,hp:20,pm:4,dmg:[7,9],sn:'Éclat d’éther',snd:'bite'}},
+ waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,AB]]}},
+ fights:[{lvl:46,en:[AB,AB,EK]},{lvl:46,en:[AB,AB,AB,SG]},{lvl:47,en:[EK,EK,AB]},{lvl:47,en:[SG,SG,AB,AB]},
+  {lvl:48,en:[EK,AB,AB,SG],goal:'chief'},{lvl:48,en:[EK,EK,SG,AB,AB]},{lvl:49,en:[AB,AB,AB,SG,SG,EK]},{lvl:49,en:[EK,SG,AB],goal:'survive'},
+  {lvl:50,en:[EK,EK,SG,AB,AB],goal:'chief'},{lvl:50,en:[EK,SG],tip:'breaker'}]};
+ZONES.push(R12);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
@@ -333,12 +346,14 @@ export const THEMES=[
  // V4.67 : sols et obstacles R10 (Gemini). Sols : 0 grès poreux, 1 marbre crème, 2 dalles blanches, 3 briques bicolores, 4 marbre gris, 5 sable doré, 6 dalles à filets d'or, 7 pavés. Obstacles 52 balustrade, 53 éboulis, 54 colonne couchée, 55 aile de pierre, 56 vasque, 57 piédestal, 58 colonne brisée, 59 statue d'ange
  {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]},
  // V4.70 : obstacles R11 (Gemini) 60 rocher enneigé, 61 tronc, 62 éboulis, 63 sarcophage, 64 traîneau, 65 muret, 66 pilier, 67 monolithe de glace. V4.69 : sols R11 (Gemini) : 0 et 5 neige, 1 et 6 dalles sombres poudrées, 2 dalles sur terre, 3 pavés sombres, 4 dalles grises, 7 pavés givrés
- {n:'Terres du Givre Éternel',ts:'sol_givre',g:[0,1,1,2,4,5,6,6,3,7,0,4],obs:[60,61,62,63,64,65,66,67],noflower:1,out:[60,62,65,66,67,61]}];
+ {n:'Terres du Givre Éternel',ts:'sol_givre',g:[0,1,1,2,4,5,6,6,3,7,0,4],obs:[60,61,62,63,64,65,66,67],noflower:1,out:[60,62,65,66,67,61]},
+ // V4.73 : sols R12 (Gemini, image 2003) : 0 ardoise unie, 1 grandes dalles, 2 mosaïque bordée de pierre claire, 3 ardoise à filet doré, 4 croisée de bandes brunes, 5 gris uni, 6 pavés bleutés, 7 gris usé. Obstacles (2004) 68 mur en ruine, 69 grille de bois, 70 escalier, 71 vasque, 72 coin de mur brisé, 73 balustrade, 74 obélisque sombre, 75 obélisque clair, 76 arche courbe
+ {n:'Sanctuaire de l’Éther',ts:'sol_eter',g:[0,0,1,1,3,5,5,6,6,7,2,4],obs:[68,69,70,71,72,73,74,75,76],noflower:1,out:[68,70,73,74,75,76]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55,60,61,62,63,64,65]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55,60,61,62,63,64,65,68,69,70,71,72,73]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72, 1.05,.9,.95,.8,.75,.7,.6,.62, 1,1.1,.95,.9,.95,1.05,.6,.62]; // V4.64 : 44 à 51 = obstacles R9 (deco6) ; V4.67 : 52 à 59 = obstacles R10 (deco7) ; V4.70 : 60 à 67 = obstacles R11 (deco8)
-export const DEC=d=>d>=60?['deco8',d-60]:d>=52?['deco7',d-52]:d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72, 1.05,.9,.95,.8,.75,.7,.6,.62, 1,1.1,.95,.9,.95,1.05,.6,.62, .95,1.1,.9,.8,.9,1.05,.6,.65,.9]; // V4.64 : 44 à 51 = obstacles R9 (deco6) ; V4.67 : 52 à 59 = obstacles R10 (deco7) ; V4.70 : 60 à 67 = obstacles R11 (deco8) ; V4.73 : 68 à 76 = obstacles R12 (deco9)
+export const DEC=d=>d>=68?['deco9',d-68]:d>=60?['deco8',d-60]:d>=52?['deco7',d-52]:d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles

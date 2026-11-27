@@ -9,7 +9,7 @@ export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','obsid','salam','fireel','ignaros','mummy','scorp','anubis','pharaoh','toad','ent','wraith','queen','cguard','griffin','astral','aetherion','polarwolf','yeti','frostel','frostking'];
+const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','obsid','salam','fireel','ignaros','mummy','scorp','anubis','pharaoh','toad','ent','wraith','queen','cguard','griffin','astral','aetherion','polarwolf','yeti','frostel','frostking','etherbeast','etherknight','sanctguard','breaker'];
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
@@ -93,7 +93,7 @@ export function layout(){
 // numéro de tuile du jeu (data.js) -> case de la planche tiles4
 const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
-const BGZ=['prairie','bois','plage','mont','chateau','cristal','braise','sables','marais','citadelle','givre'],BG={};
+const BGZ=['prairie','bois','plage','mont','chateau','cristal','braise','sables','marais','citadelle','givre','eter'],BG={};
 // chaque zone a deux peintures : <zone>.webp (verticale) et <zone>-l.webp (écran plus large que haut)
 function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=z+(W>H?'-l':'');
  if(!(id in BG)){for(const k in BG)delete BG[k]; // un seul fond en mémoire
