@@ -38,8 +38,8 @@ export const TEAM_SIZE=3,DEF_TEAM=[0,1,2];
 // en jeu normal il reste 3 héros. Ses objets : ceux que tous les héros peuvent porter. Talents : à venir.
 // learn : sorts appris par niveau (7 au recrutement au niveau 20) ; SLOTS_SP : nombre de sorts emportés au combat
 export const SLOTS_SP=6;
-export const ALL_SPELLS=typeof location!=='undefined'&&location.search.includes('tous'); // &tous (aperçu) : les 10 sorts tout de suite
-export const ORION={k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],learn:[['fireball',5],['icewall',10],['blink',15],['weaken',20],['nova',25],['glyph',35],['storm',45]]};
+export const ALL_SPELLS=typeof location!=='undefined'&&location.search.includes('apercu=braise')&&location.search.includes('tous'); // &tous (aperçu) : les 10 sorts tout de suite
+export const ORION={at:20,k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],learn:[['fireball',5],['icewall',10],['blink',15],['weaken',20],['nova',25],['glyph',35],['storm',45]]};
 export function addOrion(){if(HER.length>3)return 3;HER.push(ORION);ATTR.int.who.push(3);ATTR.vit.who.push(3);ATTR.agi.who.push(3);
  for(const o of ITEMS)if(Array.isArray(o.who)&&o.who.length===3)o.who=[0,1,2,3];return 3}
 // V4.5b : ai = rôle de combat. tank : s'interpose devant les monstres fragiles et frappe le héros qui les menace · range : garde ses distances, recule s'il est collé · flank : contourne pour viser Fenn ou Aelis
@@ -101,7 +101,7 @@ export const ZONES=[
    {lvl:17,en:[CG,CG,QS,QS,QS],cry:{p:1},tip:'prism'},{lvl:18,en:[CG,QS,QS,QS,QS],cry:{a:1,p:1},goal:'chief'},{lvl:18,en:[CG,CG,PB,PB,PB,PB],cry:{a:2}},
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},
    {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2},tip:'beam'}]}];
-// V4.29 : Forteresse de braise, 10 missions. HORS de ZONES : visible seulement avec ?apercu=braise (sauvegarde séparée, voir save.js).
+// V4.29 : Forteresse de braise, 10 missions (région 7, carte II). Ouverte à tous depuis la V4.40, après le Titan.
 // lava = {n : cases marquées à la fois, hot : chaque tour au lieu d'un tour sur deux}
 const FE='fireel',OB='obsid',SA='salam';
 export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl:21,pool:[FE,OB,SA],boss:{k:OB,s:'ignaros',n:'Ignaros',hp:3.4,dmg:1.3,h:1.5,bs:'forge'},
@@ -112,7 +112,7 @@ export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl
   {lvl:25,en:[SA,FE],lava:{n:4},tip:'forge'}]};
 export const LAVA_DMG=.12; // part des PV max perdue sur une case qui s'embrase
 export const PREVIEW=!!globalThis.location?.search.includes('apercu=braise');
-if(PREVIEW)ZONES.push(R7);
+ZONES.push(R7);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
@@ -229,4 +229,4 @@ export const PA_CARRY={per:2,max:2};
 export const PA_RULE={recast:1};
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
 
-if(PREVIEW)addOrion(); // en fin de fichier : HER, ATTR et ITEMS doivent exister
+addOrion(); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister

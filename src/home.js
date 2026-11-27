@@ -2,7 +2,7 @@
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,knownSpells,loadoutOf,swapSpell} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,swapSpell} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
@@ -10,7 +10,7 @@ import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.39';
+export const VERSION='4.40';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -72,8 +72,8 @@ let tab='camp',A=null,root=null;
 const today=()=>A.today();
 // ---------- notifications ----------
 const forgeNews=()=>save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c});
-const talentNews=()=>save.lvl>=3&&save.sp.includes(null);
-const trainNews=()=>HER.some((_,i)=>ptsLeft(save,i)>0);
+const talentNews=()=>save.lvl>=3&&roster(save).some(i=>!save.sp[i]);
+const trainNews=()=>roster(save).some(i=>ptsLeft(save,i)>0);
 const claimable=()=>contracts(save,today()).filter(t=>t.p>=t.n&&!t.c).length;
 const NEWS={forge:()=>forgeNews()?'↑':0,talents:()=>talentNews()?'!':0,taverne:()=>claimable()||(save.dd!==today()?'!':0),
  marchand:()=>0,caserne:()=>0,entrainement:()=>trainNews()?'+':0};
@@ -177,7 +177,7 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
  P.append(el('h3',null,'Commandement'));
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
  P.append(el('h4',null,'Équipe'));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
- const todo=[[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
+ const todo=[[recruited(save,3)&&!save.orionVu,'Orion a rejoint le camp : choisis ton équipe','recrue'],[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
  if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
  if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
  P.append(row('💎 <b>Cristal de l’Éther</b> : expéditions et revanches',()=>show('expe')));
@@ -191,7 +191,7 @@ function expe(P){
  ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions');
   for(let i=0;i<done;i++){const F=fightSpec(zi,i,0),b=wood(`${i+1}${F.goal==='survive'?' ⏳':F.goal==='chief'?' ♛':''} ${'★'.repeat((save.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
  if(!any)P.append(el('p','v-empty','Gagne ton premier combat pour ouvrir les expéditions.'))}
-function open(id){if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
+function open(id){if(id==='recrue'){save.orionVu=1;store();hero=3;show('heros');return}if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}
 
 // ---------- mise en place de la scène : les 6 bâtiments toujours visibles entre la barre du haut et le bas ----------
 export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'))return;
@@ -235,7 +235,7 @@ function preview(i,add){const A=attrOf(save,i);for(const k in add)A[k]+=add[k];c
  const a=heroStats(save,i),b=heroStats({...save,attr:all},i);
  return[['PV',a.hp,b.hp],['Puissance','×'+a.mult.toFixed(2),'×'+b.mult.toFixed(2)],['Critique',pct(a.crit),pct(b.crit)],['Esquive',pct(a.dodge),pct(b.dodge)]]}
 function entrainement(P){
- const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');const n=ptsLeft(save,i);b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));if(n)b.append(el('u','v-badge',n));b.onclick=()=>{if(i!==hero){draft={};resetArm=0}hero=i;show('entrainement')};tabs.append(b)});P.append(tabs);
+ const tabs=el('div','v-tabs');roster(save).forEach(i=>{const h=HER[i],b=el('button',i===hero?'on':'');const n=ptsLeft(save,i);b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));if(n)b.append(el('u','v-badge',n));b.onclick=()=>{if(i!==hero){draft={};resetArm=0}hero=i;show('entrainement')};tabs.append(b)});P.append(tabs);
  const used=Object.values(draft).reduce((a,b)=>a+b,0),free=ptsLeft(save,hero)-used,A=attrOf(save,hero),cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col'+(used?' v-dock-prev':''));cols.append(L,R);
  P.append(el('p','v-count',`${free} point${free>1?'s':''} à répartir · 1 point par niveau et par héros`),cols);
  for(const k in ATTR){const o=ATTR[k];if(!o.who.includes(hero))continue;const add=draft[k]||0,row=el('div','v-row v-attr');row.dataset.attr=k;
@@ -255,20 +255,20 @@ const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${ite
 export const diffHTML=(j,i)=>compare(save,j,i).map(([n,a,b])=>`<span class="v-diff ${b>a?'up':'down'}">${n} ${a} → ${b}</span>`).join(' ')||'<span class="v-diff">aucun changement</span>';
 // V4.12 : i = héros de la fiche (sinon, tous les héros compatibles : choix explicite du porteur d'un objet partagé)
 function itemRow(j,who,again,i){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),h=save.items.includes(j)?holder(save,j):-1,multi=whoOf(o).length>1,lock=lvOf(j)>save.lvl;
- const to=i==null?whoOf(o).filter(k=>k!==h):h===i?[]:[i];row.append(icon(...icOf(o),42));
+ const to=i==null?whoOf(o).filter(k=>k!==h&&recruited(save,k)):h===i?[]:[i];row.append(icon(...icOf(o),42));
  const st=(h>=0&&(i==null||h===i)?`<b class="v-diff up">équipé${multi?' sur '+HER[h].n:''}</b>`:h>=0?`porté par ${HER[h].n}`:'en réserve, sans effet')+
   (!to.length?'':lock?` · <b>niveau ${o.lv} requis</b>`:' · '+to.map(k=>(multi?HER[k].n+' : ':'si équipé : ')+diffHTML(j,k)).join(' · '));
  row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who||multi?whoName(o)+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.lv>1?` · niv. ${o.lv}`:''}<br>${st}</small>`));
  if(!lock&&to.length>1)row.classList.add('multi');
  if(!lock)for(const k of to)row.append(wood(multi&&i==null?'Équiper sur '+HER[k].n:'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
 function heros(P){
- const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n+(HER.length>TEAM_SIZE&&!teamOf(save).includes(i)?'<br><small>réserve</small>':'')));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
+ const tabs=el('div','v-tabs');roster(save).forEach(i=>{const h=HER[i],b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n+(roster(save).length>TEAM_SIZE&&!teamOf(save).includes(i)?'<br><small>réserve</small>':'')));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
  card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd><dt>Critique · esquive</dt><dd>${pct(st.crit)} · ${pct(st.dodge)}</dd></dl>`));L.append(card);
  // V4.33 : choix de l'équipe quand il y a plus de héros que de places
- if(HER.length>TEAM_SIZE){const team=teamOf(save),inside=team.includes(hero),box=el('div','v-card v-team');
+ if(roster(save).length>TEAM_SIZE){const team=teamOf(save),inside=team.includes(hero),box=el('div','v-card v-team');
   box.append(el('p','v-empty',inside?`<b>Dans l’équipe de combat</b> : ${team.map(i=>HER[i].n).join(', ')}.`:`<b>${h.n} est en réserve.</b> Le faire entrer à la place de :`));
   if(!inside){const a=el('div','v-actions');for(const i of team)a.append(wood(HER[i].n,()=>{swapTeam(save,i,hero);store();show('heros')},'sm'));box.append(a)}L.append(box)}
  L.append(el('h4',null,'Équipement'),el('p','v-empty','Touche un emplacement pour changer d’objet.'));
@@ -302,7 +302,7 @@ function inventaire(P){
  const chips=(label,list,cur,set)=>{const r=el('div','v-chips');r.setAttribute('role','group');r.setAttribute('aria-label',label);for(const[v,n]of list){const b=el('button',v===cur?'on':'',n);b.setAttribute('aria-pressed',v===cur);b.onclick=()=>{set(v);inv.sel=null;show('inventaire')};r.append(b)}return r};
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);
  P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),cols);
- L.append(chips('Filtrer par héros',[[-1,'Tous'],...HER.map((h,i)=>[i,h.n])],inv.who,v=>inv.who=v),chips('Filtrer par emplacement',[['','Tout'],...Object.entries(SLOTS)],inv.sl,v=>inv.sl=v));
+ L.append(chips('Filtrer par héros',[[-1,'Tous'],...roster(save).map(i=>[i,HER[i].n])],inv.who,v=>inv.who=v),chips('Filtrer par emplacement',[['','Tout'],...Object.entries(SLOTS)],inv.sl,v=>inv.sl=v));
  const ids=ITEMS.map((o,j)=>j).filter(j=>(inv.who<0||fits(j,inv.who))&&(!inv.sl||ITEMS[j].sl===inv.sl));
  if(!ids.includes(inv.sel))inv.sel=null;
  const grid=el('div','v-grid');for(const j of ids){const o=ITEMS[j],has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off')+(inv.sel===j?' sel':''));b.dataset.item=j;b.append(icon(...icOf(o),54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');

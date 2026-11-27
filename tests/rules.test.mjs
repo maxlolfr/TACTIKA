@@ -277,7 +277,7 @@ function team(sp,lvl=3){const s=arena(),hs=[{x:1,y:1},{x:2,y:1},{x:3,y:1}],es=[{
 test('talents : rien avant le niveau 3, sauvegarde validée', () => {
  const s=team(['berserk','eclaireur','druide'],2),[k,f,a]=s.units;
  assert.equal(k.dmgMul,1);assert.equal(f.maxPM,3);assert.deepEqual(a.S.venom.poison,SP.venom.poison);
- assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null]);
+ assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null,null]);
  assert.equal(SPECS.flat().length,12);
 });
 test('talents Kael : Fureur ×1,15, Robustesse PV ×1,15, Onde de choc 3 cases', () => {
@@ -701,7 +701,7 @@ test('V4.7c : nettoyage idempotent, points valables gardés, répartition abîm�
  const good=cleanAttr([{for:3,agi:2},{vit:5},{int:4}],6);
  assert.deepEqual(cleanAttr(good,6),good);assert.equal(good[0].for,3);assert.equal(good[2].int,4);
  for(const bad of[[{for:99}],[{for:-1}],[{for:1.5}],[{int:2}],[{vit:'3'}]])assert.deepEqual(cleanAttr(bad,6)[0],attrOf({},0),JSON.stringify(bad));
- for(const v of[null,'x',{},7])assert.equal(cleanAttr(v,6).length,3);
+ for(const v of[null,'x',{},7])assert.equal(cleanAttr(v,6).length,4);
 });
 test('V4.7c : dépense tout ou rien, 1 point par niveau et par héros, redistribution', () => {
  const s=sv(4);
@@ -758,7 +758,7 @@ import {chargeDest} from '../src/rules.js';
 import {SP5_LVL} from '../src/data.js';
 const H5=(lvl)=>[0,1,2].map(i=>({hp:HER[i].hp,dmg:0,heal:0,mult:1,lvl}));
 test('V4.11 : Charge, Tir perforant, Soin collectif s’ouvrent au niveau 5', () => {
- assert.deepEqual(HER.map(h=>h.sp5),['charge','pshot','mheal']);
+ assert.deepEqual(HER.slice(0,3).map(h=>h.sp5),['charge','pshot','mheal']);
  for(const id of ['charge','pshot','mheal'])assert.ok(SP[id]);
  assert.deepEqual([SP.charge.pa,SP.charge.cd,SP.charge.r,SP.charge.dmg],[4,2,[2,3],[8,11]]);
  assert.deepEqual([SP.pshot.pa,SP.pshot.cd,SP.pshot.r,SP.pshot.dmg,SP.pshot.pierce],[4,2,[2,6],[11,14],1]);
@@ -807,7 +807,7 @@ test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes v
  const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
   assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
- assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
+ assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
 });
 test('V4.12 : rareté fixe, valeurs du moteur, revente au prix final', () => {
  const sv=SV2({items:[J('eq18'),J('eq12')],rr:{[J('eq18')]:0,[J('eq12')]:2}}); // save.rr ignoré pour les nouveaux
@@ -840,7 +840,7 @@ test('V4.12 : objet partagé, un seul porteur, transfert, sans doublon de bonus'
 });
 test('V4.12 : sauvegarde d’avant le lot 3 : même équipement qu’avant', () => {
  const sv={lvl:5,items:[0,1,2,3,4,5,6,7,8,9],wpn:[0,null,null],eq:{'2:bijou':9},up:{1:1},rr:{2:2}};
- assert.deepEqual(gearAll(sv),[{arme:0,armure:3,bijou:null,accessoire:2},{arme:4,armure:5,bijou:null,accessoire:6},{arme:7,armure:null,bijou:9,accessoire:null}]);
+ assert.deepEqual(gearAll(sv),[{arme:0,armure:3,bijou:null,accessoire:2},{arme:4,armure:5,bijou:null,accessoire:6},{arme:7,armure:null,bijou:9,accessoire:null},{}]);
  assert.equal(rarOf(sv,2),2);
 });
 test('V4.12 : Soin collectif, lanceur adjacent, PV plafonnés, un seul coût', () => {
@@ -916,35 +916,36 @@ test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le bu
 
 test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans toucher aux zones',async()=>{
  const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
- assert.equal(ZONES.length,6);assert.equal(map2Open({z:{}}),false);
+ assert.equal(ZONES.length,7);assert.equal(map2Open({z:{}}),false);
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
  assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
 
-test('V4.29 : région 7 cachée, 10 missions, cases brûlantes annoncées un tour à l’avance',async()=>{
+test('V4.40 : région 7 ouverte, 10 missions, cases brûlantes annoncées un tour à l’avance',async()=>{
  const r=await import('../src/rules.js'),{ZONES,R7,MON,PREVIEW,HER}=await import('../src/data.js');
- assert.equal(PREVIEW,false);assert.equal(ZONES.length,6);assert.equal(R7.fights.length,10);
+ assert.equal(PREVIEW,false);assert.equal(ZONES[6],R7);assert.equal(R7.fights.length,10);
  for(const f of R7.fights){assert.ok(f.lava.n>0);for(const k of f.en)assert.ok(MON[k])}
- ZONES.push(R7);try{
+ {
   const F=r.fightSpec(6,0,1),s=r.newBattle(r.mulberry(3)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:21,items:[],up:{},sp:[null,null,null]},i)));
   assert.equal(s.lava.next.length,3);
   const h=s.units.find(u=>u.team==='h'),m=s.units.find(u=>u.k==='salam'),hp=h.hp,mhp=m.hp;
   s.lava.next=[{x:h.x,y:h.y},{x:m.x,y:m.y}];h.armor=.5;r.lavaTick(s);
   assert.equal(h.hp,hp-Math.round(h.max*.12));assert.equal(m.hp,mhp,'la salamandre ne brûle pas');
   assert.equal(s.lava.next.length,0,'un tour de calme');r.lavaTick(s);assert.equal(s.lava.next.length,3);
- }finally{ZONES.pop()}
+ }
 });
 
 // V4.33 : équipe de 3 parmi les héros disponibles, et Orion (ajouté en dernier : ces tests modifient HER)
 test('équipe : valeur absente ou abîmée = Kael, Fenn, Aelis ; sauvegarde non modifiée', () => {
-  for (const team of [undefined, null, [0, 1], [0, 0, 1], [0, 1, 3], [0, 1, 'a'], 'abc']) {
+  for (const team of [undefined, null, [0, 1], [0, 0, 1], [0, 1, 4], [0, 1, 'a'], 'abc']) {
     const s = { lvl: 21, items: [], team }, avant = JSON.stringify(s);
     assert.deepEqual(teamOf(s), [0, 1, 2]);
     assert.equal(JSON.stringify(s), avant);
   }
 });
 test('Orion : ajout unique, échange d’équipe, caractéristiques, objets partagés seulement', () => {
-  const avant = ITEMS.filter(o => whoOf(o).length === 3).length;
+  const avant = ITEMS.filter(o => whoOf(o).length === 4).length;
+  assert.ok(avant > 0);
   addOrion(); addOrion();
   assert.equal(HER.length, 4);
   assert.equal(ITEMS.filter(o => whoOf(o).length === 4).length, avant);
@@ -1226,4 +1227,15 @@ test('maîtrise : la téléportation garde ligne de vue et case libre', () => {
   assert.ok(!okTarget(s, o, sp, { x: 2, y: 11 }), '6 cases : trop loin');
   cell(s, 2, 7).block = 1;
   assert.ok(!okTarget(s, o, sp, { x: 2, y: 9 }), 'décor haut : pas de ligne de vue');
+});
+
+test('V4.40 : Orion recruté au niveau 20 seulement', async () => {
+  const { roster, teamOf, swapTeam } = await import('../src/rules.js');
+  const s = { lvl: 19, items: [], team: [0, 1, 3] };
+  assert.deepEqual(roster(s), [0, 1, 2]);
+  assert.deepEqual(teamOf(s), [0, 1, 2]);
+  assert.equal(swapTeam(s, 2, 3), 0);
+  s.lvl = 20;
+  assert.deepEqual(roster(s), [0, 1, 2, 3]);
+  assert.deepEqual(teamOf(s), [0, 1, 3]);
 });

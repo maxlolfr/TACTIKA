@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -189,7 +189,7 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
  F.insertAdjacentHTML('beforeend',`<h1>La Forge</h1><div class="sub">Chaque niveau renforce le bonus de l’objet (+50 %). 3 niveaux au maximum.</div>`);
  const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);F.append(top);
  const owner=j=>{const h=holder(save,j);return h>=0?h:whoOf(ITEMS[j])[0]}; // objet partagé : rangé chez son porteur
- HER.forEach((h,i)=>{const own=save.items.filter(j=>owner(j)===i),all=ITEMS.filter(o=>whoOf(o).includes(i)).length;
+ roster(save).forEach(i=>{const h=HER[i],own=save.items.filter(j=>owner(j)===i),all=ITEMS.filter(o=>whoOf(o).includes(i)).length;
   F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${own.length}/${all} objets</small></h3>`);
   if(!own.length)F.insertAdjacentHTML('beforeend','<div class="sub">Aucun objet pour l’instant : gagne des combats pour en trouver.</div>');
   for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon(...icOf(o),44));
@@ -204,9 +204,9 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
 // niveau auquel Orion apprendra le sort que ce talent améliore, s'il ne le connaît pas encore (sinon 0)
 const waits=(i,m)=>Math.max(0,...Object.keys(m?.sp||{}).map(id=>(HER[i].learn||[]).find(([s,l])=>s===id&&!knownSpells(save,i).includes(id))?.[1]||0));
 let armH=-1;
-function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=Math.max(0,HER.findIndex((_,i)=>SPECS[i]&&!specOf(save,i)));A.classList.add('on');A.innerHTML='';
+function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=roster(save).find(i=>!specOf(save,i))??0;A.classList.add('on');A.innerHTML='';
  A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`);
- const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
+ const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
  HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon(...x.ic,56));
@@ -282,7 +282,7 @@ function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${t
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
 function secondMap(L){
  MAP2.forEach((z,i)=>{const zi=ZONES.findIndex(q=>q.map===2&&q.n===z.n),b=document.createElement('button');b.className='zone'+(zi<0?' lock':'')+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
-  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>${zi<0?'Bientôt':`Aperçu · ${prog(ZONES[zi].id)}/${zlen(ZONES[zi])}`}</small>`;b.onclick=()=>zi>=0?zoneSheet(zi):mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
+  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>${zi<0?'Bientôt':!unlocked(zi)?'🔒 Bats le boss précédent':`${prog(ZONES[zi].id)}/${zlen(ZONES[zi])}`}</small>`;b.onclick=()=>zi>=0?unlocked(zi)&&zoneSheet(zi):mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
@@ -295,7 +295,7 @@ function worldMap(){
   b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
  const cz=L.querySelectorAll('.zone:not(.lock)');cz[cz.length-1]?.scrollIntoView({block:'center'});
 }
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}${z.map?'<br>Aperçu interne : musique provisoire, équilibrage non validé':''}</small>`;
+function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
