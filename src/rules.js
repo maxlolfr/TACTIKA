@@ -474,7 +474,7 @@ export function aiStep(s,u){
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
-export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique'],astral:[3,0,'Téléportation'],frost:[3,0,'Bouclier de glace']}; // V4.76 : astral (Aetherion) et frost (Roi du Givre) ont aussi une phase sous 50 % PV
+export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique'],astral:[3,0,'Téléportation'],frost:[3,0,'Bouclier de glace'],breaker:[4,0,'Défense brisée']}; // V4.76 : astral (Aetherion) et frost (Roi du Givre) ont aussi une phase sous 50 % PV
 // V4.5e : après l'appel de la meute (sous 50 % PV), le Loup alpha hurle tous les 2 tours
 const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:u.bs==='astral'&&u.raged?[2,0,BOSS_P.astral[2]]:BOSS_P[u.bs]; // V4.76 : Aetherion se téléporte tous les 2 tours après sa phase
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
@@ -484,13 +484,14 @@ export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  if(u.bs==='swamp'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Spores toxiques !',color:'#9be15d',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.poison={d:4,turns:2};ev.push({type:'status',t:h,text:'Empoisonné',color:'#9be15d'})}if(!s.lava){s.lava={toxic:1,n:3,hot:1,next:[]};lavaMark(s)}}return ev}
  if(u.bs==='astral'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;u.maxPM++;u.pm++;ev.push({type:'status',t:u,text:'Jugement céleste !',color:'#ffd65a',snd:'boss_phase'},{type:'shake',ms:350})}}
  if(u.bs==='frost'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Gel éternel !',color:'#8fd8ff',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.slow=Math.max(h.slow||0,1);ev.push({type:'status',t:h,text:'−1 PM',color:'#8fd8ff'})}if(!s.lava){s.lava={cold:1,n:3,hot:1,next:[]};lavaMark(s)}}}
- if(u.bs==='breaker'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.25;ev.push({type:'status',t:u,text:'Fracas primordial !',color:'#ffb347',snd:'boss_phase'},{type:'shake',ms:450});for(const h of s.units)if(h.team==='h'&&!h.dead){h.sunder={pct:.15,turns:2};ev.push({type:'status',t:h,text:'Armure brisée +15 %',color:'#ff9a5a'})}}return ev}
+ if(u.bs==='breaker'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.25;ev.push({type:'status',t:u,text:'Fracas primordial !',color:'#ffb347',snd:'boss_phase'},{type:'shake',ms:450});for(const h of s.units)if(h.team==='h'&&!h.dead){h.sunder={pct:.15,turns:2};ev.push({type:'status',t:h,text:'Armure brisée +15 %',color:'#ff9a5a'})}}}
  if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
  if(u.bs==='astral'){const H=s.units.filter(h=>h.team!==u.team&&!h.dead).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0],cs=H?DIRS.map(d=>cell(s,H.x+d[0],H.y+d[1])).filter(c=>c&&passable(s,c.x,c.y)&&!occ(s,c.x,c.y)):[];
   if(cs.length){const c=pick(s.rng,cs),from={x:u.x,y:u.y};u.x=u.gx=c.x;u.y=u.gy=c.y;ev.push({type:'status',t:u,text:'Téléportation !',color:'#ffd65a',snd:'boss_phase'},{type:'fx',x:from.x,y:from.y,i:5,w:1.3},{type:'fx',x:c.x,y:c.y,i:5,w:1.5},...stepOn(s,u))}}
+ if(u.bs==='breaker'){u.sunder={pct:.3,turns:2};u.pm=0;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Défense brisée ! +30 %',color:'#ffd65a',snd:'guard'})} // V4.78 : fenêtre de vulnérabilité, il s'agenouille (ne bouge pas) et subit +30 % pendant le tour des héros
  if(u.bs==='frost'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:3,w:1.5,sh:'fxi'},{type:'status',t:u,text:'Bouclier de glace',color:'#9fd8ff',snd:'guard'})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
   if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6*weakK(u));
