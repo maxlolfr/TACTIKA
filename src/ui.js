@@ -1,19 +1,19 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
-import {$} from './util.js';
+import {$,HUD2} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
-import {sfx,voice,VOICES,music,duck,setSon,sonBtns} from './audio.js';
+import {sfx,voice,VOICES,music,duck,setSon,sonBtns,setVol,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
 
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
- const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
+ const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,HUD2?60:34,u.team==='h'?.62:0);if(HUD2&&u.boss){const g=c.getContext('2d'),z=c.width;g.font=`${Math.round(z*.3)}px serif`;g.textAlign='center';g.lineWidth=z*.05;g.strokeStyle='#1a0f2a';g.fillStyle='#e9cf94';g.strokeText('♛',z*.5,z*.3);g.fillText('♛',z*.5,z*.3)}c.className=u.team+(u.boss?' b':'')+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
 const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],arcane:['sico',14],flame:['sico',2],frost:['sico',3],fireball:['spells',8],icewall:['spells',9],blink:['spells',11],weaken:['sico',7],nova:['sico',13],glyph:['spells',13],storm:['spells',10],charge:['spells5',0],pshot:['spells5',1],venomarrow:['spells5',5],blastarrow:['spells5',6],icearrow:['spells5',7],dodge:['spells5',8],rain:['spells5',9],whirl:['spells5',10],sunder:['spells5',11],taunt:['spells5',12],counter:['spells5',13],rage:['spells5',14],judge:['spells5',15],ward:['spells5',16],cleanse:['spells5',17],roots:['spells5',18],moon:['spells5',19],bless:['spells5',20],mheal:['spells5',2]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
 const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
@@ -351,3 +351,23 @@ document.addEventListener('click',e=>{if(e.target.closest('button'))sfx('click',
 // redimensionnement et rotation : iOS met parfois à jour les dimensions après l'événement, on recalcule une 2e fois
 let rzT=0;const relayout=()=>{const f=()=>{if(G.phase!=='camp')layout()};f();clearTimeout(rzT);rzT=setTimeout(f,350)};
 addEventListener('resize',relayout);addEventListener('orientationchange',relayout);
+
+// V4.50 : aperçu HUD V2 — un seul haut-parleur en combat ; un toucher ouvre un petit panneau flottant (musique, voix, bruitages).
+// Mêmes réglages que le menu (landeVol / landeSon) : réglage immédiat, mémorisé, sans toucher au plateau.
+if(HUD2){
+ const SPK='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+ const b=document.createElement('button');b.id='hson';b.className='btn dark';b.innerHTML=SPK;b.setAttribute('aria-label','Volume');b.setAttribute('aria-expanded','false');
+ $('flee').before(b);
+ const P=document.createElement('div');P.id='hvol';P.setAttribute('role','dialog');P.setAttribute('aria-label','Volume');
+ const K={m:'Musique',v:'Voix',s:'Bruitages'};
+ P.innerHTML='<button class="hx" aria-label="Fermer">✕</button>'+Object.entries(K).map(([k,n])=>`<label><span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" data-k="${k}"><b></b></label>`).join('');
+ document.body.append(P);
+ const sync=()=>P.querySelectorAll('input').forEach(i=>{const k=i.dataset.k;i.value=AU.vol[k];i.nextElementSibling.textContent=AU.vol[k]+' %'});
+ P.querySelectorAll('input').forEach(i=>{const k=i.dataset.k;i.oninput=()=>{setVol(k,i.value);i.nextElementSibling.textContent=i.value+' %';
+  const o=k==='m'?'m':'s';if(+i.value>0&&!AU.on[o]){setSon(o);sonBtns()}};if(k==='s')i.onchange=()=>sfx('coin');if(k==='v')i.onchange=()=>voice('warrior','start',{force:true})});
+ const close=()=>{P.classList.remove('on');b.setAttribute('aria-expanded','false')};
+ b.onclick=e=>{e.stopPropagation();const r=b.getBoundingClientRect();P.style.top=(r.bottom+6)+'px';P.style.right=Math.max(6,innerWidth-r.right)+'px';sync();const on=P.classList.toggle('on');b.setAttribute('aria-expanded',on?'true':'false')};
+ P.querySelector('.hx').onclick=close;
+ document.addEventListener('pointerdown',e=>{if(P.classList.contains('on')&&!P.contains(e.target)&&e.target!==b&&!b.contains(e.target))close()},true);
+ addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+}
