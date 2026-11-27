@@ -1721,3 +1721,12 @@ test('V4.86 Chronique : 40 trophées, bestiaire, collection, records, sauvegarde
  // complétion
  const c=C.completion({z:{prairie:10},st:{prairie:Array(10).fill(3)},q:{Q01:1,Q02:1,Q03:1}},0);assert.equal(c.pct,100);
 });
+
+test('V4.87 carte I : 6 marqueurs sur la nouvelle image, bien séparés, rien d’autre de changé', async()=>{
+ const fs=await import('node:fs'),M1=ZONES.filter(z=>!z.map);assert.equal(M1.length,6);
+ for(const z of M1)assert.ok(z.x>=8&&z.x<=92&&z.y>=10&&z.y<=85,z.id);
+ for(const a of M1)for(const b of M1)if(a!==b)assert.ok(Math.hypot(a.x-b.x,(a.y-b.y)/1.5)>=12,a.id+'/'+b.id+' trop proches');
+ assert.ok(fs.existsSync(new URL('../assets/world1-l.webp',import.meta.url)));
+ assert.ok(fs.readFileSync(new URL('../index.html',import.meta.url),'utf8').includes('assets/world1-l.webp'));
+ assert.deepEqual(M1.map(z=>[z.id,z.lvl,z.boss.n]),[['prairie',1,'Roi Gelée'],['bois',4,'Loup alpha'],['plage',7,'Crabe royal'],['mont',10,'Golem ancien'],['chateau',13,'Chevalier noir'],['cristal',16,M1[5].boss.n]]);
+});
