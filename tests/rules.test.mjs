@@ -1395,3 +1395,14 @@ test('Nyra et Lyria en combat : équipe de 3 avec les deux recrues, bons sprites
   assert.deepEqual(H.map(u=>u.k),['rogue','paladin','warrior']);
   assert.ok(H[0].sp.includes('dagger')&&H[1].sp.includes('hammer')&&H[0].sp.length>=6);
 });
+
+// ---------- V4.55 quêtes ----------
+import {QUESTS} from '../src/quests.js';
+import {questOpen,questDone,questFight} from '../src/rules.js';
+test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
+ assert.equal(new Set(QUESTS.map(q=>q.id)).size,18);
+ const sv={lvl:50,z:{},items:[]};
+ assert.equal(QUESTS.filter(q=>questOpen(sv,q)).length,3);
+ for(const q of QUESTS){const F=questFight(q,sv);assert.equal(F.quest,q.id);assert.ok(ZONES[F.zi]);assert.equal(!!F.wave,q.g==='survive');assert.ok(q.t&&q.d&&q.c)}
+ assert.equal(questDone({q:{Q01:1}},QUESTS[0]),true);assert.equal(questDone({},QUESTS[0]),false);
+});

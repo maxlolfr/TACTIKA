@@ -42,7 +42,7 @@ export function genMap(s,seed,th,cry){
 
 // ---------- description d'un combat (carte, défi, simulateur) ----------
 // V4.5f : toute mission de survie a des vagues ; par défaut 6 tours, 3 + 1/2/1 élite/2, plafond 6, élite = élite de la zone (chevalier) ou son monstre le plus robuste, et pas d'élite au départ
-const defWave=(Z,i)=>({turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,Z.elite?.[i]||[...Z.pool].sort((a,b)=>MON[b].hp-MON[a].hp)[0]],[5,2]]});
+export const defWave=(Z,i)=>({turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,Z.elite?.[i]||[...Z.pool].sort((a,b)=>MON[b].hp-MON[a].hp)[0]],[5,2]]});
 export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
  const F={zi,i,lvl:f.lvl||Z.lvl+i,pool:Z.pool,boss:i===zlen(Z)-1?Z.boss:null,elite:Z.elite?.[i],en:f.en,cry:f.cry,tip:f.tip,
   lava:f.lava,goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]};
@@ -524,3 +524,9 @@ function reviveSpot(s,h){if(!occ(s,h.x,h.y))return{x:h.x,y:h.y};for(const[dx,dy]
 function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
  h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.counter;delete h.ward;delete h.sunder;delete h.buff;delete h.carry;h.shield=0;
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}
+
+// ---------- quêtes (V4.55) ----------
+export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.need==null||recruited(save,q.need));
+export const questDone=(save,q)=>!!(save.q&&save.q[q.id]);
+export function questFight(q,save){const Z=ZONES[q.z],F={zi:q.z,i:-1,quest:q.id,lvl:Z.lvl+q.l,pool:Z.pool,boss:null,elite:q.e,goal:q.g||null,seed:q.z*131+ +q.id.slice(1)*17,th:Z.th[+q.id.slice(1)%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined};
+ if(F.goal==='survive')F.wave=defWave(Z,+q.id.slice(1)%zlen(Z));return F}
