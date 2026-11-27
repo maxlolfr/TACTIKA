@@ -26,13 +26,13 @@ export const SP={
  arcane:{snd:'orion_arcane',n:'Projectile arcanique',sn:'Arcane',pa:3,r:[1,5],t:'enemy',los:1,dmg:[11,15],proj:1,orb:'#7fb8ff',fx:0,d:'Trait de magie à distance'},
  flame:{snd:'crystal_amp',n:'Flamme',pa:3,r:[1,4],t:'enemy',los:1,dmg:[9,12],burn:[3,2],proj:1,orb:'#ff8a20',fx:1,cd:2,d:'Dégâts + brûlure (3 par tour) pendant 2 tours'},
  frost:{snd:'orion_ice',n:'Givre',pa:3,r:[1,4],t:'enemy',los:1,dmg:[8,11],slow:1,proj:1,orb:'#9fe4ff',fx:2,cd:2,d:'Dégâts et −1 PM au prochain tour de la cible'},
- fireball:{snd:'orion_fire',n:'Boule de feu',pa:5,r:[2,5],t:'cell',los:1,zone:1,side:.6,dmg:[16,21],proj:1,orb:'#ff6a10',fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 autour. Épargne tes héros'},
+ fireball:{vx:'sig',snd:'orion_fire',n:'Boule de feu',pa:5,r:[2,5],t:'cell',los:1,zone:1,side:.6,dmg:[16,21],proj:1,orb:'#ff6a10',fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 autour. Épargne tes héros'},
  // V4.37 : les 6 autres sorts d'Orion. wall : {tours, part des PV max d'Orion} (PV non donnés par ChatGPT : choix à confirmer)
- icewall:{snd:'orion_wall',n:'Mur de glace',sn:'Mur',pa:4,r:[1,4],t:'cell',free:1,los:1,wall:{turns:2,hp:.4},fx:2,cd:4,d:'Obstacle de glace sur une case libre, 2 tours. Les ennemis bloqués peuvent le casser'},
+ icewall:{vx:'support',snd:'orion_wall',n:'Mur de glace',sn:'Mur',pa:4,r:[1,4],t:'cell',free:1,los:1,wall:{turns:2,hp:.4},fx:2,cd:4,d:'Obstacle de glace sur une case libre, 2 tours. Les ennemis bloqués peuvent le casser'},
  blink:{snd:'orion_blink',n:'Téléportation courte',sn:'Saut',pa:3,r:[1,3],t:'cell',free:1,los:1,lob:1,blink:1,fx:7,cd:3,d:'Orion saute sur une case libre en vue, sans dépenser de PM'},
  weaken:{snd:'poison',n:'Affaiblissement',sn:'Affaiblir',pa:3,r:[1,4],t:'enemy',los:1,weaken:[.2,2],fx:5,cd:3,d:'La cible inflige 20 % de dégâts en moins pendant 2 de ses tours (sans cumul)'},
  nova:{snd:'prism_burst',n:'Explosion',pa:4,r:[0,0],t:'self',nova:1,dmg:[13,17],push:1,fx:7,cd:3,shake:1,d:'Frappe les ennemis collés à Orion et les repousse d’une case'},
- glyph:{snd:'orion_glyph',n:'Glyphe',pa:4,r:[1,4],t:'cell',free:1,los:1,trap:1,glyph:1,dmg:[12,16],fx:1,cd:3,d:'Pose un glyphe sur une case libre : il explose sous le premier ennemi qui y entre. 3 tours, un seul à la fois'},
+ glyph:{vx:'support',snd:'orion_glyph',n:'Glyphe',pa:4,r:[1,4],t:'cell',free:1,los:1,trap:1,glyph:1,dmg:[12,16],fx:1,cd:3,d:'Pose un glyphe sur une case libre : il explose sous le premier ennemi qui y entre. 3 tours, un seul à la fois'},
  // V4.44 : les 5 autres sorts d'Aelis (valeurs provisoires de Claude, non équilibrées)
  ward:{vx:'support',snd:'guard',n:'Bouclier magique',sn:'Bouclier',pa:3,r:[0,4],t:'ally',ward:[.25,2],fx:7,cd:3,d:'Bouclier qui absorbe des dégâts à hauteur de 25 % des PV max de l’allié, 2 tours'},
  cleanse:{vx:'support',snd:'aelis_heal',n:'Purification',sn:'Purif.',pa:2,r:[0,4],t:'ally',heal:[6,8],cleanse:1,fx:4,cd:2,d:'Retire poison, brûlure, entrave, malédiction, affaiblissement et armure brisée ; petit soin'},
@@ -46,7 +46,7 @@ export const SP={
  counter:{vx:'support',snd:'guard',n:'Contre-attaque',sn:'Contre',pa:2,r:[0,0],t:'self',counter:.6,fx:7,cd:3,d:'Jusqu’à ton prochain tour, chaque ennemi qui frappe Kael au contact reçoit 60 % d’une Taillade'},
  rage:{vx:'support',snd:'buff',n:'Rage guerrière',sn:'Rage',pa:2,r:[0,0],t:'self',buff:.35,buffT:2,fx:7,cd:4,d:'+35 % de dégâts pendant 2 tours (ne se cumule pas avec Aura)'},
  judge:{vx:'sig',snd:'kael_charge',n:'Jugement du lion',sn:'Jugement',pa:6,r:[1,1],t:'enemy',dmg:[30,38],pierce:.5,push:1,fx:7,cd:99,shake:1,d:'Coup ultime : ignore la moitié de l’armure et repousse d’une case. 1 fois par combat'},
- storm:{snd:'orion_storm',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'},
+ storm:{vx:'sig',snd:'orion_storm',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'},
  // V4.53 : les 10 sorts de Nyra (assassin). Valeurs provisoires de Claude, non équilibrées
  dagger:{snd:'nyra_slash',n:'Dague',pa:2,r:[1,1],t:'enemy',dmg:[8,11],fx:0,d:'Coup de dague rapide au corps à corps'},
  backstab:{snd:'nyra_backstab',n:'Frappe de dos',sn:'Dos',pa:3,r:[1,1],t:'enemy',dmg:[11,15],flk:1.5,fx:7,d:'Dégâts ×1,5 si un autre héros touche la cible'},
