@@ -222,7 +222,7 @@ export const R11={id:'givre',map:2,n:'Terres du Givre Éternel',x:20,y:18,th:[11
 ZONES.push(R11);
 // V4.73 : Sanctuaire de l'Éther, 10 missions (région 12, carte II), après les Terres du Givre. Niveaux 46 à 50. Aberrations, chevaliers de l'Éther, gardiens du Sanctuaire ; boss Briseur primordial (`bs:'breaker'`, planche `breaker`) : sous la moitié de ses PV, coups +25 %, équipe à armure brisée (+15 % de dégâts subis, 2 tours) et 2 éclats d'éther fragiles. Valeurs provisoires, pas d'équilibrage.
 const AB='etherbeast',EK='etherknight',SG='sanctguard';
-export const R12={id:'eter',map:2,n:'Sanctuaire de l’Éther',x:61,y:13,th:[12],lvl:46,pool:[AB,EK,SG],boss:{k:SG,s:'breaker',n:'Briseur primordial',hp:4.2,dmg:1.35,h:1.7,bs:'breaker',summon:{k:'etherclone',n:2,hp:20,pm:4,dmg:[7,9],sn:'Éclat d’éther',snd:'bite'}},
+export const R12={id:'eter',map:2,n:'Sanctuaire de l’Éther',x:61,y:13,th:[12],lvl:46,pool:[AB,EK,SG],boss:{k:SG,s:'breaker',n:'Briseur primordial',hp:4.6,dmg:1.42,h:1.7,bs:'breaker',summon:{k:'etherclone',n:2,hp:20,pm:4,dmg:[7,9],sn:'Éclat d’éther',snd:'bite'}},
  waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,AB]]}},
  fights:[{lvl:46,en:[AB,AB,EK]},{lvl:46,en:[AB,AB,AB,SG]},{lvl:47,en:[EK,EK,AB]},{lvl:47,en:[SG,SG,AB,AB]},
   {lvl:48,en:[EK,AB,AB,SG],goal:'chief'},{lvl:48,en:[EK,EK,SG,AB,AB]},{lvl:49,en:[AB,AB,AB,SG,SG,EK]},{lvl:49,en:[EK,SG,AB],goal:'survive'},
