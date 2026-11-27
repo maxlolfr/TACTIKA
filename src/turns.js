@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty} from './rules.js';
+import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
 import {sfx} from './audio.js';
 
@@ -26,6 +26,7 @@ export async function cast(u,sp,c){const S=G.s; // l'état du combat en cours, m
  payCost(u,sp,c);keepInView(c.x,c.y);
  pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self'||sp.t==='dead'||sp.trap)?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);
  if(sp.proj){addProj(u,c);await wait(260);sfx('arrowhit',.8)}
+ else if(sp.charge){const d=chargeDest(S,u,sp,c);if(d){u.walk=1;let st=0;for(const[x,y]of d.path){const x0=u.gx,y0=u.gy;st++;await tween(110,t=>{u.gx=x0+(x-x0)*t;u.gy=y0+(y-y0)*t;u.wf=st*2+(t<.5?0:1)})}u.walk=0}}
  else if(sp.r[1]===1&&sp.t==='enemy'){const dx=(c.x-u.x)*.35,dy=(c.y-u.y)*.35;await tween(110,t=>{u.gx=u.x+dx*t;u.gy=u.y+dy*t});tween(160,t=>{u.gx=u.x+dx*(1-t);u.gy=u.y+dy*(1-t)})}
  else await wait(180);
  play(applySpell(S,u,sp,c));

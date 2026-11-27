@@ -11,11 +11,16 @@ export const SP={
  boots:{snd:'buff',n:'Bottes ailées',ic:14,pa:2,r:[0,0],t:'self',pmBonus:2,fx:7,cd:3,d:'+2 PM pour ce tour'},
  heal:{snd:'aelis_heal',n:'Soin',ic:5,pa:3,r:[0,4],t:'ally',heal:[13,17],fx:4,cd:1,d:'Soigne un allié (ou toi)'},
  venom:{snd:'poison',n:'Épine',ic:7,pa:3,r:[1,5],t:'enemy',los:1,dmg:[5,7],poison:[4,2],fx:5,d:'Dégâts + poison pendant 2 tours'},
+ // V4.11 (lot 2, spec ChatGPT) : un nouveau sort par héros au niveau 5 (HER[].sp5)
+ charge:{snd:'kael_charge',n:'Charge',pa:4,r:[2,3],t:'enemy',dmg:[8,11],fx:7,cd:2,charge:1,shake:1,d:'Fonce sur un ennemi à 2 ou 3 cases et le frappe : Kael s’arrête sur une case libre à côté, sans dépenser de PM ni traverser d’obstacle'},
+ pshot:{snd:'bow',n:'Tir perforant',pa:4,r:[2,6],t:'enemy',los:1,lob:1,dmg:[11,14],pierce:1,proj:1,fx:0,cd:2,d:'Flèche qui ignore toute l’armure, une seule cible'},
+ mheal:{snd:'aelis_heal',n:'Soin collectif',pa:5,r:[0,3],t:'ally',heal:[7,9],splash:1,fx:4,cd:3,d:'Soigne l’allié visé et les alliés collés à lui (pas de résurrection)'},
  aura:{snd:'buff',n:'Aura',ic:6,pa:3,r:[0,3],t:'ally',buff:.3,fx:7,cd:3,d:'+30 % de dégâts à un allié, 2 tours'}};
 export const HER=[
- {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard']},
- {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots']},
- {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura']}];
+ {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge'},
+ {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot'},
+ {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura'],sp5:'mheal'}];
+export const SP5_LVL=5;
 // V4.5b : ai = rôle de combat. tank : s'interpose devant les monstres fragiles et frappe le héros qui les menace · range : garde ses distances, recule s'il est collé · flank : contourne pour viser Fenn ou Aelis
 export const MON={
  slime:{snd:'slime',n:'Gelée',s:'slimeN',row:0,hp:24,pm:2,init:8,dmg:[5,8],h:.62,xp:8},

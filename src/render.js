@@ -220,10 +220,11 @@ export function draw(now){
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
  // cible examinée : empreinte de la zone (rouge, distincte des centres orange)
  const E=sel&&cur&&!busy&&phase==='fight'?G.ex:null,exU=E?occ(S,E.tap.x,E.tap.y):null;
+ if(E&&!E.bad&&sel.sp.splash)for(const p of zoneCells(S,E)){const o=occ(S,p.x,p.y);if(!o||o.team!==cur.team)continue;const[sx,sy]=scr(p.x,p.y);diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(90,220,110,.45)';ctx.fill();ctx.strokeStyle='#c8ffcf';ctx.lineWidth=2.5;ctx.stroke()}
  if(E&&!E.bad&&sel.sp.zone)for(const p of zoneCells(S,E)){const[sx,sy]=scr(p.x,p.y),mid=p.x===E.x&&p.y===E.y;diamond(ctx,sx,sy,.9);ctx.fillStyle='rgba(235,40,30,.55)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=mid?3.5:1.8;ctx.setLineDash(mid?[]:[6,4]);ctx.stroke();ctx.setLineDash([]);if(mid){diamond(ctx,sx,sy,.4);ctx.stroke()}}
  if(cur&&!cur.dead){const[sx,sy]=scr(cur.gx,cur.gy);ctx.save();ctx.globalAlpha=.6+.3*Math.sin(now/200);diamond(ctx,sx,sy,.8);ctx.strokeStyle='#ffd65a';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // aperçu de déplacement : trajet, case d'arrivée et coût
- const plan=!cur||busy||phase!=='fight'?null:sel?E&&E.ap||null:G.plan;
+ const plan=!cur||busy||phase!=='fight'?null:sel?E&&(E.chg||E.ap)||null:G.plan;
  if(plan){const pts=[[cur.gx,cur.gy],...plan.path].map(([x,y])=>scr(x,y)),[ex,ey]=pts[pts.length-1];ctx.save();ctx.lineCap=ctx.lineJoin='round';
   for(const[w,c]of[[7,'rgba(0,20,50,.7)'],[3.5,'#fff']]){ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.setLineDash([9,7]);ctx.lineDashOffset=-now/45;ctx.stroke()}
   ctx.setLineDash([]);diamond(ctx,ex,ey,.92);ctx.fillStyle='rgba(255,255,255,.28)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
@@ -264,7 +265,7 @@ export function draw(now){
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);
   for(const o of plan.foes){const[sx,sy]=scr(o.gx,o.gy),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.75+.25*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
-  const t=plan.sp?`${plan.cost} PM puis ${plan.sp.n}`:`${plan.cost} PM · ${plan.foes.length?'🎯 '+plan.foes.length:'aucune cible'}`;ctx.save();ctx.font=`800 ${Math.max(12,Math.round(TW*.2))}px system-ui`;ctx.textAlign='center';const w=ctx.measureText(t).width+16,by=ey+TH*.62,bx=Math.max(w/2+4,Math.min(W-w/2-4,ex));
+  const t=plan.chg?`Charge · ${plan.cost} case${plan.cost>1?'s':''}`:plan.sp?`${plan.cost} PM puis ${plan.sp.n}`:`${plan.cost} PM · ${plan.foes.length?'🎯 '+plan.foes.length:'aucune cible'}`;ctx.save();ctx.font=`800 ${Math.max(12,Math.round(TW*.2))}px system-ui`;ctx.textAlign='center';const w=ctx.measureText(t).width+16,by=ey+TH*.62,bx=Math.max(w/2+4,Math.min(W-w/2-4,ex));
   ctx.fillStyle='rgba(8,20,40,.92)';ctx.strokeStyle=plan.foes.length?'#ffa040':'#8aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(bx-w/2,by-11,w,22,8);ctx.fill();ctx.stroke();ctx.fillStyle='#fff';ctx.fillText(t,bx,by+5);ctx.restore()}
  // trajet de poussée prévu
  if(sel&&sel.sp.push&&cur&&!busy)for(const c of sel.cells){const o=c.ok&&occ(S,c.x,c.y);if(!o)continue;const p=pushPlan(S,cur,o,sel.sp.push),[ax,ay]=scr(o.x,o.y),[bx,by]=scr(p.to.x,p.to.y);
