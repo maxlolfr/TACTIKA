@@ -566,3 +566,8 @@ html.lowfx .tro-toast{animation:none!important}
 
 /* V5.03 : reflet doré qui balaie une fois les objets gagnés (coupé avec « Effets réduits ») */
 .loot.shine{position:relative;overflow:hidden}.loot.shine::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,230,160,.35) 50%,transparent 65%);transform:translateX(-120%);animation:lootshine 1.1s .35s ease-out forwards;pointer-events:none}@keyframes lootshine{to{transform:translateX(120%)}}.lowfx .loot.shine::after{display:none}
+
+/* V5.07 : paysage (Honor déplié, tablette, PC) : le menu du haut (♪ 🔊 ⚙ Fuir) se replie derrière un seul bouton ☰ ; la frise des tours garde toute la place */
+#tmenu{display:none}
+@media (orientation:landscape){#tmenu{display:flex;align-items:center;justify-content:center;flex:none;min-width:34px;padding:5px 8px!important;font-size:17px;line-height:1}
+ body:not(.tmenu) #top .son-m,body:not(.tmenu) #top .son-s,body:not(.tmenu) #hson,body:not(.tmenu) #flee{display:none!important}}
