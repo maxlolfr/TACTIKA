@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.39 (27/11) : maîtrise des sorts d'Orion (aperçu)
+- `src/mastery.js` : table `MASTERY` par sort (`[type, rang II, rang III]`), réutilisable pour les 6 héros ; seul Orion a des lignes. Spec : `docs/studio/tactika/mecaniques/V4.39-maitrise.md` (studio).
+- 1 point tous les 2 niveaux (24 au niveau 50), rang II = 2 points, rang III = 3 de plus. Bonus par rapport au rang I, sans cumul entre rangs. Coûts en PA, recharges et zones inchangés.
+- Cumul avec les talents **additif** sur la base du rang I (Givre mordant + rang III = +20 %, Mur 40 % → 60 % avec Glace épaisse). Appliqué une seule fois, dans `mkUnits`. Brûlure jamais touchée ; armure, bouclier et insensibilité au feu restent appliqués après.
+- Sorts pas encore appris : pas de point. Remise à zéro gratuite à l'Académie. Sauvegarde : champ facultatif `save.ms` nettoyé par `cleanMast` (idempotent).
+- Simulateur : le bot lance désormais le sort du héros (`u.S`, talents et maîtrise compris) au lieu du sort de base ; réglages `LVL=`, `ORSPEC=`, `MAST=non|deg|ctrl`. Les mesures antérieures ne comptaient pas les talents de sorts.
+
 ## V4.38 (27/11) : talents d'Orion (aperçu)
 - 3 voies à 5 paliers (niveaux 3, 7, 11, 25, 40), valeurs pilotes de ChatGPT, non validées : Pyromancien, Cryomancien, Arcaniste. Choix à l'Académie, une seule voie. Les 3 autres héros gardent 3 paliers.
 - Lectures à confirmer : « bonus feu +10 % plafonné » = +10 % fixe sur les dégâts directs de Flamme et Boule de feu (pas la brûlure). « Givre −2 PM, plancher 1 » : boss à −1 ; un −1 reçu ensuite ne réduit pas le gel.

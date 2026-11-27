@@ -8,8 +8,9 @@ import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
 import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
+import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.38';
+export const VERSION='4.39';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -290,7 +291,7 @@ function heros(P){
 let incoming=null;
 function learnList(R,h,tal){const i=hero,load=loadoutOf(save,i),known=knownSpells(save,i),rest=known.filter(id=>!load.includes(id)),later=h.learn.filter(([id])=>!known.includes(id));
  if(!rest.includes(incoming))incoming=null;
- const line=(id,note,btn,cls='')=>{const S={...A.SP[id],...tal.sp[id]},row=el('div','v-row v-spell'+cls);row.dataset.sp=id;row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts${S.k?' +10 %':''}`:''}${S.cd?S.cd>50?' · 1 fois par combat':` · recharge ${S.cd} tours`:''}${note||''}</small>`));if(btn)row.append(btn);R.append(row)};
+ const line=(id,note,btn,cls='')=>{const S=masteredFor(save,i,id,{...A.SP[id],...tal.sp[id]}),rk=rankOf(save,i,id),row=el('div','v-row v-spell'+cls);row.dataset.sp=id;row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts${S.k>1?` +${Math.round((S.k-1)*100)} %`:''}`:''}${rk>1?` · maîtrise rang ${rk>2?'III':'II'}`:''}${S.cd?S.cd>50?' · 1 fois par combat':` · recharge ${S.cd} tours`:''}${note||''}</small>`));if(btn)row.append(btn);R.append(row)};
  R.append(el('h4',null,`Sorts emportés · ${load.length}/${SLOTS_SP}`));
  if(incoming)R.append(el('p','v-empty',`<b>${A.SP[incoming].n}</b> : touche « Remplacer » sur le sort à laisser au camp.`));
  for(const id of load)line(id,'',incoming&&wood('Remplacer',()=>{swapSpell(save,i,id,incoming);incoming=null;store();show('heros')},'sm'));

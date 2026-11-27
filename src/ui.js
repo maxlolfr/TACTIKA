@@ -8,6 +8,7 @@ import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zo
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,VOICES,music,duck,setSon,sonBtns} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
+import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
 
 // ---------- panneau de combat ----------
@@ -211,8 +212,21 @@ function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.class
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon(...x.ic,56));
    c.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b> <small>${x.d}</small>`+x.t.map(([tn,td],k)=>{const lv=tiersFor(i)[k],ok=save.lvl>=lv,w=waits(i,x.t[k][2]);return`<p class="${ok?'':'off'}"><em>${!ok?'🔒 niv '+lv:on&&!w?'✓ actif':'niv '+lv}</em> <b>${tn}</b> : ${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</p>`}).join('')+'</div>');
    const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('buff',.7);armes()};c.append(b);row.append(c)}
-  A.append(row)});
+  A.append(row);if(hasMastery(i))mastBlock(A,i)});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
+// V4.39 : maîtrise des sorts (héros qui ont une table MASTERY : Orion pour l'instant)
+const RK=['','I','II','III'];
+function mastBlock(A,i){const h=HER[i],known=knownSpells(save,i),left=mastLeft(save,i),tot=mastPts(save.lvl),nx=nextPtLvl(save.lvl),ids=[...h.sp,...(h.learn||[]).map(([id])=>id)].filter(id=>MASTERY[id]);
+ const hd=document.createElement('h3');hd.className='fh';hd.innerHTML=`Maîtrise des sorts <small>${left} point${left>1?'s':''} libre${left>1?'s':''} sur ${tot}</small>`;A.append(hd);
+ A.insertAdjacentHTML('beforeend',`<div class="sub">1 point tous les 2 niveaux${save.lvl<50?` (prochain au niveau ${nx})`:''}. Rang II : 2 points, rang III : 3 de plus. Impossible de tout maîtriser : choisis. Réinitialisation gratuite.</div>`);
+ const L=document.createElement('div');L.className='mast';
+ for(const id of ids){const r=rankOf(save,i,id),ok=known.includes(id),lv=(h.learn||[]).find(([s])=>s===id)?.[1],c=document.createElement('div');c.className='mrow'+(ok?'':' off');c.dataset.sp=id;c.append(icon(...SPI[id],40));
+  const cost=r<3?MAST_COST[r+1]-MAST_COST[r]:0;
+  c.insertAdjacentHTML('beforeend',`<div><b>${SP[id].n}</b> <span class="rk">${[1,2,3].map(k=>k<=r?'◆':'◇').join('')} rang ${RK[r]}</span><small>${!ok?`🔒 sort appris au niveau ${lv}`:`Actuel : ${mastTxt(id,r)}${r<3?` · rang ${RK[r+1]} : <b>${mastTxt(id,r+1)}</b> (${cost} points)`:' · maîtrise complète'}`}</small></div>`);
+  if(ok&&r<3){const b=document.createElement('button');b.className='btn';b.textContent=`Rang ${RK[r+1]} · ${cost} pts`;b.disabled=!canRaise(save,i,id);b.onclick=()=>{if(raise(save,i,id)){store();sfx('buff',.7);armes()}};c.append(b)}
+  L.append(c)}
+ A.append(L);
+ if(mastSpent(save,i)){const z=document.createElement('button');z.className='btn dark';z.textContent='Réinitialiser la maîtrise (gratuit)';z.onclick=()=>{if(z.dataset.arm){resetMast(save,i);store();armes()}else{z.dataset.arm=1;z.textContent='Touche encore pour rendre les points'}};A.append(z)}}
 // ---------- marchand (V2.6a) ----------
 const effet=(o,r=0)=>{const k=o.dmg?'dmg':o.hp?'hp':'heal';return(r?RARE[r].n+' · ':'')+`+${itemVal(o,k,0,r)} ${STAT[k]}`};
 function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classList.add('on');S.innerHTML='';const sellTab=tab==='v';
