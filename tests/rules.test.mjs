@@ -744,3 +744,10 @@ test('Prairie : ancienne sauvegarde reprise une seule fois', ()=>{
  const b=migratePrairie({z:{prairie:2},st:{prairie:[3,2]}});assert.equal(b.z.prairie,2);assert.deepEqual(b.st.prairie,[3,2]);
  b.z.prairie=4;migratePrairie(b);assert.equal(b.z.prairie,4);
 });
+
+// ---------- V4.10 : lumière du village ----------
+import {skyOf} from '../src/rules.js';
+test('village : lumière selon l\'heure, ou choix du joueur', ()=>{
+ assert.deepEqual([5,6,16,17,19,20,23].map(h=>skyOf(undefined,h)),['nuit','jour','jour','soir','soir','nuit','nuit']);
+ assert.equal(skyOf('nuit',12),'nuit');assert.equal(skyOf('auto',12),'jour');assert.equal(skyOf('n’importe',12),'jour');
+});
