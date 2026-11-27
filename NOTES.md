@@ -2,6 +2,12 @@
 - **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
+## V5.05 — finition, lot 3 : prototype d'ambiance, Forteresse de braise (28/11/2026) — À VALIDER (Max + ChatGPT)
+- Uniquement dans la Forteresse de braise (décor 7) : les lucioles jaunes génériques (décor non prévu, repli par défaut) sont remplacées par **22 braises procédurales** qui montent en vacillant et par une **lueur de lave** qui respire doucement en bas de l'écran (opacité 10–16 %). Aucune image ajoutée.
+- Lisibilité : braises minuscules, lueur limitée au bas de l'écran et très transparente. « Effets réduits » : 6 braises, lueur fixe.
+- Mesure (même combat, Chrome de test) : 60 i/s avant et après ; code par image 1,02 → 0,56 ms (moins coûteux que les lucioles dessinées en images).
+- Les 11 autres régions sont inchangées tant que le prototype n'est pas validé.
+
 ## V5.04 — finition, lot 2 : sensations de combat (28/11/2026)
 - Effets procéduraux légers (aucune image, aucun son ajoutés), déclenchés par les événements existants des règles : **impact selon le type d'attaque** (arc doré pour le corps à corps, éclat en étoile pour les flèches, halo coloré pour la magie et les sorts d'Orion, vert pour le poison, orange pour la brûlure) ; **blocage** (hexagone bleu quand un bouclier ou une protection encaisse) ; **esquive** (pas de côté + traits de vitesse) ; **soin** (anneau vert et étincelles qui montent) ; **critique** (halo doré + arrêt bref de 70 ms) ; gros coup (≥ 30 % des PV) : arrêt de 45 ms ; **défaite d'un boss** : arrêt de 160 ms, colonne de lumière et onde dorée, puis zoom, secousse et éclats.
 - **Récompenses** : l'or et l'XP comptent jusqu'à leur valeur (0,65 s) ; reflet doré qui balaie une fois les objets gagnés.
