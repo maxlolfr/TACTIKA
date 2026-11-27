@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V4.35 (27/11) : Orion et équipe de 3 parmi 4 (aperçu seulement)
+- `?apercu=braise` : fiche des héros → Orion → « Le faire entrer à la place de… ». Choix gardé dans `save.team` (absent ou abîmé = Kael, Fenn, Aelis). Le village montre l'équipe choisie.
+- Orion ajouté par `addOrion()` en aperçu, par les tests et par le simulateur (`TEAM=0,3,2`). Jeu normal : 3 héros, aucun fichier d'Orion chargé.
+- 4 sorts (valeurs ChatGPT, non validées) : Projectile arcanique, Flamme (brûlure 3 × 2, sans cumul, sans effet sur les insensibles au feu), Givre (−1 PM), Boule de feu au niveau 5 (60 % autour, alliés épargnés, aperçu exact). Image : `tools/prep_heros.py`. Pose fixe qui glisse. Sons réutilisés.
+- Matériel : l'équipe est servie avant la réserve. Orion ne porte que les objets communs à tous.
+- Pas encore : ses 6 autres sorts, talents, maîtrise, écran de recrutement, Nyra, Lyria.
+- Simulateur (profil std, braise 5/9/10, 8 graines, + 24 combats d'un premier essai braise 1 : 96 au total) : avec Fenn 24/24 (PV 72/41/56 %), Orion à la place de Fenn 23/24 (74/47/66 %), Orion à la place d'Aelis 23/24 (53/37/49 %). Aucune valeur changée.
+
 ## V4.34 (27/11) : niveaux des nouveaux sons
 D'après les mesures des fichiers publiés : ambiance du village, étoiles et quête remontées ; `map2`, `ember`, `boss_map2` baissées au niveau des autres musiques. Non écouté.
 

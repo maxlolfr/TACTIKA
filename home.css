@@ -227,3 +227,6 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 .v-stage[data-sky=nuit] :is(.v-vie,.v-npc,.v-hero canvas,.v-cry img){filter:brightness(.72) saturate(.85)}
 .v-stage[data-sky=nuit] .v-vie.vol{display:none}
 .v-stage[data-sky=nuit] .v-glow{scale:1.7;mix-blend-mode:screen}
+/* V4.33 : choix de l'équipe (3 héros parmi ceux disponibles) */
+.v-team p{margin:0 0 6px}.v-team .v-actions{margin:0}
+.v-tabs:has(>:nth-child(4)){grid-template-columns:repeat(4,1fr);gap:5px}.v-tabs:has(>:nth-child(4)) button{flex-direction:column;gap:0;font-size:12px;line-height:1.1;min-width:0}

@@ -8,7 +8,7 @@ import {sfx} from './audio.js';
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w,550,e.sh||'fx');break;
- case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
+ case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='burn'?'#ff9030':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
   if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx(t.bs==='beam'?'titan_death':t.boss?'boss_death':'death'),150)}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
@@ -55,7 +55,7 @@ export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne bouc
   const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;const burn=lavaTick(S);if(burn.length){play(burn);await wait(700);if(G.fid!==id||end())return}hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);keepInView(u.x,u.y);hooks.renderTL();hooks.render();
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
-  if(u.poison){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
+  if(u.poison||u.burn){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
   else{const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}
   if(G.fid!==id)return;endTurn(u);

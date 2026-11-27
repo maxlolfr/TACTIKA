@@ -1,10 +1,10 @@
 // Tests des règles de combat (Node, sans navigateur) : npm test
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {SP,HER,MON,ZONES,ITEMS,THEMES} from '../src/data.js';
+import {SP,HER,MON,ZONES,ITEMS,THEMES,addOrion} from '../src/data.js';
 import {talentFx,cleanSp,SPECS} from '../src/talents.js';
 import {K,mulberry,newBattle,cell,occ,passable,genMap,mkUnits,heroStats,gainXp,xpNeed,reach,pathTo,los,okTarget,selCells,
- hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter} from '../src/rules.js';
+ hurt,payCost,applySpell,stepOn,beginTurn,poisonTick,endTurn,outcome,aiStep,pushPlan,push,stars,starList,intent,upgrade,upCost,itemVal,targetsFrom,guideSetup,approach,carryPA,forecast,zoneCells,zoneCenter,teamOf,swapTeam} from '../src/rules.js';
 
 // petit terrain vide 12x12, sans obstacle
 function arena(){const s=newBattle(()=>0.5);for(let x=0;x<12;x++)for(let y=0;y<12;y++)s.map.set(K(x,y),{x,y,t:0});return s}
@@ -933,4 +933,66 @@ test('V4.29 : région 7 cachée, 10 missions, cases brûlantes annoncées un tou
   assert.equal(h.hp,hp-Math.round(h.max*.12));assert.equal(m.hp,mhp,'la salamandre ne brûle pas');
   assert.equal(s.lava.next.length,0,'un tour de calme');r.lavaTick(s);assert.equal(s.lava.next.length,3);
  }finally{ZONES.pop()}
+});
+
+// V4.33 : équipe de 3 parmi les héros disponibles, et Orion (ajouté en dernier : ces tests modifient HER)
+test('équipe : valeur absente ou abîmée = Kael, Fenn, Aelis ; sauvegarde non modifiée', () => {
+  for (const team of [undefined, null, [0, 1], [0, 0, 1], [0, 1, 3], [0, 1, 'a'], 'abc']) {
+    const s = { lvl: 21, items: [], team }, avant = JSON.stringify(s);
+    assert.deepEqual(teamOf(s), [0, 1, 2]);
+    assert.equal(JSON.stringify(s), avant);
+  }
+});
+test('Orion : ajout unique, échange d’équipe, caractéristiques, objets partagés seulement', () => {
+  const avant = ITEMS.filter(o => whoOf(o).length === 3).length;
+  addOrion(); addOrion();
+  assert.equal(HER.length, 4);
+  assert.equal(ITEMS.filter(o => whoOf(o).length === 4).length, avant);
+  assert.equal(ITEMS.filter(o => whoOf(o).includes(3) && whoOf(o).length < 4).length, 0);
+  const s = { lvl: 21, items: [], up: {}, attr: [{ vit: 3 }, {}, {}] };
+  s.attr = cleanAttr(s.attr, s.lvl);
+  assert.equal(s.attr.length, 4);
+  assert.equal(s.attr[0].vit, 3, 'anciens points gardés');
+  assert.equal(spendAttr(s, 3, { int: 20 }), 1, 'Orion a son budget complet');
+  assert.equal(swapTeam(s, 1, 1), 0);
+  assert.equal(swapTeam(s, 3, 0), 0);
+  assert.equal(swapTeam(s, 2, 3), 1);
+  assert.deepEqual(teamOf(s), [0, 1, 3]);
+  assert.ok(heroStats(s, 3).hp < heroStats(s, 1).hp);
+});
+test('Orion : l’équipe est servie en premier par la distribution du matériel', () => {
+  const j = ITEMS.findIndex(o => whoOf(o).length === 4);
+  const s = { lvl: 50, items: [j], up: {}, team: [0, 1, 3] };
+  assert.notEqual(holder(s, j), 2);
+});
+test('Orion en combat : 3 unités, bons sorts, brûlure sans cumul et insensibilité', () => {
+  const st = { lvl: 25, items: [], up: {}, team: [0, 3, 1] };
+  const s = newBattle(); s.pot = 0;
+  const F = fightSpec(0, 0, 7), { hs, es } = genMap(s, F.seed, F.th, F.cry);
+  mkUnits(s, F, hs, es, HER.map((_, i) => heroStats(st, i)), teamOf(st));
+  const H = s.units.filter(u => u.team === 'h');
+  assert.deepEqual(H.map(u => u.k), ['warrior', 'mage', 'archer']);
+  const o = H[1];
+  assert.deepEqual(o.sp, ['arcane', 'flame', 'frost', 'fireball']);
+  const m = s.units.find(u => u.team === 'm'); m.hp = m.max = 999;
+  s.rng = () => .99;
+  applySpell(s, o, o.S.flame, m); applySpell(s, o, o.S.flame, m);
+  assert.deepEqual(m.burn, { d: 3, turns: 2 });
+  let p = m.hp; poisonTick(s, m); assert.ok(m.hp < p); poisonTick(s, m); assert.equal(m.burn, undefined);
+  p = m.hp; poisonTick(s, m); assert.equal(m.hp, p);
+  m.k = 'fireel'; applySpell(s, o, o.S.flame, m); assert.equal(m.burn, undefined);
+});
+test('Boule de feu : 60 % autour du centre, aperçu égal à l’effet, alliés épargnés', () => {
+  const st = { lvl: 25, items: [], up: {}, team: [0, 1, 3] };
+  const s = newBattle(); s.pot = 0;
+  const F = fightSpec(0, 0, 7), { hs, es } = genMap(s, F.seed, F.th, F.cry);
+  mkUnits(s, F, hs, es, HER.map((_, i) => heroStats(st, i)), teamOf(st));
+  const o = s.units.find(u => u.k === 'mage'), [a, b] = s.units.filter(u => u.team === 'm'), ami = s.units.find(u => u.k === 'warrior');
+  Object.assign(a, { x: 4, y: 4, hp: 999, max: 999, armor: 0 }); Object.assign(b, { x: 5, y: 4, hp: 999, max: 999, armor: 0 }); Object.assign(ami, { x: 4, y: 5 });
+  const c = { x: 4, y: 4 }, centre = forecast(s, o, o.S.fireball, a, o, c), autour = forecast(s, o, o.S.fireball, b, o, c);
+  assert.ok(Math.abs(autour.dmg[1] - centre.dmg[1] * .6) <= 1);
+  const pv = ami.hp; s.rng = () => .5; applySpell(s, o, o.S.fireball, c);
+  assert.equal(ami.hp, pv);
+  assert.ok(999 - a.hp >= centre.dmg[0] && 999 - a.hp <= centre.dmg[1]);
+  assert.ok(999 - b.hp >= autour.dmg[0] && 999 - b.hp <= autour.dmg[1]);
 });

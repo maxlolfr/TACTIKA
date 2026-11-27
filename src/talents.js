@@ -13,7 +13,7 @@ export const SPECS=[
   {id:'druide',n:'Druide',ic:['spec',7],d:'Un poison qui ronge et se propage.',t:[['Venin puissant','Poison d’Épine : 6 par tour',{sp:{venom:{poison:[6,2],d:'Dégâts + poison (6 par tour) pendant 2 tours'}}}],['Venin persistant','Poison : 3 tours',{sp:{venom:{poison:[6,3],d:'Dégâts + poison (6 par tour) pendant 3 tours'}}}],['Contagion','Le poison se propage à la mort de la cible',{sp:{venom:{spread:1,d:'Dégâts + poison (6 par tour, 3 tours), se propage à la mort'}}}]]},
   {id:'enchant',n:'Enchanteresse',ic:['spec',4],d:'Renforce toute l’équipe.',t:[['Aura supérieure','Aura : +40 % de dégâts',{sp:{aura:{buff:.4,d:'+40 % de dégâts à un allié, 2 tours'}}}],['Bénédiction durable','Aura : 3 tours',{sp:{aura:{buffT:3,d:'+40 % de dégâts à un allié, 3 tours'}}}],['Bénédiction collective','Aura touche tous les héros',{sp:{aura:{all:1,d:'+40 % de dégâts à tous les héros, 3 tours'}}}]]}]];
 // spécialisation active du héros i (ou null) et nombre de paliers actifs (débloqués par le niveau ET déjà codés)
-export const specOf=(save,i)=>SPECS[i].find(x=>x.id===(save.sp||[])[i])||null;
+export const specOf=(save,i)=>SPECS[i]?.find(x=>x.id===(save.sp||[])[i])||null; // un héros sans talents codés (Orion) : aucune
 export const tiersOf=lvl=>TIER.filter(l=>lvl>=l).length;
 export function talentFx(save,i){const sp=specOf(save,i),fx={sp:{}};if(!sp)return fx;
  for(const[, ,m]of sp.t.slice(0,Math.min(DONE,tiersOf(save.lvl))))if(m)for(const k in m)k==='sp'?Object.entries(m.sp).forEach(([s,o])=>fx.sp[s]={...fx.sp[s],...o}):fx[k]=m[k];

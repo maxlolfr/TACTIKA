@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,whoOf} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,TEAM_SIZE,DEF_TEAM,whoOf} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -113,9 +113,15 @@ export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].so
 const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(save,j));return v('hp')+2.9*(v('dmg')+v('heal'))};
 // V4.12 : objets partagés (who = liste) → un seul porteur. D'abord les choix du joueur (héros 0, 1, 2), puis le meilleur objet libre
 // pour chaque emplacement resté vide, dans le même ordre : jamais deux porteurs, résultat identique à chaque calcul.
+// V4.33 : équipe de combat (3 héros distincts parmi ceux disponibles) ; valeur absente ou abîmée = Kael, Fenn, Aelis
+export const teamOf=save=>{const t=save?.team;return Array.isArray(t)&&t.length===TEAM_SIZE&&new Set(t).size===TEAM_SIZE&&t.every(i=>Number.isInteger(i)&&HER[i])?t:[...DEF_TEAM]};
+// le héros `inn` prend la place de `out` (même rang). Renvoie 1 si l'échange est fait.
+export function swapTeam(save,out,inn){const t=[...teamOf(save)],k=t.indexOf(out);if(k<0||!HER[inn]||t.includes(inn))return 0;t[k]=inn;save.team=t;return 1}
+// ordre de distribution automatique du matériel : l'équipe d'abord, la réserve ensuite
+const gearOrder=save=>[...HER.keys()].sort((a,b)=>teamOf(save).includes(b)-teamOf(save).includes(a)||a-b);
 export function gearAll(save){const G=HER.map(()=>({})),used=new Set(),ok=(j,i,sl)=>ITEMS[j]?.sl===sl&&save.items.includes(j)&&fits(j,i)&&lvOf(j)<=(save.lvl||1)&&!used.has(j);
  for(const sl in SLOTS)HER.forEach((_,i)=>{const c=save.eq?.[i+':'+sl]??(sl==='arme'?save.wpn?.[i]:null);if(c!=null&&ok(c,i,sl)){G[i][sl]=c;used.add(c)}});
- for(const sl in SLOTS)HER.forEach((_,i)=>{if(G[i][sl]!=null)return;const b=save.items.filter(j=>ok(j,i,sl)).sort((a,b)=>score(save,b)-score(save,a))[0]??null;G[i][sl]=b;if(b!=null)used.add(b)});
+ for(const sl in SLOTS)gearOrder(save).forEach(i=>{if(G[i][sl]!=null)return;const b=save.items.filter(j=>ok(j,i,sl)).sort((a,b)=>score(save,b)-score(save,a))[0]??null;G[i][sl]=b;if(b!=null)used.add(b)});
  return G}
 export const gear=(save,i)=>gearAll(save)[i];
 export const weaponOf=(save,i)=>gear(save,i).arme;
@@ -157,10 +163,10 @@ function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*
   cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:(boss?m.h*B.h:m.h)*(elite?1.15:1),xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)*(elite?2:1)),
   atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,fx:m.fx??0,proj:m.r?1:0}}}
 
-// hstats = heroStats de chacun des 3 héros. L'affichage ajoute ensuite `ref` (hauteur du sprite).
-export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
+// hstats = heroStats de chaque héros (par numéro) ; team = les 3 qui combattent. L'affichage ajoute ensuite `ref` (hauteur du sprite).
+export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- HER.forEach((h,i)=>{const st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[i].x,y:hs[i].y,gx:hs[i].x,gy:hs[i].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+ team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,{...SP[id],...tf.sp[id]}])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);
@@ -245,10 +251,12 @@ const healing=(u,roll,amp)=>Math.round((roll+(u.healB||0))*(u.mult||1)*(u.healMu
 const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u.id]).size:0;
 // V4.2 : prévision d'un sort sur l'unité t, lancé depuis `from`. Ne tire aucun hasard et ne modifie rien.
 // {dmg:[min,max], crit:[min,max], pc:chance de critique, dodge, combo, push:dégâts de collision, ko:'sure'|'maybe'|'crit'|null, heal:[min,max]}
-export function forecast(s,u,sp,t,from=u){const amp=ampAt(s,from),out={amp:amp>1};
+// part des dégâts d'un sort de zone sur la case p quand on vise `at` (1 au centre ; sp.side autour)
+const sideK=(sp,at,p)=>sp.side&&at&&(at.x!==p.x||at.y!==p.y)?sp.side:1;
+export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={amp:amp>1};
  if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(healing(u,r,amp),t.max-t.hp));
  if(!sp.dmg||t.team===u.team)return out;
- const n=comboSize(u,t),cb=COMBO[n]||1,hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr),sp.pierce||0);
+ const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr)*side,sp.pierce||0);
  out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=t.dodge||0;out.combo=n>1?n:0;out.push=0;
  if(sp.push){const p=pushPlan(s,{...from,pushDmg:u.pushDmg},t,sp.push);if(p.left)out.push=soak(t,(p.k||PUSH_DMG)*p.left)}
  const kills=d=>d+out.push>=t.hp&&!t.lastStand;
@@ -291,11 +299,12 @@ export function applySpell(s,u,sp,c){
   if(!t)continue;
   if(sp.dmg&&t.dodge&&t.team!==u.team&&rng()<t.dodge){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
+  if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p),0,cr,sp.pierce||0);if(h)ev.push(h);if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=healing(u,ri(rng,...sp.heal),amp),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){t.slow=1;ev.push({type:'status',t,text:'−1 PM',color:'#c9a0ff'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
+  if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
   if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
@@ -333,7 +342,7 @@ export function push(s,t,p){const ev=[{type:'push',t,to:p.to}],dx=Math.sign(p.to
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
 export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=u.slow?Math.max(0,u.maxPM-1):u.maxPM;delete u.slow;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
-export function poisonTick(s,u){if(!u.poison)return[];const ev=[{type:'fx',x:u.x,y:u.y,i:5,w:.9},hurt(s,u,u.poison.d,'poison')];if(--u.poison.turns<=0)delete u.poison;return ev.filter(Boolean)}
+export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
 export function endTurn(u){u.carry=carryPA(u);if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
@@ -366,6 +375,8 @@ export function waveEmpty(s){const w=s.wave;if(!w||liveM(s).length||!w.q.length|
 // ---------- V4.29 : cases brûlantes (région 7) ----------
 // Les cases sont marquées un tour entier à l'avance (s.lava.next), puis s'embrasent au début du tour suivant.
 // Un tour sur deux (calme entre deux), ou chaque tour avec hot. Dégâts : LAVA_DMG des PV max ; Rempart les réduit, pas l'armure.
+// insensible au feu (braises et brûlure)
+export const fireproof=u=>!!MON[u.k]?.imm||u.bs==='forge';
 export const lavaDmg=(s,u)=>soak(u,u.max*LAVA_DMG,1);
 export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passable(s,c.x,c.y),H=s.units.filter(u=>u.team==='h'&&!u.dead),out=[],add=c=>{if(free(c)&&!out.includes(c))out.push(c)};
  // d'abord sous les pieds ou à côté de la moitié des héros (au moins un), pour obliger à bouger ; le reste dans la bande du milieu
@@ -373,7 +384,7 @@ export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passabl
  const mid=[...s.map.values()].filter(c=>c.x+c.y>=4&&c.x+c.y<=14&&free(c));for(let g=0;g<60&&out.length<L.n&&mid.length;g++)add(pick(s.rng,mid));
  L.next=out.map(c=>({x:c.x,y:c.y}))}
 export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lavaMark(s);return[]}
- const ev=[];for(const p of L.next){ev.push({type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&!MON[u.k]?.imm&&!(u.bs==='forge')){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e)}}
+ const ev=[];for(const p of L.next){ev.push({type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&!fireproof(u)){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e)}}
  ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
 export const onLava=(s,p)=>!!s.lava&&s.lava.next.some(c=>c.x===p.x&&c.y===p.y);
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
@@ -412,7 +423,7 @@ export function aiStep(s,u){
  const ally=role==='tank'?fragile(s,u):[],guard=p=>ally.length?Math.max(0,Math.min(...ally.map(o=>man(o,p)))-2)*4:0;
  while(q.length){const p=q.shift(),d=fd.get(K(p.x,p.y));for(const[dx,dy]of DIRS){const nx=p.x+dx,ny=p.y+dy,k=K(nx,ny);if(fd.has(k)||!passable(s,nx,ny))continue;fd.set(k,d+1);q.push({x:nx,y:ny})}}
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),from={x,y};
-  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0)-(fr.some(h=>okTarget(s,u,sp,h,from))?5:0)+guard(from):100+(fd.get(k)??99)*10+d+guard(from);const burn=!MON[u.k]?.imm&&u.bs!=='forge'&&onLava(s,from)?8:0;if(sc+burn<bs){bs=sc+burn;best=k}}
+  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0)-(fr.some(h=>okTarget(s,u,sp,h,from))?5:0)+guard(from):100+(fd.get(k)??99)*10+d+guard(from);const burn=!fireproof(u)&&onLava(s,from)?8:0;if(sc+burn<bs){bs=sc+burn;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
