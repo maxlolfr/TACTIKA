@@ -260,7 +260,7 @@ function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${t
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
 function secondMap(L){
- MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock'+(z.x<22?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
+ MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock'+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
   b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>Bientôt</small>`;b.onclick=()=>mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');

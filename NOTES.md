@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.27 (27/11) : carte II sur écran horizontal
+- `assets/world2-l.webp` (image 1800 de Max, 1536×1024), utilisée quand l'écran est horizontal ; repères `lx`,`ly`. La carte I reste verticale partout.
+
 ## V4.26 (27/11) : image de la carte II (C2-01)
 - `assets/world2.webp` (1024×1536, taille reçue), chargée seulement à l'ouverture de la carte II. Repères recalés (`MAP2`), tracé provisoire retiré.
 
