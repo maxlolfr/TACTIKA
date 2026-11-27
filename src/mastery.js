@@ -10,7 +10,10 @@ export const MASTERY={
  // Sorts utilitaires (Rempart, Provocation, Contre-attaque, Rage, Bottes, Repli, Piège, Aura, Purification) : en attente des valeurs de ChatGPT.
  slash:['dmg',.05,.1],smash:['dmg',.05,.1],charge:['dmg',.05,.1],whirl:['dmg',.05,.1],sunder:['dmg',.05,.1,'dégâts directs'],judge:['dmg',.05,.1],
  shot:['dmg',.05,.1],volley:['dmg',.05,.1],pshot:['dmg',.05,.1],venomarrow:['dmg',.05,.1,'dégâts directs'],icearrow:['dmg',.05,.1],blastarrow:['dmg',.05,.1],rain:['dmg',.05,.1],
- venom:['dmg',.05,.1,'dégâts directs'],roots:['dmg',.05,.1],moon:['dmg',.05,.1],heal:['heal',.05,.1],mheal:['heal',.03,.06],bless:['heal',.03,.06],ward:['ward',.1,.2]};
+ venom:['dmg',.05,.1,'dégâts directs'],roots:['dmg',.05,.1],moon:['dmg',.05,.1],heal:['heal',.05,.1],mheal:['heal',.03,.06],bless:['heal',.03,.06],ward:['ward',.1,.2],
+ // V4.53 Nyra et V4.54 Lyria : mêmes valeurs que les autres héros (dégâts directs +5/+10 %, soins +5/+10 %, boucliers +10/+20 %). Sorts utilitaires : en attente de ChatGPT.
+ dagger:['dmg',.05,.1],backstab:['dmg',.05,.1],toxin:['dmg',.05,.1,'dégâts directs'],smoke:['dmg',.05,.1,'dégâts directs'],twin:['dmg',.05,.1],execute:['dmg',.05,.1],dance:['dmg',.05,.1],
+ hammer:['dmg',.05,.1],smite:['dmg',.05,.1],light:['heal',.05,.1],rescue:['heal',.05,.1],purge:['heal',.05,.1],aegis:['ward',.1,.2]};
 export const MAST_COST=[0,0,2,5]; // points dépensés pour atteindre le rang r (II = 2, III = 2 + 3)
 export const mastPts=lvl=>Math.max(0,Math.floor(((lvl||1)-1)/2)); // 1 point tous les 2 niveaux gagnés, 24 au niveau 50
 export const nextPtLvl=lvl=>lvl%2?lvl+2:lvl+1;

@@ -277,8 +277,8 @@ function team(sp,lvl=3){const s=arena(),hs=[{x:1,y:1},{x:2,y:1},{x:3,y:1}],es=[{
 test('talents : rien avant le niveau 3, sauvegarde validée', () => {
  const s=team(['berserk','eclaireur','druide'],2),[k,f,a]=s.units;
  assert.equal(k.dmgMul,1);assert.equal(f.maxPM,3);assert.deepEqual(a.S.venom.poison,SP.venom.poison);
- assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null,null]);
- assert.equal(SPECS.flat().length,12);
+ assert.deepEqual(cleanSp(['berserk','zzz',7]),['berserk',null,null,null,null,null]);assert.deepEqual(cleanSp(undefined),[null,null,null,null,null,null]);
+ assert.equal(SPECS.flat().length,18);
 });
 test('talents Kael : Fureur ×1,15, Robustesse PV ×1,15, Onde de choc 3 cases', () => {
  const s=team(['berserk',null,null]),k=s.units[0],t=unit(s,'m',5,5,{hp:99,max:99});k.dmgB=0;k.mult=1;s.rng=()=>.5;
@@ -701,7 +701,7 @@ test('V4.7c : nettoyage idempotent, points valables gardés, répartition abîm�
  const good=cleanAttr([{for:3,agi:2},{vit:5},{int:4}],6);
  assert.deepEqual(cleanAttr(good,6),good);assert.equal(good[0].for,3);assert.equal(good[2].int,4);
  for(const bad of[[{for:99}],[{for:-1}],[{for:1.5}],[{int:2}],[{vit:'3'}]])assert.deepEqual(cleanAttr(bad,6)[0],attrOf({},0),JSON.stringify(bad));
- for(const v of[null,'x',{},7])assert.equal(cleanAttr(v,6).length,4);
+ for(const v of[null,'x',{},7])assert.equal(cleanAttr(v,6).length,6);
 });
 test('V4.7c : dépense tout ou rien, 1 point par niveau et par héros, redistribution', () => {
  const s=sv(4);
@@ -807,7 +807,7 @@ test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes v
  const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
   assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
- assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
+ assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2,3,4,5]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
 });
 test('V4.12 : rareté fixe, valeurs du moteur, revente au prix final', () => {
  const sv=SV2({items:[J('eq18'),J('eq12')],rr:{[J('eq18')]:0,[J('eq12')]:2}}); // save.rr ignoré pour les nouveaux
@@ -840,7 +840,7 @@ test('V4.12 : objet partagé, un seul porteur, transfert, sans doublon de bonus'
 });
 test('V4.12 : sauvegarde d’avant le lot 3 : même équipement qu’avant', () => {
  const sv={lvl:5,items:[0,1,2,3,4,5,6,7,8,9],wpn:[0,null,null],eq:{'2:bijou':9},up:{1:1},rr:{2:2}};
- assert.deepEqual(gearAll(sv),[{arme:0,armure:3,bijou:null,accessoire:2},{arme:4,armure:5,bijou:null,accessoire:6},{arme:7,armure:null,bijou:9,accessoire:null},{}]);
+ assert.deepEqual(gearAll(sv),[{arme:0,armure:3,bijou:null,accessoire:2},{arme:4,armure:5,bijou:null,accessoire:6},{arme:7,armure:null,bijou:9,accessoire:null},{},{},{}]);
  assert.equal(rarOf(sv,2),2);
 });
 test('V4.12 : Soin collectif, lanceur adjacent, PV plafonnés, un seul coût', () => {
@@ -944,15 +944,15 @@ test('équipe : valeur absente ou abîmée = Kael, Fenn, Aelis ; sauvegarde non 
   }
 });
 test('Orion : ajout unique, échange d’équipe, caractéristiques, objets partagés seulement', () => {
-  const avant = ITEMS.filter(o => whoOf(o).length === 4).length;
+  const avant = ITEMS.filter(o => whoOf(o).length === 6).length;
   assert.ok(avant > 0);
   addOrion(); addOrion();
-  assert.equal(HER.length, 4);
-  assert.equal(ITEMS.filter(o => whoOf(o).length === 4).length, avant);
-  assert.equal(ITEMS.filter(o => whoOf(o).includes(3) && whoOf(o).length < 4).length, 0);
+  assert.equal(HER.length, 6, 'Orion, Nyra et Lyria, ajoutés une seule fois');
+  assert.equal(ITEMS.filter(o => whoOf(o).length === 6).length, avant);
+  assert.equal(ITEMS.filter(o => whoOf(o).includes(3) && whoOf(o).length < 6).length, 0);
   const s = { lvl: 21, items: [], up: {}, attr: [{ vit: 3 }, {}, {}] };
   s.attr = cleanAttr(s.attr, s.lvl);
-  assert.equal(s.attr.length, 4);
+  assert.equal(s.attr.length, 6);
   assert.equal(s.attr[0].vit, 3, 'anciens points gardés');
   assert.equal(spendAttr(s, 3, { int: 20 }), 1, 'Orion a son budget complet');
   assert.equal(swapTeam(s, 1, 1), 0);
@@ -962,7 +962,7 @@ test('Orion : ajout unique, échange d’équipe, caractéristiques, objets part
   assert.ok(heroStats(s, 3).hp < heroStats(s, 1).hp);
 });
 test('Orion : l’équipe est servie en premier par la distribution du matériel', () => {
-  const j = ITEMS.findIndex(o => whoOf(o).length === 4);
+  const j = ITEMS.findIndex(o => whoOf(o).length === 6);
   const s = { lvl: 50, items: [j], up: {}, team: [0, 1, 3] };
   assert.notEqual(holder(s, j), 2);
 });
@@ -1098,8 +1098,8 @@ test('talents d’Orion : 5 paliers aux niveaux 3, 7, 11, 25 et 40, une seule vo
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 0)), [0, 3, 4, 5], 'Kael a 5 paliers (V4.46)');
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 1)), [0, 3, 4, 5], 'Fenn a 5 paliers (V4.47)');
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 2)), [0, 3, 4, 5], 'Aelis a 5 paliers (V4.48)');
-  assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null], 'ancienne sauvegarde à 3 entrées');
-  assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null]);
+  assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null, null, null], 'ancienne sauvegarde à 3 entrées');
+  assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null, null, null]);
   assert.deepEqual(orion(50, null), {});
   assert.equal(orion(50, 'pyro').frost, undefined);
 });
@@ -1352,4 +1352,46 @@ test('talents d’Aelis V4.48 : paliers 25 et 40, une seule voie', () => {
   assert.equal(aelis(40, 'enchant').aura.cleanse, 1);
   assert.equal(aelis(40, 'druide').ward, undefined, 'pas de cumul entre voies');
   assert.equal(SPECS[2].every(x => x.t.length === 5), true);
+});
+
+// ---------- V4.53 Nyra / V4.54 Lyria ----------
+const idxOf=k=>HER.findIndex(h=>h.k===k);
+test('Nyra et Lyria : recrues aux niveaux 30 et 40, 10 sorts chacune, tous définis, talents à 5 paliers', () => {
+  const N=idxOf('rogue'),L=idxOf('paladin');
+  assert.deepEqual([N,L],[4,5]);assert.equal(HER[N].at,30);assert.equal(HER[L].at,40);
+  for(const i of[N,L]){const ids=[...HER[i].sp,...HER[i].learn.map(a=>a[0])];assert.equal(ids.length,10);for(const id of ids){assert.ok(SP[id],id);assert.ok(SP[id].d)}
+   assert.deepEqual([24,25,40].map(l=>tiersOf(l,i)),[3,4,5]);assert.equal(SPECS[i].length,3);for(const sp of SPECS[i])assert.equal(sp.t.length,5)}
+  assert.equal(knownSpells({lvl:30,items:[],up:{}},N).length,8);assert.equal(knownSpells({lvl:45,items:[],up:{}},N).length,10);
+  assert.equal(mastered(SP.hammer,'hammer',2).k,1.05);assert.equal(mastered(SP.light,'light',3).hk,1.1);
+});
+test('Nyra : dos (héros adjacent), exécution, double coup, marque, esquive active', () => {
+  const s=arena(),n=unit(s,'h',2,2,{mult:1,dmgMul:1,dmgB:0}),t=unit(s,'m',3,2,{hp:300,max:300,armor:0});
+  applySpell(s,n,{...SP.backstab,dmg:[20,20]},t);assert.equal(t.hp,280,'seule, pas de bonus');
+  unit(s,'h',4,2,{});applySpell(s,n,{...SP.backstab,dmg:[20,20]},t);assert.equal(t.hp,250,'×1,5 avec un héros collé à la cible');
+  const w=unit(s,'m',3,5,{hp:100,max:100,armor:0});applySpell(s,n,{...SP.execute,dmg:[10,10]},w);assert.equal(w.hp,90,'sans seuil');
+  const l=unit(s,'m',5,5,{hp:30,max:100,armor:0});applySpell(s,n,{...SP.execute,dmg:[10,10]},l);assert.equal(l.hp,10,'×2 sous 35 %');
+  const d=unit(s,'m',6,6,{hp:100,max:100,armor:0});applySpell(s,n,{...SP.twin,dmg:[10,10]},d);assert.equal(d.hp,80,'deux coups');
+  const ev=applySpell(s,n,SP.mark,t);assert.equal(t.sunder.pct,.25);assert.ok(ev.some(e=>/Marqué/.test(e.text||'')));
+  applySpell(s,n,SP.evade,{x:2,y:2});assert.equal(n.evade,.5);
+  const m=unit(s,'m',9,9,{});assert.equal(forecast(s,m,{...SP.slash},n).dodge,.5);
+  beginTurn(n);assert.equal(n.evade,undefined,'l’esquive tient jusqu’au prochain tour de Nyra');
+});
+test('Lyria : protection, interception, égide, serment, bastion, purge', () => {
+  const s=arena(),l=unit(s,'h',2,2,{mult:1,healMul:1}),a=unit(s,'h',3,2,{hp:20,max:50,poison:{d:3,turns:2}}),m=unit(s,'m',2,4,{});
+  applySpell(s,l,SP.protect,{x:3,y:2});assert.equal(a.shield,1);
+  applySpell(s,l,SP.purge,{x:3,y:2});assert.equal(a.poison,undefined);assert.ok(a.hp>20);
+  applySpell(s,l,SP.intercept,{x:2,y:2});assert.equal(l.shield,1);assert.equal(m.taunt,l.id);
+  applySpell(s,l,SP.aegis,{x:2,y:2});assert.equal(a.ward.hp,Math.round(a.max*.15));
+  applySpell(s,l,SP.oath,{x:2,y:2});assert.deepEqual([l.buff.pct,a.buff.turns],[.2,2]);
+  delete a.shield;applySpell(s,l,SP.bastion,{x:2,y:2});assert.equal(a.shield,1);
+  const t=unit(s,'m',6,6,{hp:100,max:100,armor:0}),t2=unit(s,'m',7,6,{hp:100,max:100,armor:0});
+  applySpell(s,l,{...SP.smite,dmg:[20,20]},{x:6,y:6});assert.ok(t.hp<100&&t2.hp<100&&t.hp<t2.hp,'zone, plein au centre');
+});
+test('Nyra et Lyria en combat : équipe de 3 avec les deux recrues, bons sprites et sorts', () => {
+  const st={lvl:45,items:[],up:{},team:[4,5,0]},s=newBattle();s.pot=0;
+  const F=fightSpec(0,0,7),{hs,es}=genMap(s,F.seed,F.th,F.cry);
+  mkUnits(s,F,hs,es,HER.map((_,i)=>heroStats(st,i)),teamOf(st));
+  const H=s.units.filter(u=>u.team==='h');
+  assert.deepEqual(H.map(u=>u.k),['rogue','paladin','warrior']);
+  assert.ok(H[0].sp.includes('dagger')&&H[1].sp.includes('hammer')&&H[0].sp.length>=6);
 });

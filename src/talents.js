@@ -5,7 +5,7 @@ import {HER} from './data.js';
 // V4.38 : Orion a 5 paliers par voie (valeurs pilotes de ChatGPT, 27/11, non validées)
 export const TIER=[3,7,11], TIER_ORION=[3,7,11,25,40];
 // V4.46 : Kael (0, V4.46), Fenn (1, V4.47) et Aelis (2, V4.48) passent aussi à 5 paliers
-export const FIVE=[0,1,2,3];
+export const FIVE=[0,1,2,3,4,5]; // V4.53 : Nyra (4) et V4.54 : Lyria (5), 5 paliers aussi
 export const tiersFor=i=>FIVE.includes(i)?TIER_ORION:TIER;
 export const SPECS=[
  [{id:'berserk',n:'Berserker',ic:['spec',0],d:'Frappe plus fort, achève les blessés.',t:[['Fureur','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Rage','Critique 22 % au lieu de 12 %',{crit:.22}],['Exécution','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}],
@@ -52,7 +52,27 @@ export const SPECS=[
    ['Grand saut','Portée de Téléportation courte : 4',{sp:{blink:{r:[1,4]}}}],
    ['Emprise','Affaiblissement : 3 tours',{sp:{weaken:{weaken:[.2,3],d:'La cible inflige 20 % de dégâts en moins pendant 3 de ses tours (sans cumul)'}}}],
    ['Glyphe renforcé','Glyphe : dégâts +10 %',{sp:{glyph:{k:1.1}}}],
-   ['Œil de la tempête','Tempête arcanique : 60 % autour du centre',{sp:{storm:{side:.6,d:'Zone de rayon 2, 60 % autour du centre. Épargne tes héros. 1 fois par combat'}}}]]}]];
+   ['Œil de la tempête','Tempête arcanique : 60 % autour du centre',{sp:{storm:{side:.6,d:'Zone de rayon 2, 60 % autour du centre. Épargne tes héros. 1 fois par combat'}}}]]}],
+ // V4.53 : Nyra (valeurs provisoires de Claude)
+ [{id:'ombre',n:'Ombre',ic:['spec',3],d:'Rapide, insaisissable, frappe dans le dos.',t:[['Pas feutrés','4 PM au lieu de 3',{maxPM:4}],['Frappe sournoise','Frappe de dos : ×1,75 avec un autre héros contre la cible',{sp:{backstab:{flk:1.75,d:'Dégâts ×1,75 si un autre héros touche la cible'}}}],['Insaisissable','15 % de chances d’esquiver une attaque',{dodge:.15}],
+   ['Ombre rapide','Pas d’ombre : recharge 2 au lieu de 3',{sp:{shadow:{cd:2}}}],
+   ['Danse mortelle','Danse des ombres : dégâts +20 %',{sp:{dance:{k:1.2}}}]]},
+  {id:'venimeuse',n:'Venimeuse',ic:['spec',8],d:'Empoisonne tout ce qu’elle touche.',t:[['Lame enduite','Dague : poison 3 par tour, 2 tours',{sp:{dagger:{poison:[3,2],d:'Coup de dague rapide + poison (3 par tour) pendant 2 tours'}}}],['Venin puissant','Poison : 7 par tour',{sp:{toxin:{poison:[7,3],d:'Lame empoisonnée : dégâts + poison (7 par tour) pendant 3 tours'}}}],['Contagion','Le poison se propage à la mort de la cible',{sp:{toxin:{spread:1,poison:[7,3],d:'Dégâts + poison (7 par tour, 3 tours), se propage à la mort'}}}],
+   ['Dose double','Poison : 4 tours',{sp:{toxin:{poison:[7,4],spread:1,d:'Dégâts + poison (7 par tour) pendant 4 tours, se propage à la mort'}}}],
+   ['Fumigène toxique','Fumigène : poison 4 par tour, 2 tours',{sp:{smoke:{poison:[4,2],d:'Nuage de rayon 1 : petits dégâts, −25 % de dégâts infligés et poison (4 par tour), 2 tours'}}}]]},
+  {id:'duelliste',n:'Duelliste',ic:['spec',0],d:'Critiques et mise à mort.',t:[['Vivacité','Critique 22 % au lieu de 12 %',{crit:.22}],['Lame affûtée','Lame double : dégâts +10 %',{sp:{twin:{k:1.1}}}],['Mise à mort','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}],
+   ['Marque tenace','Marque : 3 tours',{sp:{mark:{sunder:[.25,3],d:'La cible subit +25 % de dégâts pendant 3 tours'}}}],
+   ['Exécuteur','Exécution : ×2 sous 45 % de PV',{sp:{execute:{exe:[.45,2],d:'Dégâts ×2 sur une cible sous 45 % de ses PV'}}}]]}],
+ // V4.54 : Lyria (valeurs provisoires de Claude)
+ [{id:'sentinelle',n:'Sentinelle',ic:['spec',1],d:'Un mur de lumière qui protège l’équipe.',t:[['Cuirasse bénie','PV maximum ×1,15',{hpMul:1.15}],['Garde solide','Protection : recharge 2 au lieu de 3',{sp:{protect:{cd:2}}}],['Forteresse','Rempart réduit les dégâts de 65 %',{guardK:.35}],
+   ['Interception large','Interception : ennemis à 5 cases ou moins',{sp:{intercept:{taunt:5,d:'Rempart sur Lyria ; les ennemis à 5 cases ou moins ne visent qu’elle à leur prochain tour'}}}],
+   ['Bastion éternel','Bastion : bouclier de 20 % des PV max en plus',{sp:{bastion:{ward:[.2,2],d:'Rempart et bouclier de 20 % des PV max sur tous les héros. 1 fois par combat'}}}]]},
+  {id:'justiciere',n:'Justicière',ic:['spec',6],d:'Frappe fort et punit les ennemis.',t:[['Poigne sainte','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Marteau étourdissant','Marteau retire 1 PM à la cible',{sp:{hammer:{slow:1,d:'Coup de marteau sacré, retire 1 PM au prochain tour de la cible'}}}],['Châtiment','Critique 22 % au lieu de 12 %',{crit:.22}],
+   ['Impact amplifié','Impact sacré : 80 % autour du centre',{sp:{smite:{side:.8,d:'Explose sur la case visée ; 80 % des dégâts sur les 4 cases voisines'}}}],
+   ['Jugement sacré','Impact sacré : dégâts +20 %, recharge 2',{sp:{smite:{side:.8,k:1.2,cd:2,d:'Explose sur la case visée ; 80 % autour, dégâts +20 %'}}}]]},
+  {id:'luminiere',n:'Luminière',ic:['spec',5],d:'Soigne, purifie, relève les héros tombés.',t:[['Lumière vive','Soins ×1,20',{healMul:1.2}],['Grâce','Portée de Lumière : 5',{sp:{light:{r:[0,5]}}}],['Renaissance','Nouveau sort : relève un héros KO (1 fois par combat)',{add:['revive']}],
+   ['Soin hâtif','Soin de secours : recharge 3 au lieu de 4',{sp:{rescue:{cd:3}}}],
+   ['Serment radieux','Serment : +30 % de dégâts',{sp:{oath:{buff:.3,d:'+30 % de dégâts à tous les héros, 2 tours'}}}]]}]];
 // spécialisation active du héros i (ou null) et nombre de paliers débloqués par le niveau
 export const specOf=(save,i)=>SPECS[i]?.find(x=>x.id===(save.sp||[])[i])||null;
 export const tiersOf=(lvl,i)=>tiersFor(i).filter(l=>lvl>=l).length;
