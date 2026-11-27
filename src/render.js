@@ -224,7 +224,16 @@ export function say(u,s,c,big){s=tr(s);texts.push({x:u.gx,y:u.gy,s,c,big,t0:perf
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
 // particules d'ambiance par décor : 0 luciole 1 étincelle 2 feuille 3 neige 4 braise 6 feu follet
 const AMB=[[0,2],[0,2,0],[1,0],[1],[3,3],[4,6,4],[6,0,6]];
-function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;const kinds=AMB[G.F?G.F.th:0]||[0];
+// V5.05 lot 3 : prototype d'ambiance animée de la Forteresse de braise (décor 7) : braises procédurales qui montent en vacillant
+// et lueur de lave qui respire en bas de l'écran ; très discret, sans image ajoutée ; « Effets réduits » : 6 braises, lueur fixe
+let emb=[];function forge(now,dt){const lf=lowFx(),N=lf?6:22;if(emb.length>N)emb.length=N;
+ while(emb.length<N)emb.push({x:Math.random()*W,y:H*(.5+Math.random()*.6),vy:-.02-Math.random()*.035,vx:(Math.random()-.5)*.012,r:.8+Math.random()*1.8,ph:Math.random()*7,life:0,max:2500+Math.random()*3500});
+ ctx.save();ctx.globalCompositeOperation='lighter';
+ const k=lf?.5:.5+.5*Math.sin(now/1700),g=ctx.createLinearGradient(0,H,0,H*.55);g.addColorStop(0,`rgba(255,90,20,${.10+.06*k})`);g.addColorStop(1,'rgba(255,90,20,0)');ctx.fillStyle=g;ctx.fillRect(0,H*.55,W,H*.45);
+ for(const p of emb){p.life+=dt;p.x+=p.vx*dt+Math.sin(now/500+p.ph)*.25;p.y+=p.vy*dt;if(p.life>p.max||p.y<-10)Object.assign(p,{x:Math.random()*W,y:H*(.75+Math.random()*.3),life:0});
+  const a=Math.min(1,p.life/400)*Math.min(1,(p.max-p.life)/700)*(.55+.45*Math.sin(now/90+p.ph*3)),r=p.r*(TW/55),gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*3);gr.addColorStop(0,`rgba(255,220,140,${a})`);gr.addColorStop(.35,`rgba(255,120,30,${a*.7})`);gr.addColorStop(1,'rgba(255,60,0,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,r*3,0,7);ctx.fill()}
+ ctx.restore()}
+function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;if(G.F&&G.F.th===7)return forge(now,dt);const kinds=AMB[G.F?G.F.th:0]||[0];
  while(parts.length<26){const k=kinds[parts.length%kinds.length],fall=k===2||k===3;parts.push({k,x:Math.random()*W,y:fall?-20-Math.random()*H:Math.random()*H,vx:(Math.random()-.5)*.02,vy:fall?.03+Math.random()*.03:k===4||k===6?-.03-Math.random()*.03:(Math.random()-.5)*.01,s:.12+Math.random()*.14,ph:Math.random()*7,r:Math.random()*6})}
  ctx.save();for(const p of parts){p.x+=p.vx*dt+Math.sin(now/900+p.ph)*.15;p.y+=p.vy*dt;if(p.y>H+30||p.y<-40||p.x<-30||p.x>W+30){Object.assign(p,{x:Math.random()*W,y:p.vy>0?-20:H+20})}
   const f=AT.parts[p.k],w=TW*p.s*(p.k===2?1.4:1);ctx.globalAlpha=p.k===0?.5+.5*Math.sin(now/300+p.ph):.85;ctx.save();ctx.translate(p.x,p.y);if(p.k===2)ctx.rotate(Math.sin(now/600+p.ph)*1.2);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],-w/2,-w/2,w,w*f[3]/f[2]);ctx.restore()}
