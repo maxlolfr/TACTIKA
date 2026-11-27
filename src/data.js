@@ -8,7 +8,7 @@ export const SP={
  trap:{snd:'trap',n:'Piège',ic:3,pa:3,r:[1,3],t:'cell',free:1,los:1,cd:3,trap:1,fx:0,d:'Piège sur une case libre : 10 dégâts et −1 PM au premier ennemi qui y entre, 3 tours'},
  revive:{vx:'support',snd:'aelis_heal',n:'Renaissance',ic:5,pa:6,r:[1,4],t:'dead',cd:99,revive:1,fx:4,d:'Relève un héros KO avec 25 % de ses PV, 1 fois par combat'},
  potion:{snd:'aelis_heal',n:'Potion',ic:5,pa:4,r:[0,0],t:'self',potion:1,fx:4,cd:99,d:'Boit une potion du marchand : soigne 40 % des PV max, 1 fois par héros et par combat'},
- boots:{vx:'support',snd:'buff',n:'Bottes ailées',ic:14,pa:2,r:[0,0],t:'self',pmBonus:2,fx:7,cd:3,d:'+2 PM pour ce tour'},
+ boots:{vx:'support',snd:'buff',n:'Bottes ailées',sn:'Bottes',ic:14,pa:2,r:[0,0],t:'self',pmBonus:2,fx:7,cd:3,d:'+2 PM pour ce tour'},
  heal:{vx:'support',snd:'aelis_heal',n:'Soin',ic:5,pa:3,r:[0,4],t:'ally',heal:[13,17],fx:4,cd:1,d:'Soigne un allié (ou toi)'},
  venom:{vx:'sig',snd:'poison',n:'Épine',ic:7,pa:3,r:[1,5],t:'enemy',los:1,dmg:[5,7],poison:[4,2],fx:5,d:'Dégâts + poison pendant 2 tours'},
  // V4.11 (lot 2, spec ChatGPT) : un nouveau sort par héros au niveau 5 (HER[].sp5)
