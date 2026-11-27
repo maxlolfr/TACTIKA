@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty} from './rules.js';
+import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
 import {sfx} from './audio.js';
 
@@ -52,7 +52,7 @@ async function ai(u,id){
 }
 export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne boucle s'arrête si un autre combat commence
  while(G.phase==='fight'&&G.fid===id){
-  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
+  const nt=(G.turn+1)%S.order.length;if(nt===0&&G.turn>=0){S.round++;if(end())return;const burn=lavaTick(S);if(burn.length){play(burn);await wait(700);if(G.fid!==id||end())return}hooks.newRound(waveTick(S))}G.turn=nt;const u=S.order[G.turn];if(u.dead)continue;G.cur=u;
   beginTurn(u);keepInView(u.x,u.y);hooks.renderTL();hooks.render();
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}

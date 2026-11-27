@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,SP5_LVL,whoOf} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,SP5_LVL,whoOf} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -44,7 +44,7 @@ export function genMap(s,seed,th,cry){
 const defWave=(Z,i)=>({turns:6,cap:6,start:3,add:[[2,1],[3,2],[4,1,Z.elite?.[i]||[...Z.pool].sort((a,b)=>MON[b].hp-MON[a].hp)[0]],[5,2]]});
 export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
  const F={zi,i,lvl:f.lvl||Z.lvl+i,pool:Z.pool,boss:i===zlen(Z)-1?Z.boss:null,elite:Z.elite?.[i],en:f.en,cry:f.cry,tip:f.tip,
-  goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]};
+  lava:f.lava,goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]};
  if(F.goal==='survive')F.wave=Z.waves?.[i]||defWave(Z,i);return F}
 export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES[zi]);
 // V4.25 : la carte II s'ouvre quand la 6e région (Titan prismatique) est terminée
@@ -169,6 +169,7 @@ export function mkUnits(s,F,hs,es,hstats){const n=F.lvl,rng=s.rng;
  for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+MON[c.k].n.toLowerCase()+(c.tag?' '+c.tag:''); // la lettre de repère reste en majuscule
   c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
+ s.lava=F.lava?{...F.lava,next:[]}:null;lavaMark(s);
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }
 export function face(u,x,y){const dx=x-u.x,dy=y-u.y;if(!dx&&!dy)return;u.dir=Math.abs(dx)>=Math.abs(dy)?(dx>0?0:3):(dy>0?1:2)}
@@ -362,6 +363,19 @@ export function waveTick(s){const w=s.wave;if(!w)return[];const out=[];
  wavePlan(s);return out}
 // plateau vidé alors que des vagues restent : la suivante est avancée au prochain tour (pas de tours d'attente)
 export function waveEmpty(s){const w=s.wave;if(!w||liveM(s).length||!w.q.length||w.next.length)return 0;const r=w.q[0].r;for(const q of w.q)if(q.r===r)q.r=s.round+1;wavePlan(s);return 1}
+// ---------- V4.29 : cases brûlantes (région 7) ----------
+// Les cases sont marquées un tour entier à l'avance (s.lava.next), puis s'embrasent au début du tour suivant.
+// Un tour sur deux (calme entre deux), ou chaque tour avec hot. Dégâts : LAVA_DMG des PV max ; Rempart les réduit, pas l'armure.
+export const lavaDmg=(s,u)=>soak(u,u.max*LAVA_DMG,1);
+export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passable(s,c.x,c.y),H=s.units.filter(u=>u.team==='h'&&!u.dead),out=[],add=c=>{if(free(c)&&!out.includes(c))out.push(c)};
+ // d'abord sous les pieds ou à côté de la moitié des héros (au moins un), pour obliger à bouger ; le reste dans la bande du milieu
+ const hs=[...H].sort(()=>s.rng()-.5).slice(0,Math.ceil(H.length/2));for(const h of hs){if(out.length>=L.n)break;add(cell(s,h.x,h.y))}
+ const mid=[...s.map.values()].filter(c=>c.x+c.y>=4&&c.x+c.y<=14&&free(c));for(let g=0;g<60&&out.length<L.n&&mid.length;g++)add(pick(s.rng,mid));
+ L.next=out.map(c=>({x:c.x,y:c.y}))}
+export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lavaMark(s);return[]}
+ const ev=[];for(const p of L.next){ev.push({type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&!MON[u.k]?.imm&&!(u.bs==='forge')){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e)}}
+ ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
+export const onLava=(s,p)=>!!s.lava&&s.lava.next.some(c=>c.x===p.x&&c.y===p.y);
 export function outcome(s){const h=s.units.some(u=>u.team==='h'&&!u.dead),m=s.units.some(u=>u.team==='m'&&!u.dead);if(!h)return'lose';
  if(s.goal==='chief'&&s.units.some(u=>u.chief&&u.dead))return'win';if(s.goal==='survive'&&s.round>(s.surv||SURVIVE))return'win';if(!m&&s.wave){if(s.wave.q.length)return null;s.cleared=1}return m?null:'win'}
 
@@ -398,7 +412,7 @@ export function aiStep(s,u){
  const ally=role==='tank'?fragile(s,u):[],guard=p=>ally.length?Math.max(0,Math.min(...ally.map(o=>man(o,p)))-2)*4:0;
  while(q.length){const p=q.shift(),d=fd.get(K(p.x,p.y));for(const[dx,dy]of DIRS){const nx=p.x+dx,ny=p.y+dy,k=K(nx,ny);if(fd.has(k)||!passable(s,nx,ny))continue;fd.set(k,d+1);q.push({x:nx,y:ny})}}
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),from={x,y};
-  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0)-(fr.some(h=>okTarget(s,u,sp,h,from))?5:0)+guard(from):100+(fd.get(k)??99)*10+d+guard(from);if(sc<bs){bs=sc;best=k}}
+  const can=u.pa>=sp.pa&&hits(from);const sc=can?d-(sp.r[1]>1?(fd.get(k)??0)*2:0)-(ampAt(s,from)>1?3:0)-(fr.some(h=>okTarget(s,u,sp,h,from))?5:0)+guard(from):100+(fd.get(k)??99)*10+d+guard(from);const burn=!MON[u.k]?.imm&&u.bs!=='forge'&&onLava(s,from)?8:0;if(sc+burn<bs){bs=sc+burn;best=k}}
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
@@ -408,6 +422,7 @@ const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:BOSS_P[u.bs];
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'kael_charge'},{type:'shake',ms:300})}return ev}
+ if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'kael_charge'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}

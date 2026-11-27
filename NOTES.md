@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.29 (27/11) : Forteresse de braise, aperçu caché
+- Adresse : `?apercu=braise`. Sans elle, rien ne change (`ZONES` : 6 régions). Sauvegarde séparée `landeTactique1_braise`, copiée de la vraie ; la vraie n'est pas écrite (import compris). Carte I considérée terminée, niveau 21 au moins.
+- 10 missions (niveaux 21 à 25), `R7` dans data.js. Cases brûlantes (`lavaMark`, `lavaTick`) : marquées un tour à l'avance (▲), 12 % des PV max, Rempart réduit, armure ignorée, un tour sur deux ou chaque tour (missions 6 et 9). Salamandre, élémentaire et Ignaros insensibles ; chevalier d'obsidienne vulnérable (poussée). L'IA évite les cases marquées. Ignaros : surchauffe sous 50 % PV (+20 % dégâts, 2 cases de plus, chaque tour). « Braises à éteindre » du plan : non codé.
+- Valeurs **proposées**, à valider. Simulateur, profil standard, 5 graines, 50 combats : 50 victoires ; PV restants de 83 % (mission 1) à 45 % (mission 9), 61 % au boss. Le robot ne joue pas la poussée dans les braises.
+- Provisoire : monstres recolorés (`PH`), sols et obstacles du Château, musique des Cavernes, sons existants. Fonds : vraies images R7.
+
 ## V4.28 (27/11) : icônes de sorts
 - `assets/spells5.webp` (`tools/prep_sorts.py`) : Charge, Tir perforant, Soin collectif (planches RPG-08/09/10 de Max), Piège et Renaissance (pictogrammes). Ressemblance des héros contrôlée à l'œil.
 
