@@ -1272,3 +1272,18 @@ test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
 });
+
+test('V4.43 : Kael à 10 sorts (tourbillon, brise-armure, provocation, contre-attaque, rage, jugement)',async()=>{
+ const r=await import('../src/rules.js'),{HER,SP}=await import('../src/data.js');
+ assert.equal(HER[0].sp.length+HER[0].learn.length,10);for(const[id]of HER[0].learn)assert.ok(SP[id],id);
+ assert.equal(r.knownSpells({lvl:26},0).length,8);assert.equal(r.loadoutOf({lvl:50},0).length,6);
+ const F=r.fightSpec(7,0,1),s=r.newBattle(r.mulberry(9)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:30,items:[],up:{},sp:[null,null,null]},i)));
+ const k=s.units.find(u=>u.id==='h0'),m=s.units.find(u=>u.team==='m');m.x=m.gx=k.x+1;m.y=m.gy=k.y;if(!r.occ(s,m.x,m.y)||r.occ(s,m.x,m.y)!==m)return;
+ // brise-armure : +25 % de dégâts subis
+ const a=r.soak(m,100);r.applySpell(s,k,SP.sunder,m);assert.equal(m.sunder.pct,.25);assert.equal(r.soak(m,100),Math.round(a*1.25)||r.soak(m,100));
+ r.endTurn(m);r.endTurn(m);assert.ok(!m.sunder);
+ // provocation : le monstre ne vise que Kael
+ r.applySpell(s,k,SP.taunt,k);assert.equal(m.taunt,k.id);const st=r.aiStep(s,m);if(st&&st.type==='cast')assert.equal(st.target,k);r.endTurn(m);assert.ok(!m.taunt);
+ // contre-attaque : riposte au contact
+ r.applySpell(s,k,SP.counter,k);assert.ok(k.counter);const mh=m.hp;r.applySpell(s,m,m.atk,k);if(!k.dead)assert.ok(m.hp<mh);r.beginTurn(k);assert.ok(!k.counter);
+});

@@ -256,7 +256,7 @@ export function guideSetup(s){const f=s.units.find(u=>u.k==='archer'),m=s.units.
 
 // ---------- dégâts, sorts ----------
 // Bouclier : dégâts ÷2 ; armure en % ; au moins 1 dégât.
-export function soak(t,amt,pen=0){if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));return Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))))}
+export function soak(t,amt,pen=0){if(t.sunder)amt*=1+t.sunder.pct;if(t.shield>0)amt=Math.ceil(amt*(t.guardK||.5));return Math.max(1,Math.round(amt*(1-(t.armor||0)*(1-pen))))}
 // V4.37 : part des dégâts qu'inflige encore une unité affaiblie
 export const weakK=u=>u.weak?1-u.weak.pct:1;
 // Dégâts d'un sort avant bouclier et armure, pour un tirage `roll`
@@ -329,7 +329,11 @@ export function applySpell(s,u,sp,c){
   if(sp.curse&&!t.dead&&t.team!==u.team){t.curse=2;ev.push({type:'status',t,text:'Maudit : soins −50 %',color:'#d6b14a'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
+  if(sp.sunder&&!t.dead&&t.team!==u.team){t.sunder={pct:sp.sunder[0],turns:sp.sunder[1]};ev.push({type:'status',t,text:`Armure brisée +${Math.round(sp.sunder[0]*100)} %`,color:'#ff9a5a'})}
+  if(sp.dmg&&t.counter&&!t.dead&&!u.dead&&t.team!==u.team&&man(t,u)===1){const r=SP.slash.dmg,h=hurt(s,u,(r[0]+r[1])/2*(t.mult||1)*(t.dmgMul||1)*(t.buff?1+t.buff.pct:1)*t.counter,'counter');if(h)ev.push({type:'status',t,text:'Contre-attaque !',color:'#ffd65a',snd:'slash'},h)}
   if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}
+  if(sp.taunt){let n=0;for(const m of s.units)if(m.team!==u.team&&!m.dead&&man(m,u)<=sp.taunt){m.taunt=u.id;n++}ev.push({type:'status',t,text:n?`Provocation (${n})`:'Personne à portée',color:'#ff7a5a'})}
+  if(sp.counter){t.counter=sp.counter;ev.push({type:'status',t,text:'Contre-attaque prête',color:'#ffd65a'})}
   if(sp.shield){t.shield=1;ev.push({type:'status',t,text:'Rempart',color:'#9fd0ff'})}
   if(sp.buff){t.buff={pct:sp.buff,turns:sp.buffT||2};ev.push({type:'status',t,text:`+${Math.round(sp.buff*100)} %`,color:'#ffd65a'})}
   if(sp.pmBonus){t.pm+=sp.pmBonus;ev.push({type:'status',t,text:`+${sp.pmBonus} PM`,color:'#7fd0ff'})}}
@@ -368,11 +372,11 @@ export const slowFor=(sp,t)=>sp.slow>1&&!t.boss?sp.slow:1;
 export const slowedPM=u=>u.slow?Math.max(u.slow>1?1:0,u.maxPM-u.slow):u.maxPM;
 // Début de tour : PM remis au maximum, PA au maximum plus le report ; recharges et bouclier diminuent d'un tour.
 export const carryPA=u=>u.team==='h'?Math.min(PA_CARRY.max,Math.floor(u.pa/PA_CARRY.per)):0;
-export function beginTurn(u){delete u.hitBy;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
+export function beginTurn(u){delete u.hitBy;delete u.counter;delete u.casts;if(u.trap&&--u.trap.left<=0)delete u.trap;u.carried=u.carry||0;delete u.carry;u.pa=u.maxPA+u.carried;u.pm=slowedPM(u);delete u.slow;if(u.curse)u.curse--;for(const k in u.cd)if(u.cd[k]>0)u.cd[k]--;if(u.shield>0)u.shield--}
 // Poison en début de tour : dégâts puis un tour de moins. Renvoie les événements.
 export function poisonTick(s,u){const ev=[];for(const[k,fx]of[['poison',5],['burn',1]]){const e=u[k];if(!e||u.dead)continue;ev.push({type:'fx',x:u.x,y:u.y,i:fx,w:.9},hurt(s,u,e.d,k));if(--e.turns<=0)delete u[k]}return ev.filter(Boolean)}
 // Fin de tour : les PA non dépensés se reportent en partie, le bonus de dégâts diminue d'un tour.
-export function endTurn(u){u.carry=carryPA(u);if(u.weak&&--u.weak.turns<=0)delete u.weak;if(u.buff&&--u.buff.turns<=0)delete u.buff}
+export function endTurn(u){u.carry=carryPA(u);delete u.taunt;if(u.sunder&&--u.sunder.turns<=0)delete u.sunder;if(u.weak&&--u.weak.turns<=0)delete u.weak;if(u.buff&&--u.buff.turns<=0)delete u.buff}
 // null tant que le combat continue, sinon 'win' ou 'lose'.
 // objectifs (V2.6d) : s.goal = 'chief' (abattre le chef suffit) ou 'survive' (tenir jusqu'au début du tour SURVIVE+1)
 export const SURVIVE=4;
@@ -437,7 +441,7 @@ const fragile=(s,u)=>s.units.filter(o=>o.team===u.team&&!o.dead&&o!==u&&MON[o.k]
 function prefer(s,u,role,h){const near=role==='tank'?Math.min(99,...fragile(s,u).map(o=>man(o,h))):0;
  return(s.focus&&s.focus.r===s.round&&s.focus.id===h.id?-1000:0)+(role==='flank'&&h.hi?-300:0)+near*20+h.hp}
 export function aiStep(s,u){
- const sp=u.atk,heroes=s.units.filter(h=>h.team==='h'&&!h.dead);if(!heroes.length)return null;
+ const sp=u.atk,all=s.units.filter(h=>h.team==='h'&&!h.dead),tz=u.taunt&&all.find(h=>h.id===u.taunt),heroes=tz?[tz]:all;if(!heroes.length)return null; // V4.43 : provoqué, il ne vise que Kael
  const role=MON[u.k]?.ai,rc=u.pm>0?reach(s,u,u.pm):null,hits=from=>heroes.some(h=>okTarget(s,u,sp,h,from)),gap=p=>Math.min(...heroes.map(h=>man(h,p)));
  // distance : collé à un héros au début de son tour, il recule vers la case la plus sûre d'où il peut encore tirer
  if(role==='range'&&rc&&u.pa>=sp.pa&&u.backed!==s.round&&gap(u)===1){let k=null,bs=-1;for(const[c,d]of rc.dist){const[x,y]=c.split(',').map(Number),p={x,y},g=gap(p);if(g>=2&&hits(p)&&g*10-d>bs){bs=g*10-d;k=c}}
@@ -512,5 +516,5 @@ const koAt=(s,u,c)=>s.units.find(o=>o.dead&&o.team===u.team&&o!==u&&o.x===c.x&&o
 // case où le héros relevé réapparaît : la sienne si libre, sinon une voisine libre
 function reviveSpot(s,h){if(!occ(s,h.x,h.y))return{x:h.x,y:h.y};for(const[dx,dy]of DIRS){const x=h.x+dx,y=h.y+dy;if(passable(s,x,y)&&!occ(s,x,y))return{x,y}}return null}
 function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
- h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.buff;delete h.carry;h.shield=0;
+ h.x=h.gx=p.x;h.y=h.gy=p.y;h.dead=false;h.hp=Math.max(1,Math.round(h.max*.25));delete h.poison;delete h.slow;delete h.curse;delete h.counter;delete h.buff;delete h.carry;h.shield=0;
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}
