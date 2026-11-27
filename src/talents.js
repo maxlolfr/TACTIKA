@@ -4,8 +4,8 @@ import {HER} from './data.js';
 // fx : dmgMul (dégâts directs des sorts), hpMul, healMul, maxPM, sp:{id:{champs du sort remplacés}}
 // V4.38 : Orion a 5 paliers par voie (valeurs pilotes de ChatGPT, 27/11, non validées)
 export const TIER=[3,7,11], TIER_ORION=[3,7,11,25,40];
-// V4.46 : Kael (0, V4.46) et Fenn (1, V4.47) passent aussi à 5 paliers ; Aelis suit
-export const FIVE=[0,1,3];
+// V4.46 : Kael (0, V4.46), Fenn (1, V4.47) et Aelis (2, V4.48) passent aussi à 5 paliers
+export const FIVE=[0,1,2,3];
 export const tiersFor=i=>FIVE.includes(i)?TIER_ORION:TIER;
 export const SPECS=[
  [{id:'berserk',n:'Berserker',ic:['spec',0],d:'Frappe plus fort, achève les blessés.',t:[['Fureur','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Rage','Critique 22 % au lieu de 12 %',{crit:.22}],['Exécution','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}],
@@ -26,9 +26,15 @@ export const SPECS=[
   {id:'eclaireur',n:'Éclaireur',ic:['tal',2],d:'Bouge plus, esquive.',t:[['Agilité','4 PM au lieu de 3',{maxPM:4}],['Vent rapide','Bottes ailées : +3 PM',{sp:{boots:{pmBonus:3,d:'+3 PM pour ce tour'}}}],['Insaisissable','15 % de chances d’esquiver une attaque',{dodge:.15}],
    ['Repli vif','Repli acrobatique : recharge 2 au lieu de 3',{sp:{dodge:{cd:2}}}],
    ['Saut de l’ombre','Repli acrobatique : portée 5',{sp:{dodge:{r:[1,5],d:'Fenn saute sur une case libre en vue (jusqu’à 5 cases), sans dépenser de PM'}}}]]}],
- [{id:'guerisseuse',n:'Guérisseuse',ic:['spec',5],d:'Des soins plus forts, jusqu’à la résurrection.',t:[['Lumière bienfaitrice','Soins ×1,20',{healMul:1.2}],['Grâce','Portée de Soin : 5',{sp:{heal:{r:[0,5]}}}],['Renaissance','Nouveau sort : relève un héros KO (1 fois par combat)',{add:['revive']}]]},
-  {id:'druide',n:'Druide',ic:['spec',7],d:'Un poison qui ronge et se propage.',t:[['Venin puissant','Poison d’Épine : 6 par tour',{sp:{venom:{poison:[6,2],d:'Dégâts + poison (6 par tour) pendant 2 tours'}}}],['Venin persistant','Poison : 3 tours',{sp:{venom:{poison:[6,3],d:'Dégâts + poison (6 par tour) pendant 3 tours'}}}],['Contagion','Le poison se propage à la mort de la cible',{sp:{venom:{spread:1,d:'Dégâts + poison (6 par tour, 3 tours), se propage à la mort'}}}]]},
-  {id:'enchant',n:'Enchanteresse',ic:['spec',4],d:'Renforce toute l’équipe.',t:[['Aura supérieure','Aura : +40 % de dégâts',{sp:{aura:{buff:.4,d:'+40 % de dégâts à un allié, 2 tours'}}}],['Bénédiction durable','Aura : 3 tours',{sp:{aura:{buffT:3,d:'+40 % de dégâts à un allié, 3 tours'}}}],['Bénédiction collective','Aura touche tous les héros',{sp:{aura:{all:1,d:'+40 % de dégâts à tous les héros, 3 tours'}}}]]}],
+ [{id:'guerisseuse',n:'Guérisseuse',ic:['spec',5],d:'Des soins plus forts, jusqu’à la résurrection.',t:[['Lumière bienfaitrice','Soins ×1,20',{healMul:1.2}],['Grâce','Portée de Soin : 5',{sp:{heal:{r:[0,5]}}}],['Renaissance','Nouveau sort : relève un héros KO (1 fois par combat)',{add:['revive']}],
+   ['Égide lumineuse','Bouclier magique : 35 % des PV max de l’allié',{sp:{ward:{ward:[.35,2],d:'Bouclier qui absorbe des dégâts à hauteur de 35 % des PV max de l’allié, 2 tours'}}}],
+   ['Bénédiction fervente','Bénédiction ancienne : soin 22–28',{sp:{bless:{heal:[22,28],d:'Soigne (22–28) et purifie tous les héros. 1 fois par combat'}}}]]},
+  {id:'druide',n:'Druide',ic:['spec',7],d:'Un poison qui ronge et se propage.',t:[['Venin puissant','Poison d’Épine : 6 par tour',{sp:{venom:{poison:[6,2],d:'Dégâts + poison (6 par tour) pendant 2 tours'}}}],['Venin persistant','Poison : 3 tours',{sp:{venom:{poison:[6,3],d:'Dégâts + poison (6 par tour) pendant 3 tours'}}}],['Contagion','Le poison se propage à la mort de la cible',{sp:{venom:{spread:1,d:'Dégâts + poison (6 par tour, 3 tours), se propage à la mort'}}}],
+   ['Racines épineuses','Racines : dégâts +25 %',{sp:{roots:{k:1.25}}}],
+   ['Rayon vorace','Rayon lunaire : soigne 60 % des dégâts infligés',{sp:{moon:{drain:.6,d:'Ignore l’armure ; soigne l’allié le plus blessé de 60 % des dégâts infligés'}}}]]},
+  {id:'enchant',n:'Enchanteresse',ic:['spec',4],d:'Renforce toute l’équipe.',t:[['Aura supérieure','Aura : +40 % de dégâts',{sp:{aura:{buff:.4,d:'+40 % de dégâts à un allié, 2 tours'}}}],['Bénédiction durable','Aura : 3 tours',{sp:{aura:{buffT:3,d:'+40 % de dégâts à un allié, 3 tours'}}}],['Bénédiction collective','Aura touche tous les héros',{sp:{aura:{all:1,d:'+40 % de dégâts à tous les héros, 3 tours'}}}],
+   ['Chant rapide','Aura : recharge 2 au lieu de 3',{sp:{aura:{cd:2}}}],
+   ['Aura purifiante','Aura purifie aussi les alliés touchés',{sp:{aura:{cleanse:1,d:'+40 % de dégâts à tous les héros, 3 tours, et purifie leurs maux'}}}]]}],
  [{id:'pyro',n:'Pyromancien',ic:['sico',2],d:'Brûle plus fort et plus longtemps.',t:[
    ['Braises vives','Brûlure de Flamme : 4 par tour au lieu de 3',{sp:{flame:{burn:[4,2],d:'Dégâts + brûlure (4 par tour) pendant 2 tours'}}}],
    ['Longue flamme','Portée de Flamme : 5',{sp:{flame:{r:[1,5]}}}],
