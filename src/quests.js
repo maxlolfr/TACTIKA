@@ -1,4 +1,4 @@
-// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q27 : région 9 (marais). V4.67 : Q28–Q30 région 10 (citadelle). V4.68 : Q31–Q35 région 11 (givre). Q36–Q40 : région 12 et quêtes de village pas encore jouables.
+// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q27 : région 9 (marais). V4.67 : Q28–Q30 région 10 (citadelle). V4.68 : Q31–Q35 région 11 (givre). V4.74 : Q36 région 12 (éther). Q37–Q40 (signatures des héros, village) pas encore jouables.
 // V4.55 : quêtes scénarisées (carte I, Q01 à Q18 de SCENARIO-TACTIKA.md). Un combat spécial par quête, dans une région déjà ouverte,
 // avec un objectif existant (survive / chief / élite / victoire). Récompense unique ; le combat reste rejouable sans bonus.
 // z : région · l : niveau ajouté à celui de la région · g : objectif · e : élite · r : 1 = objet garanti · need : héros à recruter
@@ -37,4 +37,5 @@ export const QUESTS=[
  {id:'Q32',z:10,l:1,r:1,t:'Feu sous la glace',d:'Orion a détecté des sources de chaleur sous la glace. Dégage les loups qui les gardent pour qu’il les étudie.',c:'Orion : « Je retire ce que j’ai dit sur l’impossible. »'},
  {id:'Q33',z:10,l:2,e:'frostel',need:5,r:1,t:'Dernier gardien',d:'Un élémentaire de givre garde encore un serment oublié. Lyria veut l’affronter pour le porter à son tour.',c:'Lyria : « Nous porterons désormais son serment. »'},
  {id:'Q34',z:10,l:2,e:'knightN',r:0,t:'Reflets du passé',d:'Dans la neige, d’anciens ennemis semblent revivre. Fais face à ce que vous étiez.',c:'Kael : « Nous ne sommes plus les aventuriers du départ. »'},
- {id:'Q35',z:10,l:2,g:'survive',r:1,t:'Fragments perdus',d:'Des fragments d’équipement sont éparpillés sur la glace. Sécurise la zone le temps de les rassembler.',c:'Orion : « Chaque fragment compte. »'}];
+ {id:'Q35',z:10,l:2,g:'survive',r:1,t:'Fragments perdus',d:'Des fragments d’équipement sont éparpillés sur la glace. Sécurise la zone le temps de les rassembler.',c:'Orion : « Chaque fragment compte. »'},
+ {id:'Q36',z:11,l:1,g:'survive',r:1,t:'Dernière lumière',d:'Une dernière lueur d’Éther vacille dans le sanctuaire. Aelis la protège : tiens la position jusqu’à ce qu’elle soit à l’abri.',c:'Aelis : « Cette lumière survivra. »'}];

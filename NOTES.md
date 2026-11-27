@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.74 (27/11 nuit) : quête Q36 « Dernière lumière » (région 12)
+- `Q36` (z 11, niveau 47, objectif survie, objet garanti) : ouverte après les Terres du Givre (même règle que Q31 à Q35). Aucune règle nouvelle. 158 tests OK ; essai navigateur 844×390 sans erreur.
+- **Reste** : Q37 Honneur retrouvé (signature Kael), Q38 Voix intérieure (signature Aelis), Q39 Six destins (signatures), Q40 Un village pour demain : elles demandent des objets « signature », des conditions d'arcs de compagnons et des paliers de village, donc de nouvelles règles et une spécification (ChatGPT/Max). Non commencées.
+
 ## V4.73 (27/11 nuit) : région 12, Sanctuaire de l'Éther (10 missions, boss Briseur primordial), images du dépôt studio
 - **En jeu** : `R12` (carte II, niveaux 46 à 50, ouverte après les Terres du Givre), `THEMES[12]`, fonds `assets/bg/eter.webp` (portrait 1536×2752, image 1998 du studio) et `eter-l.webp` (paysage 2528×1696, image 1997), étoile Gemini effacée par `tools/prep_bg.py` (ils remplacent les anciens fonds 941×1672 et 1536×1024). Musique `castle` / `boss_map2`. Originaux sans perte dans `art/r12/` (`r12-*.webp`), découpe par `tools/prep_r12.py`.
 - **Sols** : 8 sols du studio (image 2003) -> `assets/sol_eter.webp`. Le doublon R8 (`r12-sols-gemini-DOUBLON-sables.webp`) n'est plus utilisé. Les dalles 5 et 6 avaient une brume magenta : retirée par le script, bas du bloc reconstitué d'après la dalle 7 (inpainting, léger flou sur l'arête du bas).
