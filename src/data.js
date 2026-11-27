@@ -295,3 +295,9 @@ export const PA_RULE={recast:1};
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
 
 addOrion();addRecruit(NYRA,['for','vit','agi']);addRecruit(LYRIA,['for','int','vit']); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister
+// V4.59 : équipement de Nyra (4) et Lyria (5) sans nouvel objet ni nouvelle image : elles portent une partie de ce que portent Fenn et Kael
+// (provisoire, en attendant la table d'équipement de ChatGPT). Lyria : tout l'équipement de Kael. Nyra : armures, accessoires et bijoux de Fenn, plus les épées et lames de Kael.
+for(const o of ITEMS){const w=whoOf(o);if(w.length>=HER.length)continue;const add=[];
+ if(w.includes(0))add.push(5);
+ if(w.includes(1)&&o.sl!=='arme'||w.includes(0)&&o.sl==='arme'&&/Épée|Lame/.test(o.n))add.push(4);
+ if(add.length)o.who=[...new Set([...w,...add])].sort((a,b)=>a-b)}
