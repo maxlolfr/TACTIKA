@@ -167,8 +167,8 @@ body.camp #top,body.camp #panel{visibility:hidden}
  #result .lootbox{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:0 10px;justify-content:center;width:100%}
  #result .loot canvas{width:36px;height:36px}#result .loot{margin:3px 0;padding:6px 10px;font-size:13px}
  #result>.btn{margin-top:8px!important}
- #armes .specs{grid-template-columns:repeat(3,minmax(0,1fr));max-width:none}
- #armes .spec{flex-direction:column;text-align:center}
+
+
  #sv textarea{height:70px}
 }
 
@@ -408,3 +408,65 @@ body.camp #exc{display:none}
 
 /* V4.60 : frise des tours défilable sans barre grise */
 #tl{scrollbar-width:none;-ms-overflow-style:none}#tl::-webkit-scrollbar{display:none;width:0;height:0}
+
+/* ===== V4.61 : Académie premium (talents reliés, 3 colonnes grand écran, vertical sur smartphone) ===== */
+#armes .specs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;max-width:1100px;align-items:stretch}
+@media (min-width:760px){#armes .specs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#armes .spec{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:10px;padding:12px;min-width:0;border:2px solid #7a6330;border-radius:16px;
+ background:linear-gradient(rgba(10,17,32,.72),rgba(7,12,24,.9)),url(assets/hud2/texture.webp) 0 0/220px 220px;box-shadow:inset 0 0 0 1px #0008,0 4px 14px #0009}
+#armes .spec.on{border-color:var(--gold);box-shadow:0 0 16px #ffd65a77,inset 0 0 0 1px #ffd65a44}
+#armes .sphd{display:flex;gap:10px;align-items:center;min-width:0}
+#armes .sphd>canvas{width:64px;height:64px;flex:none;border-radius:14px;border:2px solid #c9a85c;background:#0b1424;padding:2px}
+#armes .sphd b{display:block;font-size:18px;color:#ffd65a}#armes .sphd small{display:block;color:#cdd6ea;font-size:12.5px;line-height:1.3}
+#armes .chain{list-style:none;margin:0;padding:0;position:relative}
+#armes .chain li{position:relative;display:flex;gap:10px;align-items:flex-start;padding:0 0 12px;min-width:0}
+#armes .chain li:last-child{padding-bottom:0}
+#armes .chain li:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:2px;width:3px;border-radius:2px;background:#3a4663}
+#armes .chain li.got:not(:last-child)::before{background:linear-gradient(#ffd65a,#c9a85c)}
+#armes .chain .nd{position:relative;flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#0b1424;border:3px solid #3a4663;color:#9aa6c4;font:800 16px system-ui}
+#armes .chain .nd canvas{width:34px;height:34px;border-radius:50%}
+#armes .chain .nd u{position:absolute;right:-5px;bottom:-5px;min-width:20px;height:20px;border-radius:10px;padding:0 4px;background:#101a30;border:2px solid #3a4663;font:800 11px/16px system-ui;text-decoration:none;color:#cdd6ea;text-align:center;box-sizing:border-box}
+#armes .chain li.can .nd{border-color:#5aa6ff;box-shadow:0 0 8px #5aa6ff66}#armes .chain li.can .nd u{border-color:#5aa6ff;color:#bfe0ff}
+#armes .chain li.got .nd{border-color:#ffd65a;box-shadow:0 0 10px #ffd65a99}#armes .chain li.got .nd u{background:#c9a85c;border-color:#ffd65a;color:#1a1204}
+#armes .chain li.lock .nd canvas{filter:grayscale(1) brightness(.55)}#armes .chain li.lock{opacity:.7}
+#armes .chain li>div{flex:1;min-width:0;font-size:13px;line-height:1.3;color:#e8eefc}
+#armes .chain em{display:block;font-style:normal;font-size:11px;letter-spacing:.3px;color:#9aa6c4}
+#armes .chain li.got em{color:#ffd65a}#armes .chain li.can em{color:#8fc4ff}
+#armes .chain b{color:#fff1cf;font-size:14px}#armes .chain small{display:block;color:#cdd6ea;font-size:12px}#armes .chain i{color:#8fc4ff}
+#armes .spec .btn{align-self:stretch;margin-top:auto;padding:10px 12px;font-size:14px}
+#armes .mast{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));max-width:1100px;min-width:0}
+#armes .mrow{background:linear-gradient(rgba(10,17,32,.72),rgba(7,12,24,.9)),url(assets/hud2/texture.webp) 0 0/220px 220px;border:2px solid #7a6330;border-radius:14px;min-width:0}
+#armes .mrow small{color:#cdd6ea}#armes .mrow b{color:#fff1cf}
+#armes .mrow .rk i{font-style:normal;color:#4a5878;font-size:14px}#armes .mrow .rk i.on{color:#ffd65a;text-shadow:0 0 6px #ffd65a99}
+#armes{overflow-x:hidden}#armes>*{min-width:0;max-width:100%}
+@media (orientation:landscape) and (max-height:600px){#armes .specs{grid-template-columns:repeat(3,minmax(0,1fr))}#armes .spec{flex-direction:column;text-align:left}}
+
+/* ===== V4.61 : fiche du héros actif, barres de vie et Fin du tour d'après la maquette Royal Arcane Compact ===== */
+.hud2{--ptw:60px}
+@media (orientation:landscape){.hud2{--ptw:56px}}
+@media (orientation:landscape) and (min-height:600px){.hud2{--ptw:72px}}
+@media (min-width:1000px) and (min-height:700px){.hud2{--ptw:88px}}
+.hud2 #who{display:grid!important;grid-template-columns:auto minmax(0,1fr);column-gap:9px;align-items:center;font-size:inherit}
+.hud2 #who>canvas.pt{width:var(--ptw);height:var(--ptw);border-radius:14px;border:2px solid var(--ra-or2);background:radial-gradient(#34445c,#0e1522);box-shadow:0 0 0 1px #000b,0 0 10px #e9cf9455,inset 0 0 8px #0009;padding:0}
+.hud2 #who .wi{display:grid;gap:3px;min-width:0}
+.hud2 #who .nm{font:800 clamp(15px,1.9vw,22px)/1.1 Georgia,'Times New Roman',serif;color:var(--ra-or2);text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud2 #hpb{height:11px;border-radius:6px;border:1px solid #b99a6088;background:#05080f;overflow:hidden;box-shadow:inset 0 1px 3px #000}
+.hud2 #hpb i{display:block;height:100%;background:linear-gradient(#8be0a8,#3f9b66 55%,#2f7a50);box-shadow:0 0 6px #56b47b88}
+.hud2 #hpt{font:700 clamp(12px,1.5vw,15px)/1 system-ui;color:var(--ra-iv)}
+.hud2 #who .pp{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-width:0}
+.hud2 #who .pa,.hud2 #who .pm{font:800 clamp(12px,1.6vw,16px)/1 system-ui;padding:3px 9px 3px 4px;border-radius:12px;background:linear-gradient(#0f1828,#0a1020);box-shadow:inset 0 0 0 1px #b99a6088}
+.hud2 #who .en{font-size:11px;color:var(--ra-dan)}
+.hud2 #end{text-transform:uppercase;letter-spacing:.6px;border:2px solid #fff4!important;border-radius:14px!important;box-shadow:0 0 0 1px #5a4214,0 3px 0 #5a4214,0 5px 12px #000a,inset 0 1px 0 #fff8!important;font:900 clamp(14px,1.8vw,19px)/1.1 Georgia,serif;min-height:46px}
+.hud2 #end small{text-transform:none;letter-spacing:0;font:700 10px/1 system-ui;opacity:.8;display:block;margin-top:2px}
+@media (orientation:portrait){.hud2 #end{min-width:104px}.hud2 #who>canvas.pt{width:58px;height:58px}.hud2 #hpb{height:9px}.hud2 #who .nm{font-size:15px}}
+@media (orientation:landscape){.hud2 #who{grid-template-columns:var(--ptw) minmax(0,1fr);row-gap:4px}.hud2 #who .wi{display:contents}.hud2 #who>canvas.pt{grid-row:1/4}.hud2 #who .nm{grid-column:2;grid-row:1;align-self:end}.hud2 #hpb{grid-column:2;grid-row:2}.hud2 #hpt{grid-column:2;grid-row:3;align-self:start}.hud2 #who .pp{grid-column:1/-1;grid-row:4;margin-top:2px}}
+.hud2 #end{background:linear-gradient(#fff0b0,#f0c04a 45%,#c98f20 100%)!important;color:#2a1804!important;text-shadow:0 1px 0 #fff9}
+.hud2 #end:disabled{filter:grayscale(.6) brightness(.8)}
+/* tablette en portrait : panneau du bas plus généreux (portrait, sorts et Fin du tour plus grands) */
+@media (orientation:portrait) and (min-width:600px){
+ .hud2 #who>canvas.pt{width:88px;height:88px}.hud2 #who .nm{font-size:22px}.hud2 #hpb{height:13px}.hud2 #hpt{font-size:16px}
+ .hud2 #who .pa,.hud2 #who .pm{font-size:17px}.hud2 #who .pa img,.hud2 #who .pm img{width:24px;height:24px}
+ .hud2 #panel{padding:12px 18px calc(env(safe-area-inset-bottom) + 12px);row-gap:10px}
+ .hud2 .sp,.hud2 #spells:has(>:nth-child(5))>.sp{max-width:92px}.hud2 .sp small{font-size:11px}
+ .hud2 #end{min-width:190px;min-height:64px;font-size:22px}.hud2 #hint{font-size:13px}
+}

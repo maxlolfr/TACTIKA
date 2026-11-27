@@ -75,10 +75,14 @@ function render(){renderTL();
  if(!u){$('exc').className='';return}
  const me=u.team==='h'&&G.phase==='fight';
  G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;
- $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),30,u.team==='h'?.62:0);$('who').append(ic,`${u.n}`);
- const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=`${u.hp}/${u.max} PV`;$('who').append(hb,ht);
+ $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),HUD2?84:30,u.team==='h'?.62:0);
+ const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=HUD2?`${u.hp} / ${u.max}`:`${u.hp}/${u.max} PV`;
  // V4.0.5 : PA et PM sur la ligne du nom ; #pts ne garde que la rangée des cibles (flottante en portrait)
- $('who').insertAdjacentHTML('beforeend',`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${u.pa} PA</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${u.pm} PM</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">Tour ennemi…</span>`));$('pts').innerHTML='';
+ const pp=`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${HUD2?'PA ':''}${u.pa}${HUD2?'':' PA'}</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${HUD2?'PM ':''}${u.pm}${HUD2?'':' PM'}</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">Tour ennemi…</span>`);
+ if(HUD2){ // V4.61 : fiche du héros actif comme la maquette (portrait cadré or, nom, PV avec cœur, pastilles PA / PM)
+  ic.classList.add('pt');const wi=document.createElement('div');wi.className='wi';wi.insertAdjacentHTML('beforeend',`<b class="nm">${u.n}</b>`);wi.append(hb,ht);wi.insertAdjacentHTML('beforeend',`<div class="pp">${pp}</div>`);$('who').append(ic,wi)}
+ else{$('who').append(ic,`${u.n}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
+ $('pts').innerHTML='';
  const tg=document.createElement('div');tg.id='tgt';
  if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
  $('pts').append(tg);
@@ -258,8 +262,16 @@ function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.class
  const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
  HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
-  for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon(...x.ic,56));
-   c.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b> <small>${x.d}</small>`+x.t.map(([tn,td],k)=>{const lv=tiersFor(i)[k],ok=save.lvl>=lv,w=waits(i,x.t[k][2]);return`<p class="${ok?'':'off'}"><em>${!ok?'🔒 niv '+lv:on&&!w?'✓ actif':'niv '+lv}</em> <b>${tn}</b> : ${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</p>`}).join('')+'</div>');
+  for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');
+   const top=document.createElement('div');top.className='sphd';top.append(icon(...x.ic,64));top.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b><small>${x.d}</small></div>`);c.append(top);
+   // V4.61 : talents reliés par une ligne verticale ; acquis (doré) / disponible (bleu, si on choisit la spécialisation) / verrouillé (gris)
+   const ol=document.createElement('ol');ol.className='chain';
+   x.t.forEach(([tn,td,m],k)=>{const lv=tiersFor(i)[k],ok=save.lvl>=lv,w=waits(i,m),st=!ok?'lock':on&&!w?'got':'can',sid=Object.keys(m?.sp||{}).find(id=>SPI[id]);
+    const li=document.createElement('li');li.className=st;const nd=document.createElement('span');nd.className='nd';
+    if(sid)nd.append(icon(...SPI[sid],34));else nd.textContent=lv;
+    if(sid||st==='lock')nd.insertAdjacentHTML('beforeend',`<u>${st==='lock'?'🔒':lv}</u>`);li.append(nd);
+    li.insertAdjacentHTML('beforeend',`<div><em>${st==='got'?'✓ acquis':st==='lock'?'niveau '+lv:'niveau '+lv+(on?'':' · disponible')}</em> <b>${tn}</b><small>${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</small></div>`);ol.append(li)});
+   c.append(ol);
    const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('buff',.7);armes()};c.append(b);row.append(c)}
   A.append(row);if(hasMastery(i))mastBlock(A,i)});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
@@ -271,7 +283,7 @@ function mastBlock(A,i){const h=HER[i],known=knownSpells(save,i),left=mastLeft(s
  const L=document.createElement('div');L.className='mast';
  for(const id of ids){const r=rankOf(save,i,id),ok=known.includes(id),lv=(h.learn||[]).find(([s])=>s===id)?.[1],c=document.createElement('div');c.className='mrow'+(ok?'':' off');c.dataset.sp=id;c.append(icon(...SPI[id],40));
   const cost=r<3?MAST_COST[r+1]-MAST_COST[r]:0;
-  c.insertAdjacentHTML('beforeend',`<div><b>${SP[id].n}</b> <span class="rk">${[1,2,3].map(k=>k<=r?'◆':'◇').join('')} rang ${RK[r]}</span><small>${!ok?`🔒 sort appris au niveau ${lv}`:`Actuel : ${mastTxt(id,r)}${r<3?` · rang ${RK[r+1]} : <b>${mastTxt(id,r+1)}</b> (${cost} points)`:' · maîtrise complète'}`}</small></div>`);
+  c.insertAdjacentHTML('beforeend',`<div><b>${SP[id].n}</b> <span class="rk">${[1,2,3].map(k=>k<=r?'<i class="on">◆</i>':'<i>◇</i>').join('')} rang ${RK[r]}</span><small>${!ok?`🔒 sort appris au niveau ${lv}`:`Actuel : ${mastTxt(id,r)}${r<3?` · rang ${RK[r+1]} : <b>${mastTxt(id,r+1)}</b> (${cost} points)`:' · maîtrise complète'}`}</small></div>`);
   if(ok&&r<3){const b=document.createElement('button');b.className='btn';b.textContent=`Rang ${RK[r+1]} · ${cost} pts`;b.disabled=!canRaise(save,i,id);b.onclick=()=>{if(raise(save,i,id)){store();sfx('buff',.7);armes()}};c.append(b)}
   L.append(c)}
  A.append(L);
