@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.77 (27/11 nuit) : récompenses de Q37 à Q40 vérifiées ; validation ChatGPT de la V4.76
+- **Vérification réelle** : l'attribution des objets passe dans `grantQuest` (rules.js, sortie de l'écran de victoire). Essai navigateur bout en bout (victoire forcée par l'écran de résultat) : Q37 donne l'objet 79 ; Q39 donne 81 à 84 ; le stockage local contient les objets et `save.q` ; après rechargement, rien n'a changé ; rejouer Q37 ne redonne rien (`save.q` vaut 1, et `grantQuest` ignore les objets déjà possédés). Test Node pour Q37 à Q40 (aucun doublon, aller-retour JSON, rareté épique, Q36 = un seul objet de butin). 161 tests OK.
+- **Validé par ChatGPT (V4.76)** : Q37 à Q40 et les 7 objets signature (obtention exclusive par les quêtes, aucune image maintenant), mécanique actuelle de la Reine des marécages.
+- **À intégrer plus tard (améliorations décidées, non codées)** : ancrages destructibles d'Aetherion ; rupture tactique du bouclier du Roi du Givre (par placement) ; un objet signature réellement adapté à Orion (aujourd'hui l'Orbe du serment commun est partagé par les six) ; icônes signature originales ; célébration de Q40 rattachée à l'épilogue du nouveau scénario V2.
+- Pas de campagne de simulations ni d'équilibrage pour l'instant.
+
 ## V4.76 (27/11 nuit) : mécaniques de boss non codées (valeurs provisoires, pas d'équilibrage)
 - **Aetherion** (`astral`, `BOSS_P.astral` = [3, 0]) : **téléportation** à côté du héros le plus blessé tous les 3 tours (tous les 2 tours après sa phase à 50 %), annoncée par le compteur de cycle comme les autres boss ; effets sur la case de départ et d'arrivée, `stepOn` appliqué. Pas d'« ancrages » : le plan directeur ne les décrit pas, non codés.
 - **Reine des marécages** (`swamp`) : sous 50 % PV, **zones toxiques** (3 cases vertes ☣ marquées un tour avant, renouvelées chaque tour) : un héros dessus est empoisonné (4 PV × 2 tours), pas de dégâts directs. Réutilise `s.lava` (mode `toxic`), donc l'IA et le rendu des braises.

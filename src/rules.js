@@ -538,5 +538,8 @@ function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
 // ---------- quêtes (V4.55) ----------
 export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.after==null||zoneDone(save,q.after))&&(q.need==null||recruited(save,q.need)); // V4.75 : after = région à terminer en plus (Q40)
 export const questDone=(save,q)=>!!(save.q&&save.q[q.id]);
+// V4.77 : récompense d'objets d'une quête (sortie de l'écran de victoire pour pouvoir la tester). Objets signature `sig` d'abord (jamais en double), puis un objet de butin si r:1. Renvoie les indices obtenus. À n'appeler que pour une quête pas encore faite.
+export function grantQuest(save,Q,rng=Math.random){const got=[];for(const j of Q.sig||[])if(!save.items.includes(j)){save.items.push(j);got.push(j)}
+ if(Q.r){const fr=lootPool(save);if(fr.length){const j=pick(rng,fr);save.items.push(j);const rr=lootRare(j,rng,1);if(rr&&ITEMS[j].rr==null)(save.rr||(save.rr={}))[j]=rr;got.push(j)}}return got}
 export function questFight(q,save){const Z=ZONES[q.z],F={zi:q.z,i:-1,quest:q.id,lvl:Z.lvl+q.l,pool:Z.pool,boss:null,elite:q.e,goal:q.g||null,seed:q.z*131+ +q.id.slice(1)*17,th:Z.th[+q.id.slice(1)%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined,lava:Z.fights?.[3]?.lava}; // V4.64 : cases brûlantes ou dalles piégées de la région (R7, R8)
  if(F.goal==='survive')F.wave=defWave(Z,+q.id.slice(1)%zlen(Z));return F}

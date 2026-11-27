@@ -3,7 +3,7 @@ import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
 import {QUESTS} from './quests.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,grantQuest,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -384,7 +384,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   if(!F.daily&&!F.quest)best[F.i]=Math.max(best[F.i]||0,st);if(first)save.z[zid]=F.i+1;
   const Q=F.quest&&QUESTS.find(q=>q.id===F.quest),qNew=Q&&!questDone(save,Q);let qIt=null;const qSg=[];
   if(qNew){(save.q||(save.q={}))[Q.id]=1;const qg=Math.round((20+8*save.lvl)*2.5);save.gold+=qg;gold+=qg;up+=gainXp(save,15*save.lvl*2);xp+=15*save.lvl*2;
-   const fr=lootPool(save);for(const j of Q.sig||[])if(!save.items.includes(j)){save.items.push(j);if(qIt===null)qIt=j;else qSg.push(j)}if(Q.r&&fr.length&&true){qIt=pick(Math.random,fr);save.items.push(qIt);const rr=lootRare(qIt,Math.random,1);if(rr&&ITEMS[qIt].rr==null)(save.rr||(save.rr={}))[qIt]=rr}}
+   const got=grantQuest(save,Q);qIt=got.length?got[0]:null;qSg.push(...got.slice(1))}
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
