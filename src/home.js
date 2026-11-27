@@ -10,7 +10,7 @@ import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.48';
+export const VERSION='4.49';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -188,7 +188,7 @@ function expe(P){
  const boss=ZONES.map((z,zi)=>({z,zi})).filter(o=>zoneDone(save,o.zi));
  if(boss.length){P.append(el('h4',null,'Revanches'));for(const{z,zi}of boss){const L=zlen(z),r=el('div','v-row');r.append(el('div',null,`<b>${z.boss.n}</b><small>${z.n} · ${'★'.repeat((save.st[z.id]||[])[L-1]||0)||'aucune étoile'}</small>`),wood('Affronter',()=>A.fight(zi,L-1),'sm'));P.append(r)}}
  P.append(el('h4',null,'Missions'));let any=0;
- ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions');
+ ZONES.forEach((z,zi)=>{const done=Math.min(prog(z.id),zlen(z)-(zoneDone(save,zi)?1:0));if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,z.n));const g=el('div','v-actions v-mgrid');
   for(let i=0;i<done;i++){const F=fightSpec(zi,i,0),b=wood(`${i+1}${F.goal==='survive'?' ⏳':F.goal==='chief'?' ♛':''} ${'★'.repeat((save.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
  if(!any)P.append(el('p','v-empty','Gagne ton premier combat pour ouvrir les expéditions.'))}
 function open(id){if(id==='recrue'){save.orionVu=1;store();hero=3;show('heros');return}if(id==='caserne'){show('heros');return}if(id==='entrainement'){show('entrainement');return}A[{forge:'forge',marchand:'shop',taverne:'tav',talents:'armes'}[id]]()}

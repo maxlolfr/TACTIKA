@@ -231,3 +231,13 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 .v-team p{margin:0 0 6px}.v-team .v-actions{margin:0}
 .v-tabs:has(>:nth-child(4)){grid-template-columns:repeat(4,1fr);gap:5px}.v-tabs:has(>:nth-child(4)) button{flex-direction:column;gap:0;font-size:12px;line-height:1.1;min-width:0}
 .v-spell{flex-wrap:wrap}.v-spell>div{flex:1 1 150px;min-width:0}.v-spell>button{flex:none;margin-left:auto}
+
+/* V4.49 : interface (demande de Max du 27/11) */
+/* Cristal : les 10 missions d'une région sur deux lignes de 5, sans débordement */
+.v-actions.v-mgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%;margin-top:6px}
+.v-mgrid>button{min-width:0;padding-left:2px!important;padding-right:2px!important;font-size:12px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* paysage : le bandeau de chapitre faisait doublon avec la colonne de commandement et se faisait écraser */
+@media (orientation:landscape),(min-width:760px) and (min-aspect-ratio:4/5){#camp .v-chap{display:none}}
+/* fiche de héros étroite : libellés des caractéristiques sur une ligne */
+.v-stats dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v-stats dl{grid-template-columns:minmax(0,1fr) auto}
+@media (max-height:520px){.v-stats dl{font-size:12px}.v-stats dd{font-size:14px}.v-stats h3{font-size:20px}}

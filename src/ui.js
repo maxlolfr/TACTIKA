@@ -258,7 +258,7 @@ function quests(T,again){const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
   qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
-  const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓':'Réclamer';
+  const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓ Reçu':ok?'Réclamer':'En cours';
   b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('quest_complete',1.6);if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
