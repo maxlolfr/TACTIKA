@@ -3,23 +3,30 @@ export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buf
 // tant qu'un nouveau fichier manque, on joue son équivalent existant
 const FALL={map2:'camp',ember:'cave',boss_map2:'boss_v2',boss_phase:'kael_charge',boss_death:'death',quest_complete:'coin',star_earned:'coin',darkwood:'forest',village:'main_theme',boss_v2:'boss',main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle',golem_smash:'smash',spider_bite:'bite',bat_shriek:'poison',titan_roar:'enemy_warning',titan_death:'death',chest_open:'coin',loot_rare:'levelup',boss_intro:'enemy_warning',titan_boss:'boss',coast:'battle',mountain:'battle',castle:'battle'};
 // V4.0.3 : sons rangés dans assets/audio/musique (musiques, victoire, défaite) et assets/audio/bruitages ; catalogue : assets/audio/SONS.md
-const dir=n=>MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
+const dir=n=>n.startsWith('v_')?'voix/':MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
 // V4.31 : volume réglable (curseurs des Réglages, 0 à 150 %) et plus fort à 100 % ; TRIM remonte les deux fichiers les plus faibles (mesurés vers -17 et -16 LUFS, les autres entre -14 et -12)
-const AMB=4,GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75};
+// V4.36 : voix des héros (7 répliques courtes chacun). VTRIM égalise les fichiers, mesurés entre -26 et -15 dB ; les KO restent un peu plus bas
+export const VOICES={warrior:'kael',archer:'fenn',healer:'aelis'};
+const VLINES=['start','sig','support','hurt','ko','win','level'],VGAP=6,VSAME=20;
+const VTRIM={kael:[.84,.87,1.06,1.5,1.93,.98,1.35],fenn:[1.48,.68,.75,1.3,1.95,1,.69],aelis:[1.62,1,2.04,2,2.04,.85,1.84]};
+const vname=(h,l)=>'v_'+h+'_'+l;
+const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75};
 export const VOLMAX=150;
-export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
+export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
-AU.vol={m:100,s:100};
+AU.vol={m:100,s:100,v:100};
 try{Object.assign(AU.vol,JSON.parse(localStorage.getItem('landeVol')||'{}'))}catch(e){}
 const level=k=>AU.on[k]?GAIN[k]*AU.vol[k]/100:0;
-const apply=k=>{if(AU.c)(k==='m'?AU.m:AU.s).gain.setTargetAtTime(level(k),AU.c.currentTime,.05)};
+const apply=k=>{if(AU.c)AU[k].gain.setTargetAtTime(level(k),AU.c.currentTime,.05)};
 export function setVol(k,v){AU.vol[k]=Math.max(0,Math.min(VOLMAX,+v||0));try{localStorage.setItem('landeVol',JSON.stringify(AU.vol))}catch(e){}
+ if(k==='v'&&AU.vol.v&&!AU.on.s)setSon('s'); // les voix se coupent avec le bouton des bruitages
  if(AU.vol[k]&&!AU.on[k])setSon(k);else apply(k)}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=AU.c=new C();
  // limiteur en sortie : évite la saturation quand le volume est poussé
  const lim=c.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.25;lim.connect(c.destination);
- AU.mix=c.createGain();AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);
+ AU.mix=c.createGain();AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);AU.v=c.createGain();AU.v.gain.value=level('v');AU.v.connect(AU.mix);
+ for(const h of Object.values(VOICES))for(const l of VLINES)load(vname(h,l)).catch(()=>{});
  for(const n of SNDS)load(n).then(()=>{if(n==='village_ambience')ambience()}).catch(()=>{});
  if(AU.want)music(AU.want,1)}
 const load=n=>fetch('assets/audio/'+dir(n)+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>AU.c.decodeAudioData(b,ok,ko))).then(b=>AU.buf[n]=b);
@@ -47,7 +54,12 @@ export function music(n,force){AU.want=n;ambience();const c=AU.c;if(!c||(AU.cur=
  if(AU.src){const o=AU.src;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000);AU.src=null}
  AU.cur=n;for(const m of MUSICS)if(m!==k)delete AU.buf[m];
  const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf[k];s.loop=true;s.g=g;g.gain.value=0;s.vol=TRIM[k]||1;g.gain.setTargetAtTime(s.vol,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
-export function duck(ms){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime,v=AU.src.vol;g.setTargetAtTime(.25*v,t,.08);g.setTargetAtTime(v,t+ms/1000,.6)}
+export function duck(ms,depth=.25){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime,v=AU.src.vol;g.setTargetAtTime(depth*v,t,.08);g.setTargetAtTime(v,t+ms/1000,.6)}
+// Jamais deux voix à la fois ; en dehors des moments forts (force), 6 s de silence entre deux voix et 20 s avant de redire la même réplique
+export function voice(k,line,{chance=1,force=false}={}){const c=AU.c,h=VOICES[k];if(!c||!h||!AU.on.s||!AU.vol.v||Math.random()>chance)return false;
+ const n=vname(h,line),b=AU.buf[n],t=c.currentTime;if(!b||t<AU.vEnd||!force&&(t<AU.vEnd+VGAP||t<(AU.vLast[n]??-VSAME)+VSAME))return false;
+ const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=VTRIM[h][VLINES.indexOf(line)];s.connect(g);g.connect(AU.v);s.start();
+ AU.vEnd=t+b.duration;AU.vLast[n]=t;duck(b.duration*1000,.45);return true}
 export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
  if(b){const s=c.createBufferSource();s.buffer=b;s.playbackRate.value=rate*(.94+Math.random()*.12);s.connect(g);s.start();return}
  synth(FALL[n]||n,g,c.currentTime)}

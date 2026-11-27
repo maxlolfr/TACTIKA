@@ -3,13 +3,15 @@ import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
 import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
-import {sfx} from './audio.js';
+import {sfx,voice} from './audio.js';
 
 // Rejoue des événements produits par les règles (texte flottant, effet, son, secousse).
 export function play(events){for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w,550,e.sh||'fx');break;
  case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='burn'?'#ff9030':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
   if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx(t.bs==='beam'?'titan_death':t.boss?'boss_death':'death'),150)}
+  if(t.team==='h'){if(e.killed)setTimeout(()=>voice(t.k,'ko',{force:true}),300);
+   else if(!e.saved&&e.src!=='poison'&&(e.crit||e.amt>=t.max*.25))voice(t.k,'hurt',{chance:.7})}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
   if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
@@ -24,7 +26,7 @@ export function play(events){for(const e of events){switch(e.type){
 
 export async function cast(u,sp,c){const S=G.s; // l'état du combat en cours, même si on fuit pendant l'animation
  payCost(u,sp,c);keepInView(c.x,c.y);
- pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self'||sp.t==='dead'||sp.trap)?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);
+ pose(u,u.team==='h'&&(sp.t==='ally'||sp.t==='self'||sp.t==='dead'||sp.trap)?(sp.shield?'b':'c'):'a',sp.shield?700:450);G.busy=true;hooks.render();sfx(sp.snd);if(u.team==='h'&&sp.vx)voice(u.k,sp.vx,{chance:.6});
  if(sp.proj){addProj(u,c);await wait(260);sfx('arrowhit',.8)}
  else if(sp.charge){const d=chargeDest(S,u,sp,c);if(d){u.walk=1;let st=0;for(const[x,y]of d.path){const x0=u.gx,y0=u.gy;st++;await tween(110,t=>{u.gx=x0+(x-x0)*t;u.gy=y0+(y-y0)*t;u.wf=st*2+(t<.5?0:1)})}u.walk=0}}
  else if(sp.r[1]===1&&sp.t==='enemy'){const dx=(c.x-u.x)*.35,dy=(c.y-u.y)*.35;await tween(110,t=>{u.gx=u.x+dx*t;u.gy=u.y+dy*t});tween(160,t=>{u.gx=u.x+dx*(1-t);u.gy=u.y+dy*(1-t)})}
