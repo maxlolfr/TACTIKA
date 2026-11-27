@@ -11,6 +11,7 @@ import {sfx,voice,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} f
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
+import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 
 // ---------- panneau de combat ----------
 
@@ -200,7 +201,8 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 // ---------- écrans ----------
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){
- F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp'; // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
+ F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
+ if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
  $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
@@ -343,6 +345,7 @@ const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),today,SP,SPI,HOW,forge:
  adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
  G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
+ const ev=campEvents(save);if(ev.length)playStory(save,ev,store); // V4.80 : prologue, recrutements, épilogue
 }
 // V4.25 : sélecteur Carte I / Carte II ; la carte II reste verrouillée jusqu'au Titan
 let mapNo=1;
@@ -405,6 +408,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
    loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);box.appendChild(d);sfx(i===2?'levelup':'coin',.6)},300+i*380));
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
+  if(first&&F.boss){const ev=bossWinEvents(save,zid);if(ev.length)setTimeout(()=>playStory(save,ev,store),2200)} // V4.80 : scènes de fin de région, une seule fois, jamais en farm ni en défaite
  }else{const L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
   Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':`Tour ${L.round}`} · ${L.ko} héros KO · ${L.left} ennemi${L.left>1?'s':''} encore debout${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?` · ${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`:''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div><ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
  // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi

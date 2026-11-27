@@ -1600,3 +1600,47 @@ test('V5.0 lot 2 : 120 équipements, paliers Kael/Fenn/Aelis 25/35, Orion dédi�
   assert.ok(got.includes(119)); assert.equal(ITEMS[119].src, 'quest'); assert.deepEqual(r.grantQuest(sv, Q, () => 0.1), []);
   const sv2 = JSON.parse(JSON.stringify(sv)); assert.deepEqual(sv2.items, sv.items);
 });
+
+test('V4.80 scénario V2 : données complètes FR/EN, déclencheurs, une seule fois, anciennes sauvegardes, replis, fusions', async () => {
+  const { SC, OUTRO, cleanStory, bossWinEvents, bossPreEvents, campEvents, markSeen, nameOf } = await import('../src/story.js'), { ZONES, zlen } = await import('../src/data.js');
+  const known = ['Mira', 'Fenn', 'Garrick', 'Aelis', 'Architecte', 'Voix', 'Kael', 'Mentor', 'Orion', 'Pharaon', 'Roi du Givre', 'Lyria', 'Nyra'];
+  let lines = 0;
+  for (const [id, L] of Object.entries(SC)) for (const [w, fr, en] of L) { lines++; assert.ok(known.includes(w), id + ' ' + w); assert.ok(fr.length > 3 && en.length > 3, id); }
+  assert.equal(SC.prologue.length, 4); assert.equal(SC.r09_end.length, 5); assert.equal(OUTRO.length, 6);
+  assert.ok(lines >= 44, 'au moins 44 répliques : ' + lines);
+  assert.equal(nameOf('Voix', false), 'Voix inconnue'); assert.equal(nameOf('Voix', true), 'Unknown voice');
+  assert.equal(SC.r01_end[1][0], 'Voix', 'pas d’Architecte nommé avant la région 9'); assert.equal(SC.r09_end[0][0], 'Architecte');
+  const done = (save, ...ids) => { save.z = save.z || {}; for (const id of ids) save.z[id] = zlen(ZONES.find(z => z.id === id)); return save; };
+  // nouvelle partie : prologue au camp, rien d’autre
+  const n = { lvl: 1, items: [], z: {} }; cleanStory(n); assert.deepEqual(n.storySeen, {}); assert.deepEqual(campEvents(n), ['prologue']);
+  const before = JSON.stringify(n); assert.deepEqual(bossWinEvents(n, 'prairie'), ['r01_end']); assert.equal(JSON.stringify(n), before, 'fonctions pures');
+  markSeen(n, 'prologue'); assert.deepEqual(campEvents(n), []); markSeen(n, 'r01_end'); assert.deepEqual(bossWinEvents(n, 'prairie'), [], 'une seule fois (farm, revanche)');
+  // ancienne sauvegarde : aucune chaîne de scènes passées
+  const o = done({ lvl: 30, items: [1, 2] }, 'prairie', 'bois', 'plage', 'mont', 'chateau', 'cristal', 'braise'); cleanStory(o);
+  assert.ok(o.storySeen.prologue && o.storySeen.r05_end && o.storySeen.r07_end); assert.deepEqual(campEvents(o), [], 'Orion et Nyra déjà recrutés : rien à rejouer');
+  assert.deepEqual(bossWinEvents(o, 'sables'), ['r08_end'], 'la suite se joue normalement');
+  // ids inconnus ou abîmés ignorés
+  const bad = { lvl: 1, items: [], storySeen: { prologue: 1, nimporte: 1, r02_end: 0 } }; cleanStory(bad); assert.deepEqual(bad.storySeen, { prologue: 1 });
+  const arr = { lvl: 1, items: [], storySeen: [1, 2] }; cleanStory(arr); assert.deepEqual(arr.storySeen, {});
+  // région 6 : repli Kael si Orion absent, scène complète au recrutement (fusionnée avec join_orion)
+  const a = done({ lvl: 12, items: [], storySeen: { prologue: 1 } }, 'cristal'); assert.deepEqual(bossWinEvents(a, 'cristal'), ['r06_fb']); markSeen(a, 'r06_fb');
+  assert.deepEqual(campEvents(a), []); a.lvl = 20; assert.deepEqual(campEvents(a), ['r06_end']); markSeen(a, 'r06_end'); assert.deepEqual(campEvents(a), [], 'join_orion fusionné');
+  const b = { lvl: 20, items: [], storySeen: { prologue: 1 } }; assert.deepEqual(campEvents(b), ['join_orion'], 'recrutement avant la fin de la région 6');
+  markSeen(b, 'join_orion'); assert.deepEqual(bossWinEvents(done(b, 'cristal'), 'cristal'), ['r06_end']);
+  // Nyra, Lyria, région 10 avec repli puis recrutement
+  const c = { lvl: 30, items: [], storySeen: { prologue: 1, join_orion: 1 } }; assert.deepEqual(campEvents(c), ['join_nyra']);
+  const d = done({ lvl: 36, items: [], storySeen: { prologue: 1, join_orion: 1, join_nyra: 1 } }, 'citadelle'); assert.deepEqual(bossWinEvents(d, 'citadelle'), ['r10_fb']);
+  markSeen(d, 'r10_fb'); d.lvl = 40; assert.deepEqual(campEvents(d), ['r10_end']); markSeen(d, 'r10_end'); assert.deepEqual(campEvents(d), []);
+  const e = { lvl: 40, items: [], storySeen: { prologue: 1, join_orion: 1, join_nyra: 1 } }; assert.deepEqual(bossWinEvents(done(e, 'citadelle'), 'citadelle'), ['r10_end']);
+  // régions 7, 11, 12 : variantes selon Orion
+  assert.deepEqual(bossWinEvents({ lvl: 22, storySeen: {} }, 'braise'), ['r07_end']); assert.deepEqual(bossWinEvents({ lvl: 12, storySeen: {} }, 'braise'), ['r07_fb']);
+  assert.deepEqual(bossWinEvents({ lvl: 45, storySeen: {} }, 'givre'), ['r11_end']); assert.deepEqual(bossWinEvents({ lvl: 5, storySeen: {} }, 'givre'), ['r11_fb']);
+  assert.deepEqual(bossWinEvents({ lvl: 5, storySeen: {} }, 'eter'), ['r12_end_k']); assert.equal(SC.r12_end_k[1][0], 'Kael');
+  // R12 : scène avant le boss (passable, une fois), fin, épilogue au camp après la fin
+  const f = { lvl: 46, items: [], storySeen: { prologue: 1, join_orion: 1, join_nyra: 1, join_lyria: 1 } };
+  assert.deepEqual(bossPreEvents(f, 'eter'), ['r12_pre']); assert.deepEqual(bossPreEvents(f, 'givre'), []); markSeen(f, 'r12_pre'); assert.deepEqual(bossPreEvents(f, 'eter'), []);
+  done(f, 'eter'); assert.deepEqual(campEvents(f), [], 'pas d’épilogue avant la scène de fin'); assert.deepEqual(bossWinEvents(f, 'eter'), ['r12_end']); markSeen(f, 'r12_end');
+  assert.deepEqual(campEvents(f), ['epilogue']); markSeen(f, 'epilogue'); assert.deepEqual(campEvents(f), []);
+  // aucune scène hors région connue ; sauvegarde réaliste sérialisable
+  assert.deepEqual(bossWinEvents(f, 'inconnue'), []); assert.deepEqual(JSON.parse(JSON.stringify(f)).storySeen, f.storySeen);
+});
