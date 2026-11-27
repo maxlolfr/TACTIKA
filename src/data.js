@@ -332,13 +332,13 @@ export const THEMES=[
  {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]},
  // V4.67 : sols et obstacles R10 (Gemini). Sols : 0 grès poreux, 1 marbre crème, 2 dalles blanches, 3 briques bicolores, 4 marbre gris, 5 sable doré, 6 dalles à filets d'or, 7 pavés. Obstacles 52 balustrade, 53 éboulis, 54 colonne couchée, 55 aile de pierre, 56 vasque, 57 piédestal, 58 colonne brisée, 59 statue d'ange
  {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]},
- // V4.68 : R11, obstacles provisoires (Monts gris), à remplacer par la planche de Gemini. V4.69 : sols R11 (Gemini) : 0 et 5 neige, 1 et 6 dalles sombres poudrées, 2 dalles sur terre, 3 pavés sombres, 4 dalles grises, 7 pavés givrés
- {n:'Terres du Givre Éternel',ts:'sol_givre',g:[0,1,1,2,4,5,6,6,3,7,0,4],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]}];
+ // V4.70 : obstacles R11 (Gemini) 60 rocher enneigé, 61 tronc, 62 éboulis, 63 sarcophage, 64 traîneau, 65 muret, 66 pilier, 67 monolithe de glace. V4.69 : sols R11 (Gemini) : 0 et 5 neige, 1 et 6 dalles sombres poudrées, 2 dalles sur terre, 3 pavés sombres, 4 dalles grises, 7 pavés givrés
+ {n:'Terres du Givre Éternel',ts:'sol_givre',g:[0,1,1,2,4,5,6,6,3,7,0,4],obs:[60,61,62,63,64,65,66,67],noflower:1,out:[60,62,65,66,67,61]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55,60,61,62,63,64,65]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72, 1.05,.9,.95,.8,.75,.7,.6,.62]; // V4.64 : 44 à 51 = obstacles R9 (deco6) ; V4.67 : 52 à 59 = obstacles R10 (deco7)
-export const DEC=d=>d>=52?['deco7',d-52]:d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72, 1.05,.9,.95,.8,.75,.7,.6,.62, 1,1.1,.95,.9,.95,1.05,.6,.62]; // V4.64 : 44 à 51 = obstacles R9 (deco6) ; V4.67 : 52 à 59 = obstacles R10 (deco7) ; V4.70 : 60 à 67 = obstacles R11 (deco8)
+export const DEC=d=>d>=60?['deco8',d-60]:d>=52?['deco7',d-52]:d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles

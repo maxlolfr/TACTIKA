@@ -94,4 +94,7 @@ for n, (c, cy) in enumerate(TILES):
     x, y = (n % 4) * 520, (n // 4) * RH; at.paste(c, (x, y)); fr.append([x, y, c.width, c.height, 256, cy])
 at.save(os.path.join(ROOT, 'assets', 'sol_givre.webp'), quality=86, method=6); atlas['sol_givre'] = fr
 print('sol_givre', at.size, os.path.getsize(os.path.join(ROOT, 'assets', 'sol_givre.webp')) // 1024, 'Ko')
+# obstacles (Gemini, 27/11) 4x2 : rocher enneigé, tronc couché, éboulis de blocs, sarcophage, traîneau, muret, pilier, monolithe de glace
+c = cells(*key(nostar('r11-obstacles-gemini.webp'), shadows=True), 4, 2, (.5,), 200)
+pack('deco8', c, .278, 86)  # planche 3168 px de large (les autres 2752) : échelle .32 × 2752 / 3168
 json.dump(atlas, open(fp, 'w'), separators=(',', ':'))
