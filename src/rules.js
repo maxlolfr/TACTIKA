@@ -115,9 +115,12 @@ const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(sav
 // V4.12 : objets partagés (who = liste) → un seul porteur. D'abord les choix du joueur (héros 0, 1, 2), puis le meilleur objet libre
 // pour chaque emplacement resté vide, dans le même ordre : jamais deux porteurs, résultat identique à chaque calcul.
 // V4.33 : équipe de combat (3 héros distincts parmi ceux disponibles) ; valeur absente ou abîmée = Kael, Fenn, Aelis
-export const teamOf=save=>{const t=save?.team;return Array.isArray(t)&&t.length===TEAM_SIZE&&new Set(t).size===TEAM_SIZE&&t.every(i=>Number.isInteger(i)&&HER[i])?t:[...DEF_TEAM]};
+// V4.40 : un héros est recruté dès le niveau commun HER[i].at (absent = présent dès le début)
+export const recruited=(save,i)=>!!HER[i]&&(save?.lvl||1)>=(HER[i].at||1);
+export const roster=save=>[...HER.keys()].filter(i=>recruited(save,i));
+export const teamOf=save=>{const t=save?.team;return Array.isArray(t)&&t.length===TEAM_SIZE&&new Set(t).size===TEAM_SIZE&&t.every(i=>Number.isInteger(i)&&recruited(save,i))?t:[...DEF_TEAM]};
 // le héros `inn` prend la place de `out` (même rang). Renvoie 1 si l'échange est fait.
-export function swapTeam(save,out,inn){const t=[...teamOf(save)],k=t.indexOf(out);if(k<0||!HER[inn]||t.includes(inn))return 0;t[k]=inn;save.team=t;return 1}
+export function swapTeam(save,out,inn){const t=[...teamOf(save)],k=t.indexOf(out);if(k<0||!recruited(save,inn)||t.includes(inn))return 0;t[k]=inn;save.team=t;return 1}
 // V4.37 : sorts connus d'un héros à apprentissage (Orion), et les SLOTS_SP emportés (save.load[i], nettoyé à la lecture)
 export const knownSpells=(save,i)=>{const h=HER[i];return[...h.sp,...(h.learn||[]).filter(([,l])=>ALL_SPELLS||(save.lvl||1)>=l).map(([id])=>id)]};
 export function loadoutOf(save,i){const known=knownSpells(save,i),out=[...new Set(Array.isArray(save.load?.[i])?save.load[i]:[])].filter(id=>known.includes(id)).slice(0,SLOTS_SP);
@@ -125,8 +128,8 @@ export function loadoutOf(save,i){const known=knownSpells(save,i),out=[...new Se
 // le sort `inn` (connu, non emporté) prend la place de `out`. Renvoie 1 si l'échange est fait.
 export function swapSpell(save,i,out,inn){const l=loadoutOf(save,i),k=l.indexOf(out);if(k<0||l.includes(inn)||!knownSpells(save,i).includes(inn))return 0;l[k]=inn;(save.load||(save.load={}))[i]=l;return 1}
 // ordre de distribution automatique du matériel : l'équipe d'abord, la réserve ensuite
-const gearOrder=save=>[...HER.keys()].sort((a,b)=>teamOf(save).includes(b)-teamOf(save).includes(a)||a-b);
-export function gearAll(save){const G=HER.map(()=>({})),used=new Set(),ok=(j,i,sl)=>ITEMS[j]?.sl===sl&&save.items.includes(j)&&fits(j,i)&&lvOf(j)<=(save.lvl||1)&&!used.has(j);
+const gearOrder=save=>roster(save).sort((a,b)=>teamOf(save).includes(b)-teamOf(save).includes(a)||a-b);
+export function gearAll(save){const G=HER.map(()=>({})),used=new Set(),ok=(j,i,sl)=>recruited(save,i)&&ITEMS[j]?.sl===sl&&save.items.includes(j)&&fits(j,i)&&lvOf(j)<=(save.lvl||1)&&!used.has(j);
  for(const sl in SLOTS)HER.forEach((_,i)=>{const c=save.eq?.[i+':'+sl]??(sl==='arme'?save.wpn?.[i]:null);if(c!=null&&ok(c,i,sl)){G[i][sl]=c;used.add(c)}});
  for(const sl in SLOTS)gearOrder(save).forEach(i=>{if(G[i][sl]!=null)return;const b=save.items.filter(j=>ok(j,i,sl)).sort((a,b)=>score(save,b)-score(save,a))[0]??null;G[i][sl]=b;if(b!=null)used.add(b)});
  return G}

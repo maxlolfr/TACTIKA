@@ -4,20 +4,20 @@
 //         node tools/sim.mjs [campagnes]   (campagne entière : très coûteux, seulement avec l'accord de Max)
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
-import {R7,addOrion,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
+import {SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 import {raise} from '../src/mastery.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
 import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,iceTick,hitCells,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
 
 if(process.env.NO_MHEAL)SP.mheal.pa=99;
 // TEAM=0,1,3 : équipe de combat (3 = Orion, V4.33)
-const TEAM=process.env.TEAM?.split(',').map(Number);if(TEAM?.includes(3))addOrion();
+const TEAM=process.env.TEAM?.split(',').map(Number);
 // V4.39 : mesures d'Orion aux niveaux 20 à 50. LVL=30 : équipe ET monstres au niveau 30 (mission de R7 mise à l'échelle, faute de régions 8 à 12).
 // ORSPEC=pyro|cryo|arcaniste : voie d'Orion (profils std et opti ; sous = aucune). MAST=non|deg|ctrl : points de maîtrise d'Orion (std et opti).
 const LV=+process.env.LVL||0,ORSPEC=process.env.ORSPEC||'pyro',MAST=process.env.MAST||'deg';
 const MAST_ORDER={non:[],deg:['arcane','fireball','storm','flame','frost','nova','glyph'],ctrl:['frost','icewall','weaken','blink','arcane','fireball']};
 function mastFill(save){if(!TEAM?.includes(3))return;for(const id of MAST_ORDER[MAST]||[])while(raise(save,3,id));} // sort par sort jusqu'au rang III, tant qu'il reste des points
-ZONES.push(R7); // région 7 mesurable : « 6.0 » à « 6.9 »
+// région 7 (dans ZONES depuis la V4.40) : « 6.0 » à « 6.9 »
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;const CASTS={}; // sorts lancés par les héros
 const SPL={}; // par « héros · sort » : lancers, PA, dégâts et soins directs (brûlure et poison non attribués)
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
