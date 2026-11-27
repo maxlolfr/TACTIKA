@@ -1,5 +1,14 @@
 # Notes du projet Tactika
 
+## V4.68 (27/11 nuit) : région 11, Terres du Givre éternel (10 missions, boss Roi du Givre), quêtes Q31 à Q35
+- **En jeu** : `R11` (carte II, niveaux 41 à 45, ouverte après la Citadelle), `THEMES[11]`, fond `assets/bg/givre.webp` (portrait, reçu de Max, étoile Gemini effacée) et `givre-l.webp`, musique `mountain` / `boss_map2`. Images reçues le 27/11 (ChatGPT) : loup polaire, yéti, élémentaire de givre (3×2), Roi du Givre A et B (2×2) ; originaux sans perte dans `art/r11/`, découpe par `tools/prep_r11.py`.
+- **Provisoire, à remplacer à la réception de Gemini** : sols et obstacles = ceux des Monts gris (`sol_mont`, obstacles 20, 21, 4, 3, 19) ; fond paysage `givre-l.webp` = recadrage 3:2 du fond portrait (bande à 30 % de la hauteur).
+- **Monstres** (valeurs provisoires) : `polarwolf` (flanc, 56 PV), `yeti` (tank, 82 PV), `frostel` (tank, ralentit, 66 PV), `frostclone` Éclat de givre (clone fragile 18 PV, planche `frostking`). Poses 0 à 5 telles quelles.
+- **Roi du Givre** : planche `frostking` = repos A0, attaque A1, touché A2, spécial B2 (armure fissurée), KO A3, repos 2 B0. `bs:'frost'` : sous 50 % PV, dégâts ×1,2, équipe gelée (−1 PM au tour suivant) et 2 éclats de givre (`summon`). Astuce au combat 10 (`TIPS.frost`). **Pas codé** : fissures et bouclier à briser par placement du plan directeur.
+- **Quêtes** : Q31 Expédition perdue (survie), Q32 Feu sous la glace, Q33 Dernier gardien (élite élémentaire de givre, exige Lyria), Q34 Reflets du passé (élite chevalier sombre), Q35 Fragments perdus (survie). Q36–Q40 : région 12 et village.
+- 157 tests OK ; essai navigateur 844×390 et 390×844 (combat 4, boss, quête Q33) sans erreur ni 404. Safari et Honor non testés. Pas d'équilibrage ni de polish.
+- **Reste** : R12 (Sanctuaire de l'Éther) tout, sols/obstacles/fond paysage de R11, Q36–Q40.
+
 ## V4.67 (27/11 nuit) : région 10, Citadelle céleste (10 missions, boss Aetherion), quêtes Q28 à Q30
 - **En jeu** : `R10` (carte II, niveaux 36 à 40, ouverte après le Marais), `THEMES[10]` (`sol_celeste`, obstacles 52–59 = `deco7`, `DECO_W`, `DEC`, `LOW` : balustrade, éboulis, colonne couchée, aile de pierre bas), fonds `assets/bg/citadelle.webp` (portrait, original du dépôt studio) et `citadelle-l.webp` (paysage, reçu de Max), `prep_bg.py` (étoile Gemini effacée), musique `castle` / `boss_map2`. Images reçues de Max le 27/11 : gardien céleste, griffon royal, sentinelle astrale (ChatGPT, 3×2), Aetherion A et B (2×2), 8 sols et 8 obstacles (Gemini) ; originaux sans perte dans `art/r10/`, découpe par `tools/prep_r10.py` (même méthode que `prep_r9.py`).
 - **Monstres** (valeurs provisoires) : `cguard` Gardien céleste (tank, 70 PV), `griffin` Griffon royal (flanc, vole, 48 PV), `astral` Sentinelle astrale (portée 1–4, 42 PV), `astralclone` Double astral (clone fragile 16 PV, planche `aetherion`). Ordre des poses : gardien et sentinelle 0–5 tel quel, griffon 0, 1, 3, 2, 4, 5.
