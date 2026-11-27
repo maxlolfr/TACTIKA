@@ -80,6 +80,7 @@ export function playStory(save,ids,persist){ids=ids.filter(id=>SC[id]);if(!ids.l
  const run=()=>new Promise(res=>{const en=save.lang==='en',el=mount();const lines=[];
   for(const id of ids){markSeen(save,id);for(const l of SC[id])lines.push(l);}
   if(persist)persist();
+  import('./audio.js').then(a=>{if(ids.some(i=>i.startsWith('join_')))a.sfx('recruit_hero',.9);if(ids.includes('epilogue'))a.music('ending')}).catch(()=>{});
   const hasEpi=ids.includes('epilogue');let k=0,card=false,closed=false;
   const close=()=>{if(closed)return;closed=true;el.remove();removeEventListener('keydown',key);res()};
   const draw=()=>{el.innerHTML='';const sp=document.createElement('button');sp.className='sp';sp.textContent=en?'Skip ▶▶':'Passer ▶▶';sp.onclick=e=>{e.stopPropagation();close()};el.append(sp);
