@@ -1097,7 +1097,7 @@ test('talents d’Orion : 5 paliers aux niveaux 3, 7, 11, 25 et 40, une seule vo
   assert.deepEqual([2, 3, 7, 11, 24, 25, 40].map(l => tiersOf(l, 3)), [0, 1, 2, 3, 3, 4, 5]);
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 0)), [0, 3, 4, 5], 'Kael a 5 paliers (V4.46)');
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 1)), [0, 3, 4, 5], 'Fenn a 5 paliers (V4.47)');
-  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 2)), [0, 3, 3], 'Aelis garde 3 paliers');
+  assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 2)), [0, 3, 4, 5], 'Aelis a 5 paliers (V4.48)');
   assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null], 'ancienne sauvegarde à 3 entrées');
   assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null]);
   assert.deepEqual(orion(50, null), {});
@@ -1338,4 +1338,18 @@ test('talents de Fenn V4.47 : paliers 25 et 40, une seule voie', () => {
   assert.equal(fenn(40, 'eclaireur').dodge.r[1], 5);
   assert.equal(fenn(40, 'tireur').venomarrow, undefined, 'pas de cumul entre voies');
   assert.equal(SPECS[1].every(x => x.t.length === 5), true);
+});
+
+// V4.48 : talents d'Aelis aux paliers 25 et 40
+const aelis = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [null, null, voie] }, 2).tal.sp;
+test('talents d’Aelis V4.48 : paliers 25 et 40, une seule voie', () => {
+  assert.equal(aelis(24, 'guerisseuse').ward, undefined);
+  assert.equal(aelis(25, 'guerisseuse').ward.ward[0], .35);
+  assert.equal(aelis(40, 'guerisseuse').bless.heal[1], 28);
+  assert.equal(aelis(25, 'druide').roots.k, 1.25);
+  assert.equal(aelis(40, 'druide').moon.drain, .6);
+  assert.equal(aelis(25, 'enchant').aura.cd, 2);
+  assert.equal(aelis(40, 'enchant').aura.cleanse, 1);
+  assert.equal(aelis(40, 'druide').ward, undefined, 'pas de cumul entre voies');
+  assert.equal(SPECS[2].every(x => x.t.length === 5), true);
 });
