@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.25 (27/11) : lot 10, première partie : sélecteur Carte I / Carte II
+- Boutons en bas à gauche de l'écran Carte. Carte II verrouillée jusqu'au Titan prismatique (`map2Open`), avec message d'explication.
+- Carte II : 6 régions « Bientôt » (`MAP2`, `DOCK` dans data.js), hors de `ZONES` : aucune mission, sauvegarde inchangée.
+- Fond provisoire dessiné en CSS. À réception de C2-01 : ajouter `assets/world2.webp` en fond de `#mapbox.m2` et recaler les coordonnées.
+- 109 tests ; navigateur automatique en 390×844, 375×667, 905×980, 1280×800, 844×390 (Titan battu ou non). Non vérifié sur vrai téléphone.
+
 ## V4.24 (27/11) : lot 9, premier passage d'équilibrage de la carte I
 - Un ennemi de plus (aucun PV changé) : Prairie 5 (sanglier), Prairie 10 (gelée toxique), Côte 5 et Côte 10 (crabe).
 - 75 combats simulés (chef, survie, boss des 6 mondes). Standard : Côte 5 89 → 84 % de PV restants, Prairie 5 94 → 91 %, Prairie 10 85 → 82 %. La Prairie reste facile. Réglage fin après les tests de Max.

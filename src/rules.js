@@ -47,6 +47,8 @@ export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
   goal:Z.fights?f.goal||null:zi&&i===1?'chief':zi&&i===2?'survive':null,seed,th:Z.th[i%Z.th.length]};
  if(F.goal==='survive')F.wave=Z.waves?.[i]||defWave(Z,i);return F}
 export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES[zi]);
+// V4.25 : la carte II s'ouvre quand la 6e région (Titan prismatique) est terminée
+export const map2Open=save=>zoneDone(save,5);
 // V4.6.1 : état du Cristal de l'Éther (1 à 5) selon les régions terminées : 0 → 1, 1 → 2, 2-3 → 3, 4-5 → 4, 6 et plus → 5
 export const crystalState=save=>[1,2,3,3,4,4,5][Math.min(6,ZONES.filter((_,i)=>zoneDone(save,i)).length)];
 // V4.9 : la Prairie passe de 4 à 10 étapes. Boss déjà battu = région toujours terminée (étoiles du boss déplacées à l'étape 10),
