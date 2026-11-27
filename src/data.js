@@ -132,6 +132,11 @@ export const MON={
  griffin:{ai:'flank',snd:'bite',n:'Griffon royal',s:'griffin',row:0,hp:48,pm:5,init:14,dmg:[11,14],h:.95,xp:32,fly:1},
  astral:{ai:'range',snd:'poison',n:'Sentinelle astrale',s:'astral',row:0,hp:42,pm:3,init:11,dmg:[10,13],r:[1,4],los:1,fx:5,h:1.1,xp:30},
  astralclone:{ai:'flank',snd:'slash',n:'Double astral',s:'aetherion',row:0,hp:16,pm:4,init:10,dmg:[6,8],h:.55,xp:0},
+ // V4.68, région 11 (valeurs provisoires de Claude). Planches ChatGPT, tools/prep_r11.py. Éclat de givre = clone fragile du Roi (planche `frostking`).
+ polarwolf:{ai:'flank',snd:'bite',n:'Loup polaire',s:'polarwolf',row:0,hp:56,pm:5,init:14,dmg:[12,16],h:.85,xp:36},
+ yeti:{ai:'tank',snd:'smash',n:'Yéti',s:'yeti',row:0,hp:82,pm:2,init:8,dmg:[14,18],armor:.2,h:1.3,xp:40},
+ frostel:{ai:'tank',snd:'smash',n:'Élémentaire de givre',s:'frostel',row:0,hp:66,pm:2,init:9,dmg:[11,15],armor:.25,slow:1,h:1.2,xp:38},
+ frostclone:{ai:'flank',snd:'slash',n:'Éclat de givre',s:'frostking',row:0,hp:18,pm:4,init:10,dmg:[6,8],slow:1,h:.55,xp:0},
  queenling:{ai:'flank',snd:'bite',n:'Clone de la Reine',s:'queen',row:0,hp:14,pm:4,init:10,dmg:[5,7],poison:[2,2],h:.55,xp:0}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
@@ -202,6 +207,14 @@ export const R10={id:'citadelle',map:2,n:'Citadelle céleste',x:79,y:31,th:[10],
   {lvl:38,en:[CGD,GRF,AST,AST],goal:'chief'},{lvl:38,en:[CGD,CGD,GRF,AST,AST]},{lvl:39,en:[GRF,GRF,AST,AST,CGD,CGD]},{lvl:39,en:[CGD,GRF,CGD],goal:'survive'},
   {lvl:40,en:[CGD,CGD,GRF,AST,AST],goal:'chief'},{lvl:40,en:[CGD,AST],tip:'astral'}]};
 ZONES.push(R10);
+// V4.68 : Terres du Givre éternel, 10 missions (région 11, carte II), après la Citadelle. Niveaux 41 à 45. Loups polaires, yétis, élémentaires de givre ; boss Roi du Givre (`bs:'frost'`, planche `frostking`) : sous la moitié de ses PV, coups +20 %, équipe gelée (−1 PM) et 2 éclats de givre fragiles. Sols et obstacles provisoires (ceux des Monts gris) en attendant les planches de Gemini ; fond paysage = recadrage du fond portrait.
+const PW='polarwolf',YT='yeti',FE2='frostel';
+export const R11={id:'givre',map:2,n:'Terres du Givre Éternel',x:20,y:18,th:[11],lvl:41,pool:[PW,YT,FE2],boss:{k:YT,s:'frostking',n:'Roi du Givre',hp:3.8,dmg:1.3,h:1.65,bs:'frost',summon:{k:'frostclone',n:2,hp:18,pm:4,dmg:[6,8],sn:'Éclat de givre',snd:'slash'}},
+ waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,PW]]}},
+ fights:[{lvl:41,en:[PW,PW,YT]},{lvl:41,en:[PW,PW,PW,FE2]},{lvl:42,en:[YT,YT,PW]},{lvl:42,en:[FE2,FE2,PW,PW]},
+  {lvl:43,en:[YT,PW,PW,FE2],goal:'chief'},{lvl:43,en:[YT,YT,FE2,PW,PW]},{lvl:44,en:[PW,PW,PW,FE2,FE2,YT]},{lvl:44,en:[YT,FE2,PW],goal:'survive'},
+  {lvl:45,en:[YT,YT,FE2,PW,PW],goal:'chief'},{lvl:45,en:[YT,FE2],tip:'frost'}]};
+ZONES.push(R11);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
@@ -318,7 +331,9 @@ export const THEMES=[
  // V4.64 : sols et obstacles R9 (Gemini). Sols : 0-1 dalles vert-gris, 2 dalles moussues, 3 ardoise lisse, 4 boue sombre, 5 terre brune, 6 ardoise bleue, 7 planches. Obstacles 44 souche, 45 tronc, 46 éboulis, 47 rocher, 48 muret, 49 racines, 50 statue, 51 arche
  {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]},
  // V4.67 : sols et obstacles R10 (Gemini). Sols : 0 grès poreux, 1 marbre crème, 2 dalles blanches, 3 briques bicolores, 4 marbre gris, 5 sable doré, 6 dalles à filets d'or, 7 pavés. Obstacles 52 balustrade, 53 éboulis, 54 colonne couchée, 55 aile de pierre, 56 vasque, 57 piédestal, 58 colonne brisée, 59 statue d'ange
- {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]}];
+ {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]},
+ // V4.68 : R11, sols et obstacles provisoires (Monts gris) ; à remplacer par les planches de Gemini
+ {n:'Terres du Givre Éternel',ts:'sol_mont',g:[0,1,3,0,1,3],obs:[20,20,21,4,3,19],rock:4,noflower:1,out:[20,21,19,20,4]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
 export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche

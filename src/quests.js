@@ -1,4 +1,4 @@
-// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q27 : région 9 (marais). V4.67 : Q28–Q30 région 10 (citadelle). Q31–Q40 : régions 11 et 12 pas encore jouables.
+// V4.64 : Q19–Q24 (région 7 braise, région 8 sables) ; le combat reprend les cases brûlantes / dalles piégées de la région. Q25–Q27 : région 9 (marais). V4.67 : Q28–Q30 région 10 (citadelle). V4.68 : Q31–Q35 région 11 (givre). Q36–Q40 : région 12 et quêtes de village pas encore jouables.
 // V4.55 : quêtes scénarisées (carte I, Q01 à Q18 de SCENARIO-TACTIKA.md). Un combat spécial par quête, dans une région déjà ouverte,
 // avec un objectif existant (survive / chief / élite / victoire). Récompense unique ; le combat reste rejouable sans bonus.
 // z : région · l : niveau ajouté à celui de la région · g : objectif · e : élite · r : 1 = objet garanti · need : héros à recruter
@@ -32,4 +32,9 @@ export const QUESTS=[
  {id:'Q27',z:8,l:2,e:'shroom',r:1,t:'Cœur de la forêt',d:'Un champignon géant étouffe le marais. Fenn veut qu’on l’abatte pour que la vie reprenne.',c:'Fenn : « La vie est sacrément obstinée. »'},
  {id:'Q28',z:9,l:1,g:'survive',r:0,t:'Ailes brisées',d:'Un griffon blessé est pris au piège dans la citadelle. Protège-le des sentinelles le temps qu’il reprenne son envol.',c:'Kael : « Nous avons fait ce qui était juste. »'},
  {id:'Q29',z:9,l:2,g:'chief',r:1,t:'Messager céleste',d:'Un messager des gardiens fuit avec un message pour Orion. Rattrape-le avant qu’il ne quitte la citadelle.',c:'Orion : « Le temps nous est compté. »'},
- {id:'Q30',z:9,l:2,e:'astral',need:5,r:1,t:'Archives astrales',d:'Une sentinelle astrale garde les archives scellées des gardiens. Lyria veut que ces secrets ne soient plus cachés.',c:'Lyria : « Plus jamais de secrets. »'}];
+ {id:'Q30',z:9,l:2,e:'astral',need:5,r:1,t:'Archives astrales',d:'Une sentinelle astrale garde les archives scellées des gardiens. Lyria veut que ces secrets ne soient plus cachés.',c:'Lyria : « Plus jamais de secrets. »'},
+ {id:'Q31',z:10,l:1,g:'survive',r:0,t:'Expédition perdue',d:'Des survivants d’une expédition sont bloqués dans la neige. Tiens la position pendant que Garrick les ramène.',c:'Garrick : « Aucun trésor ne vaut davantage. »'},
+ {id:'Q32',z:10,l:1,r:1,t:'Feu sous la glace',d:'Orion a détecté des sources de chaleur sous la glace. Dégage les loups qui les gardent pour qu’il les étudie.',c:'Orion : « Je retire ce que j’ai dit sur l’impossible. »'},
+ {id:'Q33',z:10,l:2,e:'frostel',need:5,r:1,t:'Dernier gardien',d:'Un élémentaire de givre garde encore un serment oublié. Lyria veut l’affronter pour le porter à son tour.',c:'Lyria : « Nous porterons désormais son serment. »'},
+ {id:'Q34',z:10,l:2,e:'knightN',r:0,t:'Reflets du passé',d:'Dans la neige, d’anciens ennemis semblent revivre. Fais face à ce que vous étiez.',c:'Kael : « Nous ne sommes plus les aventuriers du départ. »'},
+ {id:'Q35',z:10,l:2,g:'survive',r:1,t:'Fragments perdus',d:'Des fragments d’équipement sont éparpillés sur la glace. Sécurise la zone le temps de les rassembler.',c:'Orion : « Chaque fragment compte. »'}];

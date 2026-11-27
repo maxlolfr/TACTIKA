@@ -916,7 +916,7 @@ test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le bu
 
 test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans toucher aux zones',async()=>{
  const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
- assert.equal(ZONES.length,10);assert.equal(map2Open({z:{}}),false);
+ assert.equal(ZONES.length,11);assert.equal(map2Open({z:{}}),false);
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
  assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
@@ -1298,6 +1298,21 @@ test('V4.67 : région 10 (Citadelle céleste) : 10 missions, thème, boss Aether
  const q=id=>QUESTS.find(x=>x.id===id);for(const id of['Q28','Q29','Q30'])assert.equal(q(id).z,9);assert.equal(r.questOpen({z:{[R9.id]:10}},q('Q28')),true);assert.equal(r.questOpen({z:{}},q('Q28')),false);
  assert.equal(r.questFight(q('Q30'),{}).elite,'astral');
 });
+test('V4.68 : région 11 (Terres du Givre) : 10 missions, boss Roi du Givre (gel), quêtes Q31–Q35',async()=>{
+ const {ZONES,R10,R11,MON,THEMES,DEC,zlen,MAP2,HER}=await import('../src/data.js'),r=await import('../src/rules.js'),{QUESTS}=await import('../src/quests.js');
+ const at=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
+ assert.equal(ZONES[10],R11);assert.equal(zlen(R11),10);assert.equal(R11.th[0],11);assert.ok(MAP2.some(m=>m.n===R11.n));
+ for(const n of['polarwolf','yeti','frostel','frostking'])assert.equal(at[n].length,6,n);
+ assert.ok(THEMES[11].g.every(i=>at[THEMES[11].ts][i]));assert.ok(THEMES[11].obs.every(o=>at[DEC(o)[0]][DEC(o)[1]]));
+ for(const f of R11.fights){assert.ok(f.lvl>=41&&f.lvl<=45);for(const k of f.en)assert.ok(MON[k],k)}
+ assert.equal(R11.boss.s,'frostking');assert.equal(MON[R11.boss.summon.k].s,'frostking');
+ const F=r.fightSpec(10,9,1),s=r.newBattle(r.mulberry(5)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:45,items:[],up:{},sp:[null,null,null]},i)));
+ const B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.ok(B&&B.bs==='frost'&&B.s==='frostking');B.hp=B.max;assert.deepEqual(r.bossTurn(s,B),[]);assert.ok(!h.slow);
+ B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.2);assert.equal(h.slow,1);assert.deepEqual(r.bossTurn(s,B),[]);
+ const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===18));
+ const q=id=>QUESTS.find(x=>x.id===id);for(const id of['Q31','Q32','Q33','Q34','Q35'])assert.equal(q(id).z,10);assert.equal(r.questOpen({z:{[R10.id]:10}},q('Q31')),true);assert.equal(r.questOpen({z:{}},q('Q31')),false);
+ assert.equal(r.questFight(q('Q33'),{}).elite,'frostel');
+});
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
@@ -1425,7 +1440,7 @@ test('Nyra et Lyria en combat : équipe de 3 avec les deux recrues, bons sprites
 import {QUESTS} from '../src/quests.js';
 import {questOpen,questDone,questFight} from '../src/rules.js';
 test('quêtes : 18 uniques, ouvertes par région, combat jouable',()=>{
- assert.equal(new Set(QUESTS.map(q=>q.id)).size,30);
+ assert.equal(new Set(QUESTS.map(q=>q.id)).size,35);
  const sv={lvl:50,z:{},items:[]};
  assert.equal(QUESTS.filter(q=>questOpen(sv,q)).length,3);
  for(const q of QUESTS){const F=questFight(q,sv);assert.equal(F.quest,q.id);assert.ok(ZONES[F.zi]);assert.equal(!!F.wave,q.g==='survive');assert.ok(q.t&&q.d&&q.c)}
@@ -1470,7 +1485,7 @@ test('V4.64 : seuils 29/30, 34/35, 39/40, 44/45 ; marchand avant le butin ; obje
 test('V4.64 : quêtes Q19 à Q24 (braise, sables) : ouvertes après la région précédente, cases brûlantes et dalles piégées reprises', async () => {
   const { QUESTS } = await import('../src/quests.js'), { questOpen, questFight, zoneDone } = await import('../src/rules.js'), { ZONES, MON, zlen } = await import('../src/data.js');
   const q = id => QUESTS.find(x => x.id === id), z = i => ({ [ZONES[i].id]: zlen(ZONES[i]) });
-  assert.equal(QUESTS.length, 30);
+  assert.equal(QUESTS.length, 35);
   assert.equal(questOpen({ z: {} }, q('Q19')), false); assert.equal(questOpen({ z: z(5) }, q('Q19')), true);
   assert.equal(questOpen({ z: z(5) }, q('Q22')), false); assert.equal(questOpen({ z: { ...z(5), ...z(6) } }, q('Q22')), true);
   for (const id of ['Q19', 'Q20', 'Q21', 'Q22', 'Q23', 'Q24']) {
