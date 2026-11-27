@@ -15,6 +15,12 @@ export const SP={
  charge:{vx:'sig',snd:'kael_charge',n:'Charge',pa:4,r:[2,3],t:'enemy',dmg:[8,11],fx:7,cd:2,charge:1,shake:1,d:'Fonce sur un ennemi à 2 ou 3 cases et le frappe : Kael s’arrête sur une case libre à côté, sans dépenser de PM ni traverser d’obstacle'},
  pshot:{vx:'sig',snd:'bow',n:'Tir perforant',pa:4,r:[2,6],t:'enemy',los:1,lob:1,dmg:[11,14],pierce:1,proj:1,fx:0,cd:2,d:'Flèche qui ignore toute l’armure, une seule cible'},
  mheal:{vx:'support',snd:'aelis_heal',n:'Soin collectif',pa:5,r:[0,3],t:'ally',heal:[7,9],splash:1,fx:4,cd:3,d:'Soigne l’allié visé et les alliés collés à lui (pas de résurrection)'},
+ // V4.41 : les 5 autres sorts de Fenn (valeurs provisoires de Claude, non équilibrées)
+ venomarrow:{snd:'bow',n:'Flèche toxique',sn:'Toxique',pa:3,r:[2,6],t:'enemy',los:1,lob:1,dmg:[5,7],poison:[4,2],proj:1,fx:5,cd:2,d:'Flèche : dégâts + poison pendant 2 tours'},
+ dodge:{vx:'support',snd:'buff',n:'Repli acrobatique',sn:'Repli',pa:2,r:[1,3],t:'cell',free:1,los:1,lob:1,blink:1,fx:7,cd:3,d:'Fenn saute sur une case libre en vue, sans dépenser de PM'},
+ icearrow:{snd:'bow',n:'Flèche glaciale',sn:'Glaciale',pa:3,r:[2,6],t:'enemy',los:1,lob:1,dmg:[7,10],slow:1,proj:1,fx:2,cd:2,d:'Flèche : dégâts et −1 PM au prochain tour de la cible'},
+ blastarrow:{vx:'sig',snd:'bow',n:'Flèche explosive',sn:'Explosive',pa:5,r:[2,5],t:'cell',los:1,lob:1,zone:1,side:.6,dmg:[13,17],proj:1,fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 cases voisines'},
+ rain:{vx:'sig',snd:'bow',n:'Pluie céleste',sn:'Pluie',pa:6,r:[2,5],t:'cell',los:1,lob:1,zone:2,side:.5,dmg:[17,22],proj:1,fx:3,cd:99,shake:1,d:'Pluie de flèches de rayon 2, 50 % autour du centre. 1 fois par combat'},
  aura:{snd:'buff',n:'Aura',ic:6,pa:3,r:[0,3],t:'ally',buff:.3,fx:7,cd:3,d:'+30 % de dégâts à un allié, 2 tours'},
  // V4.33 : Orion (aperçu). Valeurs pilotes de ChatGPT (27/11), non validées
  arcane:{snd:'prism_burst',n:'Projectile arcanique',sn:'Arcane',pa:3,r:[1,5],t:'enemy',los:1,dmg:[11,15],proj:1,orb:'#7fb8ff',fx:0,d:'Trait de magie à distance'},
@@ -30,7 +36,8 @@ export const SP={
  storm:{snd:'prism_burst',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'}};
 export const HER=[
  {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge'},
- {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot'},
+ {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot',
+  learn:[['pshot',5],['venomarrow',10],['dodge',15],['icearrow',20],['blastarrow',25],['rain',35]]},
  {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura'],sp5:'mheal'}];
 export const SP5_LVL=5;
 export const TEAM_SIZE=3,DEF_TEAM=[0,1,2];
