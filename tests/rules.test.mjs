@@ -1308,7 +1308,7 @@ test('V4.68 : région 11 (Terres du Givre) : 10 missions, boss Roi du Givre (gel
  assert.equal(R11.boss.s,'frostking');assert.equal(MON[R11.boss.summon.k].s,'frostking');
  const F=r.fightSpec(10,9,1),s=r.newBattle(r.mulberry(5)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:45,items:[],up:{},sp:[null,null,null]},i)));
  const B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.ok(B&&B.bs==='frost'&&B.s==='frostking');B.hp=B.max;assert.deepEqual(r.bossTurn(s,B),[]);assert.ok(!h.slow);
- B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.2);assert.equal(h.slow,1);assert.deepEqual(r.bossTurn(s,B),[]);
+ B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.2);assert.equal(h.slow,1);B.bt=0;assert.deepEqual(r.bossTurn(s,B),[]); // V4.76 : le bouclier de glace revient tous les 3 tours (testé à part)
  const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===18));
  const q=id=>QUESTS.find(x=>x.id===id);for(const id of['Q31','Q32','Q33','Q34','Q35'])assert.equal(q(id).z,10);assert.equal(r.questOpen({z:{[R10.id]:10}},q('Q31')),true);assert.equal(r.questOpen({z:{}},q('Q31')),false);
  assert.equal(r.questFight(q('Q33'),{}).elite,'frostel');
@@ -1340,6 +1340,26 @@ test('V4.75 : quêtes Q37 à Q40, objets signature uniquement en récompense',as
  assert.equal(r.questFight(q('Q37'),{}).elite,'knightN');assert.equal(r.questFight(q('Q38'),{}).elite,'wraith');assert.equal(r.questFight(q('Q39'),{}).goal,'chief');
  const s40={lvl:60,z:Object.fromEntries(ZONES.slice(0,11).map(z=>[z.id,zlen(z)]))};assert.equal(r.questOpen(s40,q('Q40')),false);s40.z[ZONES[11].id]=zlen(ZONES[11]);assert.equal(r.questOpen(s40,q('Q40')),true);
  assert.equal(r.questFight(q('Q40'),{}).goal,'survive');assert.equal(r.questFight(q('Q40'),{}).lvl,ZONES[11].lvl+4);
+});
+test('V4.76 : mécaniques de boss : téléportation d’Aetherion, zones toxiques de la Reine, bouclier et fissures du Roi du Givre',async()=>{
+ const {HER,ZONES}=await import('../src/data.js'),r=await import('../src/rules.js');
+ const mk=(zi,i)=>{const F=r.fightSpec(zi,i,1),s=r.newBattle(r.mulberry(7)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,k)=>r.heroStats({lvl:50,items:[],up:{},sp:[null,null,null]},k)));return s};
+ const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+ // Aetherion (R10, indice 9) : tous les 3 tours il saute à côté du héros le plus blessé ; après sa phase, tous les 2 tours
+ {const s=mk(9,9),B=s.units.find(u=>u.boss),hs=s.units.filter(u=>u.team==='h'&&!u.dead);assert.equal(B.bs,'astral');hs[1].hp=Math.floor(hs[1].max*.3);
+  B.bt=2;const ev=r.bossTurn(s,B);assert.ok(ev.some(e=>e.text==='Téléportation !'));assert.equal(man(B,hs[1]),1);assert.equal(B.gx,B.x);
+  B.bt=0;assert.ok(!r.bossTurn(s,B).some(e=>e.text==='Téléportation !'));
+  B.hp=Math.floor(B.max/2);B.bt=0;r.bossTurn(s,B);assert.equal(B.raged,1);B.bt=1;assert.ok(r.bossTurn(s,B).some(e=>e.text==='Téléportation !'),'tous les 2 tours après la phase');assert.equal(r.bossNext(B)>0,true);}
+ // Reine des marécages (R9, indice 9) : sous 50 % PV, 3 zones toxiques marquées un tour avant ; un héros dessus est empoisonné au tick
+ {const s=mk(8,9),B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.equal(B.bs,'swamp');assert.equal(s.lava,null);
+  B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.ok(s.lava&&s.lava.toxic&&s.lava.next.length>=1&&s.lava.next.length<=3);
+  const p=s.lava.next[0];for(const u of s.units.filter(u=>u.team==='h'))delete u.poison;const old={x:h.x,y:h.y};h.x=h.gx=p.x;h.y=h.gy=p.y;const hp0=h.hp;
+  const ev=r.lavaTick(s);assert.deepEqual(h.poison,{d:4,turns:2});assert.equal(h.hp,hp0);assert.ok(ev.some(e=>e.text==='Empoisonné'));assert.ok(s.lava.next.length>=1,'une nouvelle vague est marquée (hot)');}
+ // Roi du Givre (R11, indice 9) : bouclier de glace tous les 3 tours ; sous 50 % PV, fissures : −6 % PV et −1 PM
+ {const s=mk(10,9),B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.equal(B.bs,'frost');
+  B.bt=2;assert.ok(r.bossTurn(s,B).some(e=>e.text==='Bouclier de glace'));assert.equal(B.shield,1);
+  B.hp=Math.floor(B.max/2);B.bt=0;r.bossTurn(s,B);assert.ok(s.lava&&s.lava.cold);
+  const p=s.lava.next[0];h.x=h.gx=p.x;h.y=h.gy=p.y;delete h.slow;const hp0=h.hp;r.lavaTick(s);assert.equal(h.slow,1);assert.ok(h.hp<hp0&&h.hp>=hp0-Math.ceil(h.max*.07)-1);}
 });
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));

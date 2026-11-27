@@ -422,7 +422,10 @@ export function lavaMark(s){const L=s.lava;if(!L)return;const free=c=>c&&passabl
  const mid=[...s.map.values()].filter(c=>c.x+c.y>=4&&c.x+c.y<=14&&free(c));for(let g=0;g<60&&out.length<L.n&&mid.length;g++)add(pick(s.rng,mid));
  L.next=out.map(c=>({x:c.x,y:c.y}))}
 export function lavaTick(s){const L=s.lava;if(!L)return[];if(!L.next.length){lavaMark(s);return[]}
- const ev=[];for(const p of L.next){ev.push(L.trap?{type:'fx',x:p.x,y:p.y,i:7,w:1.1}:{type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);if(u&&(L.trap?u.team==='h':!fireproof(u))){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e);if(L.trap&&!u.dead)u.slow=u.slow||1}}
+ const ev=[];for(const p of L.next){ev.push(L.trap?{type:'fx',x:p.x,y:p.y,i:7,w:1.1}:L.toxic?{type:'fx',x:p.x,y:p.y,i:5,w:1.2}:L.cold?{type:'fx',x:p.x,y:p.y,i:3,w:1.2,sh:'fxi'}:{type:'fx',x:p.x,y:p.y,i:1,w:1.2,sh:'fxi'});const u=occ(s,p.x,p.y);
+  // V4.76 : zones toxiques (Reine des marécages : poison 4 × 2) et fissures de givre (Roi du Givre : −6 % PV et −1 PM), cases marquées un tour à l'avance comme les braises, héros seulement
+  if(L.toxic||L.cold){if(u&&u.team==='h'){if(L.toxic){u.poison={d:4,turns:2};ev.push({type:'status',t:u,text:'Empoisonné',color:'#9be15d'})}else{const e=hurt(s,u,u.max*.06,'lava',false,1);if(e)ev.push(e);if(!u.dead){u.slow=Math.max(u.slow||0,1);ev.push({type:'status',t:u,text:'−1 PM',color:'#8fd8ff'})}}}continue}
+  if(u&&(L.trap?u.team==='h':!fireproof(u))){const e=hurt(s,u,u.max*LAVA_DMG,'lava',false,1);if(e)ev.push(e);if(L.trap&&!u.dead)u.slow=u.slow||1}}
  ev.push({type:'shake',ms:250});L.next=[];if(L.hot)lavaMark(s);return ev}
 // V4.37 : mur de glace. Il disparaît au début du tour de table s.round>=until (même si Orion est tombé)
 export function melt(c){delete c.ice;delete c.block}
@@ -471,21 +474,24 @@ export function aiStep(s,u){
  return best&&best!==K(u.x,u.y)?{type:'move',to:best,prev:rc.prev}:null}
 // ---------- V2.6c : mécaniques uniques des boss, jouées au début de leur tour ----------
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
-export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique']};
+export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique'],astral:[3,0,'Téléportation'],frost:[3,0,'Bouclier de glace']}; // V4.76 : astral (Aetherion) et frost (Roi du Givre) ont aussi une phase sous 50 % PV
 // V4.5e : après l'appel de la meute (sous 50 % PV), le Loup alpha hurle tous les 2 tours
-const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:BOSS_P[u.bs];
+const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:u.bs==='astral'&&u.raged?[2,0,BOSS_P.astral[2]]:BOSS_P[u.bs]; // V4.76 : Aetherion se téléporte tous les 2 tours après sa phase
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
  if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'boss_phase'},{type:'shake',ms:300})}return ev}
  if(u.bs==='tomb'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Malédiction du tombeau !',color:'#d6b14a',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.curse=2;ev.push({type:'status',t:h,text:'Maudit',color:'#d6b14a'})}}return ev}
- if(u.bs==='swamp'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Spores toxiques !',color:'#9be15d',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.poison={d:4,turns:2};ev.push({type:'status',t:h,text:'Empoisonné',color:'#9be15d'})}}return ev}
- if(u.bs==='astral'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;u.maxPM++;u.pm++;ev.push({type:'status',t:u,text:'Jugement céleste !',color:'#ffd65a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
- if(u.bs==='frost'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Gel éternel !',color:'#8fd8ff',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.slow=Math.max(h.slow||0,1);ev.push({type:'status',t:h,text:'−1 PM',color:'#8fd8ff'})}}return ev}
+ if(u.bs==='swamp'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Spores toxiques !',color:'#9be15d',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.poison={d:4,turns:2};ev.push({type:'status',t:h,text:'Empoisonné',color:'#9be15d'})}if(!s.lava){s.lava={toxic:1,n:3,hot:1,next:[]};lavaMark(s)}}return ev}
+ if(u.bs==='astral'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;u.maxPM++;u.pm++;ev.push({type:'status',t:u,text:'Jugement céleste !',color:'#ffd65a',snd:'boss_phase'},{type:'shake',ms:350})}}
+ if(u.bs==='frost'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Gel éternel !',color:'#8fd8ff',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.slow=Math.max(h.slow||0,1);ev.push({type:'status',t:h,text:'−1 PM',color:'#8fd8ff'})}if(!s.lava){s.lava={cold:1,n:3,hot:1,next:[]};lavaMark(s)}}}
  if(u.bs==='breaker'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.25;ev.push({type:'status',t:u,text:'Fracas primordial !',color:'#ffb347',snd:'boss_phase'},{type:'shake',ms:450});for(const h of s.units)if(h.team==='h'&&!h.dead){h.sunder={pct:.15,turns:2};ev.push({type:'status',t:h,text:'Armure brisée +15 %',color:'#ff9a5a'})}}return ev}
  if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}
+ if(u.bs==='astral'){const H=s.units.filter(h=>h.team!==u.team&&!h.dead).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0],cs=H?DIRS.map(d=>cell(s,H.x+d[0],H.y+d[1])).filter(c=>c&&passable(s,c.x,c.y)&&!occ(s,c.x,c.y)):[];
+  if(cs.length){const c=pick(s.rng,cs),from={x:u.x,y:u.y};u.x=u.gx=c.x;u.y=u.gy=c.y;ev.push({type:'status',t:u,text:'Téléportation !',color:'#ffd65a',snd:'boss_phase'},{type:'fx',x:from.x,y:from.y,i:5,w:1.3},{type:'fx',x:c.x,y:c.y,i:5,w:1.5},...stepOn(s,u))}}
+ if(u.bs==='frost'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:3,w:1.5,sh:'fxi'},{type:'status',t:u,text:'Bouclier de glace',color:'#9fd8ff',snd:'guard'})}
  if(u.bs==='shell'){u.shield=1;ev.push({type:'fx',x:u.x,y:u.y,i:7,w:1.5},{type:'status',t:u,text:'Carapace',color:'#9fd0ff',snd:'guard'})}
   if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6*weakK(u));
   for(const h of s.units)if(h.team!==u.team&&!h.dead&&Math.abs(h.x-u.x)+Math.abs(h.y-u.y)<=3){ev.push({type:'fx',x:h.x,y:h.y,i:7,w:1.2});const e=hurt(s,h,d,'quake');if(e)ev.push(e)}}
