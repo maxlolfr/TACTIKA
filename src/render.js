@@ -10,7 +10,7 @@ export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
 const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','obsid','salam','fireel','ignaros'];
-const PRE=['kaelV','fennV','aelisV','ignaros','deco4']; // chargées en aperçu seulement
+const PRE=['orion9','kaelV','fennV','aelisV','ignaros','deco4']; // chargées en aperçu seulement
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
@@ -160,12 +160,14 @@ export function tapCell(px,py){const{sel,reachC}=G,S=G.s;px=(px-view.x)/view.z;p
 const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v:[n,8]});
 const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]),
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
- healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0])};
+ healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0]),
+ // V4.33 : Orion, sans planche de marche (pose fixe qui glisse)
+ mage:{...P9('orion9',['orion9',[0,0,0,0]],['orion9',[0,0,0,0]],['orion9',0]),still:1}};
 // V4.32 : héros « vétérans » (aperçu R7 seulement tant que la région n'est pas ouverte), dès le niveau 25 ou avec &veterans.
 // Pas de planche de marche : la pose de repos glisse avec le petit rebond de chaque case.
 const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','aelisV']].map(([k,n])=>{const still=[n,[0,0,0,0]];return[k,{...P9(n,still,still,[n,0]),vet:1}]}));
 export const isVet=()=>PREVIEW&&(VET_FORCE||save.lvl>=VET_LVL);
-const hn=k=>(isVet()?HV:HN)[k];
+const hn=k=>isVet()&&HV[k]||HN[k];
 export const heroFrame=k=>hn(k).i;
 // images de marche [planche, 4 cases], tournées vers la droite (réutilisées au village, V4.8b)
 export const walkFrames=(k,back)=>hn(k)[back?'B':'F'];
@@ -271,7 +273,7 @@ export function draw(now){
  const taken=[];
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-lift(u)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
-  {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
+  {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8,u.burn&&15].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
  for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*(G.ex?.42:.12);ctx.save();ctx.font=`900 ${Math.round(TW*.22)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);
@@ -285,7 +287,7 @@ export function draw(now){
  if(E){const col=E.bad?'#ff5a4a':'#fff27a';
   if(exU){const[sx,sy]=scr(exU.gx,exU.gy),[s,i,flip,rf]=frameOf(exU);ctx.save();ctx.shadowColor=col;ctx.shadowBlur=TW*.22*dpr;const draw1=()=>drawF(ctx,s,i,sx,sy+TH*.12-lift(exU),hgt(exU)/rf,flip,.92);draw1();draw1();ctx.restore()}
   const[sx,sy]=scr(E.tap.x,E.tap.y);ctx.save();for(const[w,c]of[[6,'rgba(0,0,0,.75)'],[3,col]]){diamond(ctx,sx,sy,1+.05*Math.sin(now/140));ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()}ctx.restore();
-  if(!E.bad&&sel.sp.dmg&&!sel.sp.all)for(const p of sel.sp.zone?zoneCells(S,E):[E]){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
+  if(!E.bad&&sel.sp.dmg&&!sel.sp.all)for(const p of sel.sp.zone?zoneCells(S,E):[E]){const o=occ(S,p.x,p.y);if(!o||o.team===cur.team)continue;const f=forecast(S,cur,sel.sp,o,E.ap||cur,E),[ex,ey]=scr(o.gx,o.gy),y=ey-hgt(o)-lift(o)-TW*.16,t=`-${f.dmg[0]}–${f.dmg[1]}${f.ko==='sure'?' KO':f.ko?' KO ?':''}`;
    ctx.save();ctx.font=`900 ${Math.max(12,Math.round(TW*.22))}px system-ui`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.strokeText(t,ex,y);ctx.fillStyle=f.ko==='sure'?'#ff7a6a':'#ffe9a0';ctx.fillText(t,ex,y);ctx.restore()}}
  // intentions : bulle au-dessus de chaque monstre
  if(G.intents&&!busy&&!E){ctx.font=`800 ${Math.round(TW*.19)}px system-ui`;ctx.textAlign='center';for(const it of G.intents){const u=it.m,[sx,sy]=scr(u.gx,u.gy);let y=sy-hgt(u)-lift(u)-TW*.3;const t=it.dmg.join('–'),h=TW*.28,iw=h*.95,w=ctx.measureText(t).width+14+iw,[tx,ty]=scr(it.target.gx,it.target.gy);

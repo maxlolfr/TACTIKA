@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {$} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -13,7 +13,7 @@ import {renderHome} from './home.js';
 // ---------- panneau de combat ----------
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';const n=S.order.length;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;
  const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,34,u.team==='h'?.62:0);c.className=u.team+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};tl.appendChild(c)}}
-const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],charge:['spells5',0],pshot:['spells5',1],mheal:['spells5',2]};
+const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],volley:['ico',11],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sico',10],heal:['sico',4],venom:['sico',5],aura:['sico',6],arcane:['sico',14],flame:['sico',2],frost:['sico',3],fireball:['spells',8],charge:['spells5',0],pshot:['spells5',1],mheal:['spells5',2]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
 const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
 const GOALS={survive:`<b>⏳ Objectif : survivre ${SURVIVE} tours</b><br>Garde au moins un héros debout jusqu’à la fin du ${SURVIVE}ᵉ tour. Tu n’as pas besoin de vaincre tous les monstres (le faire gagne aussi).`,
@@ -38,7 +38,7 @@ function render(){renderTL();
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
   b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));const pc=costOf(u,sp);b.insertAdjacentHTML('beforeend',`<b${pc>sp.pa?' class="up" title="Relance : +1 PA"':''}>${pc}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
-  b.insertAdjacentHTML('beforeend',`<small>${sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${pc} PA`);
+  b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${pc} PA`);
   if(me&&!sel&&F&&F.guide&&id==='shot'&&u.pa>=pc&&targetsFrom(G.s,u,u).foes.length)b.classList.add('coach');
   b.disabled=!me||G.busy||u.pa<pc||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;G.ex=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
@@ -114,6 +114,8 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
 const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
 function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
+ if(sp.burn&&f.dmg)out.push(fireproof(t)?'insensible au feu : pas de brûlure':`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`);
+ if(sp.slow&&f.dmg)out.push('−1 PM au prochain tour');
  if(f.dmg){out.push(`<b>${rg(f.dmg)} dégâts</b>${f.push?` + ${f.push} collision`:''} · critique ${Math.round(f.pc*100)} % : ${rg(f.crit)}${f.dodge?` · esquive ${Math.round(f.dodge*100)} %`:''}`);
   const why=[u.buff&&`bonus +${Math.round(u.buff.pct*100)} %`,f.combo&&`combo ×${f.combo}`,f.amp&&'cristal',t.shield>0&&'Rempart',t.armor&&`armure ${Math.round(t.armor*(1-(sp.pierce||0))*100)} %`].filter(Boolean);
   if(f.ko||why.length)out.push((f.ko?KO[f.ko]+' ':'')+why.join(' · '))}
@@ -127,8 +129,8 @@ function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.cla
  if(E.bad)L.push(`✗ ${E.bad}`);
  else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.chg?`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`:E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
   if(sp.zone){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
-   for(const o of hit){const f=forecast(S,u,sp,o,from);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
-   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · la Volée épargne tes héros`:'Aucun ennemi dans la zone')}
+   for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
+   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · ${sp.n} épargne tes héros`:'Aucun ennemi dans la zone')}
   else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit)L.push(`${o.n} : <b>+${rg(forecast(S,u,sp,o,from).heal)} PV</b>`);L.push('Cible et alliés collés à elle · pas de résurrection')}
   else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
   // prisme déclenché : effet à part, qui touche aussi les héros
@@ -149,7 +151,7 @@ export async function startFight(zi,i,F){
  $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
- mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
+ mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
  layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
@@ -197,9 +199,9 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{F.classList.remove('on');camp()};F.append(back)}
 // ---------- maître d'armes (V2.5a) ----------
 let armH=-1;
-function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=Math.max(0,HER.findIndex((_,i)=>!specOf(save,i)));A.classList.add('on');A.innerHTML='';
+function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=Math.max(0,HER.findIndex((_,i)=>SPECS[i]&&!specOf(save,i)));A.classList.add('on');A.innerHTML='';
  A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux 3, 7 et 11.</div>`);
- const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
+ const tabs=document.createElement('div');tabs.className='htabs';HER.forEach((h,i)=>{if(!SPECS[i])return; /* Orion : talents à venir */const b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
  HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');c.append(icon(...x.ic,56));

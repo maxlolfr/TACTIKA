@@ -4,11 +4,13 @@
 //         node tools/sim.mjs [campagnes]   (campagne entière : très coûteux, seulement avec l'accord de Max)
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
-import {R7,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
+import {R7,addOrion,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
-import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,onLava,costOf,lootPool} from '../src/rules.js';
+import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
 
 if(process.env.NO_MHEAL)SP.mheal.pa=99;
+// TEAM=0,1,3 : équipe de combat (3 = Orion, V4.33)
+const TEAM=process.env.TEAM?.split(',').map(Number);if(TEAM?.includes(3))addOrion();
 ZONES.push(R7); // région 7 mesurable : « 6.0 » à « 6.9 »
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;const CASTS={}; // sorts lancés par les héros
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
@@ -21,7 +23,7 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
  if(sp.shield)return alive(s,'m').filter(m=>man(m,u)<=2).length>=2?7:0;
  if(sp.pmBonus||sp.revive||sp.trap)return 0; // Renaissance et Piège : non joués par le simulateur
  const tg=sp.zone?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c];let v=0;
- for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)}
+ for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(p===c?1:sp.side||1)*(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)+(sp.burn&&!fireproof(m)&&!m.burn?4:0)}
  return v}
 // Meilleure action : {p (case d'où lancer), sp, c, v}.
 function best(s,u){const rc=reach(s,u,u.pm);let b=null;
@@ -33,7 +35,7 @@ function best(s,u){const rc=reach(s,u,u.pm);let b=null;
 function heroTurn(s,u){
  for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}payCost(u,b.sp,b.c);CASTS[b.sp.n]=(CASTS[b.sp.n]||0)+1;tally(s,applySpell(s,u,b.sp,b.c));if(outcome(s))return}
  if(u.pm>0&&!outcome(s)){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
-  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
+  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1||u.hi===3?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
   if(bk){u.x=bk[0];u.y=bk[1];u.pm-=bk[2]}}}
 function monTurn(s,u){tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<6&&!u.dead;g++){const a=aiStep(s,u);if(!a)return;
  if(a.type==='cast'){payCost(u,a.sp,a.target);tally(s,applySpell(s,u,a.sp,a.target));if(outcome(s))return;continue}
@@ -43,11 +45,11 @@ function monTurn(s,u){tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<
 function tally(s,ev){for(const e of ev||[]){if(e.type==='hurt')s.T[e.t.team==='m'?'hit':'taken']+=e.amt;if(e.type==='heal')s.T.heal+=e.amt}}
 // Un combat, comme startFight + runFight de l'interface. rs = graine du hasard du combat (reproductible).
 function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F=fightSpec(zi,i,seed);
- const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
+ const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);if(TEAM)save.team=TEAM;mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
  s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;
  while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;tally(s,lavaTick(s));if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
-  beginTurn(u);if(u.poison){poisonTick(s,u);if(outcome(s)||u.dead)continue}
+  beginTurn(u);if(u.poison||u.burn){poisonTick(s,u);if(outcome(s)||u.dead)continue}
   u.team==='h'?heroTurn(s,u):monTurn(s,u);endTurn(u);waveEmpty(s)}
  const win=outcome(s)==='win';
  return{win,F,s,round:s.round,ko:s.units.filter(u=>u.team==='h'&&u.dead).length,st:win?stars(s,!!F.boss):0,hpLeft:avg(s.units.filter(u=>u.team==='h').map(u=>u.hp/u.max)),T:s.T,xp:s.killedXp,cleared:!!s.cleared}}
@@ -61,7 +63,7 @@ function reward(save,r){const{F,s}=r,z=ZONES[F.zi].id,first=(save.z[z]||0)===F.i
 // sous = niveau −2, sans objet ni talent · std = niveau de la mission, 4 objets communs, Gardien/Tireur/Guérisseuse · opti = niveau +2, 10 objets rares forge 2, Berserker/Tireur/Enchanteresse
 const PROF={sous:{dl:-2,items:[],rr:0,up:0,sp:[null,null,null]},std:{dl:0,items:[0,4,7,5],rr:0,up:0,sp:['gardien','tireur','guerisseuse']},opti:{dl:2,items:[...ITEMS.keys()],rr:1,up:2,sp:['berserk','tireur','enchant']}};
 // V4.7c : points de caractéristiques. sous : aucun · std : répartis en trois parts (attaque, Agilité, Vitalité) · opti : tout en attaque
-const main=i=>i===2?'int':'for';
+const main=i=>i>=2?'int':'for';
 PROF.std.attr=(n,i)=>{const a=Math.ceil(n/3),b=Math.ceil((n-a)/2);return{[main(i)]:a,agi:b,vit:n-a-b}};
 PROF.opti.attr=(n,i)=>({[main(i)]:n});
 // V4.12 (lot 3) : anc = les 10 objets historiques, communs, sans forge ; cat = tout le catalogue permis au niveau (raretés fixes des nouveaux), sans forge
@@ -74,7 +76,7 @@ if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,b
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const q=m.split('.').map(Number),[name,zi,i]=PIL[m]||[ZONES[q[0]].n+' '+(q[1]+1),q[0],q[1]]; // « monde.étape » : monde dès 0, étape dès 0
   for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i)+p.dl),R=[];
-  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&[0,1,2].map(i=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
+  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&HER.map((_,i)=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
  console.log(`\nSoins lancés : Soin ${CASTS[SP.heal.n]||0}, Soin collectif ${CASTS[SP.mheal.n]||0}.`);console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}

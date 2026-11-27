@@ -1,15 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
-import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf} from './rules.js';
+import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE} from './data.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
 import {setSon,sonBtns,sfx,setVol,AU,VOLMAX} from './audio.js';
-import {specOf} from './talents.js';
+import {specOf,SPECS} from './talents.js';
 
-export const VERSION='4.34';
+export const VERSION='4.35';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -97,9 +97,10 @@ function scene(k){
   const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
   const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
  // héros : leur poste est autour du feu, ils vont faire un tour puis reviennent (V4.8b)
- const walkers=Q.camp.map(([x,y,i,flip])=>{const[hw,hh]=Q.hero,b=el('button','v-hero');b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
+ // V4.33 : les 3 places du feu reviennent à l'équipe de combat (W.i = héros, W.p = place)
+ const walkers=Q.camp.map(([x,y,p,flip])=>{const i=teamOf(save)[p],[hw,hh]=Q.hero,b=el('button','v-hero');b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
   const c=el('canvas');c.width=260;c.height=316;c.style.animationDelay=-i*.9+'s';b.append(c);b.onclick=()=>{hero=i;show('heros')};stage.append(b);
-  const W={i,b,g:c.getContext('2d'),path:[[x,y],...Q.walk[i]],flip,x,y,at:0,dir:1,wait:1.5+i*4.5,t:0,key:''};place1(Q,W);paint(W);return W});
+  const W={i,p,b,g:c.getContext('2d'),path:[[x,y],...Q.walk[p]],flip,x,y,at:0,dir:1,wait:1.5+i*4.5,t:0,key:''};place1(Q,W);paint(W);return W});
  roam(stage,Q,walkers);
  for(const b of Q.bld){const z=el('button','v-bld');z.dataset.b=b.id;z.style.cssText=pc(...b.z);z.setAttribute('aria-label',`${b.n} : ${b.d}`);
   const lift=el('i','v-lift');lift.style.backgroundImage=`url(${Q.src})`;lift.dataset.crop=b.z.slice(0,2).join();z.append(lift);
@@ -120,7 +121,7 @@ function place1(Q,W){const[hw,hh]=Q.hero;W.b.style.cssText=`left:${(W.x-hw/2)/Q.
 function paint(W,walk){let s,k,ref,flip=W.flip;
  if(walk){const w=walkFrames(HER[W.i].k,walk.back);s=w[0];k=w[1][Math.floor(W.t/.16)%4];ref=AT[s][w[1][0]][3];flip=walk.left}
  else{[s,k]=heroFrame(HER[W.i].k);ref=AT[s][k][3]}
- const key=s+k+flip;if(key===W.key)return;W.key=key;W.b.classList.toggle('walk',!!walk);W.b.classList.toggle('glide',!!walk&&isVet());W.g.clearRect(0,0,260,316);drawF(W.g,s,k,130,300,284/ref,flip)}
+ const key=s+k+flip;if(key===W.key)return;W.key=key;W.b.classList.toggle('walk',!!walk);W.b.classList.toggle('glide',!!walk&&!!(isVet()||HER[W.i].k==='mage'));W.g.clearRect(0,0,260,316);drawF(W.g,s,k,130,300,284/ref,flip)}
 // avance un héros de dt secondes ; vitesse proportionnelle à sa taille dans la peinture
 function step(Q,W,dt){
  if(W.wait>0){W.wait-=dt;return}
@@ -128,7 +129,7 @@ function step(Q,W,dt){
  const way={back:dy<0,left:dx<0};
  if(d>v){W.x+=dx/d*v;W.y+=dy/d*v;paint(W,way)}
  else{[W.x,W.y]=next;W.at+=W.dir;
-  if(W.at===W.path.length-1||W.at===0){const home=W.at===0;W.dir=home?1:-1;W.wait=home?6+Math.random()*8:3+Math.random()*3;if(!home)W.flip=way.left;else W.flip=Q.camp[W.i][3];W.t=0;paint(W)}}
+  if(W.at===W.path.length-1||W.at===0){const home=W.at===0;W.dir=home?1:-1;W.wait=home?6+Math.random()*8:3+Math.random()*3;if(!home)W.flip=way.left;else W.flip=Q.camp[W.p][3];W.t=0;paint(W)}}
  place1(Q,W)}
 // une seule boucle, arrêtée quand la scène est remplacée ; en pause quand le village n'est pas visible
 // (à la première image la scène est déjà en place, ou déjà remplacée par l'autre peinture : la boucle s'arrête alors)
@@ -174,7 +175,7 @@ function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F=fightSp
 function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.last(),row=(h,fn)=>{const r=el(fn?'button':'div','v-cl',`<span>${h}</span>`);if(fn)r.onclick=fn;return r};
  P.append(el('h3',null,'Commandement'));
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
- P.append(el('h4',null,'Équipe'));HER.forEach((h,i)=>{const st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
+ P.append(el('h4',null,'Équipe'));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),30,.55));P.append(r)});
  const todo=[[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
  if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
  if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
@@ -260,11 +261,15 @@ function itemRow(j,who,again,i){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v
  if(!lock&&to.length>1)row.classList.add('multi');
  if(!lock)for(const k of to)row.append(wood(multi&&i==null?'Équiper sur '+HER[k].n:'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
 function heros(P){
- const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
+ const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n+(HER.length>TEAM_SIZE&&!teamOf(save).includes(i)?'<br><small>réserve</small>':'')));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
  const h=HER[hero],st=heroStats(save,hero),sp=specOf(save,hero),card=el('div','v-card v-sheet');
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
  card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd><dt>Critique · esquive</dt><dd>${pct(st.crit)} · ${pct(st.dodge)}</dd></dl>`));L.append(card);
+ // V4.33 : choix de l'équipe quand il y a plus de héros que de places
+ if(HER.length>TEAM_SIZE){const team=teamOf(save),inside=team.includes(hero),box=el('div','v-card v-team');
+  box.append(el('p','v-empty',inside?`<b>Dans l’équipe de combat</b> : ${team.map(i=>HER[i].n).join(', ')}.`:`<b>${h.n} est en réserve.</b> Le faire entrer à la place de :`));
+  if(!inside){const a=el('div','v-actions');for(const i of team)a.append(wood(HER[i].n,()=>{swapTeam(save,i,hero);store();show('heros')},'sm'));box.append(a)}L.append(box)}
  L.append(el('h4',null,'Équipement'),el('p','v-empty','Touche un emplacement pour changer d’objet.'));
  const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],spare=save.items.filter(q=>fits(q,hero)&&ITEMS[q].sl===sl&&q!==j).length;
   const b=el('button','v-eq'+(j==null?' vide':'')+(slotOpen===sl?' sel':''));b.dataset.sl=sl;b.setAttribute('aria-expanded',slotOpen===sl);if(j!=null)b.append(icon(...icOf(ITEMS[j]),40));
@@ -275,7 +280,7 @@ function heros(P){
   if(!own.length)box.append(el('p','v-empty',`${h.n} n’a aucun objet pour cet emplacement. On en gagne en combat ou chez le Marchand.`));
   for(const j of own)box.append(itemRow(j,0,()=>show('heros'),hero));
   const act=el('div','v-actions');act.append(own.length?wood('Voir dans l’inventaire',()=>{inv={who:hero,sl:slotOpen,sel:g[slotOpen]};show('inventaire','heros')},'dk sm'):wood('Le Marchand',visit(A.shop),'sm'));box.append(act);L.append(box)}
- const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',visit(A.armes),'sm'));R.append(tl);
+ const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${!SPECS[hero]?'Ses talents arriveront plus tard.':sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`));if(SPECS[hero])tl.append(wood('Académie',visit(A.armes),'sm'));R.append(tl);
  {const n=ptsLeft(save,hero),a=attrOf(save,hero),tr=el('div','v-card v-row');tr.append(icon('spells',0,42),el('div',null,`<b>${n?`${n} point${n>1?'s':''} à répartir`:'Caractéristiques'}</b><small>${Object.keys(ATTR).filter(k=>ATTR[k].who.includes(hero)).map(k=>ATTR[k].n+' '+a[k]).join(' · ')}</small>`),wood('Entraînement',()=>{draft={};show('entrainement','heros')},'sm'));R.append(tr)}
  R.append(el('h4',null,'Sorts'));
  for(const id of[...h.sp,...(h.sp5?[h.sp5]:[]),...(st.tal.add||[])]){const S={...A.SP[id],...st.tal.sp[id]},lock=id===h.sp5&&save.lvl<5,row=el('div','v-row'+(lock?' v-lock':''));row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts`:''}${S.heal?` · ${S.heal.join('–')} soins`:''}${S.cd?` · recharge ${S.cd} tours`:''}${lock?' · <b>s’ouvre au niveau 5</b>':''}</small>`));R.append(row)}
