@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.28 (27/11) : icônes de sorts
+- `assets/spells5.webp` (`tools/prep_sorts.py`) : Charge, Tir perforant, Soin collectif (planches RPG-08/09/10 de Max), Piège et Renaissance (pictogrammes). Ressemblance des héros contrôlée à l'œil.
+
 ## V4.27 (27/11) : carte II sur écran horizontal
 - `assets/world2-l.webp` (image 1800 de Max, 1536×1024), utilisée quand l'écran est horizontal ; repères `lx`,`ly`. La carte I reste verticale partout.
 
