@@ -79,6 +79,7 @@ PROF.opti.attr=(n,i)=>({[main(i)]:n});
 PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:null};
 // soin (mesure du cumul des soins) : tout le catalogue, forge 2, Guérisseuse, Aelis tout en Intelligence. NO_MHEAL=1 retire Soin collectif.
 PROF.soin={...PROF.cat,up:2,attr:(n,i)=>i===2?{int:n}:PROF.std.attr(n,i)};
+PROF.mid={...PROF.std,items:ITEMS.map((x,j)=>j).filter(j=>!ITEMS[j].src||ITEMS[j].src==='shop'),up:1}; // V4.84 : joueur « moyen » tardif = objets de la boutique jusqu'à son niveau (std n'a que 4 objets de départ)
 for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
 const PIL={h5:['Château 5 (chevalier rouge)',4,4],h8:['Château 8 (survie)',4,7],h10:['Chevalier noir (boss)',4,9],m5:['Monts 5 (chevalier rouge)',3,4],m8:['Monts 8 (survie)',3,7],m10:['Golem ancien (boss)',3,9],c5:['Côte 5 (chevalier)',2,4],c8:['Côte 8 (survie)',2,7],c10:['Crabe royal (boss)',2,9],p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 8 (survie)',1,7],loup:['Loup alpha (boss)',1,9],b5:['Bois 5 (chef)',1,4],b7:['Bois 7 (formation)',1,6],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
