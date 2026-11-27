@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,SP5_LVL} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,SP5_LVL,whoOf} from './data.js';
 import {talentFx} from './talents.js';
 
 export const K=(x,y)=>x+','+y;
@@ -61,7 +61,13 @@ export const xpNeed=l=>60*l;
 // Niveau d'amélioration d'un objet (0 à 3), valeur d'une caractéristique à un niveau donné, coût du niveau suivant (null = maximum).
 export const upLvl=(save,j)=>(save.up&&save.up[j])||0;
 export const itemVal=(o,k,l,r=0)=>o[k]?Math.round(o[k]*(1+FORGE_STEP*l)*RARE[r].k):0;
-export const rarOf=(save,j)=>(save.rr&&save.rr[j])||0;
+// V4.12 : rareté fixe des nouveaux objets (ITEMS[j].rr), sinon celle tirée au butin (save.rr) pour les 10 historiques
+export const rarOf=(save,j)=>ITEMS[j]?.rr??((save.rr&&save.rr[j])||0);
+export const fits=(j,i)=>whoOf(ITEMS[j]).includes(i);
+export const lvOf=j=>ITEMS[j].lv||1;
+// objets que le butin peut donner : non possédés, pas réservés au marchand, niveau atteint
+export const lootPool=save=>ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='shop'&&lvOf(j)<=(save.lvl||1));
+export const lootRare=(j,rng,good)=>ITEMS[j].rr??rollRare(rng,good);
 // rareté d'un objet trouvé : 70 % commun, 25 % rare, 5 % épique ; au moins rare pour un boss ou le défi du jour
 export function rollRare(rng,good){const x=rng();return x<.05?2:good||x<.3?1:0}
 export const upCost=(save,j)=>FORGE_COST[upLvl(save,j)]??null;
@@ -70,10 +76,10 @@ export function upgrade(save,j){const c=upCost(save,j);if(!save.items.includes(j
  save.gold-=c;(save.up||(save.up={}))[j]=upLvl(save,j)+1;return save.up[j]}
 // ---------- marchand (V2.6a) ----------
 // Stock du jour : SHOP_N objets non possédés, mélangés selon le jour (même stock toute la journée).
-export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
-export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save.gold<o.pr)return 0;save.gold-=o.pr;save.items.push(j);return 1}
+export function shopStock(save,day){const h=j=>((j+1)*2654435761+day*40503)%1000003;return ITEMS.map((_,j)=>j).filter(j=>!save.items.includes(j)&&ITEMS[j].src!=='loot'&&lvOf(j)<=(save.lvl||1)).sort((a,b)=>h(a)-h(b)).slice(0,SHOP_N)}
+export function buy(save,j){const o=ITEMS[j];if(!o||save.items.includes(j)||save.gold<o.pr||o.src==='loot'||lvOf(j)>(save.lvl||1))return 0;save.gold-=o.pr;save.items.push(j);return 1}
 // revente : moitié du prix + moitié de l'or mis dans la forge
-export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr*RARE[rarOf(save,j)].k+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
+export const sellPrice=(save,j)=>Math.round(SELL_K*(ITEMS[j].pr*(ITEMS[j].rr!=null?1:RARE[rarOf(save,j)].k)+FORGE_COST.slice(0,upLvl(save,j)).reduce((a,b)=>a+b,0)));
 export function sell(save,j){if(!save.items.includes(j))return 0;const g=sellPrice(save,j);save.gold+=g;save.items=save.items.filter(x=>x!==j);if(save.up)delete save.up[j];if(save.rr)delete save.rr[j];return g}
 export function buyPot(save){if((save.pot||0)>=POTION.max||save.gold<POTION.cost)return 0;save.gold-=POTION.cost;save.pot=(save.pot||0)+1;return 1}
 // ---------- taverne (V2.6b) : 3 contrats par jour, tirés une fois puis gardés dans la sauvegarde ----------
@@ -94,11 +100,20 @@ export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].so
 // V4.7a : équipement du héros i, un objet par emplacement. Choix du joueur (save.eq, ou save.wpn d'avant la V4.7a pour l'arme)
 // s'il possède encore l'objet ; sinon le meilleur possédé pour cet emplacement (à égalité, les PV d'abord).
 const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(save,j));return v('hp')+2.9*(v('dmg')+v('heal'))};
-export function gear(save,i){const g={};for(const sl in SLOTS){const own=save.items.filter(j=>ITEMS[j].who===i&&ITEMS[j].sl===sl),
- c=save.eq?.[i+':'+sl]??(sl==='arme'?save.wpn?.[i]:null);g[sl]=own.includes(c)?c:own.sort((a,b)=>score(save,b)-score(save,a))[0]??null}return g}
+// V4.12 : objets partagés (who = liste) → un seul porteur. D'abord les choix du joueur (héros 0, 1, 2), puis le meilleur objet libre
+// pour chaque emplacement resté vide, dans le même ordre : jamais deux porteurs, résultat identique à chaque calcul.
+export function gearAll(save){const G=HER.map(()=>({})),used=new Set(),ok=(j,i,sl)=>ITEMS[j]?.sl===sl&&save.items.includes(j)&&fits(j,i)&&lvOf(j)<=(save.lvl||1)&&!used.has(j);
+ for(const sl in SLOTS)HER.forEach((_,i)=>{const c=save.eq?.[i+':'+sl]??(sl==='arme'?save.wpn?.[i]:null);if(c!=null&&ok(c,i,sl)){G[i][sl]=c;used.add(c)}});
+ for(const sl in SLOTS)HER.forEach((_,i)=>{if(G[i][sl]!=null)return;const b=save.items.filter(j=>ok(j,i,sl)).sort((a,b)=>score(save,b)-score(save,a))[0]??null;G[i][sl]=b;if(b!=null)used.add(b)});
+ return G}
+export const gear=(save,i)=>gearAll(save)[i];
 export const weaponOf=(save,i)=>gear(save,i).arme;
-export const isOn=(save,j)=>gear(save,ITEMS[j].who)[ITEMS[j].sl]===j;
-export function equip(save,j){const o=ITEMS[j];if(!o||!save.items.includes(j))return 0;(save.eq||(save.eq={}))[o.who+':'+o.sl]=j;return 1}
+// héros qui porte l'objet j, ou -1
+export const holder=(save,j)=>gearAll(save).findIndex(g=>g[ITEMS[j].sl]===j);
+export const isOn=(save,j)=>holder(save,j)>=0;
+// équipe j sur le héros i (par défaut le premier compatible) ; un objet partagé quitte son ancien porteur (transfert en une fois)
+export function equip(save,j,i=whoOf(ITEMS[j]??{who:[]})[0]){const o=ITEMS[j];if(!o||!save.items.includes(j)||!fits(j,i)||lvOf(j)>(save.lvl||1))return 0;const eq=save.eq||(save.eq={});
+ for(const k of whoOf(o))if(k!==i&&eq[k+':'+o.sl]===j)delete eq[k+':'+o.sl];eq[i+':'+o.sl]=j;return 1}
 // V4.7c : la sauvegarde ne garde que le nombre de points placés (save.attr[héros]) ; les valeurs peuvent changer sans rien perdre
 export const attrOf=(save,i)=>({for:0,int:0,vit:0,agi:0,...(save.attr&&save.attr[i])});
 export const attrEff=n=>Math.min(n,10)+Math.max(0,Math.min(n,20)-10)/2+Math.max(0,n-20)/4;
@@ -117,7 +132,8 @@ export function heroStats(save,i){const h=HER[i],it=Object.values(gear(save,i)).
  return{lvl:save.lvl,hp:Math.round((Math.round(h.hp*m)+sum('hp'))*(tal.hpMul||1)*(1+bonus('hp'))),dmg:sum('dmg'),heal:sum('heal'),mult:(1+.06*(save.lvl-1))*(1+bonus('dmg')),
   crit:Math.min(Math.max(CRIT_CAP,crit),crit+bonus('crit')),dodge:Math.min(Math.max(DODGE_CAP,dodge),dodge+bonus('dodge')),tal}}
 // ce que changerait l'objet j s'il était équipé : [[nom, avant, après]] pour les seules valeurs qui bougent (ne modifie rien)
-export function compare(save,j){const i=ITEMS[j].who,a=heroStats(save,i),b=heroStats({...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq,[i+':'+ITEMS[j].sl]:j}},i);
+export function compare(save,j,i){if(i==null){const h=holder(save,j);i=h>=0?h:whoOf(ITEMS[j])[0]}const c={...save,items:save.items.includes(j)?save.items:[...save.items,j],eq:{...save.eq}};
+ if(!equip(c,j,i))return[];const a=heroStats(save,i),b=heroStats(c,i);
  return[['PV','hp'],['dégâts','dmg'],['soin','heal']].filter(([,k])=>a[k]!==b[k]).map(([n,k])=>[n,a[k],b[k]])}
 // Ajoute de l'XP, renvoie le nombre de niveaux gagnés.
 export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.lvl)){save.xp-=xpNeed(save.lvl);save.lvl++;up++}return up}

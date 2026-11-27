@@ -1,8 +1,8 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest} from './rules.js';
+import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -173,10 +173,11 @@ const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList.add('on');F.innerHTML='';
  F.insertAdjacentHTML('beforeend',`<h1>La Forge</h1><div class="sub">Chaque niveau renforce le bonus de l’objet (+50 %). 3 niveaux au maximum.</div>`);
  const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);F.append(top);
- HER.forEach((h,i)=>{const own=save.items.filter(j=>ITEMS[j].who===i),all=ITEMS.filter(o=>o.who===i).length;
+ const owner=j=>{const h=holder(save,j);return h>=0?h:whoOf(ITEMS[j])[0]}; // objet partagé : rangé chez son porteur
+ HER.forEach((h,i)=>{const own=save.items.filter(j=>owner(j)===i),all=ITEMS.filter(o=>whoOf(o).includes(i)).length;
   F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${own.length}/${all} objets</small></h3>`);
   if(!own.length)F.insertAdjacentHTML('beforeend','<div class="sub">Aucun objet pour l’instant : gagne des combats pour en trouver.</div>');
-  for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon('items',o.ic,44));
+  for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon(...icOf(o),44));
    const rr=rarOf(save,j);r.insertAdjacentHTML('beforeend',`<div><b style="color:${RARE[rr].c}">${o.n}</b> <span class="pips"></span><br><small>${isOn(save,j)?'':'<b>En réserve (sans effet)</b> · '}${rr?RARE[rr].n+' · ':''}+${itemVal(o,k,l,rr)} ${STAT[k]}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1,rr)}</b>`:' · maximum'}</small></div>`);
    r.querySelector('.pips').append(icon('badge',l?l-1:3,30)); // badge du niveau d'amélioration (cadenas = jamais amélioré)
    const b=document.createElement('button');b.className='btn'+(c!=null&&save.gold>=c?'':' dark');b.disabled=c==null||save.gold<c;b.innerHTML=c==null?'Max':`${c} <img src="${uiURL(14)}">`;
@@ -207,10 +208,10 @@ function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classLis
   const b=document.createElement('button');b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.innerHTML=label;b.onclick=()=>{if(!act())return shop(tab);store();sfx('coin',.8);addPop(r,'');setTimeout(()=>shop(tab),350)};r.append(b);S.append(r)};
  const price=n=>`${n} <img src="${uiURL(14)}">`;
  if(sellTab){if(!save.items.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu n’as aucun objet à vendre.</div>');
-  for(const j of save.items){const o=ITEMS[j];row(['items',o.ic],`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${HER[o.who].n} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
+  for(const j of save.items){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
  else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>Soigne 40 % des PV · tu en as ${p}/${POTION.max}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
   const st=shopStock(save,today());if(!st.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu as déjà tous les objets !</div>');
-  for(const j of st){const o=ITEMS[j];row(['items',o.ic],`<b>${o.n}</b><br><small>${HER[o.who].n} · ${SLOTS[o.sl]} · ${effet(o)}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
+  for(const j of st){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${SLOTS[o.sl]} · ${effet(o,rarOf(save,j))}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{S.classList.remove('on');camp()};S.append(back)}
 // ---------- taverne (V2.6b) ----------
 const ctTxt=t=>t.k==='win'?`Gagne ${t.n} combats`:t.k==='kill'?`Vaincs ${t.n} ${MON[t.m].n.toLowerCase()}${t.n>1?'s':''}`:t.k==='star'?`Gagne ${t.n>1?t.n+' combats':'un combat'} avec 3 ★`:'Bats un boss (même déjà vaincu)';
@@ -263,7 +264,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
  if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 Objectif atteint : ${G.s.goal==='survive'?`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`:'le chef est abattu'}</div>`:G.s.cleared?'<div class="goalwon">🎯 Toutes les vagues éliminées : +25 % d’or</div>':'';
   const zid=ZONES[F.zi].id,first=!F.daily&&prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=!F.daily&&st===3&&(best[F.i]||0)<3;
   const gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(F.daily?2:first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)*(G.s.cleared?1.25:1)),xp=G.s.killedXp;save.gold+=gold;const up=gainXp(save,xp);
-  const free=ITEMS.map((_,i)=>i).filter(i=>!save.items.includes(i));let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=rollRare(Math.random,F.daily||F.boss);if(r)(save.rr||(save.rr={}))[it]=r}
+  const free=lootPool(save);let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=lootRare(it,Math.random,F.daily||F.boss);if(r&&ITEMS[it].rr==null)(save.rr||(save.rr={}))[it]=r}
   if(!F.daily)best[F.i]=Math.max(best[F.i]||0,st);if(first)save.z[zid]=F.i+1;
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
@@ -271,7 +272,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
    <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('coin',.5,1.3),d*1000+200));
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
-  if(it!==null)loot.push([icon('items',ITEMS[it].ic,48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${HER[ITEMS[it].who].n} : ${effet(ITEMS[it],rarOf(save,it))}`]);
+  if(it!==null)loot.push([icon(...icOf(ITEMS[it]),48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${whoName(ITEMS[it])} : ${effet(ITEMS[it],rarOf(save,it))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne

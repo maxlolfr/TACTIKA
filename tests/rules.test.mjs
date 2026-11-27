@@ -17,7 +17,7 @@ const HS=[0,1,2].map(i=>({hp:HER[i].hp,dmg:0,heal:0,mult:1}));
 test('données : chaque sort de héros et chaque monstre de zone existent', () => {
  for(const h of HER)for(const id of h.sp)assert.ok(SP[id],id);
  for(const z of ZONES){for(const m of z.pool)assert.ok(MON[m],m);assert.ok(MON[z.boss.k],z.boss.k);for(const t of z.th)assert.ok(THEMES[t])}
- for(const it of ITEMS)assert.ok(HER[it.who]);
+ for(const it of ITEMS)for(const w of (Array.isArray(it.who)?it.who:[it.who]))assert.ok(HER[w]);
 });
 
 test('carte : même graine = même carte, tous les départs sont joignables', () => {
@@ -791,4 +791,59 @@ test('V4.11 : Soin collectif soigne la cible et les alliés collés, sans résur
  assert.ok(okTarget(s,ae,SP.mheal,t));assert.ok(okTarget(s,ae,SP.mheal,ae),'portée 0 : sur soi');
  applySpell(s,ae,SP.mheal,{x:2,y:0});
  assert.deepEqual([t.hp,adj.hp,far.hp,ko.hp,ko.dead,foe.hp],[28,28,20,0,true,20]); // 7–9 → 8 avec rng 0,5 ; Aura ignorée
+});
+
+// ---------- V4.12 : lot 3, 12 nouveaux équipements (table ChatGPT eq11-eq22) ----------
+import {lootPool,lootRare,holder,gearAll,fits,lvOf} from '../src/rules.js';
+import {whoOf,icOf} from '../src/data.js';
+import {readFileSync} from 'node:fs';
+const J=id=>ITEMS.findIndex(o=>o.id===id),SV2=(o={})=>({lvl:10,gold:1000,xp:0,items:[],sp:[null,null,null],up:{},...o});
+test('V4.12 : 22 objets, les 10 historiques inchangés, ids et icônes valides', () => {
+ assert.equal(ITEMS.length,22);
+ assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,o.who,o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
+  [['Épée courte',60,0,'arme',2],['Hache de guerre',120,0,'arme',3],['Bouclier rond',90,0,'accessoire',8],['Heaume',70,0,'armure',6],['Arc long',60,1,'arme',2],
+   ['Armure de cuir',70,1,'armure',6],['Bottes de cuir',50,1,'accessoire',4],['Bâton de saule',60,2,'arme',3],['Anneau de rubis',100,2,'bijou',2],['Amulette',70,2,'bijou',6]].map(a=>[...a,undefined,undefined,undefined]));
+ const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
+ ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
+  assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
+ assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
+});
+test('V4.12 : rareté fixe, valeurs du moteur, revente au prix final', () => {
+ const sv=SV2({items:[J('eq18'),J('eq12')],rr:{[J('eq18')]:0,[J('eq12')]:2}}); // save.rr ignoré pour les nouveaux
+ assert.equal(rarOf(sv,J('eq18')),1);assert.equal(rarOf(sv,J('eq12')),1);
+ assert.equal(itemVal(ITEMS[J('eq18')],'dmg',0,1),2,'bracelet base 1 rare : 1,5 arrondi à 2');assert.equal(itemVal(ITEMS[J('eq19')],'hp',0,1),9);
+ assert.equal(sellPrice(sv,J('eq12')),63);sv.up[J('eq12')]=1;assert.equal(sellPrice(sv,J('eq12')),75);
+ assert.equal(sellPrice({items:[1],rr:{1:1}},1),90,'historique : prix × rareté comme avant');
+ for(let k=0;k<20;k++)assert.equal(lootRare(J('eq17'),Math.random,1),0);
+});
+test('V4.12 : niveau requis et source au marchand et au butin', () => {
+ const lo=SV2({lvl:2}),hi=SV2({lvl:8});
+ for(let d=0;d<40;d++){for(const j of shopStock(hi,d))assert.notEqual(ITEMS[j].src,'loot');for(const j of shopStock(lo,d))assert.ok(lvOf(j)<=2)}
+ assert.equal(buy(lo,J('eq14')),0,'niveau 3 requis');assert.equal(buy(hi,J('eq15')),0,'butin seulement');assert.equal(buy(hi,J('eq14')),1);
+ assert.ok(lootPool(hi).every(j=>ITEMS[j].src!=='shop'&&!hi.items.includes(j)));assert.ok(lootPool(hi).includes(J('eq22')));assert.ok(!lootPool(lo).includes(J('eq17')));
+ assert.equal(equip(SV2({lvl:4,items:[J('eq21')]}),J('eq21'),0),0,'gants : niveau 5');
+});
+test('V4.12 : objet partagé, un seul porteur, transfert, sans doublon de bonus', () => {
+ const a=J('eq17'),sv=SV2({lvl:6,items:[a,9]}); // anneau pour tous + amulette d'Aelis
+ const G=gearAll(sv);assert.equal(G.filter(g=>g.bijou===a).length,1);assert.equal(holder(sv,a),0,'libre : premier héros sans bijou');assert.equal(G[2].bijou,9);
+ const hp=i=>heroStats(sv,i).hp,base=[0,1,2].map(i=>heroStats(SV2({lvl:6}),i).hp);
+ assert.deepEqual([hp(0)-base[0],hp(1)-base[1]],[4,0]);
+ assert.deepEqual(compare(sv,a,1),[['PV',base[1],base[1]+4]]);
+ assert.equal(equip(sv,a,1),1);assert.equal(holder(sv,a),1);assert.equal(gear(sv,0).bijou,null);assert.deepEqual([hp(0)-base[0],hp(1)-base[1]],[0,4]);
+ assert.equal(equip(sv,a,2),1);assert.equal(holder(sv,a),2);assert.equal(sv.eq['1:bijou'],undefined);assert.equal(gear(sv,1).bijou,null);
+ assert.ok(isOn(sv,a));assert.ok(!isOn(sv,9),'l’amulette passe en réserve');
+ assert.equal(equip(sv,J('eq21'),2),0,'gants : pas pour Aelis');
+ sv.eq['0:bijou']=a;sv.eq['2:bijou']=a; // sauvegarde abîmée : deux choix pour le même objet
+ assert.equal(gearAll(sv).filter(g=>g.bijou===a).length,1);
+ const g=sell(sv,a);assert.ok(g>0);assert.equal(holder(sv,a),-1);assert.equal(gear(sv,2).bijou,9);
+});
+test('V4.12 : sauvegarde d’avant le lot 3 : même équipement qu’avant', () => {
+ const sv={lvl:5,items:[0,1,2,3,4,5,6,7,8,9],wpn:[0,null,null],eq:{'2:bijou':9},up:{1:1},rr:{2:2}};
+ assert.deepEqual(gearAll(sv),[{arme:0,armure:3,bijou:null,accessoire:2},{arme:4,armure:5,bijou:null,accessoire:6},{arme:7,armure:null,bijou:9,accessoire:null}]);
+ assert.equal(rarOf(sv,2),2);
+});
+test('V4.12 : Soin collectif, lanceur adjacent, PV plafonnés, un seul coût', () => {
+ const s=arena(),ae=unit(s,'h',2,1,{hp:40,max:46,healMul:1.2}),t=unit(s,'h',2,0,{hp:45,max:50});
+ payCost(ae,SP.mheal,t);applySpell(s,ae,SP.mheal,{x:2,y:0});
+ assert.deepEqual([t.hp,ae.hp,ae.pa,ae.cd['Soin collectif']],[50,46,1,3]); // 8 × 1,2 = 10 → plafonné à 50 ; lanceur collé soigné une fois
 });

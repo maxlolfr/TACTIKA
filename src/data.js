@@ -74,7 +74,27 @@ export const SLOTS={arme:'Arme',armure:'Armure',bijou:'Bijou',accessoire:'Access
 export const ITEMS=[
  {ic:0,n:'Épée courte',pr:60,who:0,dmg:2,sl:'arme'},{ic:1,n:'Hache de guerre',pr:120,who:0,dmg:3,sl:'arme'},{ic:4,n:'Bouclier rond',pr:90,who:0,hp:8,sl:'accessoire'},{ic:5,n:'Heaume',pr:70,who:0,hp:6,sl:'armure'},
  {ic:2,n:'Arc long',pr:60,who:1,dmg:2,sl:'arme'},{ic:6,n:'Armure de cuir',pr:70,who:1,hp:6,sl:'armure'},{ic:7,n:'Bottes de cuir',pr:50,who:1,hp:4,sl:'accessoire'},
- {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3,sl:'arme'},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2,sl:'bijou'},{ic:9,n:'Amulette',pr:70,who:2,hp:6,sl:'bijou'}];
+ {ic:3,n:'Bâton de saule',pr:60,who:2,heal:3,sl:'arme'},{ic:8,n:'Anneau de rubis',pr:100,who:2,dmg:2,sl:'bijou'},{ic:9,n:'Amulette',pr:70,who:2,hp:6,sl:'bijou'},
+ // V4.12 (lot 3, table ChatGPT eq11-eq22) : planche « equip », rareté fixe (rr), niveau requis (lv), source (shop = marchand seul, loot = butin seul),
+ // who = liste quand plusieurs héros peuvent le porter (un seul porteur à la fois). Bonus = bases avant rareté et forge. Index 10 à 21, ne jamais réordonner.
+ {id:'eq11',s:'equip',ic:0,n:'Épée de recrue',pr:65,who:0,dmg:2,sl:'arme',lv:2,rr:0,src:'shop'},
+ {id:'eq12',s:'equip',ic:1,n:'Arc du pisteur',pr:125,who:1,dmg:2,sl:'arme',lv:7,rr:1,src:'shop'},
+ {id:'eq13',s:'equip',ic:2,n:'Bâton du guérisseur',pr:125,who:2,heal:2,sl:'arme',lv:7,rr:1,src:'shop'},
+ {id:'eq14',s:'equip',ic:3,n:'Cuirasse de garde',pr:80,who:0,hp:6,sl:'armure',lv:3,rr:0,src:'shop'},
+ {id:'eq15',s:'equip',ic:4,n:'Cuir du voyageur',pr:75,who:1,hp:6,sl:'armure',lv:3,rr:0,src:'loot'},
+ {id:'eq16',s:'equip',ic:5,n:'Robe de l’apprentie',pr:75,who:2,hp:6,sl:'armure',lv:3,rr:0,src:'shop'},
+ {id:'eq17',s:'equip',ic:6,n:'Anneau de vigueur',pr:65,who:[0,1,2],hp:4,sl:'bijou',lv:4,rr:0,src:'loot'},
+ {id:'eq18',s:'equip',ic:7,n:'Bracelet de précision',pr:115,who:1,dmg:1,sl:'bijou',lv:8,rr:1,src:'loot'},
+ {id:'eq19',s:'equip',ic:8,n:'Bouclier du rempart',pr:140,who:0,hp:6,sl:'accessoire',lv:8,rr:1,src:'shop'},
+ {id:'eq20',s:'equip',ic:9,n:'Bottes du marcheur',pr:60,who:[0,1,2],hp:4,sl:'accessoire',lv:4,rr:0,src:'shop'},
+ {id:'eq21',s:'equip',ic:10,n:'Gants de combat',pr:80,who:[0,1],dmg:1,sl:'accessoire',lv:5,rr:0,src:'loot'},
+ {id:'eq22',s:'equip',ic:11,n:'Grimoire de l’aube',pr:130,who:2,heal:2,sl:'accessoire',lv:8,rr:1,src:'loot'}];
+// icône d'un objet ; héros qui peuvent le porter
+export const icOf=o=>[o.s||'items',o.ic];
+export const whoOf=o=>Array.isArray(o.who)?o.who:[o.who];
+export const whoName=o=>whoOf(o).length===HER.length?'Tous les héros':whoOf(o).map(i=>HER[i].n).join(', ');
+// V4.12 : ce que regroupe chaque emplacement (4 emplacements gardés pour le pilote : un casque concurrence l'armure, un bouclier les bottes…)
+export const SLOT_D={arme:'épées, arcs, bâtons',armure:'armures, tenues, robes, casques, capes',bijou:'anneaux, colliers, bracelets',accessoire:'boucliers, bottes, gants, ceintures, reliques, livres'};
 // V4.0 : ts = planche de sol propre au thème (sol_<zone>, tiles5), g = cases de cette planche ; l'eau (4) et la roche (8) restent dans tiles4
 // tuiles : 0 herbe 1 fleurs 2 terre 3 sable 4 eau 5 pavés 6 sous-bois 7 dalles
 // décors : 0 chêne 1 sapin 2 buisson 3 caillou 4 rocher 5 fleurs 6 souche 7 barrière 8 caisse 9 puits 10 chaumière 11 panneau
