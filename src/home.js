@@ -1,15 +1,15 @@
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
-import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr} from './rules.js';
+import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D} from './data.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.11';
+export const VERSION='4.12';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -250,10 +250,14 @@ const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
 const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
 // V4.7a : comparaison avant/après, « PV 112 → 118 » (vert : gain, rouge : perte)
-export const diffHTML=j=>compare(save,j).map(([n,a,b])=>`<span class="v-diff ${b>a?'up':'down'}">${n} ${a} → ${b}</span>`).join(' ')||'<span class="v-diff">aucun changement</span>';
-function itemRow(j,who,again){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),on=save.items.includes(j)&&isOn(save,j);row.append(icon('items',o.ic,42));
- row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who?HER[o.who].n+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}<br>${on?'<b class="v-diff up">équipé</b>':'en réserve, sans effet · si équipé : '+diffHTML(j)}</small>`));
- if(!on)row.append(wood('Équiper',()=>{equip(save,j);store();again()},'sm'));return row}
+export const diffHTML=(j,i)=>compare(save,j,i).map(([n,a,b])=>`<span class="v-diff ${b>a?'up':'down'}">${n} ${a} → ${b}</span>`).join(' ')||'<span class="v-diff">aucun changement</span>';
+// V4.12 : i = héros de la fiche (sinon, tous les héros compatibles : choix explicite du porteur d'un objet partagé)
+function itemRow(j,who,again,i){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),h=save.items.includes(j)?holder(save,j):-1,multi=whoOf(o).length>1,lock=lvOf(j)>save.lvl;
+ const to=i==null?whoOf(o).filter(k=>k!==h):h===i?[]:[i];row.append(icon(...icOf(o),42));
+ const st=(h>=0&&(i==null||h===i)?`<b class="v-diff up">équipé${multi?' sur '+HER[h].n:''}</b>`:h>=0?`porté par ${HER[h].n}`:'en réserve, sans effet')+
+  (!to.length?'':lock?` · <b>niveau ${o.lv} requis</b>`:' · '+to.map(k=>(multi?HER[k].n+' : ':'si équipé : ')+diffHTML(j,k)).join(' · '));
+ row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who||multi?whoName(o)+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.lv>1?` · niv. ${o.lv}`:''}<br>${st}</small>`));
+ if(!lock)for(const k of to)row.append(wood(multi&&i==null?'Équiper sur '+HER[k].n:'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
 function heros(P){
  const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
@@ -261,13 +265,14 @@ function heros(P){
  const c=el('canvas');c.width=300;c.height=340;const[s,k]=heroFrame(h.k);drawF(c.getContext('2d'),s,k,150,326,310/AT[s][k][3]);card.append(c);
  card.append(el('div','v-stats',`<h3>${h.n}</h3><em>${h.cls}</em><dl><dt>Points de vie</dt><dd>${st.hp}</dd><dt>PA · PM</dt><dd>6 · ${st.tal.maxPM||3}</dd><dt>${hero===2?'Bonus de soin':'Bonus de dégâts'}</dt><dd>+${hero===2?st.heal:st.dmg}</dd><dt>Puissance</dt><dd>×${(st.mult*(st.tal.dmgMul||1)).toFixed(2)}</dd><dt>Critique · esquive</dt><dd>${pct(st.crit)} · ${pct(st.dodge)}</dd></dl>`));L.append(card);
  L.append(el('h4',null,'Équipement'),el('p','v-empty','Touche un emplacement pour changer d’objet.'));
- const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],spare=save.items.filter(q=>ITEMS[q].who===hero&&ITEMS[q].sl===sl&&q!==j).length;
-  const b=el('button','v-eq'+(j==null?' vide':'')+(slotOpen===sl?' sel':''));b.dataset.sl=sl;b.setAttribute('aria-expanded',slotOpen===sl);if(j!=null)b.append(icon('items',ITEMS[j].ic,40));
+ const g=gear(save,hero),G=el('div','v-slots');for(const sl in SLOTS){const j=g[sl],spare=save.items.filter(q=>fits(q,hero)&&ITEMS[q].sl===sl&&q!==j).length;
+  const b=el('button','v-eq'+(j==null?' vide':'')+(slotOpen===sl?' sel':''));b.dataset.sl=sl;b.setAttribute('aria-expanded',slotOpen===sl);if(j!=null)b.append(icon(...icOf(ITEMS[j]),40));
   b.append(el('span',null,`<i>${SLOTS[sl]}</i><b>${j!=null?ITEMS[j].n:'Vide'}</b>${j!=null?`<small>${bonus(j)}</small>`:''}`));if(spare){const u=el('u',null,'⇄ '+spare);u.title=spare+' en réserve';b.append(u)}
   b.onclick=()=>{slotOpen=slotOpen===sl?null:sl;show('heros');$('vpanel').querySelector('.v-pick')?.scrollIntoView({block:'nearest'})};G.append(b)}L.append(G);
- if(slotOpen){const own=save.items.filter(j=>ITEMS[j].who===hero&&ITEMS[j].sl===slotOpen).sort((a,b)=>isOn(save,b)-isOn(save,a)),box=el('div','v-pick');
+ if(slotOpen){const own=save.items.filter(j=>fits(j,hero)&&ITEMS[j].sl===slotOpen).sort((a,b)=>(holder(save,b)===hero)-(holder(save,a)===hero)),box=el('div','v-pick');
+  box.append(el('p','v-empty',`Un seul objet à la fois : ${SLOT_D[slotOpen]}.`));
   if(!own.length)box.append(el('p','v-empty',`${h.n} n’a aucun objet pour cet emplacement. On en gagne en combat ou chez le Marchand.`));
-  for(const j of own)box.append(itemRow(j,0,()=>show('heros')));
+  for(const j of own)box.append(itemRow(j,0,()=>show('heros'),hero));
   const act=el('div','v-actions');act.append(own.length?wood('Voir dans l’inventaire',()=>{inv={who:hero,sl:slotOpen,sel:g[slotOpen]};show('inventaire','heros')},'dk sm'):wood('Le Marchand',visit(A.shop),'sm'));box.append(act);L.append(box)}
  const tl=el('div','v-card v-row');tl.append(sp?icon(...sp.ic,42):icon('badge',3,42),el('div',null,`<b>${sp?sp.n:'Aucune spécialisation'}</b><small>${sp?sp.d:save.lvl<3?'S’ouvre au niveau 3.':'Choisis une voie pour ce héros.'}</small>`),wood('Académie',visit(A.armes),'sm'));R.append(tl);
  {const n=ptsLeft(save,hero),a=attrOf(save,hero),tr=el('div','v-card v-row');tr.append(icon('spells',0,42),el('div',null,`<b>${n?`${n} point${n>1?'s':''} à répartir`:'Caractéristiques'}</b><small>${Object.keys(ATTR).filter(k=>ATTR[k].who.includes(hero)).map(k=>ATTR[k].n+' '+a[k]).join(' · ')}</small>`),wood('Entraînement',()=>{draft={};show('entrainement','heros')},'sm'));R.append(tr)}
@@ -280,16 +285,16 @@ function inventaire(P){
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);
  P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),cols);
  L.append(chips('Filtrer par héros',[[-1,'Tous'],...HER.map((h,i)=>[i,h.n])],inv.who,v=>inv.who=v),chips('Filtrer par emplacement',[['','Tout'],...Object.entries(SLOTS)],inv.sl,v=>inv.sl=v));
- const ids=ITEMS.map((o,j)=>j).filter(j=>(inv.who<0||ITEMS[j].who===inv.who)&&(!inv.sl||ITEMS[j].sl===inv.sl));
+ const ids=ITEMS.map((o,j)=>j).filter(j=>(inv.who<0||fits(j,inv.who))&&(!inv.sl||ITEMS[j].sl===inv.sl));
  if(!ids.includes(inv.sel))inv.sel=null;
- const grid=el('div','v-grid');for(const j of ids){const o=ITEMS[j],has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off')+(inv.sel===j?' sel':''));b.dataset.item=j;b.append(icon('items',o.ic,54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');
+ const grid=el('div','v-grid');for(const j of ids){const o=ITEMS[j],has=save.items.includes(j),b=el('button','v-slot'+(has?'':' off')+(inv.sel===j?' sel':''));b.dataset.item=j;b.append(icon(...icOf(o),54));b.setAttribute('aria-label',has?o.n:'Objet à découvrir');
   if(has){b.style.borderColor=RARE[rarOf(save,j)].c;if(upLvl(save,j))b.append(el('u',null,'+'+upLvl(save,j)));if(isOn(save,j))b.append(el('s',null,'✓'))}
   b.onclick=()=>{inv.sel=j;show('inventaire')};grid.append(b)}
  L.append(ids.length?grid:el('p','v-empty','Aucun objet ne correspond à ces filtres.'));
  const info=el('div','v-card'),j=inv.sel;
  if(j==null)info.innerHTML='<p class="v-empty">Touche un objet pour voir son effet. ✓ = équipé.</p>';
- else{const o=ITEMS[j];info.append(save.items.includes(j)?itemRow(j,1,()=>show('inventaire')):el('p','v-empty',`Objet à découvrir pour ${HER[o.who].n} (${SLOTS[o.sl]}).`));
-  info.append(wood('Voir la fiche de '+HER[o.who].n,()=>{hero=o.who;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
+ else{const o=ITEMS[j],h=save.items.includes(j)?holder(save,j):-1,f=h>=0?h:whoOf(o)[0];info.append(save.items.includes(j)?itemRow(j,1,()=>show('inventaire')):el('p','v-empty',`Objet à découvrir pour ${whoName(o)} (${SLOTS[o.sl]}${o.lv>1?`, niveau ${o.lv}`:''}).`));
+  info.append(wood('Voir la fiche de '+HER[f].n,()=>{hero=f;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
  R.append(info);
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}

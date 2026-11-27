@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.12 (27/11/2026) : 12 nouveaux équipements (lot 3, table ChatGPT eq11-eq22)
+- 22 objets (10 historiques inchangés, index 10-21 = eq11-eq22). Champs : `id`, `s:'equip'` (planche assets/equip.webp, `tools/prep_equip.py`), `lv` requis, `rr` rareté fixe, `src` shop|loot, `who` liste si partagé.
+- `gearAll` : choix du joueur puis meilleur objet libre, héros 0→2 : un seul porteur, jamais de doublon. `equip(save,j,i)` transfère, `holder`, `compare(save,j,i)`.
+- Revente des nouveaux : 50 % du prix final + 50 % de la forge (pas de ×rareté). Marchand sans objets « loot » ni au-dessus du niveau ; butin (`lootPool`) sans « shop ».
+- 101 tests. Simulateur : 60 combats (anc/cat 30, opti avant/après 30) : gain modéré.
+
 ## V4.11 (27/11/2026) : trois sorts du niveau 5 (lot 2, spec ChatGPT)
 - `HER[].sp5` ouvert à `SP5_LVL`=5 (heroStats donne `lvl`, mkUnits l'ajoute). Kael **Charge** (4 PA, recharge 2, portée 2-3, 8-11) : `chargeDest` = case libre voisine la plus proche en ≤ 2 pas, sans traverser obstacle, eau ni unité ; aucun PM ; jamais d'avance automatique (`approach` renvoie null) ; aperçu du trajet ; amplificateur pris sur la case de départ.
 - Fenn **Tir perforant** (4 PA, recharge 2, portée 2-6, 11-14, `pierce:1` = 100 % de l'armure ignorée, une cible, en cloche comme Tir). Distinct du talent Flèche perforante (Tir, 50 %).

@@ -6,7 +6,7 @@
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
 import {SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
-import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,costOf} from '../src/rules.js';
+import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,costOf,lootPool} from '../src/rules.js';
 
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
@@ -52,7 +52,7 @@ function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIG
 // Récompenses, comme result() de l'interface.
 function reward(save,r){const{F,s}=r,z=ZONES[F.zi].id,first=(save.z[z]||0)===F.i,best=save.st[z]||(save.st[z]=[]),new3=r.st===3&&(best[F.i]||0)<3;
  save.gold+=Math.round(((6*F.lvl+ri(Math.random,0,8))*(first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1));gainXp(save,s.killedXp);
- const free=ITEMS.map((_,i)=>i).filter(i=>!save.items.includes(i));if(free.length&&Math.random()<(F.boss&&first?1:first?.5:.15))save.items.push(pick(Math.random,free));
+ const free=lootPool(save);if(free.length&&Math.random()<(F.boss&&first?1:first?.5:.15))save.items.push(pick(Math.random,free));
  best[F.i]=Math.max(best[F.i]||0,r.st);if(first)save.z[z]=F.i+1}
 
 // ---------- mode pilote (V4.5) : 3 missions × 3 profils × graines fixes ----------
@@ -62,11 +62,14 @@ const PROF={sous:{dl:-2,items:[],rr:0,up:0,sp:[null,null,null]},std:{dl:0,items:
 const main=i=>i===2?'int':'for';
 PROF.std.attr=(n,i)=>{const a=Math.ceil(n/3),b=Math.ceil((n-a)/2);return{[main(i)]:a,agi:b,vit:n-a-b}};
 PROF.opti.attr=(n,i)=>({[main(i)]:n});
+// V4.12 (lot 3) : anc = les 10 objets historiques, communs, sans forge ; cat = tout le catalogue permis au niveau (raretés fixes des nouveaux), sans forge
+PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:null};
+for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
 const PIL={bois1:['Bois 1 (classique)',1,0],bois3:['Bois 3 (survie)',1,2],loup:['Loup alpha (boss)',1,3],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,ZONES[zi].lvl+i+p.dl),R=[];
-  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&[0,1,2].map(i=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:[...p.items],rr:Object.fromEntries(p.items.map(j=>[j,p.rr])),up:Object.fromEntries(p.items.map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
+  for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&[0,1,2].map(i=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
  console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}
