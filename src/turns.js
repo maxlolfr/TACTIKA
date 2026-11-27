@@ -2,7 +2,7 @@
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
 import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick,iceTick} from './rules.js';
-import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH} from './render.js';
+import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH,impact,hitStop,dodgeMove} from './render.js';
 import {sfx,voice} from './audio.js';
 import {tally} from './chronicle.js';
 
@@ -10,15 +10,18 @@ import {tally} from './chronicle.js';
 export function play(events){if(G.s?.T)tally(G.s.T,events,G.cur); // V4.86 : dégâts, soins et records du bilan
  for(const e of events){switch(e.type){
  case 'fx':addFx(e.x,e.y,e.i,e.w,550,e.sh||'fx');break;
- case 'hurt':{const t=e.t;say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='burn'?'#ff9030':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
+ case 'hurt':{const t=e.t;{const sp=G.lastSp,k=e.src==='poison'?'magic':e.src==='burn'?'magic':e.src==='collision'?null:!sp?'slash':sp.proj&&!sp.orb?'pierce':sp.orb||sp.all||sp.nova||sp.r&&sp.r[1]>1?'magic':'slash';
+  if(k)impact(t,k,e.src==='poison'?'#9be15d':e.src==='burn'?'#ff8a30':sp&&sp.orb||null);if(t.shield>0||t.ward)impact(t,'block');if(e.crit){impact(t,'magic','#ffd65a');hitStop(70)}else if(e.amt>=t.max*.3&&!e.killed)hitStop(45);
+  if(e.killed&&t.boss){hitStop(160);impact(t,'boss');setTimeout(()=>{punch(t,.09,520);shake(450);burst(t,1);burst(t,4)},170)}}
+ say(t,(e.crit?'Critique ! -':'-')+e.amt,e.src==='poison'?'#b9f26a':e.src==='burn'?'#ff9030':e.src==='collision'?'#ffa040':e.crit?'#ffd23a':'#ff6b5a',e.crit);pose(t,'h');t.flashT=performance.now()+120;sfx(e.src==='poison'?'poison':'hit',.7);if(e.crit){sfx('critical',.9);punch(t,.06)}
   if(e.killed){punch(t,.05,260);burst(t);addFx(t.gx,t.gy,15,1,900,'fxi',-.5);t.deadT=performance.now();setTimeout(()=>sfx(t.bs==='beam'?'titan_death':t.boss?'boss_death':'death'),150)}
   if(t.team==='h'){if(e.killed)setTimeout(()=>voice(t.k,'ko',{force:true}),300);
    else if(!e.saved&&e.src!=='poison'&&(e.crit||e.amt>=t.max*.25))voice(t.k,'hurt',{chance:.7})}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
   if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
- case 'heal':say(e.t,'+'+e.amt,'#7dff8a');break;
- case 'status':say(e.t,e.text,e.color);if(e.snd)sfx(e.snd,.8);break;
+ case 'heal':say(e.t,'+'+e.amt,'#7dff8a');impact(e.t,'heal');break;
+ case 'status':say(e.t,e.text,e.color);if(e.snd==='dodge'&&e.t.gx!=null){dodgeMove(e.t);impact(e.t,'dodge')}else if(/^Bouclier −/.test(e.text||'')&&e.t.gx!=null)impact(e.t,'block');if(e.snd)sfx(e.snd,.8);break;
  case 'snd':sfx(e.n,e.v||.8);break;
  case 'shake':shake(e.ms);break;
  case 'beam':addBeam(e.from,e.cells);break;
@@ -34,7 +37,7 @@ export async function cast(u,sp,c){const S=G.s; // l'état du combat en cours, m
  else if(sp.charge){const d=chargeDest(S,u,sp,c);if(d){u.walk=1;let st=0;for(const[x,y]of d.path){const x0=u.gx,y0=u.gy;st++;await tween(110,t=>{u.gx=x0+(x-x0)*t;u.gy=y0+(y-y0)*t;u.wf=st*2+(t<.5?0:1)})}u.walk=0}}
  else if(sp.r[1]===1&&sp.t==='enemy'){const dx=(c.x-u.x)*.35,dy=(c.y-u.y)*.35;await tween(110,t=>{u.gx=u.x+dx*t;u.gy=u.y+dy*t});tween(160,t=>{u.gx=u.x+dx*(1-t);u.gy=u.y+dy*(1-t)})}
  else await wait(180);
- play(applySpell(S,u,sp,c));
+ G.lastSp=sp;play(applySpell(S,u,sp,c));G.lastSp=null;
  await wait(420);G.busy=false;
 }
 export async function moveTo(u,k,prev){const path=pathTo(u,k,prev);
