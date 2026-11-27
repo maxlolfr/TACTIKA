@@ -4,8 +4,8 @@ import {HER} from './data.js';
 // fx : dmgMul (dégâts directs des sorts), hpMul, healMul, maxPM, sp:{id:{champs du sort remplacés}}
 // V4.38 : Orion a 5 paliers par voie (valeurs pilotes de ChatGPT, 27/11, non validées)
 export const TIER=[3,7,11], TIER_ORION=[3,7,11,25,40];
-// V4.46 : Kael (0) passe aussi à 5 paliers ; Fenn et Aelis suivent dans les prochaines versions
-export const FIVE=[0,3];
+// V4.46 : Kael (0, V4.46) et Fenn (1, V4.47) passent aussi à 5 paliers ; Aelis suit
+export const FIVE=[0,1,3];
 export const tiersFor=i=>FIVE.includes(i)?TIER_ORION:TIER;
 export const SPECS=[
  [{id:'berserk',n:'Berserker',ic:['spec',0],d:'Frappe plus fort, achève les blessés.',t:[['Fureur','Dégâts des sorts ×1,15',{dmgMul:1.15}],['Rage','Critique 22 % au lieu de 12 %',{crit:.22}],['Exécution','Dégâts ×1,25 sur une cible sous 30 % de PV',{exec:1}],
@@ -17,9 +17,15 @@ export const SPECS=[
   {id:'briseur',n:'Briseur',ic:['spec',6],d:'Repousse et écrase contre les obstacles.',t:[['Onde de choc','Fracas repousse de 3 cases',{sp:{smash:{push:3,d:'Gros coup qui repousse de 3 cases, 1 fois par tour'}}}],['Impact brutal','Collisions : 7 dégâts par case au lieu de 5',{pushDmg:7}],['Fracas affaiblissant','Fracas retire 1 PM à la cible',{sp:{smash:{slow:1,d:'Gros coup qui repousse de 3 cases et retire 1 PM, 1 fois par tour'}}}],
    ['Tourbillon fracassant','Tourbillon repousse les ennemis d’une case',{sp:{whirl:{push:1,d:'Frappe tous les ennemis collés à Kael et les repousse d’une case'}}}],
    ['Jugement ravageur','Jugement du lion : repousse de 3 cases, dégâts +10 %',{sp:{judge:{push:3,k:1.1,d:'Coup ultime : ignore la moitié de l’armure et repousse de 3 cases. 1 fois par combat'}}}]]}],
- [{id:'tireur',n:'Tireur',ic:['spec',3],d:'Tire de plus loin et plus juste.',t:[['Œil de lynx','Portée de Tir : 7 au lieu de 6',{sp:{shot:{r:[2,7]}}}],['Précision','Critique 22 % au lieu de 12 %',{crit:.22}],['Flèche perforante','Tir ignore la moitié de l’armure',{sp:{shot:{pierce:.5}}}]]},
-  {id:'chasseur',n:'Chasseur',ic:['spec',8],d:'Ralentit et piège ses proies.',t:[['Tir entravant','Tir retire 1 PM à la cible',{sp:{shot:{slow:1,d:'Flèche par-dessus les décors bas, retire 1 PM au prochain tour'}}}],['Volée affaiblissante','Volée retire 1 PM aux ennemis touchés',{sp:{volley:{slow:1,d:'Touche la case visée et les 4 autour, retire 1 PM aux ennemis touchés'}}}],['Piège naturel','Nouveau sort : Piège (10 dégâts, −1 PM)',{add:['trap']}]]},
-  {id:'eclaireur',n:'Éclaireur',ic:['tal',2],d:'Bouge plus, esquive.',t:[['Agilité','4 PM au lieu de 3',{maxPM:4}],['Vent rapide','Bottes ailées : +3 PM',{sp:{boots:{pmBonus:3,d:'+3 PM pour ce tour'}}}],['Insaisissable','15 % de chances d’esquiver une attaque',{dodge:.15}]]}],
+ [{id:'tireur',n:'Tireur',ic:['spec',3],d:'Tire de plus loin et plus juste.',t:[['Œil de lynx','Portée de Tir : 7 au lieu de 6',{sp:{shot:{r:[2,7]}}}],['Précision','Critique 22 % au lieu de 12 %',{crit:.22}],['Flèche perforante','Tir ignore la moitié de l’armure',{sp:{shot:{pierce:.5}}}],
+   ['Explosion précise','Flèche explosive : 80 % des dégâts autour du centre',{sp:{blastarrow:{side:.8,d:'Explose sur la case visée ; 80 % des dégâts sur les 4 cases voisines'}}}],
+   ['Pluie dévastatrice','Pluie céleste : dégâts +20 %, 60 % autour du centre',{sp:{rain:{k:1.2,side:.6,d:'Pluie de flèches de rayon 2, 60 % autour du centre, dégâts +20 %. 1 fois par combat'}}}]]},
+  {id:'chasseur',n:'Chasseur',ic:['spec',8],d:'Ralentit et piège ses proies.',t:[['Tir entravant','Tir retire 1 PM à la cible',{sp:{shot:{slow:1,d:'Flèche par-dessus les décors bas, retire 1 PM au prochain tour'}}}],['Volée affaiblissante','Volée retire 1 PM aux ennemis touchés',{sp:{volley:{slow:1,d:'Touche la case visée et les 4 autour, retire 1 PM aux ennemis touchés'}}}],['Piège naturel','Nouveau sort : Piège (10 dégâts, −1 PM)',{add:['trap']}],
+   ['Poison tenace','Flèche toxique : poison 5 par tour pendant 3 tours',{sp:{venomarrow:{poison:[5,3],d:'Flèche : dégâts + poison (5 par tour) pendant 3 tours'}}}],
+   ['Pluie entravante','Pluie céleste : −1 PM aux ennemis touchés',{sp:{rain:{slow:1,d:'Pluie de flèches de rayon 2, 50 % autour du centre, −1 PM aux ennemis touchés. 1 fois par combat'}}}]]},
+  {id:'eclaireur',n:'Éclaireur',ic:['tal',2],d:'Bouge plus, esquive.',t:[['Agilité','4 PM au lieu de 3',{maxPM:4}],['Vent rapide','Bottes ailées : +3 PM',{sp:{boots:{pmBonus:3,d:'+3 PM pour ce tour'}}}],['Insaisissable','15 % de chances d’esquiver une attaque',{dodge:.15}],
+   ['Repli vif','Repli acrobatique : recharge 2 au lieu de 3',{sp:{dodge:{cd:2}}}],
+   ['Saut de l’ombre','Repli acrobatique : portée 5',{sp:{dodge:{r:[1,5],d:'Fenn saute sur une case libre en vue (jusqu’à 5 cases), sans dépenser de PM'}}}]]}],
  [{id:'guerisseuse',n:'Guérisseuse',ic:['spec',5],d:'Des soins plus forts, jusqu’à la résurrection.',t:[['Lumière bienfaitrice','Soins ×1,20',{healMul:1.2}],['Grâce','Portée de Soin : 5',{sp:{heal:{r:[0,5]}}}],['Renaissance','Nouveau sort : relève un héros KO (1 fois par combat)',{add:['revive']}]]},
   {id:'druide',n:'Druide',ic:['spec',7],d:'Un poison qui ronge et se propage.',t:[['Venin puissant','Poison d’Épine : 6 par tour',{sp:{venom:{poison:[6,2],d:'Dégâts + poison (6 par tour) pendant 2 tours'}}}],['Venin persistant','Poison : 3 tours',{sp:{venom:{poison:[6,3],d:'Dégâts + poison (6 par tour) pendant 3 tours'}}}],['Contagion','Le poison se propage à la mort de la cible',{sp:{venom:{spread:1,d:'Dégâts + poison (6 par tour, 3 tours), se propage à la mort'}}}]]},
   {id:'enchant',n:'Enchanteresse',ic:['spec',4],d:'Renforce toute l’équipe.',t:[['Aura supérieure','Aura : +40 % de dégâts',{sp:{aura:{buff:.4,d:'+40 % de dégâts à un allié, 2 tours'}}}],['Bénédiction durable','Aura : 3 tours',{sp:{aura:{buffT:3,d:'+40 % de dégâts à un allié, 3 tours'}}}],['Bénédiction collective','Aura touche tous les héros',{sp:{aura:{all:1,d:'+40 % de dégâts à tous les héros, 3 tours'}}}]]}],

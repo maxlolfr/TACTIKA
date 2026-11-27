@@ -1096,7 +1096,8 @@ const orion = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [null, null
 test('talents d’Orion : 5 paliers aux niveaux 3, 7, 11, 25 et 40, une seule voie', () => {
   assert.deepEqual([2, 3, 7, 11, 24, 25, 40].map(l => tiersOf(l, 3)), [0, 1, 2, 3, 3, 4, 5]);
   assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 0)), [0, 3, 4, 5], 'Kael a 5 paliers (V4.46)');
-  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 1)), [0, 3, 3], 'Fenn garde 3 paliers');
+  assert.deepEqual([2, 11, 25, 40].map(l => tiersOf(l, 1)), [0, 3, 4, 5], 'Fenn a 5 paliers (V4.47)');
+  assert.deepEqual([2, 11, 40].map(l => tiersOf(l, 2)), [0, 3, 3], 'Aelis garde 3 paliers');
   assert.deepEqual(cleanSp(['berserk', null, null]), ['berserk', null, null, null], 'ancienne sauvegarde à 3 entrées');
   assert.deepEqual(cleanSp([null, null, null, 'berserk']), [null, null, null, null]);
   assert.deepEqual(orion(50, null), {});
@@ -1323,4 +1324,18 @@ test('talents de Kael V4.46 : paliers 25 et 40, une seule voie', () => {
   assert.equal(kael(40, 'briseur').judge.push, 3);
   assert.equal(kael(40, 'gardien').judge, undefined, 'pas de cumul entre voies');
   assert.equal(SPECS[0].every(x => x.t.length === 5), true);
+});
+
+// V4.47 : talents de Fenn aux paliers 25 et 40
+const fenn = (lvl, voie) => heroStats({ lvl, items: [], up: {}, sp: [null, voie, null] }, 1).tal.sp;
+test('talents de Fenn V4.47 : paliers 25 et 40, une seule voie', () => {
+  assert.equal(fenn(24, 'tireur').blastarrow, undefined);
+  assert.equal(fenn(25, 'tireur').blastarrow.side, .8);
+  assert.equal(fenn(40, 'tireur').rain.k, 1.2);
+  assert.equal(fenn(25, 'chasseur').venomarrow.poison[1], 3);
+  assert.equal(fenn(40, 'chasseur').rain.slow, 1);
+  assert.equal(fenn(25, 'eclaireur').dodge.cd, 2);
+  assert.equal(fenn(40, 'eclaireur').dodge.r[1], 5);
+  assert.equal(fenn(40, 'tireur').venomarrow, undefined, 'pas de cumul entre voies');
+  assert.equal(SPECS[1].every(x => x.t.length === 5), true);
 });
