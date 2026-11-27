@@ -327,7 +327,42 @@ export const ITEMS=[
   {id:'sg82',s:'equip',ic:35,n:'Orbe du serment commun',pr:300,who:[0,1,2,3,4,5],dmg:3,sl:'bijou',lv:38,rr:2,src:'quest'},
   {id:'sg83',s:'equip',ic:12,n:'Lames du serment commun',pr:300,who:4,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'},
   {id:'sg84',s:'equip',ic:12,n:'Épée du serment commun',pr:300,who:5,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'},
-  {id:'sg85',s:'equip',ic:47,n:'Médaille du village',pr:300,who:[0,1,2,3,4,5],hp:8,sl:'accessoire',lv:45,rr:2,src:'quest'}];
+  {id:'sg85',s:'equip',ic:47,n:'Médaille du village',pr:300,who:[0,1,2,3,4,5],hp:8,sl:'accessoire',lv:45,rr:2,src:'quest'},
+  // V5.0 lot 2 (gel RPG) : 34 entrées, 86 → 120. Kael/Fenn/Aelis : paliers 25 (marchand) et 35 (butin) ; Orion : équipement dédié, paliers 20/30/40 ; signature d’Orion (Q39). Icônes réemployées, exclusifs (who 0 à 3), valeurs pilotes.
+  {id:'eq87',s:'equip',ic:12,n:'Lame du vétéran',pr:155,who:0,dmg:3,sl:'arme',lv:25,rr:1,src:'shop'},
+  {id:'eq88',s:'equip',ic:18,n:'Cuirasse du capitaine',pr:150,who:0,hp:8,sl:'armure',lv:25,rr:1,src:'shop'},
+  {id:'eq89',s:'equip',ic:36,n:'Bracelet de guerre',pr:140,who:0,dmg:2,sl:'bijou',lv:25,rr:1,src:'shop'},
+  {id:'eq90',s:'equip',ic:8,n:'Bouclier de la garde',pr:145,who:0,hp:8,sl:'accessoire',lv:25,rr:1,src:'shop'},
+  {id:'eq91',s:'equip',ic:13,n:'Épée du champion',pr:260,who:0,dmg:3,sl:'arme',lv:35,rr:2,src:'loot'},
+  {id:'eq92',s:'equip',ic:19,n:'Armure du lion d’or',pr:265,who:0,hp:8,sl:'armure',lv:35,rr:2,src:'loot'},
+  {id:'eq93',s:'equip',ic:37,n:'Bracelet du conquérant',pr:235,who:0,dmg:2,sl:'bijou',lv:35,rr:2,src:'loot'},
+  {id:'eq94',s:'equip',ic:20,n:'Écu du grand maître',pr:250,who:0,hp:8,sl:'accessoire',lv:35,rr:2,src:'loot'},
+  {id:'eq95',s:'equip',ic:14,n:'Arc du grand chasseur',pr:155,who:1,dmg:3,sl:'arme',lv:25,rr:1,src:'shop'},
+  {id:'eq96',s:'equip',ic:25,n:'Tenue du ranger',pr:145,who:1,hp:6,sl:'armure',lv:25,rr:1,src:'shop'},
+  {id:'eq97',s:'equip',ic:7,n:'Bracelet d’archer',pr:140,who:1,dmg:2,sl:'bijou',lv:25,rr:1,src:'shop'},
+  {id:'eq98',s:'equip',ic:38,n:'Bottes du traqueur',pr:140,who:1,hp:6,sl:'accessoire',lv:25,rr:1,src:'shop'},
+  {id:'eq99',s:'equip',ic:15,n:'Arc de l’aigle',pr:260,who:1,dmg:3,sl:'arme',lv:35,rr:2,src:'loot'},
+  {id:'eq100',s:'equip',ic:24,n:'Cuir du maître-archer',pr:245,who:1,hp:6,sl:'armure',lv:35,rr:2,src:'loot'},
+  {id:'eq101',s:'equip',ic:37,n:'Bracelet du faucon',pr:230,who:1,dmg:2,sl:'bijou',lv:35,rr:2,src:'loot'},
+  {id:'eq102',s:'equip',ic:39,n:'Bottes du vent',pr:235,who:1,hp:6,sl:'accessoire',lv:35,rr:2,src:'loot'},
+  {id:'eq103',s:'equip',ic:17,n:'Sceptre de lumière',pr:155,who:2,heal:3,sl:'arme',lv:25,rr:1,src:'shop'},
+  {id:'eq104',s:'equip',ic:27,n:'Robe du soleil levant',pr:150,who:2,hp:8,sl:'armure',lv:25,rr:1,src:'shop'},
+  {id:'eq105',s:'equip',ic:33,n:'Collier de pleine lune',pr:140,who:2,heal:2,sl:'bijou',lv:25,rr:1,src:'shop'},
+  {id:'eq106',s:'equip',ic:48,n:'Livre de prières',pr:140,who:2,heal:2,sl:'accessoire',lv:25,rr:1,src:'shop'},
+  {id:'eq107',s:'equip',ic:16,n:'Bâton de vie',pr:260,who:2,heal:3,sl:'arme',lv:35,rr:2,src:'loot'},
+  {id:'eq108',s:'equip',ic:30,n:'Cape de la grande prêtresse',pr:245,who:2,hp:8,sl:'armure',lv:35,rr:2,src:'loot'},
+  {id:'eq109',s:'equip',ic:35,n:'Collier d’étoile',pr:230,who:2,heal:2,sl:'bijou',lv:35,rr:2,src:'loot'},
+  {id:'eq110',s:'equip',ic:49,n:'Grimoire sacré',pr:235,who:2,heal:2,sl:'accessoire',lv:35,rr:2,src:'loot'},
+  {id:'eq111',s:'equip',ic:16,n:'Bâton d’écorce runique',pr:150,who:3,dmg:3,sl:'arme',lv:20,rr:1,src:'shop'},
+  {id:'eq112',s:'equip',ic:26,n:'Robe de l’érudit',pr:140,who:3,hp:6,sl:'armure',lv:20,rr:1,src:'shop'},
+  {id:'eq113',s:'equip',ic:31,n:'Anneau du mage',pr:130,who:3,dmg:2,sl:'bijou',lv:20,rr:1,src:'shop'},
+  {id:'eq114',s:'equip',ic:48,n:'Livre d’études',pr:130,who:3,hp:6,sl:'accessoire',lv:20,rr:1,src:'shop'},
+  {id:'eq115',s:'equip',ic:17,n:'Sceptre arcanique',pr:255,who:3,dmg:3,sl:'arme',lv:30,rr:2,src:'loot'},
+  {id:'eq116',s:'equip',ic:30,n:'Cape de l’arcaniste',pr:240,who:3,hp:6,sl:'armure',lv:30,rr:2,src:'loot'},
+  {id:'eq117',s:'equip',ic:32,n:'Anneau d’arcaniste',pr:225,who:3,dmg:2,sl:'bijou',lv:30,rr:2,src:'loot'},
+  {id:'eq118',s:'equip',ic:49,n:'Grimoire d’arcane',pr:230,who:3,dmg:2,sl:'accessoire',lv:30,rr:2,src:'loot'},
+  {id:'eq119',s:'equip',ic:17,n:'Sceptre de l’Éther',pr:270,who:3,dmg:3,sl:'arme',lv:40,rr:2,src:'loot'},
+  {id:'sg119',s:'equip',ic:16,n:'Bâton du serment commun',pr:300,who:3,dmg:4,sl:'arme',lv:38,rr:2,src:'quest'}];
 // icône d'un objet ; héros qui peuvent le porter
 export const icOf=o=>[o.s||'items',o.ic];
 export const whoOf=o=>Array.isArray(o.who)?o.who:[o.who];
@@ -382,7 +417,7 @@ export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
 addOrion();addRecruit(NYRA,['for','vit','agi']);addRecruit(LYRIA,['for','int','vit']); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister
 // V4.59 : équipement de Nyra (4) et Lyria (5) sans nouvel objet ni nouvelle image : elles portent une partie de ce que portent Fenn et Kael
 // (provisoire, en attendant la table d'équipement de ChatGPT). Lyria : tout l'équipement de Kael. Nyra : armures, accessoires et bijoux de Fenn, plus les épées et lames de Kael.
-for(const o of ITEMS){const w=whoOf(o);if(w.length>=HER.length)continue;const add=[];
+for(const [k,o] of ITEMS.entries()){const w=whoOf(o);if(k>=86||w.length>=HER.length)continue;const add=[]; // V5.0 : les objets 86+ (lot 2) restent exclusifs, jamais prêtés
  if(w.includes(0))add.push(5);
  if(w.includes(1)&&o.sl!=='arme'||w.includes(0)&&o.sl==='arme'&&/Épée|Lame/.test(o.n))add.push(4);
  if(add.length)o.who=[...new Set([...w,...add])].sort((a,b)=>a-b)}
