@@ -344,3 +344,34 @@ body.camp #exc{display:none}
 .hud2 .sp em{inset:auto auto 13px 50%;translate:-50% 0;padding:0 5px 0 3px;border-radius:8px;background:#0b1018e6;box-shadow:inset 0 0 0 1px var(--ra-mag);font:800 11px/16px system-ui;color:var(--ra-iv);white-space:nowrap}
 .hud2 .sp em::before{content:'⏱';margin-right:2px;font-size:10px}
 .hud2 #who .pa{color:var(--ra-pa)}.hud2 #who .pm{color:var(--ra-pm)}
+
+/* ===== V4.51 : images de ChatGPT dans l'aperçu HUD V2 (anneaux, cases de sort, icônes, cadre et texture du panneau) ===== */
+.hud2{--rgw:48px}
+@media (orientation:landscape) and (max-height:450px){.hud2{--rgw:42px}}
+@media (orientation:landscape) and (min-height:600px){.hud2{--rgw:56px}}
+@media (min-width:1000px) and (min-height:700px){.hud2{--rgw:64px}}
+.hud2 #tl{padding:8px 8px 4px;gap:4px;align-items:center}
+.hud2 .rg{position:relative;flex:none;width:var(--rgw);height:var(--rgw);display:grid;place-items:center;transition:transform .15s}
+.hud2 .rg::after{content:'';position:absolute;left:50%;top:50%;width:145.5%;height:145.5%;translate:-50% -50%;background:url(assets/hud2/ring-h.webp) center/100% 100% no-repeat;pointer-events:none;z-index:1}
+.hud2 .rg.m::after{background-image:url(assets/hud2/ring-m.webp)}
+.hud2 .rg.b::after{background-image:url(assets/hud2/ring-b.webp)}
+.hud2 .rg.cur::after{background-image:url(assets/hud2/ring-cur.webp)}
+.hud2 .rg.cur{transform:scale(1.1);margin:0 3px;z-index:2}
+.hud2 #tl .rg canvas{width:calc(var(--rgw)*.8)!important;height:calc(var(--rgw)*.8)!important;border:0!important;border-radius:50%;box-shadow:none!important;transform:none!important;margin:0!important;background:radial-gradient(#2b3646,#0f1620)}
+.hud2 .rg.tg{filter:drop-shadow(0 0 3px #ffa040) drop-shadow(0 0 6px #ffa040)}
+/* cases de sort : cadre peint (3 états) par-dessus l'icône existante */
+.hud2 .sp{background:linear-gradient(#252d38,#161e2a)!important;box-shadow:0 2px 4px #0009!important;filter:none!important;border-radius:11px;padding:6px}
+.hud2 .sp::after{content:'';position:absolute;inset:-3px;background:url(assets/hud2/sp-n.webp) center/100% 100% no-repeat;pointer-events:none;z-index:1}
+.hud2 .sp.sel::after{background-image:url(assets/hud2/sp-sel.webp)}
+.hud2 .sp:disabled::after{background-image:url(assets/hud2/sp-off.webp)}
+.hud2 .sp b,.hud2 .sp em,.hud2 .sp small{z-index:2}
+.hud2 .sp canvas{border-radius:8px}
+/* icônes peintes : PA, PM, PV, haut-parleur */
+.hud2 #who .pa img,.hud2 #who .pm img{width:20px;height:20px;margin:-3px 0}
+.hud2 #hpt::before{content:'';display:inline-block;width:15px;height:15px;margin-right:4px;vertical-align:-3px;background:url(assets/hud2/ic-pv.webp) center/contain no-repeat}
+.hud2 #hson img{display:block;width:22px;height:22px}
+/* panneau : texture raccordable sous un voile bleu nuit, cadre à coins (9 tranches) */
+.hud2 #panel{background:linear-gradient(rgba(19,28,41,.62),rgba(11,18,34,.8)),url(assets/hud2/texture.webp) 0 0/200px 200px!important}
+.hud2 #panel::before{content:'';position:absolute;inset:0;border:20px solid transparent;border-image:url(assets/hud2/panel-frame.webp) 58 stretch;pointer-events:none;z-index:1}
+/* V4.51 : portrait — les vignettes de cibles flottent au-dessus du panneau (elles recouvraient la ligne du héros) */
+@media (orientation:portrait){.hud2 #pts{position:static}}
