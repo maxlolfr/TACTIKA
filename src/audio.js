@@ -6,10 +6,12 @@ const FALL={map2:'camp',ember:'cave',boss_map2:'boss_v2',boss_phase:'kael_charge
 const dir=n=>n.startsWith('v_')?'voix/':MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
 // V4.31 : volume réglable (curseurs des Réglages, 0 à 150 %) et plus fort à 100 % ; TRIM remonte les deux fichiers les plus faibles (mesurés vers -17 et -16 LUFS, les autres entre -14 et -12)
 // V4.36 : voix des héros (7 répliques courtes chacun). VTRIM égalise les fichiers, mesurés entre -26 et -15 dB ; les KO restent un peu plus bas
-export const VOICES={warrior:'kael',archer:'fenn',healer:'aelis'};
+export const VOICES={warrior:'kael',archer:'fenn',healer:'aelis',mage:'orion',rogue:'nyra',paladin:'lyria'};
 const VLINES=['start','sig','support','hurt','ko','win','level'],VGAP=6,VSAME=20;
-const VTRIM={kael:[.84,.87,1.06,1.5,1.93,.98,1.35],fenn:[1.48,.68,.75,1.3,1.95,1,.69],aelis:[1.62,1,2.04,2,2.04,.85,1.84]};
-const vname=(h,l)=>'v_'+h+'_'+l;
+const VTRIM={kael:[.84,.87,1.06,1.5,1.93,.98,1.35],fenn:[1.48,.68,.75,1.3,1.95,1,.69],aelis:[1.62,1,2.04,2,2.04,.85,1.84],orion:[1,1,1,1,1,1,1],nyra:[1,1,1,1,1,1,1],lyria:[1,1,1,1,1,1,1]};
+let VLANG='fr';const vname=(h,l)=>'v_'+h+'_'+l+(VLANG==='en'?'_en':'');
+// V4.82 : voix en anglais (fichiers v_<héros>_<réplique>_en.mp3), chargées seulement quand la langue du jeu est l'anglais
+export function setVoiceLang(l){l=l==='en'?'en':'fr';if(l===VLANG)return;VLANG=l;for(const h of Object.values(VOICES))for(const x of VLINES)load(vname(h,x)).catch(()=>{})}
 const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
@@ -60,7 +62,7 @@ export function duck(ms,depth=.25){if(!AU.src)return;const g=AU.src.g.gain,t=AU.
 // Jamais deux voix à la fois ; en dehors des moments forts (force), 6 s de silence entre deux voix et 20 s avant de redire la même réplique
 export function voice(k,line,{chance=1,force=false}={}){const c=AU.c,h=VOICES[k];if(!c||!h||!AU.on.s||!AU.vol.v||Math.random()>chance)return false;
  const n=vname(h,line),b=AU.buf[n],t=c.currentTime;if(!b||t<AU.vEnd||!force&&(t<AU.vEnd+VGAP||t<(AU.vLast[n]??-VSAME)+VSAME))return false;
- const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=VTRIM[h][VLINES.indexOf(line)];s.connect(g);g.connect(AU.v);s.start();
+ const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=VLANG==='en'||!VTRIM[h]?1:VTRIM[h][VLINES.indexOf(line)];s.connect(g);g.connect(AU.v);s.start();
  AU.vEnd=t+b.duration;AU.vLast[n]=t;duck(b.duration*1000,.45);return true}
 export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
  if(b){const s=c.createBufferSource();s.buffer=b;s.playbackRate.value=rate*(.94+Math.random()*.12);s.connect(g);s.start();return}

@@ -1655,3 +1655,16 @@ test('V4.81 audio V5 : chaque son et musique déclaré existe, chaque snd de sor
  const D=fs.readFileSync(new URL('../src/data.js',import.meta.url),'utf8');
  for(const m of D.matchAll(/snd:'(\w+)'/g))assert.ok(S.includes(m[1])||['slash'].includes(m[1]),'snd inconnu '+m[1]);
 });
+
+test('V4.82 voix FR/EN : 6 héros, 7 répliques, versions _en, sélection de langue', async()=>{
+ const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8');
+ assert.match(A,/mage:'orion',rogue:'nyra',paladin:'lyria'/);assert.match(A,/export function setVoiceLang/);
+ for(const h of ['kael','fenn','aelis','orion','nyra','lyria'])for(const l of ['start','sig','support','hurt','ko','win','level'])for(const e of ['','_en'])
+  assert.ok(fs.existsSync(new URL('../assets/audio/voix/v_'+h+'_'+l+e+'.mp3',import.meta.url)),'voix manquante '+h+l+e);
+});
+
+test('V4.82 narration : fichiers vo_ présents, FR et EN, une réplique par fichier', async()=>{
+ const fs=await import('node:fs'),m=await import('../src/story.js');
+ assert.equal(m.VO.size,48);
+ for(const n of m.VO){assert.ok(fs.existsSync(new URL('../assets/audio/voix/'+n+'.mp3',import.meta.url)),n);const[,id,i,lg]=n.match(/^vo_(.+)_(\d+)_(fr|en)$/);assert.ok(m.SC[id]&&m.SC[id][+i-1],'réplique inconnue '+n);assert.ok(m.VO.has('vo_'+id+'_'+i+'_'+(lg==='fr'?'en':'fr')),'version manquante '+n)}
+});
