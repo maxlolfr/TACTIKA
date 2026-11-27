@@ -4,11 +4,22 @@ export const SNDS=['slash','smash','guard','bow','arrowhit','heal','poison','buf
 const FALL={darkwood:'forest',village:'main_theme',boss_v2:'boss',main_theme:'camp',forest:'battle',elite_battle:'battle',critical:'smash',enemy_warning:'turn',kael_charge:'smash',aelis_heal:'heal',push:'hit',collision:'smash',combo_2:'buff',combo_3:'levelup',crystal_amp:'buff',prism_burst:'critical',beam_charge:'enemy_warning',beam_fire:'smash',cave:'battle',golem_smash:'smash',spider_bite:'bite',bat_shriek:'poison',titan_roar:'enemy_warning',titan_death:'death',chest_open:'coin',loot_rare:'levelup',boss_intro:'enemy_warning',titan_boss:'boss',coast:'battle',mountain:'battle',castle:'battle'};
 // V4.0.3 : sons rangés dans assets/audio/musique (musiques, victoire, défaite) et assets/audio/bruitages ; catalogue : assets/audio/SONS.md
 const dir=n=>MUSICS.includes(n)||n==='victory'||n==='defeat'?'musique/':'bruitages/';
+// V4.31 : volume réglable (curseurs des Réglages, 0 à 150 %) et plus fort à 100 % ; TRIM remonte les deux fichiers les plus faibles (mesurés vers -17 et -16 LUFS, les autres entre -14 et -12)
+const GAIN={m:.9,s:1},TRIM={main_theme:1.5,camp:1.4};
+export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
+AU.vol={m:100,s:100};
+try{Object.assign(AU.vol,JSON.parse(localStorage.getItem('landeVol')||'{}'))}catch(e){}
+const level=k=>AU.on[k]?GAIN[k]*AU.vol[k]/100:0;
+const apply=k=>{if(AU.c)(k==='m'?AU.m:AU.s).gain.setTargetAtTime(level(k),AU.c.currentTime,.05)};
+export function setVol(k,v){AU.vol[k]=Math.max(0,Math.min(VOLMAX,+v||0));try{localStorage.setItem('landeVol',JSON.stringify(AU.vol))}catch(e){}
+ if(AU.vol[k]&&!AU.on[k])setSon(k);else apply(k)}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=AU.c=new C();
- AU.mix=c.createGain();AU.mix.connect(c.destination);AU.m=c.createGain();AU.m.gain.value=AU.on.m?.45:0;AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=AU.on.s?.8:0;AU.s.connect(AU.mix);
+ // limiteur en sortie : évite la saturation quand le volume est poussé
+ const lim=c.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.25;lim.connect(c.destination);
+ AU.mix=c.createGain();AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);
  for(const n of SNDS)load(n).catch(()=>{});
  if(AU.want)music(AU.want,1)}
 const load=n=>fetch('assets/audio/'+dir(n)+n+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>AU.c.decodeAudioData(b,ok,ko))).then(b=>AU.buf[n]=b);
@@ -24,15 +35,15 @@ function unlock(){auInit();if(!AU.c)return;try{const b=AU.c.createBuffer(1,1,220
 ['touchend','click','pointerup','keydown'].forEach(ev=>addEventListener(ev,unlock,{capture:true}));
 document.addEventListener('visibilitychange',()=>{if(!AU.c)return;document.hidden?AU.c.suspend():AU.c.resume()});
 export function setSon(k){AU.on[k]=AU.on[k]?0:1;try{localStorage.setItem('landeSon',JSON.stringify(AU.on))}catch(e){}
- if(AU.c){const g=k==='m'?AU.m:AU.s;g.gain.setTargetAtTime(AU.on[k]?(k==='m'?.45:.8):0,AU.c.currentTime,.05)}sonBtns()}
+ apply(k);sonBtns()}
 export function sonBtns(){document.querySelectorAll('.son-m').forEach(b=>b.style.opacity=AU.on.m?1:.35);document.querySelectorAll('.son-s').forEach(b=>b.style.opacity=AU.on.s?1:.35)}
 export function music(n,force){AU.want=n;const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
  const w=lost[n]?FALL[n]:n,k=AU.buf[w]?w:null;
  if(!k){musicLoad(w);return} // l'ancienne musique continue pendant le chargement
  if(AU.src){const o=AU.src;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000);AU.src=null}
  AU.cur=n;for(const m of MUSICS)if(m!==k)delete AU.buf[m];
- const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf[k];s.loop=true;s.g=g;g.gain.value=0;g.gain.setTargetAtTime(1,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
-export function duck(ms){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime;g.setTargetAtTime(.25,t,.08);g.setTargetAtTime(1,t+ms/1000,.6)}
+ const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf[k];s.loop=true;s.g=g;g.gain.value=0;s.vol=TRIM[k]||1;g.gain.setTargetAtTime(s.vol,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
+export function duck(ms){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime,v=AU.src.vol;g.setTargetAtTime(.25*v,t,.08);g.setTargetAtTime(v,t+ms/1000,.6)}
 export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
  if(b){const s=c.createBufferSource();s.buffer=b;s.playbackRate.value=rate*(.94+Math.random()*.12);s.connect(g);s.start();return}
  synth(FALL[n]||n,g,c.currentTime)}
