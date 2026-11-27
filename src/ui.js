@@ -4,7 +4,8 @@ import {$,HUD2} from './util.js';
 import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
 import {QUESTS} from './quests.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,grantQuest,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
-import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
+import {save,prog,unlocked,store,resetSave,storeState,hasBackup,restoreBackup,importSave} from './save.js';
+import {encodeCode,decodeCode} from './savecore.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
@@ -14,7 +15,7 @@ import {renderHome} from './home.js';
 import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
-import {regHtml} from './i18n.js';
+import {regHtml,trh} from './i18n.js';
 import {HOW_EN} from './tips-en.js';
 
 // ---------- panneau de combat ----------
@@ -227,11 +228,20 @@ export function tuto(done,i=0,L=TUTO,title){const T=$('tuto');T.classList.add('o
  const b=document.createElement('button');b.className='btn';b.textContent=i<L.length-1?'Suivant':'Compris !';b.onclick=()=>i<L.length-1?tuto(done,i+1,L,title):(T.classList.remove('on'),save.tuto=1,store(),done&&done());T.append(b);
  if(i<L.length-1){const s=document.createElement('button');s.className='btn dark';s.style.marginLeft='8px';s.textContent='Passer';s.onclick=()=>{T.classList.remove('on');save.tuto=1;store();done&&done()};T.append(s)}}
 // ---------- export / import de la sauvegarde (V3.0a) ----------
-function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-size:13px;color:#cbbd9c">Copie ce code pour garder ta partie (ou la passer sur un autre appareil). Pour restaurer, colle un code puis « Importer ».</p><textarea id="svt"></textarea><div id="svm" style="font-size:13px;min-height:18px"></div>`;
- const t=D.querySelector('textarea'),m=D.querySelector('#svm');t.value=btoa(unescape(encodeURIComponent(JSON.stringify(save))));
- const mk=(n,f)=>{const b=document.createElement('button');b.className='btn dark';b.textContent=n;b.onclick=f;D.append(b)};
- mk('Copier',()=>{t.select();try{navigator.clipboard.writeText(t.value);m.textContent='Copié !'}catch(e){document.execCommand('copy');m.textContent='Copié !'}});
- mk('Importer',()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(t.value.trim()))));if(!s||!Number.isFinite(s.lvl)||!Array.isArray(s.items))throw 0;localStorage.setItem(KEY,JSON.stringify(s));location.reload()}catch(e){m.style.color='#ff8a7a';m.textContent='Code invalide : rien n’a été changé.'}});
+function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-size:13px;color:#cbbd9c">Exporte ta partie en fichier ou copie le code pour la garder (ou la passer sur un autre appareil). Pour restaurer, choisis un fichier ou colle un code puis « Importer ».</p><textarea id="svt"></textarea><div id="svm" style="font-size:13px;min-height:18px"></div>`;
+ const t=D.querySelector('textarea'),m=D.querySelector('#svm');t.value=encodeCode(save);
+ const say=(x,bad)=>{m.style.color=bad?'#ff8a7a':'';m.textContent=x};
+ if(storeState.loadFrom==='backup')say('La copie de secours a été restaurée au démarrage (l’ancienne sauvegarde était abîmée).');
+ else if(storeState.loadFrom==='corrupt')say('La sauvegarde était illisible : une nouvelle partie a démarré (l’original est gardé de côté).',1);
+ if(!storeState.ok)say('Écriture impossible sur cet appareil : exporte ta partie maintenant.',1);
+ const mk=(n,f)=>{const b=document.createElement('button');b.className='btn dark';b.textContent=n;b.onclick=f;D.append(b);return b};
+ const done=o=>{if(!o)return say('Fichier ou code invalide : rien n’a été changé.',1);if(importSave(o))location.reload();else say('Écriture impossible : rien n’a été changé.',1)};
+ mk('Copier',()=>{t.select();try{navigator.clipboard.writeText(t.value);say('Copié !')}catch(e){document.execCommand('copy');say('Copié !')}});
+ mk('Exporter (fichier)',()=>{try{const u=URL.createObjectURL(new Blob([JSON.stringify(save)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='tactika-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);say('Fichier exporté.')}catch(e){say('Export impossible : utilise « Copier ».',1)}});
+ const fi=document.createElement('input');fi.type='file';fi.accept='.json,application/json,text/plain';fi.style.display='none';fi.onchange=()=>{const f=fi.files&&fi.files[0];if(!f)return;if(f.size>4e6)return say('Fichier invalide : rien n’a été changé.',1);const r=new FileReader();r.onload=()=>done(decodeCode(String(r.result)));r.onerror=()=>say('Lecture impossible : rien n’a été changé.',1);r.readAsText(f)};D.append(fi);
+ mk('Importer (fichier)',()=>fi.click());
+ mk('Importer',()=>done(decodeCode(t.value)));
+ if(hasBackup())mk('Copie de secours',()=>{if(restoreBackup())location.reload();else say('Aucune copie de secours lisible.',1)});
  mk('Fermer',()=>D.close());D.showModal()}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
