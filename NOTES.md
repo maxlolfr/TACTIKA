@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.9 (27/11/2026) : Prairie à 10 étapes (pilote)
+- `ZONES[0].fights` : 9 combats + Roi Gelée, niveaux 1 à 3, gelées et sangliers ; étape 5 « abattre le chef », étape 8 survie (5 tours, `waves`).
+- Sauvegarde : `migratePrairie` (une fois, `save.p10`). Boss déjà battu = 10/10, ses étoiles passent à l'étape 10, les nouvelles étapes restent rejouables ; sinon étapes gagnées gardées.
+- Défi du jour : cristaux seulement dans les Cavernes. Musique « élite » sur les combats à objectif.
+- 89 tests ; 60 combats simulés (6 campagnes Prairie) : 100 % de victoires au 1er essai, équipe niveau 4 au boss. Difficulté à juger par Max.
+
 ## V4.8e (27/11/2026) : Académie, Forge, Marchand, Taverne (lot 4.7e, partie ergonomie)
 - « Retour » (`.ov-back`) reste à l'écran quand la liste défile ; lignes sans débordement horizontal. Colonnes en large déjà présentes, gardées.
 - Non refait : ces écrans restent des écrans pleins (pas de passage dans les panneaux du village) ; la Taverne et l'onglet Quêtes partagent déjà la même fonction `quests`.

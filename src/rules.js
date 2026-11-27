@@ -49,6 +49,9 @@ export function fightSpec(zi,i,seed){const Z=ZONES[zi],f=Z.fights?.[i]||{};
 export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES[zi]);
 // V4.6.1 : état du Cristal de l'Éther (1 à 5) selon les régions terminées : 0 → 1, 1 → 2, 2-3 → 3, 4-5 → 4, 6 et plus → 5
 export const crystalState=save=>[1,2,3,3,4,4,5][Math.min(6,ZONES.filter((_,i)=>zoneDone(save,i)).length)];
+// V4.9 : la Prairie passe de 4 à 10 étapes. Boss déjà battu = région toujours terminée (étoiles du boss déplacées à l'étape 10),
+// sinon les étapes gagnées sont gardées. Une seule fois (save.p10), les étapes ajoutées d'une région terminée restent rejouables.
+export function migratePrairie(save){if(save.p10)return save;save.p10=1;if((save.z?.prairie||0)>=4){save.z.prairie=10;const st=save.st?.prairie;if(st&&st[3]){st[9]=st[3];st[3]=0}}return save}
 // ---------- progression ----------
 export const xpNeed=l=>60*l;
 // ---------- forge ----------
@@ -84,7 +87,7 @@ export function ctUpdate(save,day,res){const done=[];if(!res.win)return done;
 export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p<t.n)return 0;t.c=1;save.gold+=t.g;return 1+gainXp(save,t.x)}
 // défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
 export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
- return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.fights?{a:1,p:1}:undefined}}
+ return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined}}
 // V4.7a : équipement du héros i, un objet par emplacement. Choix du joueur (save.eq, ou save.wpn d'avant la V4.7a pour l'arme)
 // s'il possède encore l'objet ; sinon le meilleur possédé pour cet emplacement (à égalité, les PV d'abord).
 const score=(save,j)=>{const o=ITEMS[j],v=k=>itemVal(o,k,upLvl(save,j),rarOf(save,j));return v('hp')+2.9*(v('dmg')+v('heal'))};
