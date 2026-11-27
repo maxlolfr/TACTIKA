@@ -33,9 +33,17 @@ export const SP={
  weaken:{snd:'poison',n:'Affaiblissement',sn:'Affaiblir',pa:3,r:[1,4],t:'enemy',los:1,weaken:[.2,2],fx:5,cd:3,d:'La cible inflige 20 % de dégâts en moins pendant 2 de ses tours (sans cumul)'},
  nova:{snd:'prism_burst',n:'Explosion',pa:4,r:[0,0],t:'self',nova:1,dmg:[13,17],push:1,fx:7,cd:3,shake:1,d:'Frappe les ennemis collés à Orion et les repousse d’une case'},
  glyph:{snd:'trap',n:'Glyphe',pa:4,r:[1,4],t:'cell',free:1,los:1,trap:1,glyph:1,dmg:[12,16],fx:1,cd:3,d:'Pose un glyphe sur une case libre : il explose sous le premier ennemi qui y entre. 3 tours, un seul à la fois'},
+ // V4.43 : les 6 autres sorts de Kael (valeurs provisoires de Claude, non équilibrées)
+ whirl:{vx:'sig',snd:'slash',n:'Tourbillon',pa:4,r:[0,0],t:'self',nova:1,dmg:[10,13],fx:7,cd:2,shake:1,d:'Frappe tous les ennemis collés à Kael'},
+ sunder:{snd:'kael_charge',n:'Brise-armure',sn:'Brise',pa:4,r:[1,1],t:'enemy',dmg:[10,13],pierce:.5,sunder:[.25,2],fx:7,cd:2,d:'Ignore la moitié de l’armure ; la cible subit +25 % de dégâts pendant 2 tours'},
+ taunt:{vx:'support',snd:'guard',n:'Provocation',sn:'Provoc.',pa:2,r:[0,0],t:'self',taunt:3,fx:7,cd:3,d:'Les ennemis à 3 cases ou moins ne visent que Kael à leur prochain tour'},
+ counter:{vx:'support',snd:'guard',n:'Contre-attaque',sn:'Contre',pa:2,r:[0,0],t:'self',counter:.6,fx:7,cd:3,d:'Jusqu’à ton prochain tour, chaque ennemi qui frappe Kael au contact reçoit 60 % d’une Taillade'},
+ rage:{vx:'support',snd:'buff',n:'Rage guerrière',sn:'Rage',pa:2,r:[0,0],t:'self',buff:.35,buffT:2,fx:7,cd:4,d:'+35 % de dégâts pendant 2 tours (ne se cumule pas avec Aura)'},
+ judge:{vx:'sig',snd:'kael_charge',n:'Jugement du lion',sn:'Jugement',pa:6,r:[1,1],t:'enemy',dmg:[30,38],pierce:.5,push:1,fx:7,cd:99,shake:1,d:'Coup ultime : ignore la moitié de l’armure et repousse d’une case. 1 fois par combat'},
  storm:{snd:'prism_burst',n:'Tempête arcanique',sn:'Tempête',pa:6,r:[2,5],t:'cell',los:1,zone:2,side:.5,dmg:[23,30],proj:1,orb:'#b98bff',fx:3,cd:99,shake:1,d:'Zone de rayon 2, 50 % autour du centre. Épargne tes héros. 1 fois par combat'}};
 export const HER=[
- {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge'},
+ {k:'warrior',n:'Kael',cls:'Guerrier',hp:62,init:12,sp:['slash','smash','guard'],sp5:'charge',
+  learn:[['charge',5],['whirl',10],['sunder',15],['taunt',20],['counter',25],['rage',35],['judge',45]]},
  {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot',
   learn:[['pshot',5],['venomarrow',10],['dodge',15],['icearrow',20],['blastarrow',25],['rain',35]]},
  {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura'],sp5:'mheal'}];

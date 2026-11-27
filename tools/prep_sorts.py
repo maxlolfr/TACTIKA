@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # V4.28 : icônes de sorts (planches RPG-08/09/10 et pictogrammes, fond magenta). usage : python3 tools/prep_sorts.py <dossier art/tactika/sorts>
-# Sortie : assets/spells5.webp + entrée « spells5 » de atlas.json : 0 Charge, 1 Tir perforant, 2 Soin collectif, 3 Piège, 4 Renaissance, 5 à 9 Fenn.
+# Sortie : assets/spells5.webp + entrée « spells5 » de atlas.json : 0 Charge, 1 Tir perforant, 2 Soin collectif, 3 Piège, 4 Renaissance, 5 à 9 Fenn, 10 à 15 Kael.
 import sys,json,numpy as np
 from PIL import Image
 from scipy import ndimage
 S=160;D=sys.argv[1]+'/'
 CASES=[('rpg08-sorts-kael-1772',3,3,0),('rpg09-sorts-fenn-1769',3,2,0),('rpg10-sorts-aelis-v2-1777',3,2,0),('pictos-6-1778',3,2,0),('pictos-6-1778',3,2,1)]
 CASES+=[('rpg09-sorts-fenn-1769',3,2,k) for k in range(1,6)] # V4.41 : toxique, explosive, glaciale, repli, pluie
+CASES+=[('rpg08-sorts-kael-1772',3,3,k) for k in range(1,7)] # V4.43 : tourbillon, brise-armure, provocation, contre-attaque, rage, jugement
 sheet=Image.new('RGBA',((S+2)*len(CASES),S));F=[]
 for n,(f,C,R,k) in enumerate(CASES):
     a=np.array(Image.open(D+f+'.png').convert('RGB')).astype(float);H,W=a.shape[:2];r,g,b=a[...,0],a[...,1],a[...,2]
