@@ -918,5 +918,5 @@ test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans
  const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
  assert.equal(ZONES.length,6);assert.equal(map2Open({z:{}}),false);
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
- assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94);
+ assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
