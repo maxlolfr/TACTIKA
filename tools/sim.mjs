@@ -8,8 +8,9 @@ import {R7,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
 import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,onLava,costOf,lootPool} from '../src/rules.js';
 
+if(process.env.NO_MHEAL)SP.mheal.pa=99;
 ZONES.push(R7); // région 7 mesurable : « 6.0 » à « 6.9 »
-const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;
+const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;const CASTS={}; // sorts lancés par les héros
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
 const avg=a=>(a.reduce((x,y)=>x+y,0)/a.length)||0;
 
@@ -30,7 +31,7 @@ function best(s,u){const rc=reach(s,u,u.pm);let b=null;
    for(const c of sp.t==='self'?[p]:cells){if(!okTarget(s,u,sp,c,p))continue;const v=value(s,u,sp,c)-d*.5;if(v>0&&(!b||v>b.v))b={p,d,sp,c,v}}}}
  return b}
 function heroTurn(s,u){
- for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}payCost(u,b.sp,b.c);tally(s,applySpell(s,u,b.sp,b.c));if(outcome(s))return}
+ for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}payCost(u,b.sp,b.c);CASTS[b.sp.n]=(CASTS[b.sp.n]||0)+1;tally(s,applySpell(s,u,b.sp,b.c));if(outcome(s))return}
  if(u.pm>0&&!outcome(s)){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
   for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
   if(bk){u.x=bk[0];u.y=bk[1];u.pm-=bk[2]}}}
@@ -65,6 +66,8 @@ PROF.std.attr=(n,i)=>{const a=Math.ceil(n/3),b=Math.ceil((n-a)/2);return{[main(i
 PROF.opti.attr=(n,i)=>({[main(i)]:n});
 // V4.12 (lot 3) : anc = les 10 objets historiques, communs, sans forge ; cat = tout le catalogue permis au niveau (raretés fixes des nouveaux), sans forge
 PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:null};
+// soin (mesure du cumul des soins) : tout le catalogue, forge 2, Guérisseuse, Aelis tout en Intelligence. NO_MHEAL=1 retire Soin collectif.
+PROF.soin={...PROF.cat,up:2,attr:(n,i)=>i===2?{int:n}:PROF.std.attr(n,i)};
 for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
 const PIL={h5:['Château 5 (chevalier rouge)',4,4],h8:['Château 8 (survie)',4,7],h10:['Chevalier noir (boss)',4,9],m5:['Monts 5 (chevalier rouge)',3,4],m8:['Monts 8 (survie)',3,7],m10:['Golem ancien (boss)',3,9],c5:['Côte 5 (chevalier)',2,4],c8:['Côte 8 (survie)',2,7],c10:['Crabe royal (boss)',2,9],p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 8 (survie)',1,7],loup:['Loup alpha (boss)',1,9],b5:['Bois 5 (chef)',1,4],b7:['Bois 7 (formation)',1,6],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
@@ -74,7 +77,7 @@ if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,b
   for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&[0,1,2].map(i=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:p.sp,z:{},st:{}};R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
- console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}
+ console.log(`\nSoins lancés : Soin ${CASTS[SP.heal.n]||0}, Soin collectif ${CASTS[SP.mheal.n]||0}.`);console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}
 
 // Campagne : chaque combat dans l'ordre ; après une défaite, on rejoue le dernier combat gagné (pour l'XP) puis on réessaie.
 const stats=ZONES.flatMap((z,zi)=>[...Array(zlen(z)).keys()].map(i=>({zi,i,tries:[],firstWin:0,rounds:[],st:[0,0,0,0],ko:[],hp:[],lvl:[],grind:[],stuck:0})));

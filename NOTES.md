@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## Mesures du 27/11 (aucune valeur de jeu changée)
+- `sim.mjs` : profil `soin` (tout le catalogue, forge 2, Aelis en Intelligence), `NO_MHEAL=1`, compte des soins lancés.
+- 8 graines. Château 10 et Braise 10 : profil `sous` (niveau −2, sans objet ni talent) 0/8 ; `std` 8/8, 55-56 % de PV ; `opti` 8/8, 78-79 %. Survies Château 8 et Braise 8 gagnées par tous.
+- Soin collectif : le robot le lance 4 fois contre 73 Soins (24 combats `std`). La mesure ne permet **pas** de juger son cumul.
+- Attention : sans `PROF=`, `pilote` joue 5 profils (8 graines × 1 mission = 40 combats).
 ## V4.30 (27/11) : camp sur écran presque carré (pliant ouvert, tablette)
 - Le village horizontal s'affiche dès que la zone à gauche du menu atteint 0,8 fois sa hauteur (avant : 1,2). Cadre utile resserré (860 → 810), plaque Académie décalée.
 - Menu de droite plus étroit sous le rapport 7/5 (`--dock`), « Partir à l'aventure » sur une ligne. Écrans larges et téléphone droit inchangés. Signalé par Max sur Magic V5 déplié ; testé au navigateur seulement.
