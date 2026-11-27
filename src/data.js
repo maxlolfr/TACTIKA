@@ -72,10 +72,10 @@ export const ZONES=[
   fights:[{lvl:13,en:[GB,GB,SK]},{lvl:13,en:[GB,GH,GH]},{lvl:13,en:[SK,SK,GH]},{lvl:14,en:[GB,GB,GB,GH]},{lvl:14,en:[KR,SK,GH],goal:'chief'},
    {lvl:14,en:[SK,SK,KB,GB]},{lvl:14,en:[SK,GB,GB,GH,GH]},{lvl:15,en:[SK,GB,GH],goal:'survive'},{lvl:15,en:[KN,SK,SK,GH,GB]},{lvl:15,en:[SK,GB,GH],tip:'rage'}]},
  {id:'cristal',n:'Cavernes de cristal',x:14,y:33,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'titan',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat','titan'],
-  fights:[{lvl:16,en:[CG,CG,CG,CG],cry:{a:1},tip:'amp'},{lvl:16,en:[CG,CG,CG,'knightB','knightB'],cry:{a:2}},{lvl:17,en:[CG,CG,QS,QS,QS],cry:{a:2}},
+  fights:[{lvl:16,en:[CG,CG,CG],cry:{a:1},tip:'amp'},{lvl:16,en:[CG,CG,'knightB','knightB'],cry:{a:2}},{lvl:17,en:[CG,CG,QS,QS,QS],cry:{a:2}},
    {lvl:17,en:[CG,CG,QS,QS,QS],cry:{p:1},tip:'prism'},{lvl:18,en:[CG,QS,QS,QS,QS],cry:{a:1,p:1},goal:'chief'},{lvl:18,en:[CG,CG,PB,PB,PB,PB],cry:{a:2}},
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},
-   {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2}}]}];
+   {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2},tip:'beam'}]}];
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
 // V4.7a : sl = emplacement (arme, armure, bijou, accessoire). Seul l'objet équipé dans chaque emplacement donne son bonus (save.eq).
