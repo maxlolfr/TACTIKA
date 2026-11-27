@@ -151,7 +151,7 @@ export async function startFight(zi,i,F){
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
- layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'cave'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_v2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
+ layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
@@ -236,7 +236,7 @@ function quests(T,again){const d=today(),l=contracts(save,d);store();
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
   qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
   const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓':'Réclamer';
-  b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('coin');if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
+  b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('quest_complete');if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
  const b=document.createElement('button');b.className='btn'+(done?' dark':'');b.disabled=done;b.textContent=done?'✓':'Combattre';b.onclick=()=>{$('tav').classList.remove('on');startFight(F.zi,-1,F)};dd.append(b);T.append(dd)}
@@ -264,9 +264,9 @@ function secondMap(L){
  MAP2.forEach((z,i)=>{const zi=ZONES.findIndex(q=>q.map===2&&q.n===z.n),b=document.createElement('button');b.className='zone'+(zi<0?' lock':'')+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
   b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>${zi<0?'Bientôt':`Aperçu · ${prog(ZONES[zi].id)}/${zlen(ZONES[zi])}`}</small>`;b.onclick=()=>zi>=0?zoneSheet(zi):mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
- G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
+ G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
- if(!map2Open(save))mapNo=1;$('mapbox').classList.toggle('m2',mapNo===2);mapTabs();
+ if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');$('mapbox').classList.toggle('m2',mapNo===2);mapTabs();
  if(mapNo===2)return secondMap(L);
  L.insertAdjacentHTML('beforeend',road(ZONES.filter(z=>!z.map)));
  ZONES.filter(z=>!z.map).forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
@@ -292,7 +292,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
    <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
-  [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('coin',.5,1.3),d*1000+200));
+  [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',.7),d*1000+200));
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon(...icOf(ITEMS[it]),48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${whoName(ITEMS[it])} : ${effet(ITEMS[it],rarOf(save,it))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);

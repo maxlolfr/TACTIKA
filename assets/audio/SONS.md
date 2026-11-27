@@ -22,6 +22,9 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | boss | boss de la Prairie, du Bois et de la Côte | ancien |
 | titan_boss | Titan prismatique | V4.0.3 |
 | victory, defeat | fin de combat | ancien |
+| map2 | carte II | V4.33 |
+| ember | Forteresse de braise (aperçu) | V4.33 |
+| boss_map2 | boss de la Forteresse de braise (aperçu) ; remplace boss_v2 à cet endroit | V4.33 |
 
 ## Bruitages (`bruitages/`)
 | Groupe | Fichiers |
@@ -31,3 +34,4 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | Interface | step, click, turn, coin, levelup, chest_open (V4.0.3), loot_rare (V4.0.3), boss_intro (V4.0.3) |
 | Cavernes (V4.0.2) | crystal_amp (cristal turquoise), prism_burst (prisme), beam_charge, beam_fire (rayon du Titan) |
 | Monstres des Cavernes (V4.0.3) | golem_smash, spider_bite, bat_shriek, titan_roar (changement de phase), titan_death |
+| V4.33 | boss_phase (Fureur, Surchauffe), boss_death (mort d'un boss, hors Titan), quest_complete (contrat réclamé), star_earned (étoiles), village_ambience (boucle sous le thème du village) |
