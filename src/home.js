@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.21';
+export const VERSION='4.22';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -257,6 +257,7 @@ function itemRow(j,who,again,i){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v
  const st=(h>=0&&(i==null||h===i)?`<b class="v-diff up">équipé${multi?' sur '+HER[h].n:''}</b>`:h>=0?`porté par ${HER[h].n}`:'en réserve, sans effet')+
   (!to.length?'':lock?` · <b>niveau ${o.lv} requis</b>`:' · '+to.map(k=>(multi?HER[k].n+' : ':'si équipé : ')+diffHTML(j,k)).join(' · '));
  row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who||multi?whoName(o)+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.lv>1?` · niv. ${o.lv}`:''}<br>${st}</small>`));
+ if(!lock&&to.length>1)row.classList.add('multi');
  if(!lock)for(const k of to)row.append(wood(multi&&i==null?'Équiper sur '+HER[k].n:'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
 function heros(P){
  const tabs=el('div','v-tabs');HER.forEach((h,i)=>{const b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);

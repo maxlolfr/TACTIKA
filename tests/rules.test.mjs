@@ -799,13 +799,13 @@ import {lootPool,lootRare,holder,gearAll,fits,lvOf} from '../src/rules.js';
 import {whoOf,icOf} from '../src/data.js';
 import {readFileSync} from 'node:fs';
 const J=id=>ITEMS.findIndex(o=>o.id===id),SV2=(o={})=>({lvl:10,gold:1000,xp:0,items:[],sp:[null,null,null],up:{},...o});
-test('V4.12 : 22 objets, les 10 historiques inchangés, ids et icônes valides', () => {
- assert.equal(ITEMS.length,22);
+test('V4.12 / V4.22 : 63 objets, les 10 historiques inchangés, ids et icônes valides', () => {
+ assert.equal(ITEMS.length,63);
  assert.deepEqual(ITEMS.slice(0,10).map(o=>[o.n,o.pr,o.who,o.sl,o.dmg||o.hp||o.heal,o.rr,o.lv,o.src]),
   [['Épée courte',60,0,'arme',2],['Hache de guerre',120,0,'arme',3],['Bouclier rond',90,0,'accessoire',8],['Heaume',70,0,'armure',6],['Arc long',60,1,'arme',2],
    ['Armure de cuir',70,1,'armure',6],['Bottes de cuir',50,1,'accessoire',4],['Bâton de saule',60,2,'arme',3],['Anneau de rubis',100,2,'bijou',2],['Amulette',70,2,'bijou',6]].map(a=>[...a,undefined,undefined,undefined]));
  const at=JSON.parse(readFileSync(new URL('../assets/atlas.json',import.meta.url)));
- ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
+ ITEMS.slice(10).forEach((o,k)=>{assert.equal(o.id,'eq'+(11+k));assert.deepEqual(icOf(o),['equip',k]);assert.ok(at.equip[k]);assert.ok([0,1,2].includes(o.rr));assert.ok(['shop','loot'].includes(o.src));
   assert.equal([o.dmg,o.hp,o.heal].filter(Boolean).length,1,'un seul bonus');assert.ok(!o.pa&&!o.pm)});
  assert.deepEqual(whoOf(ITEMS[J('eq17')]),[0,1,2]);assert.deepEqual(whoOf(ITEMS[J('eq21')]),[0,1]);
 });
@@ -904,4 +904,12 @@ test('V4.17 : Château, 10 étapes, niveaux 13 à 15, survie au 8e, Chevalier no
  for(let i=0;i<10;i++)for(let seed=1;seed<=10;seed++){const f=fightSpec(4,i,seed),s=newBattle(),g=genMap(s,seed,f.th);mkUnits(s,f,g.hs,g.es,HS);
   assert.equal(s.units.filter(u=>u.team==='m').length,f.wave?f.wave.start:f.en.length+(f.boss?1:0))}
  const a=migrateChateau({z:{chateau:4},st:{chateau:[3,2,3,1]}});assert.equal(a.z.chateau,10);assert.deepEqual([a.st.chateau[3],a.st.chateau[9]],[0,1]);assert.equal(migrateChateau({z:{chateau:2}}).z.chateau,2);
+});
+
+test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le butin', () => {
+ const lv=[[3,6],[8,11],[16,19]];
+ ITEMS.slice(22).forEach(o=>assert.ok(o.lv>=lv[o.rr][0]&&o.lv<=lv[o.rr][1],o.id));
+ const hi=SV2({lvl:19,gold:99999});
+ ITEMS.forEach((o,j)=>{if(j<22)return;if(o.src==='loot')assert.ok(lootPool(hi).includes(j),o.id);else assert.equal(buy({...hi,items:[]},j),1,o.id)});
+ assert.ok(lootPool(SV2({lvl:15})).every(j=>ITEMS[j].rr!==2||j<22),'aucun épique avant 16');
 });
