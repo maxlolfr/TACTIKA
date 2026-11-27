@@ -45,9 +45,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#16220f;color:var(--in
 .loot canvas{width:48px;height:48px}
 #map{padding:0;background:#2a6f9e}
 #mapbar{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;gap:8px;align-items:center;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;background:linear-gradient(#000a,#0000)}#mapbar span{flex:1;font-weight:700;text-shadow:0 1px 3px #000}
+#maptabs{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:3;display:flex;flex-direction:column;gap:6px}
 #mapbox{position:relative;width:min(100vw,66vh);aspect-ratio:2/3;margin:auto;background:radial-gradient(#3a8cc0,#1d5a85)}
 #worldimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}.isle{position:absolute;inset:0;width:100%;height:100%}
 #mapbox.hasimg .isle,#mapbox.hasimg .road{display:none}
+#mapbox.m2 #worldimg,#mapbox.m2 .isle{display:none}#mapbox.m2 .road{display:block}
+#mapbox.m2{background:radial-gradient(ellipse 46% 49% at 50% 50%,#6d6a55 0 96%,#d9c58f 97% 100%,#0000 101%),radial-gradient(#2d6f96,#143f60)}
 #mapz{position:absolute;inset:0;z-index:2}.road{position:absolute;inset:0;width:100%;height:100%}.road polyline{fill:none;stroke:#f3e2b0;stroke-width:.8;stroke-dasharray:2 1.6;vector-effect:non-scaling-stroke;stroke-width:3}
 .zone{position:absolute;transform:translate(-50%,-60%);background:none;border:0;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:0;font:inherit}
 .zone canvas,.zone .q{width:58px;height:58px;border-radius:50%;background:#1a120ccc;border:3px solid var(--gold);box-shadow:0 3px 8px #0008}.zone .q{display:flex;align-items:center;justify-content:center;font:800 26px system-ui;color:#cbbd9c}

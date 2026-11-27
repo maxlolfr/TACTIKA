@@ -1,8 +1,8 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
-import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
+import {SP,HER,MON,ZONES,MAP2,DOCK,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
+import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -251,15 +251,27 @@ let opened=false;
 export function camp(){
  G.phase='camp';document.body.classList.add('camp');music(opened?'village':'main_theme');opened=true;for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
 }
+// V4.25 : sélecteur Carte I / Carte II ; la carte II reste verrouillée jusqu'au Titan
+let mapNo=1;
+function mapTabs(){const T=$('maptabs');T.innerHTML='';[1,2].forEach(n=>{const b=document.createElement('button'),lock=n===2&&!map2Open(save);
+ b.className='btn'+(n===mapNo?'':' dark');b.textContent=(n===1?'Carte I':'Carte II')+(lock?' 🔒':'');b.setAttribute('aria-pressed',n===mapNo);
+ b.onclick=()=>{if(lock)return mapNote('Carte II','Bats le Titan prismatique, dans les Cavernes de cristal, pour ouvrir la carte II.');mapNo=n;worldMap()};T.append(b)})}
+function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${txt}</small>`;
+ const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
+const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
+function secondMap(L){L.insertAdjacentHTML('beforeend',road([DOCK,...MAP2]));
+ MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock';b.style.left=z.x+'%';b.style.top=z.y+'%';
+  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>Bientôt</small>`;b.onclick=()=>mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
- const L=$('mapz');L.innerHTML='';
- const svg=`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${ZONES.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;L.insertAdjacentHTML('beforeend',svg);
+ const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
+ if(!map2Open(save))mapNo=1;$('mapbox').classList.toggle('m2',mapNo===2);mapTabs();
+ if(mapNo===2)return secondMap(L);
+ L.insertAdjacentHTML('beforeend',road(ZONES));
  ZONES.forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
   const B=z.boss?MON[z.boss.k]:null;if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,46));else b.insertAdjacentHTML('beforeend','<span class="q">?</span>');
   b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?' · '+starsOf(z.id).reduce((a,b)=>a+b,0)+'/'+3*zlen(z)+' ★':''}</small>`);
   b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
- $('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
  const cz=L.querySelectorAll('.zone:not(.lock)');cz[cz.length-1]?.scrollIntoView({block:'center'});
 }
 function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;

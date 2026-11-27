@@ -913,3 +913,10 @@ test('V4.22 : eq23 à eq63, paliers de niveau et accès par le marchand ou le bu
  ITEMS.forEach((o,j)=>{if(j<22)return;if(o.src==='loot')assert.ok(lootPool(hi).includes(j),o.id);else assert.equal(buy({...hi,items:[]},j),1,o.id)});
  assert.ok(lootPool(SV2({lvl:15})).every(j=>ITEMS[j].rr!==2||j<22),'aucun épique avant 16');
 });
+
+test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans toucher aux zones',async()=>{
+ const{map2Open,zoneDone}=await import('../src/rules.js'),{MAP2,ZONES,zlen}=await import('../src/data.js');
+ assert.equal(ZONES.length,6);assert.equal(map2Open({z:{}}),false);
+ const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
+ assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94);
+});

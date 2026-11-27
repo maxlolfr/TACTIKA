@@ -76,6 +76,11 @@ export const ZONES=[
    {lvl:17,en:[CG,CG,QS,QS,QS],cry:{p:1},tip:'prism'},{lvl:18,en:[CG,QS,QS,QS,QS],cry:{a:1,p:1},goal:'chief'},{lvl:18,en:[CG,CG,PB,PB,PB,PB],cry:{a:2}},
    {lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{p:2},goal:'survive'},{lvl:19,en:[CG,CG,QS,QS,PB,PB],cry:{a:2,p:2}},{lvl:20,en:[QS,CG,CG,QS,PB,PB],cry:{a:2,p:2},goal:'chief'},
    {lvl:20,en:[QS,QS,PB],cry:{a:2,p:2},tip:'beam'}]}];
+// V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
+// Coordonnées proposées (commande C2-01), à recaler sur l'image reçue. DOCK = point de départ de la route.
+export const DOCK={x:50,y:91};
+export const MAP2=[{n:'Forteresse de braise',x:27,y:76},{n:'Temple des sables',x:72,y:66},{n:'Marais des âmes',x:29,y:52},
+ {n:'Citadelle céleste',x:73,y:39},{n:'Terres du Givre Éternel',x:29,y:24},{n:'Sanctuaire de l’Éther',x:55,y:10}];
 // nombre de combats d'une zone (le dernier est le boss)
 export const zlen=z=>z.fights?z.fights.length:4;
 // V4.7a : sl = emplacement (arme, armure, bijou, accessoire). Seul l'objet équipé dans chaque emplacement donne son bonus (save.eq).

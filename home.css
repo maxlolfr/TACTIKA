@@ -165,7 +165,7 @@ button.v-cl{cursor:pointer}button.v-cl:hover,button.v-cl:focus-visible{backgroun
 .v-cmd>*{flex:none}
 
 /* V4.6.1 : écran droit annoncé « large » (navigateur en version pour ordinateur, plié) : --ui agrandit l'interface */
-.wide .v-top,.wide .v-dock,.wide .v-panel,.wide .v-logo,.wide .ov:not(#camp):not(#map),.wide #mapbar,.wide #zsheet,.wide .zone,.wide #top,.wide #panel,.wide #tuto,.wide #goal,.wide #sv,.wide #unzoom{zoom:var(--ui)}
+.wide .v-top,.wide .v-dock,.wide .v-panel,.wide .v-logo,.wide .ov:not(#camp):not(#map),.wide #mapbar,.wide #maptabs,.wide #zsheet,.wide .zone,.wide #top,.wide #panel,.wide #tuto,.wide #goal,.wide #sv,.wide #unzoom{zoom:var(--ui)}
 .wide .v-plate{zoom:calc(var(--ui)*.78)}
 .v-hero{z-index:1}.v-plate{z-index:3}
 
