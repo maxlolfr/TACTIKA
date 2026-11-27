@@ -1287,3 +1287,20 @@ test('V4.43 : Kael à 10 sorts (tourbillon, brise-armure, provocation, contre-at
  // contre-attaque : riposte au contact
  r.applySpell(s,k,SP.counter,k);assert.ok(k.counter);const mh=m.hp;r.applySpell(s,m,m.atk,k);if(!k.dead)assert.ok(m.hp<mh);r.beginTurn(k);assert.ok(!k.counter);
 });
+
+test('V4.44 : Aelis à 10 sorts (bouclier, purification, racines, rayon lunaire, bénédiction)',async()=>{
+ const r=await import('../src/rules.js'),{HER,SP}=await import('../src/data.js');
+ assert.equal(HER[2].sp.length+HER[2].learn.length,9,'+ Renaissance par talent = 10');for(const[id]of HER[2].learn)assert.ok(SP[id],id);
+ const F=r.fightSpec(7,0,1),s=r.newBattle(r.mulberry(11)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:35,items:[],up:{},sp:[null,null,null]},i)));
+ const a=s.units.find(u=>u.id==='h2'),k=s.units.find(u=>u.id==='h0'),m=s.units.find(u=>u.team==='m');
+ // bouclier : absorbe avant les PV
+ r.applySpell(s,a,SP.ward,k);const w=k.ward.hp,hp=k.hp;assert.equal(w,Math.round(k.max*.25));r.hurt(s,k,w-1,'test');assert.equal(k.hp,hp);r.hurt(s,k,50,'test');assert.ok(!k.ward&&k.hp<hp);
+ // purification
+ k.poison={d:4,turns:2};k.curse=2;k.slow=1;r.applySpell(s,a,SP.cleanse,k);assert.ok(!k.poison&&!k.curse&&!k.slow);
+ // racines : 1 PM
+ r.applySpell(s,a,SP.roots,m);if(!m.dead&&!m.boss){m.maxPM=5;r.beginTurn(m);assert.equal(m.pm,1)}
+ // rayon lunaire : soigne le héros le plus blessé
+ k.hp=Math.round(k.max/2);const kh=k.hp;r.applySpell(s,a,SP.moon,m);assert.ok(k.hp>kh||m.dead);
+ // bénédiction : tous les héros
+ for(const h of s.units)if(h.team==='h'){h.hp=10;h.poison={d:3,turns:2}}r.applySpell(s,a,SP.bless,a);for(const h of s.units)if(h.team==='h')assert.ok(h.hp>10&&!h.poison);
+});

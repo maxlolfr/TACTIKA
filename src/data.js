@@ -33,6 +33,12 @@ export const SP={
  weaken:{snd:'poison',n:'Affaiblissement',sn:'Affaiblir',pa:3,r:[1,4],t:'enemy',los:1,weaken:[.2,2],fx:5,cd:3,d:'La cible inflige 20 % de dégâts en moins pendant 2 de ses tours (sans cumul)'},
  nova:{snd:'prism_burst',n:'Explosion',pa:4,r:[0,0],t:'self',nova:1,dmg:[13,17],push:1,fx:7,cd:3,shake:1,d:'Frappe les ennemis collés à Orion et les repousse d’une case'},
  glyph:{snd:'trap',n:'Glyphe',pa:4,r:[1,4],t:'cell',free:1,los:1,trap:1,glyph:1,dmg:[12,16],fx:1,cd:3,d:'Pose un glyphe sur une case libre : il explose sous le premier ennemi qui y entre. 3 tours, un seul à la fois'},
+ // V4.44 : les 5 autres sorts d'Aelis (valeurs provisoires de Claude, non équilibrées)
+ ward:{vx:'support',snd:'guard',n:'Bouclier magique',sn:'Bouclier',pa:3,r:[0,4],t:'ally',ward:[.25,2],fx:7,cd:3,d:'Bouclier qui absorbe des dégâts à hauteur de 25 % des PV max de l’allié, 2 tours'},
+ cleanse:{vx:'support',snd:'aelis_heal',n:'Purification',sn:'Purif.',pa:2,r:[0,4],t:'ally',heal:[6,8],cleanse:1,fx:4,cd:2,d:'Retire poison, brûlure, entrave, malédiction, affaiblissement et armure brisée ; petit soin'},
+ roots:{vx:'sig',snd:'poison',n:'Racines',pa:4,r:[1,5],t:'cell',los:1,zone:1,side:1,dmg:[6,8],slow:9,fx:5,cd:3,d:'Zone de rayon 1 : dégâts, et les ennemis n’ont plus qu’1 PM à leur prochain tour (−1 PM pour un boss)'},
+ moon:{snd:'prism_burst',n:'Rayon lunaire',sn:'Rayon',pa:4,r:[2,6],t:'enemy',los:1,dmg:[13,17],pierce:1,drain:.4,proj:1,orb:'#9fd8ff',fx:2,cd:2,d:'Ignore l’armure ; soigne l’allié le plus blessé de 40 % des dégâts infligés'},
+ bless:{vx:'sig',snd:'aelis_heal',n:'Bénédiction ancienne',sn:'Bénédiction',pa:6,r:[0,0],t:'self',all:1,heal:[16,21],cleanse:1,fx:4,cd:99,shake:1,d:'Soigne et purifie tous les héros. 1 fois par combat'},
  // V4.43 : les 6 autres sorts de Kael (valeurs provisoires de Claude, non équilibrées)
  whirl:{vx:'sig',snd:'slash',n:'Tourbillon',pa:4,r:[0,0],t:'self',nova:1,dmg:[10,13],fx:7,cd:2,shake:1,d:'Frappe tous les ennemis collés à Kael'},
  sunder:{snd:'kael_charge',n:'Brise-armure',sn:'Brise',pa:4,r:[1,1],t:'enemy',dmg:[10,13],pierce:.5,sunder:[.25,2],fx:7,cd:2,d:'Ignore la moitié de l’armure ; la cible subit +25 % de dégâts pendant 2 tours'},
@@ -46,7 +52,8 @@ export const HER=[
   learn:[['charge',5],['whirl',10],['sunder',15],['taunt',20],['counter',25],['rage',35],['judge',45]]},
  {k:'archer',n:'Fenn',cls:'Archer',hp:44,init:14,sp:['shot','volley','boots'],sp5:'pshot',
   learn:[['pshot',5],['venomarrow',10],['dodge',15],['icearrow',20],['blastarrow',25],['rain',35]]},
- {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura'],sp5:'mheal'}];
+ {k:'healer',n:'Aelis',cls:'Soigneuse',hp:40,init:10,sp:['heal','venom','aura'],sp5:'mheal',
+  learn:[['mheal',5],['ward',10],['cleanse',15],['roots',20],['moon',25],['bless',35]]}];
 export const SP5_LVL=5;
 export const TEAM_SIZE=3,DEF_TEAM=[0,1,2];
 // V4.33 : Orion, première recrue (niveau 20). PV ≈ 85 % de ceux de Fenn. Ajouté seulement en aperçu (et par les tests et le simulateur) :
