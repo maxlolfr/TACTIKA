@@ -36,8 +36,12 @@ export function skin(){const st=document.createElement('style');st.textContent=`
  .btn.dark{background-image:url(${uiURL(10)});color:#f3ead8;text-shadow:0 1px 2px #000}
  .btn.dark{padding:12px 28px}#top .btn{background:#2a1b10dd;border:1px solid #7a5a32;border-radius:10px;padding:6px 9px;color:#f3ead8}
  #panel{background:url(${uiURL(11)}) center/100% 100% no-repeat,#2a1b10;border-top:0}`;document.head.appendChild(st)}
-export function icon(s,i,px,top){const cv=document.createElement('canvas'),d=2;cv.width=cv.height=px*d;const c=cv.getContext('2d'),f=AT[s][i];
- const sh=top?f[3]*top:f[3],k=Math.min(px*d/f[2],px*d/sh),paint=()=>c.drawImage(IMG[s],f[0],f[1],f[2],sh,(px*d-f[2]*k)/2,(px*d-sh*k)/2,f[2]*k,sh*k);
+export function icon(s,i,px,top){const dpr=typeof devicePixelRatio==='number'?devicePixelRatio:2,d=Math.min(4,Math.max(2,Math.ceil(dpr))),cv=document.createElement('canvas');cv.width=cv.height=Math.round(px*d);cv.style.width=cv.style.height=px+'px';const c=cv.getContext('2d'),f=AT[s][i];
+ // V4.71 : définition adaptée à l'écran (ratio de pixels) + réduction en deux temps avec lissage haute qualité, sinon les petits portraits sont flous/crénelés.
+ const sh=top?f[3]*top:f[3],W=cv.width,k=Math.min(W/f[2],W/sh),dw=f[2]*k,dh=sh*k,paint=()=>{c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  let src=IMG[s],sx=f[0],sy=f[1],sw=f[2],shh=sh;
+  if(k<.5){const t=document.createElement('canvas');t.width=Math.ceil(sw/2);t.height=Math.ceil(shh/2);const tc=t.getContext('2d');tc.imageSmoothingQuality='high';tc.drawImage(src,sx,sy,sw,shh,0,0,t.width,t.height);src=t;sx=0;sy=0;sw=t.width;shh=t.height}
+  c.drawImage(src,sx,sy,sw,shh,(W-dw)/2,(W-dh)/2,dw,dh)};
  IMG[s]?paint():load(s).then(paint,()=>{});return cv} // planche pas encore chargée : l'icône se dessine à son arrivée
 // Hauteur de référence du sprite de chaque unité (sert à les mettre à l'échelle).
 export function addRefs(units){for(const u of units)u.ref=u.team==='h'?AT[HN[u.k].i[0]][HN[u.k].i[1]][3]:AT[u.s][u.row*3][3]}

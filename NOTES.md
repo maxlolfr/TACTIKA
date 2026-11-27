@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.71 — Icônes nettes (liste Équipe du camp)
+- `icon()` (render.js) : définition selon le ratio de pixels de l'écran (×2 à ×4) + réduction en deux temps avec lissage haute qualité ; taille CSS fixée. Avant : canvas 2× flou sur écran dense (Honor).
+- Liste « Équipe » du panneau Commandement : portraits 46 px au lieu de 30. Profite aussi aux onglets héros et à la médaille.
+- Reprise nouvelle fenêtre : R12 (Sanctuaire de l'Éther) + quêtes Q36–Q40 à la réception des images (monstres, Briseur primordial A/B, sols, obstacles, fonds portrait/paysage). Non codé : téléportation Aetherion, zones toxiques Reine, fissures Roi du Givre.
+
 ## V4.70 (27/11 nuit) : obstacles et fond paysage de la région 11 (Gemini) : R11 complète côté images
 - 8 obstacles reçus (`art/r11/r11-obstacles-gemini.webp`, planche 3168 px, échelle .278 pour la même taille que R9/R10) -> `assets/deco8.webp`, obstacles 60 à 67 (`DEC`, `DECO_W`, `LOW` : rocher, tronc, éboulis, sarcophage, traîneau, muret bas ; pilier et monolithe hauts), `THEMES[11].obs`. Fond paysage : 2 versions reçues (`r11-givre-l-A`, `-B`), la B (centre le plus dégagé) est en jeu (`givre-l.webp`, étoile effacée) ; la A reste archivée. Le fond portrait (forêt et porte en ruine) ne montre pas le même lieu que le paysage (palais de glace) : à harmoniser si Max le souhaite.
 - 157 tests OK ; essai navigateur 844×390 et 390×844 sans erreur ni 404.
