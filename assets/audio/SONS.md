@@ -7,9 +7,9 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 ## Musiques (`musique/`)
 | Fichier | Où | Lot |
 |---|---|---|
-| main_theme | ouverture du jeu | lot 1 |
-| village | retours au village | V4.20 (qualité d'origine) |
-| boss_v2 | boss des zones 1 à 5 | V4.20 (qualité d'origine) |
+| main_theme | village (et ouverture du jeu) | lot 1 |
+| village | Taverne | V4.20 (qualité d'origine) |
+| boss_v2 | boss des Monts gris, du Château (et aperçu Braise) | V4.20 (qualité d'origine) |
 | camp | carte | ancien |
 | forest | Prairie | lot 1 |
 | darkwood | Bois sombre | V4.21 (qualité d'origine) |
@@ -19,7 +19,7 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | cave | Cavernes de cristal | V4.0.2 |
 | battle | secours / autres combats | ancien |
 | elite_battle | 3e combat des zones 1 à 5 | lot 1 |
-| boss | secours de boss_v2 | ancien |
+| boss | boss de la Prairie, du Bois et de la Côte | ancien |
 | titan_boss | Titan prismatique | V4.0.3 |
 | victory, defeat | fin de combat | ancien |
 
