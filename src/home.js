@@ -9,7 +9,7 @@ import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames} from './render.js';
 import {setSon,sonBtns,sfx} from './audio.js';
 import {specOf} from './talents.js';
 
-export const VERSION='4.29';
+export const VERSION='4.30';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -35,10 +35,10 @@ const SCENES={
   // V4.8b : trajet de chaque héros sur les chemins (après son poste) — Kael vers la forge, Fenn vers le marchand, Aelis vers le cristal
   walk:[[[300,1425],[420,1340],[440,1255],[320,1160]],[[440,1350],[510,1260],[600,1215],[672,1172]],[[560,1365],[485,1325],[400,1345]]]},
  // horizontale : paysage large
- l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[940,880,700,535],hero:[100,122],
+ l:{src:'assets/village-paysage.webp',w:1536,h:1030,box:[810,880,700,535],hero:[100,122],
   npc:108,pnj:{caserne:[742,352,true],taverne:[815,396,false],forge:[708,614,true],marchand:[842,614,false],entrainement:[312,846,false],talents:[1125,938,true]},
   bld:place({caserne:[[495,105,230,235],[608,340]],taverne:[[800,175,270,195],[940,368]],forge:[[470,390,235,215],[578,605]],marchand:[[850,405,225,200],[978,600]],
-   entrainement:[[225,625,420,255],[430,862]],talents:[[865,610,265,345],[1005,932]]}),
+   entrainement:[[225,625,420,255],[430,862]],talents:[[865,610,265,345],[982,932]]}),
   glow:[[532,255,30,'l'],[575,265,34,'w'],[648,258,30,'w'],[848,295,30,'l'],[915,235,34,'w'],[985,262,34,'w'],[935,292,40,'w'],[665,525,60,'f'],[952,528,34,'l'],
    [828,765,38,'l'],[945,820,34,'w'],[918,862,45,'m'],[1090,858,32,'w'],[1005,893,30,'l'],[505,912,30,'l'],[1197,378,34,'w'],[1370,468,45,'m'],[762,892,75,'f']],
   smoke:[[558,390,.9],[986,172,.7]],water:[400,975,130,55],
@@ -200,8 +200,8 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
  // zone libre : au-dessus du bas en portrait, à gauche de la colonne en paysage
  const x1=land?D.left:W,y0=land?top-6:top+4,y1=land?H-16:D.top-6;
  if(!W||!H)return;
- // menu en colonne et zone libre nettement plus large que haute : peinture horizontale ; sinon la verticale
- const k=land&&x1>(y1-y0)*1.2?'l':'p';
+ // menu en colonne et zone libre au moins presque carrée : peinture horizontale (V4.30 : écrans pliants ouverts) ; sinon la verticale
+ const k=land&&x1>(y1-y0)*.8?'l':'p';
  if(S.dataset.k!==k){kind=k;const N=scene(k);S.replaceWith(N);S=N}
  root.querySelector('.v-back').style.backgroundImage=`url(${SCENES[k].src})`;
  const Q=SCENES[k],[bw,bh,cx,cy]=Q.box;
