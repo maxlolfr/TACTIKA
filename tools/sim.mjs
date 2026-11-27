@@ -4,10 +4,11 @@
 //         node tools/sim.mjs [campagnes]   (campagne entière : très coûteux, seulement avec l'accord de Max)
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
-import {SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
+import {R7,SP,HER,ZONES,ITEMS,zlen,PA_RULE} from '../src/data.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
-import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,costOf,lootPool} from '../src/rules.js';
+import {newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,onLava,costOf,lootPool} from '../src/rules.js';
 
+ZONES.push(R7); // région 7 mesurable : « 6.0 » à « 6.9 »
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
 const avg=a=>(a.reduce((x,y)=>x+y,0)/a.length)||0;
@@ -30,8 +31,8 @@ function best(s,u){const rc=reach(s,u,u.pm);let b=null;
  return b}
 function heroTurn(s,u){
  for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}payCost(u,b.sp,b.c);tally(s,applySpell(s,u,b.sp,b.c));if(outcome(s))return}
- if(u.pm>0){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
-  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1?3:1));if(sc<bd){bd=sc;bk=[x,y,d]}}
+ if(u.pm>0&&!outcome(s)){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
+  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
   if(bk){u.x=bk[0];u.y=bk[1];u.pm-=bk[2]}}}
 function monTurn(s,u){tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<6&&!u.dead;g++){const a=aiStep(s,u);if(!a)return;
  if(a.type==='cast'){payCost(u,a.sp,a.target);tally(s,applySpell(s,u,a.sp,a.target));if(outcome(s))return;continue}
@@ -44,7 +45,7 @@ function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIG
  const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
  s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;
- while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
+ while(!outcome(s)&&s.round<=MAXR){const nt=(turn+1)%s.order.length;if(nt===0&&turn>=0){s.round++;if(outcome(s))break;tally(s,lavaTick(s));if(outcome(s))break;waveTick(s)}turn=nt;const u=s.order[turn];if(u.dead)continue;
   beginTurn(u);if(u.poison){poisonTick(s,u);if(outcome(s)||u.dead)continue}
   u.team==='h'?heroTurn(s,u):monTurn(s,u);endTurn(u);waveEmpty(s)}
  const win=outcome(s)==='win';

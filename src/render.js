@@ -1,22 +1,23 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
 import {G} from './game.js';
 import {$} from './util.js';
-import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES} from './data.js';
+import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,PH} from './data.js';
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan'];
+const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat','titan','ph_obsid','ph_salam','ph_fire','ph_ignaros'];
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
 function tint(src,rgba){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const x=c.getContext('2d');x.drawImage(src,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=rgba;x.fillRect(0,0,c.width,c.height);return c}
-function load(n){if(n==='slimeT')return IMG[n]?Promise.resolve():load('slimeN').then(()=>{IMG[n]=tint(IMG.slimeN,'rgba(150,40,200,.5)')}); // V4.13 : gelée toxique = gelée recolorée
+function load(n){if(PH[n])return IMG[n]?Promise.resolve():load(PH[n][0]).then(()=>{IMG[n]=tint(IMG[PH[n][0]],PH[n][1])}); // V4.29 : planches provisoires recolorées
+ if(n==='slimeT')return IMG[n]?Promise.resolve():load('slimeN').then(()=>{IMG[n]=tint(IMG.slimeN,'rgba(150,40,200,.5)')}); // V4.13 : gelée toxique = gelée recolorée
  return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;delete LD[n];ok()};i.onerror=()=>{delete LD[n];ko(n)};i.src='assets/'+n+'.webp'}))}
 export async function loadAssets(){
- AT=await(await fetch('assets/atlas.json')).json();AT.slimeT=AT.slimeN;
+ AT=await(await fetch('assets/atlas.json')).json();AT.slimeT=AT.slimeN;for(const[n,[src]]of Object.entries(PH))AT[n]=AT[src];
  for(const k of[...Object.values(MON).map(m=>m.s),...ZONES.map(z=>z.boss.s)])for(const n of[k,k+'m',k+'w'])if(AT[n])MS.add(n);
  for(const t of THEMES)if(t.ts)MS.add(t.ts); // sols par région : chargés aussi à l'entrée de la zone
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)).map(load));
@@ -87,7 +88,7 @@ export function layout(){
 // numéro de tuile du jeu (data.js) -> case de la planche tiles4
 const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
-const BGZ=['prairie','bois','plage','mont','chateau','cristal'],BG={};
+const BGZ=['prairie','bois','plage','mont','chateau','cristal','braise'],BG={};
 // chaque zone a deux peintures : <zone>.webp (verticale) et <zone>-l.webp (écran plus large que haut)
 function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=z+(W>H?'-l':'');
  if(!(id in BG)){for(const k in BG)delete BG[k]; // un seul fond en mémoire
@@ -231,6 +232,8 @@ export function draw(now){
   ctx.setLineDash([]);diamond(ctx,ex,ey,.92);ctx.fillStyle='rgba(255,255,255,.28)';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore()}
  // V4.5a : cases d'arrivée des renforts du prochain tour (hachures orange et ⚠)
  if(S.wave)for(const p of S.wave.next){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,p.q.elite?'#ffd65a':'#ff8a3a',.3+.2*Math.sin(now/200));ctx.save();ctx.font=`900 ${Math.round(TW*.3)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText('⚠',sx,sy+TW*.1);ctx.fillStyle=p.q.elite?'#ffd65a':'#ffa040';ctx.fillText('⚠',sx,sy+TW*.1);ctx.restore()}
+ // V4.29 : cases qui s'embrasent au prochain tour (hachures rouges et ▲, distinctes des renforts ⚠)
+ if(S.lava)for(const p of S.lava.next){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#ff3a12',.38+.2*Math.sin(now/220));ctx.save();ctx.font=`900 ${Math.round(TW*.26)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText('▲',sx,sy+TW*.09);ctx.fillStyle='#ffd23a';ctx.fillText('▲',sx,sy+TW*.09);ctx.restore()}
  // Titan : cases du rayon chargé (hachures violettes)
  if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi

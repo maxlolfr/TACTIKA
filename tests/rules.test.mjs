@@ -920,3 +920,17 @@ test('V4.25 : carte II fermée avant le Titan, six repères dans l’image, sans
  const z=ZONES[5];assert.equal(map2Open({z:{[z.id]:zlen(z)-1}}),false);assert.equal(map2Open({z:{[z.id]:zlen(z)}}),true);
  assert.equal(MAP2.length,6);for(const p of MAP2)assert.ok(p.x>=6&&p.x<=94&&p.y>=6&&p.y<=94&&p.lx>=6&&p.lx<=94&&p.ly>=6&&p.ly<=94);
 });
+
+test('V4.29 : région 7 cachée, 10 missions, cases brûlantes annoncées un tour à l’avance',async()=>{
+ const r=await import('../src/rules.js'),{ZONES,R7,MON,PREVIEW,HER}=await import('../src/data.js');
+ assert.equal(PREVIEW,false);assert.equal(ZONES.length,6);assert.equal(R7.fights.length,10);
+ for(const f of R7.fights){assert.ok(f.lava.n>0);for(const k of f.en)assert.ok(MON[k])}
+ ZONES.push(R7);try{
+  const F=r.fightSpec(6,0,1),s=r.newBattle(r.mulberry(3)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:21,items:[],up:{},sp:[null,null,null]},i)));
+  assert.equal(s.lava.next.length,3);
+  const h=s.units.find(u=>u.team==='h'),m=s.units.find(u=>u.k==='salam'),hp=h.hp,mhp=m.hp;
+  s.lava.next=[{x:h.x,y:h.y},{x:m.x,y:m.y}];h.armor=.5;r.lavaTick(s);
+  assert.equal(h.hp,hp-Math.round(h.max*.12));assert.equal(m.hp,mhp,'la salamandre ne brûle pas');
+  assert.equal(s.lava.next.length,0,'un tour de calme');r.lavaTick(s);assert.equal(s.lava.next.length,3);
+ }finally{ZONES.pop()}
+});

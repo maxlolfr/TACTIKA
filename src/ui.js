@@ -1,9 +1,9 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$} from './util.js';
-import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,icOf,whoOf,whoName} from './data.js';
+import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
-import {save,prog,unlocked,store,resetSave} from './save.js';
+import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,music,duck,setSon,sonBtns} from './audio.js';
@@ -43,15 +43,16 @@ function render(){renderTL();
   b.disabled=!me||G.busy||u.pa<pc||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;G.ex=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};S.appendChild(b)}
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
  $('end').disabled=!me||G.busy;
+ const lava=G.s.lava?.next.length&&me?`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `:'';
  const beam=G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:'',amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
- $('hint').textContent=!me?`${u.n} joue.`:beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
+ $('hint').textContent=!me?`${u.n} joue.`:lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
  aimCard(u);
 }
 function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
  if(u.k==='archer')return t&&u.pa>=3?'🎯 Une Gelée est à portée : touche « Tir », la Gelée, puis retouche-la.':u.pm?go+' Le 🎯 compte les ennemis visables de là.':'Bien joué ! Touche « Fin du tour ».';
  if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
  return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
-const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')};
+const info=o=>{const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')};
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
 const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=costOf(u,sp)&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
 const canMove=u=>u.pm>0&&!!G.reachC&&G.reachC.dist.size>1;
@@ -150,13 +151,15 @@ export async function startFight(zi,i,F){
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
- layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave'};music(G.F.boss?(zid==='cristal'?'titan_boss':'boss_v2'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
+ layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'cave'};music(G.F.boss?(zid==='cristal'?'titan_boss':'boss_v2'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
 const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue à pastille</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche un ennemi (ou son portrait) pour voir l’effet, puis <b>retouche-le</b> pour lancer.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
 // messages guidés des Cavernes de cristal (niveaux 1 et 4)
-const TIPS={rage:['<b>Chevalier noir : Fureur</b><br>Sous la <b>moitié de ses PV</b>, il entre en fureur : <b>+1 PM</b> et des coups <b>30 % plus forts</b>. Garde un soin prêt et éloigne tes héros fragiles avant de franchir ce seuil.'],
+const TIPS={lava:['<b>Cases brûlantes</b><br>Les cases <b>rouges marquées ▲</b> s’embrasent <b>au début du prochain tour</b> et retirent 12 % des PV de qui s’y trouve. Tu as un tour pour en sortir. Les salamandres et les élémentaires ne craignent pas le feu.'],
+ pushfire:['<b>Pousser dans les braises</b><br>Le <b>chevalier d’obsidienne</b> n’est pas à l’abri : pousse-le avec <b>Fracas</b> sur une case marquée ▲, il brûlera au prochain tour.'],
+ forge:['<b>Ignaros — Surchauffe</b><br>Sous la <b>moitié de ses PV</b>, ses coups sont 20 % plus forts et la forge s’emballe : <b>plus de cases brûlantes, à chaque tour</b>. Garde de quoi te déplacer et te soigner.'],rage:['<b>Chevalier noir : Fureur</b><br>Sous la <b>moitié de ses PV</b>, il entre en fureur : <b>+1 PM</b> et des coups <b>30 % plus forts</b>. Garde un soin prêt et éloigne tes héros fragiles avant de franchir ce seuil.'],
  beam:['<b>Titan prismatique — Rayon</b><br>Il <b>marque des cases au sol</b>, puis tire dessus à son tour suivant : <b>sors-en tes héros</b>. Sous les 2/3 de ses PV le rayon forme une <b>croix</b> ; sous 1/3, les <b>prismes touchés éclatent</b>.'],
  quake:['<b>Golem ancien — Séisme</b><br>Tous les 3 tours, il frappe <b>tous les héros à 3 cases ou moins</b> de lui (sa fiche annonce le tour). <b>Évite-le :</b> garde tes héros à 4 cases ou plus ce tour-là, et frappe-le de loin avec Fenn.'],
  armor:['<b>Armure</b><br>Les crabes (et les chevaliers) réduisent les dégâts de 15 %. <b>Tir perforant</b> de Fenn (niveau 5) ignore toute l’armure. Place Fenn derrière Kael, garde ses distances.'],
@@ -173,7 +176,7 @@ function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-
  const t=D.querySelector('textarea'),m=D.querySelector('#svm');t.value=btoa(unescape(encodeURIComponent(JSON.stringify(save))));
  const mk=(n,f)=>{const b=document.createElement('button');b.className='btn dark';b.textContent=n;b.onclick=f;D.append(b)};
  mk('Copier',()=>{t.select();try{navigator.clipboard.writeText(t.value);m.textContent='Copié !'}catch(e){document.execCommand('copy');m.textContent='Copié !'}});
- mk('Importer',()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(t.value.trim()))));if(!s||!Number.isFinite(s.lvl)||!Array.isArray(s.items))throw 0;localStorage.setItem('landeTactique1',JSON.stringify(s));location.reload()}catch(e){m.style.color='#ff8a7a';m.textContent='Code invalide : rien n’a été changé.'}});
+ mk('Importer',()=>{try{const s=JSON.parse(decodeURIComponent(escape(atob(t.value.trim()))));if(!s||!Number.isFinite(s.lvl)||!Array.isArray(s.items))throw 0;localStorage.setItem(KEY,JSON.stringify(s));location.reload()}catch(e){m.style.color='#ff8a7a';m.textContent='Code invalide : rien n’a été changé.'}});
  mk('Fermer',()=>D.close());D.showModal()}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
@@ -260,21 +263,21 @@ function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${t
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
 function secondMap(L){
- MAP2.forEach((z,i)=>{const b=document.createElement('button');b.className='zone lock'+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
-  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>Bientôt</small>`;b.onclick=()=>mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
+ MAP2.forEach((z,i)=>{const zi=ZONES.findIndex(q=>q.map===2&&q.n===z.n),b=document.createElement('button');b.className='zone'+(zi<0?' lock':'')+(z.x<22?' edge':'');for(const k of['x','y','lx','ly'])b.style.setProperty('--'+k,z[k]+'%');
+  b.innerHTML=`<span class="q">${i+7}</span><b>${z.n}</b><small>${zi<0?'Bientôt':`Aperçu · ${prog(ZONES[zi].id)}/${zlen(ZONES[zi])}`}</small>`;b.onclick=()=>zi>=0?zoneSheet(zi):mapNote(z.n,'Région en préparation : elle arrivera dans une prochaine version.');L.appendChild(b)})}
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');music('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
  if(!map2Open(save))mapNo=1;$('mapbox').classList.toggle('m2',mapNo===2);mapTabs();
  if(mapNo===2)return secondMap(L);
- L.insertAdjacentHTML('beforeend',road(ZONES));
- ZONES.forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
+ L.insertAdjacentHTML('beforeend',road(ZONES.filter(z=>!z.map)));
+ ZONES.filter(z=>!z.map).forEach((z,zi)=>{const b=document.createElement('button'),ok=unlocked(zi),p=prog(z.id||'');b.className='zone'+(ok?'':' lock')+(z.x<20?' edge':'');b.style.left=z.x+'%';b.style.top=z.y+'%';
   const B=z.boss?MON[z.boss.k]:null;if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,46));else b.insertAdjacentHTML('beforeend','<span class="q">?</span>');
   b.insertAdjacentHTML('beforeend',`<b>${z.n}</b><small>${z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?' · '+starsOf(z.id).reduce((a,b)=>a+b,0)+'/'+3*zlen(z)+' ★':''}</small>`);
   b.onclick=()=>{if(ok)zoneSheet(zi)};L.appendChild(b)});
  const cz=L.querySelectorAll('.zone:not(.lock)');cz[cz.length-1]?.scrollIntoView({block:'center'});
 }
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
+function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}${z.map?'<br>Aperçu interne : monstres, sols, obstacles et musique provisoires':''}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
