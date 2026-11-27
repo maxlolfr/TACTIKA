@@ -1,4 +1,5 @@
 // Rendu : canvas du combat (sol, décors, unités, effets, particules) et images de l'atlas.
+import {tr} from './i18n.js';
 import {G} from './game.js';
 import {$,HUD2} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,VET_LVL,VET_FORCE} from './data.js';
@@ -215,7 +216,7 @@ export const shake=ms=>{if(lowFx())return;shakeT=performance.now()+ms};
 // impacts : zoom bref vers un point, éclats de particules (coup critique, KO, collision)
 let punchE=0,punchP=null;export const punch=(u,k=.05,ms=220)=>{punchE=performance.now()+ms;punchP={x:u.gx,y:u.gy,k,ms}};
 export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<(lowFx()?3:12);i++){const a=Math.random()*6.28,v=.6+Math.random();fx.push({burst:1,x:u.gx,y:u.gy,k:kind,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,t0,dur:650})}};
-export function say(u,s,c,big){texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
+export function say(u,s,c,big){s=tr(s);texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
 // particules d'ambiance par décor : 0 luciole 1 étincelle 2 feuille 3 neige 4 braise 6 feu follet
 const AMB=[[0,2],[0,2,0],[1,0],[1],[3,3],[4,6,4],[6,0,6]];
