@@ -1,5 +1,13 @@
 # Notes du projet Tactika
 
+## V4.66 (27/11 nuit) : région 9 terminée côté images (ent, spectre, Reine des marécages)
+- **Images reçues de Max le 27/11** (ChatGPT) : ent corrompu et spectre des marais (3×2), Reine A et B (2×2 chacune). Originaux sans perte dans `art/r9/` (`r9-ent-corrompu`, `r9-spectre-marais`, `r9-reine-A`, `r9-reine-B`), découpe par `tools/prep_r9.py` (même script, section ajoutée). Ordre du jeu [repos, attaque, touché, spécial, KO, repos 2] : ent et spectre = poses 0, 1, 3, 2, 4, 5.
+- **Reine** : les deux planches n'ont pas de pose KO peinte ; planche `queen` = repos A0, attaque A1, touché B0 (accroupie), spécial A3, KO B0 (accroupie, provisoire), repos 2 B3, même échelle. Pas de planche de marche (glisse). `toadK` supprimé (atlas et fichier).
+- **Code** : `MON.ent` (tank, 64 PV), `MON.wraith` (portée 1–3, vole, 30 PV), `MON.queenling` (clone fragile 14 PV, poison 2 × 2, planche `queen`) ; valeurs provisoires. `R9.pool` = crapaud, ent, spectre ; le Fantôme n'est plus utilisé en R9 ; combats 1 à 10 recomposés avec l'ent. Boss `bs:'swamp'` (`bossTurn`) : sous 50 % PV, dégâts ×1,2, **Spores toxiques** (toute l'équipe empoisonnée 4 × 2) et, par `summon`, **2 clones fragiles**. Astuce affichée au combat 10 (`TIPS.swamp`).
+- **Pas fait** : zones toxiques au sol (les « zones toxiques » du brief) et planche de KO de la Reine ; pas d'équilibrage ni de polish (consigne de Max).
+- 155 tests OK ; essai navigateur 844×390 et 390×844 (combat 2 avec ent et spectre, combat 10 avec la Reine) sans erreur ni 404. Safari et Honor non testés.
+- **Reste** : R10 (trois monstres, Aetherion A/B, obstacles), R11, R12 et Q28–Q40, à la réception des images.
+
 ## V4.65 (27/11 soir) : région 9, Marais des âmes (partielle), quêtes Q25 à Q27
 - **En jeu** : `R9` (carte II, 10 missions, niveaux 31 à 35, ouverte après le Pharaon), thème `THEMES[9]` (`sol_marais`, obstacles 44–51 = `deco6`, `DECO_W`, `LOW`), fond `assets/bg/marais.webp` (portrait, proportions d'origine 2:3, ajusté en « cover ») et `marais-l.webp`, musique `darkwood` / `boss_map2`. Images reçues de Max le 27/11 : crapaud venimeux (ChatGPT), 8 sols et 8 obstacles (Gemini), originaux sans perte dans `art/r9/`, découpe par `tools/prep_r9.py` (même méthode que `prep_r8.py`, étoile Gemini effacée).
 - **Monstres** : Crapaud venimeux (`toad`, poison 4×2, ralentit, valeurs provisoires). **Provisoire, à remplacer à la réception des planches** : spectre des marais = Fantôme existant (`ghost`) ; boss « Reine des marécages » = crapaud agrandi (`toadK`, mêmes poses, pas de mécanique propre) ; ent corrompu non codé. Quand les planches Reine A/B arrivent : nouvelle planche boss, changer `R9.boss.s`, ajouter les phases voulues.

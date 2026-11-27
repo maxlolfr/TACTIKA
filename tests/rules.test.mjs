@@ -1273,6 +1273,16 @@ test('V4.42 : région 8 après R7, pièges (12 % et −1 PM, monstres épargnés
  h.curse=2;r.beginTurn(h);assert.equal(h.curse,1);
  const B={...m,bs:'tomb',hp:10,max:100,team:'m'};h.curse=0;r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(h.curse,2);assert.equal(s.lava.hot,1);
 });
+test('V4.66 : Reine des marécages : spores toxiques sous la moitié des PV, clones fragiles',async()=>{
+ const {R9,MON}=await import('../src/data.js'),r=await import('../src/rules.js');
+ assert.ok(MON.queenling&&MON[R9.boss.summon.k]===MON.queenling&&MON.queenling.s==='queen');
+ const {HER}=await import('../src/data.js'),F=r.fightSpec(8,9,1),s=r.newBattle(r.mulberry(5)),{hs,es}=r.genMap(s,F.seed,F.th);r.mkUnits(s,F,hs,es,HER.map((_,i)=>r.heroStats({lvl:35,items:[],up:{},sp:[null,null,null]},i)));
+ {const B=s.units.find(u=>u.boss);assert.ok(B&&B.bs==='swamp'&&B.s==='queen');const h=s.units.find(u=>u.team==='h'&&!u.dead);
+  B.hp=B.max;assert.deepEqual(r.bossTurn(s,B),[]);assert.ok(!B.raged);
+  B.hp=Math.floor(B.max/2);const ev=r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.2);assert.ok(h.poison&&h.poison.turns===2);assert.ok(ev.length>=2);
+  assert.deepEqual(r.bossTurn(s,B),[],'une seule fois');
+  const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===14&&c.s==='queen'))}
+});
 test('V4.42 : chaque obstacle de thème a une largeur et une image',async()=>{
  const {THEMES,DECO_W,DEC}=await import('../src/data.js'),A=JSON.parse((await import('node:fs')).readFileSync(new URL('../assets/atlas.json',import.meta.url)));
  for(const t of THEMES)for(const d of[...t.obs,...(t.out||[])]){assert.ok(DECO_W[d]>0,'largeur '+d);const[s,i]=DEC(d);assert.ok(A[s]&&A[s][i],'image '+d)}
@@ -1459,11 +1469,12 @@ test('V4.64 : région 9 (Marais des âmes) : 10 missions, boss provisoire, sols 
   const { ZONES, R8, R9, MON, THEMES, DEC, LOW, zlen, MAP2 } = await import('../src/data.js'), { zoneDone, fightSpec } = await import('../src/rules.js');
   const at = JSON.parse(readFileSync(new URL('../assets/atlas.json', import.meta.url)));
   assert.equal(ZONES[8], R9); assert.equal(R9.fights.length, 10); assert.equal(zlen(R9), 10); assert.equal(R9.th[0], 9);
-  assert.equal(THEMES[9].ts, 'sol_marais'); assert.equal(at.sol_marais.length, 8); assert.equal(at.deco6.length, 8); assert.equal(at.toad.length, 6); assert.equal(at.toadK.length, 6);
+  assert.equal(THEMES[9].ts, 'sol_marais'); assert.equal(at.sol_marais.length, 8); assert.equal(at.deco6.length, 8); assert.equal(at.toad.length, 6); assert.equal(at.toadK, undefined);
+  for (const n of ['ent', 'wraith', 'queen']) assert.equal(at[n].length, 6, n);
   assert.ok(THEMES[9].g.every(i => at.sol_marais[i])); assert.deepEqual(DEC(44), ['deco6', 0]); assert.deepEqual(DEC(51), ['deco6', 7]); assert.deepEqual(DEC(43), ['deco5', 7]);
   assert.ok(THEMES[9].obs.every(o => at[DEC(o)[0]][DEC(o)[1]])); assert.ok(LOW.has(44) && !LOW.has(50));
   for (const f of R9.fights) { assert.ok(f.lvl >= 31 && f.lvl <= 35); for (const k of f.en) assert.ok(MON[k], k) }
-  assert.ok(MAP2.some(m => m.n === R9.n)); assert.equal(R9.boss.s, 'toadK'); assert.ok(at[R9.boss.s]);
+  assert.ok(MAP2.some(m => m.n === R9.n)); assert.equal(R9.boss.s, 'queen'); assert.ok(at[R9.boss.s]); assert.equal(R9.boss.bs, 'swamp'); assert.ok(R9.fights.some(f => f.en.includes('ent')) && R9.fights.some(f => f.en.includes('wraith')) && !R9.fights.some(f => f.en.includes('ghost')));
   assert.equal(R9.boss.n, 'Reine des marécages'); assert.equal(fightSpec(8, 9, 1).boss, R9.boss);
   assert.equal(zoneDone({ z: { [R8.id]: zlen(R8) } }, 7), true);
 });

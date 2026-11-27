@@ -75,7 +75,18 @@ def pack(name, ims, sc, q=84):
 # crapaud venimeux 3x2 : repos, attaque (gueule ouverte), touché (yeux fermés), spécial (ventre gonflé), KO (endormi), repos 2
 c = cells(*key(os.path.join(SRC, 'r9-crapaud-venimeux.webp')), 3, 2, (.5,), 60)
 pack('toad', c, 190 / c[0].height)
-pack('toadK', c, 300 / c[0].height)  # provisoire : boss « Reine des marécages » = crapaud agrandi, jusqu'à réception des planches de la Reine
+# V4.66 : le crapaud agrandi (toadK) n'est plus le boss : retiré (la Reine a sa planche)
+atlas.pop('toadK', None)
+if os.path.exists(os.path.join(ROOT, 'assets', 'toadK.webp')): os.remove(os.path.join(ROOT, 'assets', 'toadK.webp'))
+# ent corrompu et spectre des marais 3x2 (ChatGPT, 27/11) : repos, attaque, accroupi = touché, bras écartés = spécial, KO, repos 2
+for name, src in [('ent', 'r9-ent-corrompu'), ('wraith', 'r9-spectre-marais')]:
+    c = cells(*key(os.path.join(SRC, src + '.webp')), 3, 2, (.5,), 60)
+    pack(name, [c[i] for i in (0, 1, 3, 2, 4, 5)], 190 / c[0].height)
+# Reine des marécages : deux planches 2x2 (A : repos, attaque, repos, cri ; B : accroupie, bond, cri dressé, repos), pas de pose KO peinte.
+# Planche du jeu : repos A0, attaque A1, touché B0 (accroupie), spécial A3, KO B0 (accroupie, provisoire), repos 2 B3. Même échelle pour tout (les deux planches ont la même taille de corps).
+A = cells(*key(os.path.join(SRC, 'r9-reine-A.webp')), 2, 2, (.5,), 60)
+B = cells(*key(os.path.join(SRC, 'r9-reine-B.webp')), 2, 2, (.5,), 60)
+pack('queen', [A[0], A[1], B[0], A[3], B[0], B[3]], 300 / A[0].height)
 # les deux planches Gemini : l'étoile Gemini (coin bas droit) est effacée avant découpe
 def nostar(name):
     a = np.array(Image.open(os.path.join(SRC, name)).convert('RGB')); M = np.median(a[:4].reshape(-1, 3), 0).astype(np.uint8)
