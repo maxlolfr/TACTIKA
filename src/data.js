@@ -127,6 +127,11 @@ export const MON={
  toad:{ai:'tank',snd:'bite',n:'Crapaud venimeux',s:'toad',row:0,hp:50,pm:3,init:9,dmg:[10,13],armor:.1,poison:[4,2],slow:1,h:.8,xp:28},
  ent:{ai:'tank',snd:'smash',n:'Ent corrompu',s:'ent',row:0,hp:64,pm:2,init:7,dmg:[12,16],armor:.2,h:1.25,xp:30},
  wraith:{ai:'range',snd:'poison',n:'Spectre des marais',s:'wraith',row:0,hp:30,pm:4,init:12,dmg:[8,11],r:[1,3],los:1,fx:5,h:.95,xp:20,fly:1},
+ // V4.67, région 10 (valeurs provisoires de Claude). Planches ChatGPT, tools/prep_r10.py. Double astral = clone fragile d'Aetherion.
+ cguard:{ai:'tank',snd:'smash',n:'Gardien céleste',s:'cguard',row:0,hp:70,pm:2,init:8,dmg:[13,17],armor:.25,h:1.25,xp:34},
+ griffin:{ai:'flank',snd:'bite',n:'Griffon royal',s:'griffin',row:0,hp:48,pm:5,init:14,dmg:[11,14],h:.95,xp:32,fly:1},
+ astral:{ai:'range',snd:'poison',n:'Sentinelle astrale',s:'astral',row:0,hp:42,pm:3,init:11,dmg:[10,13],r:[1,4],los:1,fx:5,h:1.1,xp:30},
+ astralclone:{ai:'flank',snd:'slash',n:'Double astral',s:'aetherion',row:0,hp:16,pm:4,init:10,dmg:[6,8],h:.55,xp:0},
  queenling:{ai:'flank',snd:'bite',n:'Clone de la Reine',s:'queen',row:0,hp:14,pm:4,init:10,dmg:[5,7],poison:[2,2],h:.55,xp:0}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
@@ -189,6 +194,14 @@ export const R9={id:'marais',map:2,n:'Marais des âmes',x:23,y:41,th:[9],lvl:31,
   {lvl:33,en:[EN,TD,WR,WR],goal:'chief'},{lvl:33,en:[TD,TD,TD,WR,WR]},{lvl:34,en:[WR,WR,WR,EN,TD,TD]},{lvl:34,en:[TD,EN,TD],goal:'survive'},
   {lvl:35,en:[EN,TD,TD,WR,WR],goal:'chief'},{lvl:35,en:[TD,WR],tip:'swamp'}]};
 ZONES.push(R9);
+// V4.67 : Citadelle céleste, 10 missions (région 10, carte II), après le Marais. Niveaux 36 à 40. Gardiens célestes, griffons royaux, sentinelles astrales ; boss Aetherion (`bs:'astral'`, planche `aetherion`) : sous la moitié de ses PV, 2 doubles astraux fragiles et coups +20 %. Téléportation annoncée et ancrages : pas encore codés.
+const CGD='cguard',GRF='griffin',AST='astral';
+export const R10={id:'citadelle',map:2,n:'Citadelle céleste',x:79,y:31,th:[10],lvl:36,pool:[CGD,GRF,AST],boss:{k:CGD,s:'aetherion',n:'Aetherion',hp:3.8,dmg:1.3,h:1.6,bs:'astral',summon:{k:'astralclone',n:2,hp:16,pm:4,dmg:[6,8],sn:'Double astral',snd:'slash'}},
+ waves:{7:{turns:5,cap:5,start:3,add:[[2,1],[3,1],[4,1,GRF]]}},
+ fights:[{lvl:36,en:[CGD,GRF,AST]},{lvl:36,en:[GRF,GRF,AST]},{lvl:37,en:[CGD,CGD,AST,AST]},{lvl:37,en:[GRF,GRF,GRF,AST,CGD]},
+  {lvl:38,en:[CGD,GRF,AST,AST],goal:'chief'},{lvl:38,en:[CGD,CGD,GRF,AST,AST]},{lvl:39,en:[GRF,GRF,AST,AST,CGD,CGD]},{lvl:39,en:[CGD,GRF,CGD],goal:'survive'},
+  {lvl:40,en:[CGD,CGD,GRF,AST,AST],goal:'chief'},{lvl:40,en:[CGD,AST],tip:'astral'}]};
+ZONES.push(R10);
 export const VET_LVL=25,VET_FORCE=!!globalThis.location?.search.includes('veterans');
 // V4.25 : carte II (régions 7 à 12). Aucune mission encore : noms et repères seulement, hors de ZONES (sauvegarde inchangée).
 // Coordonnées en % de l'image : x,y sur world2.webp (vertical), lx,ly sur world2-l.webp (écran horizontal).
@@ -303,12 +316,14 @@ export const THEMES=[
  // V4.42 : sols et obstacles R8 (Gemini), une grande dalle par case. Sols : 0-1 grès, 2 hiéroglyphes, 3-4 sable, 5 pierre sombre, 6-7 dalles d'or
  {n:'Temple des sables',ts:'sol_sables',g:[0,0,1,1,3,3,4,2,5,6,7],obs:[36,37,38,39,40,41,42,43],noflower:1,out:[36,39,40,37,42]},
  // V4.64 : sols et obstacles R9 (Gemini). Sols : 0-1 dalles vert-gris, 2 dalles moussues, 3 ardoise lisse, 4 boue sombre, 5 terre brune, 6 ardoise bleue, 7 planches. Obstacles 44 souche, 45 tronc, 46 éboulis, 47 rocher, 48 muret, 49 racines, 50 statue, 51 arche
- {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]}];
+ {n:'Marais des âmes',ts:'sol_marais',g:[0,0,1,2,2,3,4,4,5,5,6,7],obs:[44,45,46,47,48,49,50,51],noflower:1,out:[44,47,50,51,49]},
+ // V4.67 : sols et obstacles R10 (Gemini). Sols : 0 grès poreux, 1 marbre crème, 2 dalles blanches, 3 briques bicolores, 4 marbre gris, 5 sable doré, 6 dalles à filets d'or, 7 pavés. Obstacles 52 balustrade, 53 éboulis, 54 colonne couchée, 55 aile de pierre, 56 vasque, 57 piédestal, 58 colonne brisée, 59 statue d'ange
+ {n:'Citadelle céleste',ts:'sol_celeste',g:[1,1,2,2,4,6,6,5,3,7,0,2],obs:[52,53,54,55,56,57,58,59],noflower:1,out:[52,53,54,57,58,55]}];
 // V4.1 : décors bas (buisson, caillou, fleurs, souche, barrière, caisses, ossements, coffre, pieux) : ils bloquent le passage mais pas les flèches en cloche de Fenn (sorts `lob`)
-export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
+export const LOW=new Set([2,3,5,6,7,8,16,17,23,26,28,29,34,35,38,41,44,45,46,48,49,52,53,54,55]); // V4.64 : souche, tronc, éboulis, muret, racines (R9)
 // tuiles 8-15 = 2e planche (8 roche, 9 gravier, 10 neige, 11 grotte, 12 dalles, 13 briques, 14 runes, 15 planches) ; décors 12-23 = 2e planche
-export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72]; // V4.64 : 44 à 51 = obstacles R9 (deco6)
-export const DEC=d=>d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
+export const DECO_W=[1.2,1.1,.9,.55,1.1,.8,.75,1,1,1.1,2.2,.7, .62,.62,.6,.7,.9,.85,.8,.5,1,1.1,.62,.95, 1.05,1,.9,.9,1,.9, .86,.72,.8,.82,.74,.98, .66,.78,.98,.6,.8,.86,.95,.8, .66,1,.95,.8,.9,.9,.5,.72, 1.05,.9,.95,.8,.75,.7,.6,.62]; // V4.64 : 44 à 51 = obstacles R9 (deco6) ; V4.67 : 52 à 59 = obstacles R10 (deco7)
+export const DEC=d=>d>=52?['deco7',d-52]:d<12?['deco',d]:d<24?['deco2',d-12]:d<30?['deco3',d-24]:d<36?['deco4',d-30]:d<44?['deco5',d-36]:['deco6',d-44],TIL=t=>t<8?['tiles',t]:['tiles2',t-8];
 export const DIRS=[[1,0],[0,1],[0,-1],[-1,0]]; // index = direction du sprite : 0 bas-droite 1 bas-gauche 2 haut-droite 3 haut-gauche
 export const R=16, CMAX=5;
 // V2.3 (proposition Claude, à revoir par ChatGPT) : poussée, combos, étoiles

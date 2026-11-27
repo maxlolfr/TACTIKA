@@ -1,5 +1,12 @@
 # Notes du projet Tactika
 
+## V4.67 (27/11 nuit) : région 10, Citadelle céleste (10 missions, boss Aetherion), quêtes Q28 à Q30
+- **En jeu** : `R10` (carte II, niveaux 36 à 40, ouverte après le Marais), `THEMES[10]` (`sol_celeste`, obstacles 52–59 = `deco7`, `DECO_W`, `DEC`, `LOW` : balustrade, éboulis, colonne couchée, aile de pierre bas), fonds `assets/bg/citadelle.webp` (portrait, original du dépôt studio) et `citadelle-l.webp` (paysage, reçu de Max), `prep_bg.py` (étoile Gemini effacée), musique `castle` / `boss_map2`. Images reçues de Max le 27/11 : gardien céleste, griffon royal, sentinelle astrale (ChatGPT, 3×2), Aetherion A et B (2×2), 8 sols et 8 obstacles (Gemini) ; originaux sans perte dans `art/r10/`, découpe par `tools/prep_r10.py` (même méthode que `prep_r9.py`).
+- **Monstres** (valeurs provisoires) : `cguard` Gardien céleste (tank, 70 PV), `griffin` Griffon royal (flanc, vole, 48 PV), `astral` Sentinelle astrale (portée 1–4, 42 PV), `astralclone` Double astral (clone fragile 16 PV, planche `aetherion`). Ordre des poses : gardien et sentinelle 0–5 tel quel, griffon 0, 1, 3, 2, 4, 5.
+- **Aetherion** : planche `aetherion` = repos A0, attaque A1, touché A2, spécial B0 (ailes refermées), KO A3, repos 2 B3. `bs:'astral'` (`bossTurn`) : sous 50 % PV, dégâts ×1,2, +1 PM et, par `summon`, 2 doubles astraux. Astuce au combat 10 (`TIPS.astral`). **Pas codé** : téléportation annoncée et ancrages du plan directeur.
+- **Quêtes** : Q28 Ailes brisées (survie), Q29 Messager céleste (chef), Q30 Archives astrales (élite sentinelle, exige Lyria recrutée). Q31–Q40 : régions 11 et 12 (images à recevoir).
+- 156 tests OK ; essai navigateur 844×390 et 390×844 (combat 4, boss, quête Q30) sans erreur ni 404. Safari et Honor non testés. Pas d'équilibrage ni de polish.
+
 ## V4.66 (27/11 nuit) : région 9 terminée côté images (ent, spectre, Reine des marécages)
 - **Images reçues de Max le 27/11** (ChatGPT) : ent corrompu et spectre des marais (3×2), Reine A et B (2×2 chacune). Originaux sans perte dans `art/r9/` (`r9-ent-corrompu`, `r9-spectre-marais`, `r9-reine-A`, `r9-reine-B`), découpe par `tools/prep_r9.py` (même script, section ajoutée). Ordre du jeu [repos, attaque, touché, spécial, KO, repos 2] : ent et spectre = poses 0, 1, 3, 2, 4, 5.
 - **Reine** : les deux planches n'ont pas de pose KO peinte ; planche `queen` = repos A0, attaque A1, touché B0 (accroupie), spécial A3, KO B0 (accroupie, provisoire), repos 2 B3, même échelle. Pas de planche de marche (glisse). `toadK` supprimé (atlas et fichier).
