@@ -2,7 +2,7 @@
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
-import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,swapSpell} from './rules.js';
+import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
@@ -10,7 +10,7 @@ import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.40';
+export const VERSION='4.41';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -292,7 +292,8 @@ let incoming=null;
 function learnList(R,h,tal){const i=hero,load=loadoutOf(save,i),known=knownSpells(save,i),rest=known.filter(id=>!load.includes(id)),later=h.learn.filter(([id])=>!known.includes(id));
  if(!rest.includes(incoming))incoming=null;
  const line=(id,note,btn,cls='')=>{const S=masteredFor(save,i,id,{...A.SP[id],...tal.sp[id]}),rk=rankOf(save,i,id),row=el('div','v-row v-spell'+cls);row.dataset.sp=id;row.append(icon(...A.SPI[id],40),el('div',null,`<b>${S.n} <i>${S.pa} PA</i></b><small>${S.d}${S.dmg?` · ${S.dmg.join('–')} dégâts${S.k>1?` +${Math.round((S.k-1)*100)} %`:''}`:''}${rk>1?` · maîtrise rang ${rk>2?'III':'II'}`:''}${S.cd?S.cd>50?' · 1 fois par combat':` · recharge ${S.cd} tours`:''}${note||''}</small>`));if(btn)row.append(btn);R.append(row)};
- R.append(el('h4',null,`Sorts emportés · ${load.length}/${SLOTS_SP}`));
+ R.append(el('h4',null,`Sorts emportés · ${load.length}/${slotsOf(save,i)}`));
+ for(const id of tal.add||[])line(id,' · sort de talent, toujours emporté',null);
  if(incoming)R.append(el('p','v-empty',`<b>${A.SP[incoming].n}</b> : touche « Remplacer » sur le sort à laisser au camp.`));
  for(const id of load)line(id,'',incoming&&wood('Remplacer',()=>{swapSpell(save,i,id,incoming);incoming=null;store();show('heros')},'sm'));
  if(rest.length){R.append(el('h4',null,'En réserve'));for(const id of rest)line(id,'',wood(incoming===id?'Annuler':'Emporter',()=>{incoming=incoming===id?null:id;show('heros')},incoming===id?'dk sm':'sm'))}

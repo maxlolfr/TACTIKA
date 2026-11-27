@@ -123,8 +123,10 @@ export const teamOf=save=>{const t=save?.team;return Array.isArray(t)&&t.length=
 export function swapTeam(save,out,inn){const t=[...teamOf(save)],k=t.indexOf(out);if(k<0||!recruited(save,inn)||t.includes(inn))return 0;t[k]=inn;save.team=t;return 1}
 // V4.37 : sorts connus d'un héros à apprentissage (Orion), et les SLOTS_SP emportés (save.load[i], nettoyé à la lecture)
 export const knownSpells=(save,i)=>{const h=HER[i];return[...h.sp,...(h.learn||[]).filter(([,l])=>ALL_SPELLS||(save.lvl||1)>=l).map(([id])=>id)]};
-export function loadoutOf(save,i){const known=knownSpells(save,i),out=[...new Set(Array.isArray(save.load?.[i])?save.load[i]:[])].filter(id=>known.includes(id)).slice(0,SLOTS_SP);
- for(const id of known)if(out.length<SLOTS_SP&&!out.includes(id))out.push(id);return out}
+// un sort offert par un talent (Piège) occupe une des places
+export const slotsOf=(save,i)=>SLOTS_SP-(talentFx(save,i).add?.length||0);
+export function loadoutOf(save,i){const known=knownSpells(save,i),n=slotsOf(save,i),out=[...new Set(Array.isArray(save.load?.[i])?save.load[i]:[])].filter(id=>known.includes(id)).slice(0,n);
+ for(const id of known)if(out.length<n&&!out.includes(id))out.push(id);return out}
 // le sort `inn` (connu, non emporté) prend la place de `out`. Renvoie 1 si l'échange est fait.
 export function swapSpell(save,i,out,inn){const l=loadoutOf(save,i),k=l.indexOf(out);if(k<0||l.includes(inn)||!knownSpells(save,i).includes(inn))return 0;l[k]=inn;(save.load||(save.load={}))[i]=l;return 1}
 // ordre de distribution automatique du matériel : l'équipe d'abord, la réserve ensuite

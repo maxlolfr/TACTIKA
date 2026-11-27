@@ -1239,3 +1239,17 @@ test('V4.40 : Orion recruté au niveau 20 seulement', async () => {
   assert.deepEqual(roster(s), [0, 1, 2, 3]);
   assert.deepEqual(teamOf(s), [0, 1, 3]);
 });
+
+test('V4.41 : Fenn a 10 sorts, appris par niveau, 6 places dont celle du Piège', async () => {
+  const { knownSpells, loadoutOf, slotsOf } = await import('../src/rules.js');
+  const base = lvl => ({ lvl, items: [], up: {}, sp: [null, null, null, null] });
+  assert.deepEqual(knownSpells(base(4), 1), ['shot', 'volley', 'boots']);
+  assert.deepEqual(loadoutOf(base(9), 1), ['shot', 'volley', 'boots', 'pshot']);
+  assert.equal(knownSpells(base(35), 1).length, 9, 'le 10e est le Piège (talent)');
+  assert.equal(loadoutOf(base(35), 1).length, 6);
+  for (const id of knownSpells(base(35), 1)) assert.ok(SP[id]);
+  const t = { ...base(35), sp: [null, 'chasseur', null, null] };
+  assert.equal(slotsOf(t, 1), 5);
+  const st = heroStats(t, 1);
+  assert.equal(st.spells.length + st.tal.add.length, 6);
+});
