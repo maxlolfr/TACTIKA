@@ -1,6 +1,10 @@
 # Notes du projet Tactika
 
 
+
+## V4.19 (27/11) : fonds des Cavernes
+G-14 (paysage) et G-15 (portrait) de Gemini, étoile effacée (`tools/unstar.py`, qui garde le dessin sous l’étoile), taille d'origine. Fin du fond provisoire des Monts teinté en violet.
+
 ## V4.18 (27/11) : images des Cavernes
 Araignée, chauve-souris et Titan définitifs (6 poses + 4 images de marche ou de vol, planche `titan` à part du golem), 6 obstacles ternes (`deco3`, bas : éboulis, chariot, champignons), 7 sols C6-10 v3 (`tiles5` ; la dalle humide est écartée, elle ressemble à de l'eau). Découpe : `tools/prep_cave.py`. Aucune règle de combat changée, hormis les décors bas ci-dessus.
 
@@ -138,7 +142,7 @@ Araignée, chauve-souris et Titan définitifs (6 poses + 4 images de marche ou d
 - « Chef squelette a » devient « Chef squelette A ». 54 tests.
 
 ## V3.7 (26/11/2026) — qualité maximale et intérieurs
-- Demande de Max : garder la qualité maximale. Les décors Gemini sont désormais à leur taille d'origine, WebP qualité 92 (`tools/prep_bg.py`) ; marche des chevaliers en qualité 95. Les images plus anciennes (Prairie et Bois verticaux, Côte et Château horizontaux, village vertical, maître d'armes) sont inchangées.
+- Demande de Max : garder la qualité maximale. Les décors Gemini sont désormais à leur taille d'origine, WebP qualité 92 (`tools/unstar.py`, qui garde le dessin sous l’étoile) ; marche des chevaliers en qualité 95. Les images plus anciennes (Prairie et Bois verticaux, Côte et Château horizontaux, village vertical, maître d'armes) sont inchangées.
 - Forge, Marchand et Taverne ont leur intérieur peint (G-08 à G-10), voile éclairci.
 - Village horizontal remplacé par la même scène en 2528×1696 (coordonnées de `home.js` inchangées).
 

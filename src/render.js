@@ -88,15 +88,14 @@ export function layout(){
 const T4=[0,2,12,13,15,14,3,8,4,5,6,7,8,9,10,11];
 function diamond(c,x,y,s=1){c.beginPath();c.moveTo(x,y-TH/2*s);c.lineTo(x+TW/2*s,y);c.lineTo(x,y+TH/2*s);c.lineTo(x-TW/2*s,y);c.closePath()}
 const BGZ=['prairie','bois','plage','mont','chateau','cristal'],BG={};
-const BGA={cristal:'mont'}; // fond provisoire des Cavernes tant que G-14/G-15 ne sont pas dans le jeu (teinté en violet)
 // chaque zone a deux peintures : <zone>.webp (verticale) et <zone>-l.webp (écran plus large que haut)
-function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=(BGA[z]||z)+(W>H?'-l':'');
+function bgOf(){const z=G.F&&ZONES[G.F.zi].id;if(!BGZ.includes(z))return null;const id=z+(W>H?'-l':'');
  if(!(id in BG)){for(const k in BG)delete BG[k]; // un seul fond en mémoire
   BG[id]=null;const i=new Image();i.onload=()=>{BG[id]=i;if(G.s.map.size&&G.F&&ZONES[G.F.zi].id===z)buildGround()};i.src='assets/bg/'+id+'.webp'}return BG[id]}
 function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  groundK=resFor(view.z);ground=document.createElement('canvas');ground.width=W*groundK;ground.height=H*groundK;const g=ground.getContext('2d');g.setTransform(groundK,0,0,groundK,0,0);
  g.fillStyle='#16220f';g.fillRect(0,0,W,H);
- if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle=theme.cave?'rgba(26,8,64,.5)':'rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
+ if(bg){const k=Math.max(W/bg.width,H/bg.height);g.imageSmoothingQuality='high';g.drawImage(bg,(W-bg.width*k)/2,(H-bg.height*k)/2,bg.width*k,bg.height*k);g.fillStyle='rgba(0,0,0,.34)';g.fillRect(0,0,W,H)}
  // périphérie assombrie : le regard va au plateau
  {const[cx,cy]=scr(R/4,R/4),rad=Math.max(W,H)*.75,v=g.createRadialGradient(cx,cy,TW*2.5,cx,cy,rad);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.5)');g.fillStyle=v;g.fillRect(0,0,W,H)}
  const r0=Math.floor(-oy/(TH/2))-2,r1=Math.ceil((H-oy)/(TH/2))+2,c0=Math.floor(-ox/(TW/2))-2,c1=Math.ceil((W-ox)/(TW/2))+2,rr=mulberry(G.F.seed*13);outer=[];
