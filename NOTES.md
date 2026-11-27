@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.69 (27/11 nuit) : sols de la région 11 (Gemini)
+- 8 sols reçus de Max (`art/r11/r11-sols-gemini.webp`), découpe par `tools/prep_r11.py` -> `assets/sol_givre.webp` (même méthode que R9 et R10) ; `THEMES[11].ts = 'sol_givre'`. Reste provisoire pour R11 : obstacles (Monts gris) et fond paysage (recadrage du fond portrait).
+
 ## V4.68 (27/11 nuit) : région 11, Terres du Givre éternel (10 missions, boss Roi du Givre), quêtes Q31 à Q35
 - **En jeu** : `R11` (carte II, niveaux 41 à 45, ouverte après la Citadelle), `THEMES[11]`, fond `assets/bg/givre.webp` (portrait, reçu de Max, étoile Gemini effacée) et `givre-l.webp`, musique `mountain` / `boss_map2`. Images reçues le 27/11 (ChatGPT) : loup polaire, yéti, élémentaire de givre (3×2), Roi du Givre A et B (2×2) ; originaux sans perte dans `art/r11/`, découpe par `tools/prep_r11.py`.
 - **Provisoire, à remplacer à la réception de Gemini** : sols et obstacles = ceux des Monts gris (`sol_mont`, obstacles 20, 21, 4, 3, 19) ; fond paysage `givre-l.webp` = recadrage 3:2 du fond portrait (bande à 30 % de la hauteur).

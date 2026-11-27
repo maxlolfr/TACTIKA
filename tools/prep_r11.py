@@ -80,4 +80,18 @@ for name, src in [('polarwolf', 'r11-loup-polaire'), ('yeti', 'r11-yeti'), ('fro
 A = cells(*key(os.path.join(SRC, 'r11-roi-givre-A.webp')), 2, 2, (.5,), 60)
 B = cells(*key(os.path.join(SRC, 'r11-roi-givre-B.webp')), 2, 2, (.5,), 60)
 pack('frostking', [A[0], A[1], A[2], B[2], A[3], B[0]], 300 / A[0].height)
+def nostar(name):
+    a = np.array(Image.open(os.path.join(SRC, name)).convert('RGB')); M = np.median(a[:4].reshape(-1, 3), 0).astype(np.uint8)
+    H, W = a.shape[:2]; a[int(H * .895):, int(W * .93):] = M; p = '/tmp/' + name.replace('.webp', '-sans-etoile.png'); Image.fromarray(a).save(p); return p
+# sols (Gemini, 27/11) : 8 dalles complètes, 4x2 ; 0 neige, 1 dalles sombres poudrées, 2 dalles sur terre, 3 pavés sombres, 4 dalles grises claires, 5 neige, 6 dalles sombres poudrées, 7 pavés givrés
+T = cells(*key(nostar('r11-sols-gemini.webp'), shadows=False), 4, 2, (.5,), 2000)
+TILES = []
+for im in T:
+    k2 = 512 / im.width; r = im.resize((512, round(im.height * k2)), Image.LANCZOS); al = np.array(r)[..., 3] > 128
+    ys = np.nonzero(al[:, :6].any(1))[0]; TILES.append((r, int(ys.min())))
+RH = max(c.height for c, _ in TILES) + 8; at = Image.new('RGBA', (4 * 520, RH * 2)); fr = []
+for n, (c, cy) in enumerate(TILES):
+    x, y = (n % 4) * 520, (n // 4) * RH; at.paste(c, (x, y)); fr.append([x, y, c.width, c.height, 256, cy])
+at.save(os.path.join(ROOT, 'assets', 'sol_givre.webp'), quality=86, method=6); atlas['sol_givre'] = fr
+print('sol_givre', at.size, os.path.getsize(os.path.join(ROOT, 'assets', 'sol_givre.webp')) // 1024, 'Ko')
 json.dump(atlas, open(fp, 'w'), separators=(',', ':'))
