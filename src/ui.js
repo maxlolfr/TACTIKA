@@ -303,7 +303,7 @@ function tav(){music('village');$('camp').classList.remove('on');const T=$('tav'
 function quests(T,again){const d=today(),l=contracts(save,d);store();
  const ql=QUESTS.filter(q=>questOpen(save,q));
  if(ql.length){T.insertAdjacentHTML('beforeend',`<h3 class="fh">Quêtes · ${QUESTS.filter(q=>questDone(save,q)).length}/${QUESTS.length}</h3>`);
-  ql.forEach(q=>{const dn=questDone(save,q),r=document.createElement('div');r.className='loot frow';r.append(icon('items',17,44));
+  ql.forEach(q=>{const dn=questDone(save,q),r=document.createElement('div');r.className='loot frow';r.append(icon('items',17,44));qban(r,q.e||q.g==='chief'?'boss':'win');
    r.insertAdjacentHTML('beforeend',`<div><b>${q.t}</b> <small>· ${ZONES[q.z].n}</small><br><small>${dn?q.c:q.d}</small></div>`);
    const b=document.createElement('button');b.className='btn'+(dn?' dark':'');b.textContent=dn?'Rejouer':'Partir';b.onclick=()=>{$('tav').classList.remove('on');startFight(q.z,-1,questFight(q,save))};r.append(b);T.append(r)})}
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
