@@ -3,6 +3,9 @@
 // (de la plus longue à la plus courte, en mots entiers). Les récits et les voix ont leur propre anglais (story.js, audio.js).
 // Ajouter une traduction : une ligne "français":"anglais" ; aucune autre modification nécessaire.
 import {EN_DESC} from './i18n-desc.js';
+import {EN_Q} from './i18n-quests.js';
+import {TUTO,TIPS,TIPS_T} from './tips.js';
+import {TUTO_EN,TIPS_EN,TIPS_T_EN,BOSS_DEFAULT_EN} from './tips-en.js';
 export const EN={
 // ---------- camp, menus ----------
 "Partir à l’aventure":"Set off on an adventure","Camp":"Camp","Héros":"Heroes","Inventaire":"Inventory","Quêtes":"Quests","Chronique":"Chronicle","Réglages":"Settings",
@@ -124,6 +127,15 @@ Object.assign(EN,{"Épée courte":"Short sword","Hache de guerre":"War axe","Bou
 "Collier d’étoile":"Star necklace","Grimoire sacré":"Sacred grimoire","Bâton d’écorce runique":"Runic bark staff","Robe de l’érudit":"Scholar's robe","Anneau du mage":"Mage's ring","Livre d’études":"Study book","Sceptre arcanique":"Arcane scepter","Cape de l’arcaniste":"Arcanist's cloak","Anneau d’arcaniste":"Arcanist's ring","Grimoire d’arcane":"Arcane grimoire",
 "Sceptre de l’Éther":"Ether scepter","Bâton du serment commun":"Staff of the shared oath"});
 Object.assign(EN,EN_DESC); // V4.90 : descriptions des sorts et des talents
+// V5.0 : quêtes, intros de boss, libellés du tutoriel ; les textes à balises (tutoriel, astuces, objectifs) passent par trh() car le
+// MutationObserver ne voit que des morceaux de texte entre les balises <b> et <br>.
+Object.assign(EN,EN_Q,{"Tutoriel":"Tutorial","Nouveau":"New","Compris !":"Got it!","Un gardien redoutable":BOSS_DEFAULT_EN});
+for(const k in TIPS_T)EN[TIPS_T[k]]=TIPS_T_EN[k];
+const HTML=new Map();
+const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
+zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
+export const regHtml=(fr,en)=>{HTML.set(fr,en)};
+export const trh=s=>L.on&&HTML.has(s)?HTML.get(s):s;
 // ---------- moteur ----------
 export const L={on:false};
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
