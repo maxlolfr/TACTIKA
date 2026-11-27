@@ -8,11 +8,13 @@ const dir=n=>n.startsWith('v_')?'voix/':MUSICS.includes(n)||n==='victory'||n==='
 // V4.36 : voix des héros (7 répliques courtes chacun). VTRIM égalise les fichiers, mesurés entre -26 et -15 dB ; les KO restent un peu plus bas
 export const VOICES={warrior:'kael',archer:'fenn',healer:'aelis',mage:'orion',rogue:'nyra',paladin:'lyria'};
 const VLINES=['start','sig','support','hurt','ko','win','level'],VGAP=6,VSAME=20;
-const VTRIM={kael:[.84,.87,1.06,1.5,1.93,.98,1.35],fenn:[1.48,.68,.75,1.3,1.95,1,.69],aelis:[1.62,1,2.04,2,2.04,.85,1.84],orion:[1,1,1,1,1,1,1],nyra:[1,1,1,1,1,1,1],lyria:[1,1,1,1,1,1,1]};
+const VTRIM={kael:[.84,.87,1.06,1.5,1.93,.98,1.35],fenn:[1.48,.68,.75,1.3,1.95,1,.69],aelis:[1.62,1,2.04,2,2.04,.85,1.84],orion:[1.97,1.22,1.29,1.2,1.11,1.22,1.8],nyra:[1.22,1.22,1.22,1.2,1.11,1.2,1.22],lyria:[1.22,1.22,1.22,1.22,1.11,1.22,1.22]};
 let VLANG='fr';const vname=(h,l)=>'v_'+h+'_'+l+(VLANG==='en'?'_en':'');
 // V4.82 : voix en anglais (fichiers v_<héros>_<réplique>_en.mp3), chargées seulement quand la langue du jeu est l'anglais
 export function setVoiceLang(l){l=l==='en'?'en':'fr';if(l===VLANG)return;VLANG=l;for(const h of Object.values(VOICES))for(const x of VLINES)load(vname(h,x)).catch(()=>{})}
-const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75};
+// V5.06 (lot 4 audio, mesures EBU R128 de tous les fichiers) : musiques ramenées vers -13,5 LUFS (marais -18,8, sanctuaire -15,4, défaite -19,6, givre -12,1 étaient hors plage) ;
+// STRIM : bruitages d'impact trop faibles (coup -24 dB crête, soin -19, fracas et esquive -9) remontés, fin de boss à crête > 0 dB légèrement baissée ; le limiteur de sortie évite toute saturation
+const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75,swamp:1.7,sanctuary:1.2,frost:.9},STRIM={defeat:1.6,hit:3.2,heal:2,aelis_heal:2,smash:1.6,dodge:1.6,boss_death:.85};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
@@ -64,7 +66,7 @@ export function voice(k,line,{chance=1,force=false}={}){const c=AU.c,h=VOICES[k]
  const n=vname(h,line),b=AU.buf[n],t=c.currentTime;if(!b||t<AU.vEnd||!force&&(t<AU.vEnd+VGAP||t<(AU.vLast[n]??-VSAME)+VSAME))return false;
  const s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=VLANG==='en'||!VTRIM[h]?1:VTRIM[h][VLINES.indexOf(line)];s.connect(g);g.connect(AU.v);s.start();
  AU.vEnd=t+b.duration;AU.vLast[n]=t;duck(b.duration*1000,.45);return true}
-export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol;g.connect(AU.s);
+export function sfx(n,vol=1,rate=1){const c=AU.c;if(!c||!AU.on.s||!n)return;const b=AU.buf[n]||AU.buf[FALL[n]],g=c.createGain();g.gain.value=vol*(STRIM[n]||1);g.connect(AU.s);
  if(b){const s=c.createBufferSource();s.buffer=b;s.playbackRate.value=rate*(.94+Math.random()*.12);s.connect(g);s.start();return}
  synth(FALL[n]||n,g,c.currentTime)}
 // sons de secours synthétisés (remplacés automatiquement par les mp3 ElevenLabs)

@@ -2,6 +2,13 @@
 - **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
+## V5.06 — finition, lot 4 : audio (28/11/2026)
+- **Mesure** EBU R128 des 231 fichiers (sortie : `tools/audio-loudness-v5.06.txt` = fichier, LUFS intégrés, crête vraie, crête). Médianes : musiques -13,5 LUFS, voix -17,4, bruitages -20,7.
+- **Musiques** (aucun fichier modifié, gain de lecture `TRIM`) : marais ×1,7 (-18,8 LUFS), sanctuaire ×1,2 (-15,4), givre ×0,9 (-12,1) ; réglages existants conservés (thème, camp, carte II, braise, boss carte II).
+- **Bruitages** (`STRIM`, nouveau) : coup reçu ×3,2 (crête -24 dB : presque inaudible jusqu'ici), soin ×2, fracas et esquive ×1,6, jingle de défaite ×1,6 (-19,6 contre -13,1 pour la victoire), mort de boss ×0,85 (crête au-dessus de 0 dB). Le limiteur de sortie empêche la saturation.
+- **Voix** d'Orion, Nyra et Lyria égalisées sur Kael/Fenn/Aelis (≈ -15,7 LUFS effectifs, KO un peu plus bas) : Orion « début » ×1,97 et « niveau » ×1,8, le reste ×1,1–1,3.
+- Aucun son généré ni remplacé, aucune musique changée. 203 tests + test navigateur OK. Écoute finale par Max sur l'Honor (casque et haut-parleur).
+
 ## V5.05 — finition, lot 3 : prototype d'ambiance, Forteresse de braise (28/11/2026) — À VALIDER (Max + ChatGPT)
 - Uniquement dans la Forteresse de braise (décor 7) : les lucioles jaunes génériques (décor non prévu, repli par défaut) sont remplacées par **22 braises procédurales** qui montent en vacillant et par une **lueur de lave** qui respire doucement en bas de l'écran (opacité 10–16 %). Aucune image ajoutée.
 - Lisibilité : braises minuscules, lueur limitée au bas de l'écran et très transparente. « Effets réduits » : 6 braises, lueur fixe.
