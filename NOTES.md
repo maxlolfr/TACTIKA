@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.16 (27/11/2026) : Monts gris à 10 étapes (lot 6, liste ChatGPT)
+- Niveaux 10,10,10,11,11,11,11,12,12,12 : golems, golems et loups, chevalier bleu, obstacles rocheux, chevalier rouge (chef), formation lourde, rapides soutenant les tanks, **survie** (8e, élite de renfort = chevalier rouge), épreuve de placement, Golem ancien (conseil : Séisme annoncé, évitable à 4 cases ou plus).
+- `migrateMonts` (drapeau `m10`). 106 tests. Simulateur : 75 combats ; boss : sous-équipé 0/5 (comme avant), standard 5/5 (40 % PV restants).
+
 ## V4.15 (27/11/2026) : Côte dorée à 10 étapes (lot 5, liste ChatGPT)
 - Niveaux 7,7,7,8,8,8,8,9,9,9 : introduction à l'armure (conseil Tir perforant), crabes et mouettes, obstacles, mouettes rapides, chevalier bleu (chef), formation de crabes, mixte, **survie à renforts** (8e, élite de renfort = Chevalier bleu ; pas de protection de zone), garde du Crabe royal, Crabe royal.
 - `migrateCote` (drapeau `c10`). Test « zones inchangées » déplacé sur les Monts.

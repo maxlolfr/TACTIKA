@@ -47,7 +47,7 @@ export const MON={
  prisbat:{ai:'range',snd:'bat_shriek',n:'Chauve-souris prismatique',s:'prisbat',row:0,hp:22,pm:5,init:14,dmg:[6,9],r:[1,3],los:1,fx:5,h:.55,xp:14,fly:1}};
 // zones de la carte : 3 combats + 1 boss chacune (ou `fights` : liste propre, le dernier est le boss) ; x,y en % de la carte
 // fights : lvl, en (monstres, le 1er est le chef si goal='chief'), cry {a:turquoise, p:violet}, goal, tip (message guidé)
-const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB';
+const G6=['crygolem','qspider','prisbat'],[CG,QS,PB]=G6,SL='slime',BO='boar',TX='toxslime',WO='wolf',SH='shroom',BA='bat',CR='crab',GU='gull',KB='knightB',KR='knightR',GO='golem';
 export const ZONES=[
  {id:'prairie',n:'Prairie de Lande',x:48,y:77,th:[0,2],lvl:1,pool:['slime','boar',TX],boss:{k:'slime',s:'roiG',n:'Roi Gelée',hp:3.2,dmg:1.4,h:2.1,summon:{k:'slime',n:2,hp:12,pm:2,dmg:[3,5]}},
   // V4.9 pilote : 10 étapes, niveaux 1 à 3, gelées et sangliers (le 1er monstre est le chef si goal='chief'). Chiffres de départ, à régler après les tests de Max
@@ -63,7 +63,10 @@ export const ZONES=[
   // V4.15 (lot 5, liste ChatGPT) : 10 étapes, niveaux 7 à 9. Étape 8 = survie (pas de protection de zone), élite de renfort : Chevalier bleu.
   fights:[{lvl:7,en:[CR,CR,SL],tip:'armor'},{lvl:7,en:[CR,GU,GU]},{lvl:7,en:[CR,CR,GU]},{lvl:8,en:[GU,GU,GU,SL]},{lvl:8,en:[KB,CR,GU],goal:'chief'},
    {lvl:8,en:[CR,CR,CR,GU]},{lvl:8,en:[KB,CR,GU,SL]},{lvl:9,en:[CR,GU,SL],goal:'survive'},{lvl:9,en:[CR,CR,KB,GU]},{lvl:9,en:[CR,GU,SL]}]},
- {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{1:'knightB',2:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'}},
+ {id:'mont',n:'Monts gris',x:34,y:27,th:[4],lvl:10,pool:['golem','gull','wolf','crab'],elite:{7:'knightR'},boss:{k:'golem',s:'golemK',n:'Golem ancien',hp:2.6,dmg:1.4,h:1.5,bs:'quake'},
+  // V4.16 (lot 6, liste ChatGPT) : 10 étapes, niveaux 10 à 12. Étape 8 = survie, élite de renfort : Chevalier rouge.
+  fights:[{lvl:10,en:[GO,GU,GU]},{lvl:10,en:[GO,WO,WO]},{lvl:10,en:[KB,GO,WO]},{lvl:11,en:[GO,GO,GU]},{lvl:11,en:[KR,GO,WO],goal:'chief'},
+   {lvl:11,en:[GO,GO,KB,CR]},{lvl:11,en:[GO,GO,WO,GU,GU]},{lvl:12,en:[GO,WO,GU],goal:'survive'},{lvl:12,en:[GO,GO,KR,WO,GU]},{lvl:12,en:[GO,WO,GU],tip:'quake'}]},
  {id:'chateau',n:'Château en ruine',x:62,y:18,th:[5],lvl:13,pool:['goblin','ghost','skel','goblin'],elite:{0:'knightB',1:'knightR',2:'knightN'},boss:{k:'knight',s:'knightK',n:'Chevalier noir',hp:2.4,dmg:1.3,h:1.35,bs:'rage'}},
  {id:'cristal',n:'Cavernes de cristal',x:14,y:33,th:[6],lvl:16,pool:G6,boss:{k:'crygolem',s:'crygolem',n:'Titan prismatique',hp:3.2,dmg:1.4,h:1.55,bs:'beam'},sheets:['crygolem','qspider','prisbat'],
   fights:[{lvl:16,en:[CG,CG,CG,CG],cry:{a:1},tip:'amp'},{lvl:16,en:[CG,CG,CG,'knightB','knightB'],cry:{a:2}},{lvl:17,en:[CG,CG,QS,QS,QS],cry:{a:2}},
