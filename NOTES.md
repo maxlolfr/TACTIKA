@@ -2,6 +2,11 @@
 - **V4.81 · audio V5 (phase 1 : musiques et bruitages)** : 8 nouvelles musiques de 90 s (sables, marais, citadelle céleste, givre, sanctuaire, élite carte II, boss final, fin) ajoutées sans toucher aux 19 existantes (`ember` et `boss_map2` conservées) ; 28 bruitages (Orion 7, Nyra 7, Lyria 6, mécaniques de boss et de région, recrutement, talent). Zones carte II routées vers leur musique, élites de la carte II vers `elite2`, boss de la région 12 vers `final_boss`, épilogue vers `ending`, recrutement avec `recruit_hero`. Les sorts d'Orion, Nyra et Lyria ont leur son propre. `FALL` garde un repli pour chaque nouveau nom. Bruitages en mono 44,1 kHz 64 kbit/s, musiques sans recompression. Test ajouté : chaque son déclaré existe, chaque `snd` de sort est connu. Reste de la phase 2 (V4.82) : voix de combat et narration FR/EN.
 # Notes du projet Tactika
 
+## V5.02 — correctif cache (28/11/2026)
+- Sur l'Honor, après la fusion de la V5.01, le premier combat restait bloqué (panneau des sorts vide + bandeau d'erreur) alors que la V5.01 fonctionne en navigateur de test : le téléphone gardait l'ancien `src/ui.js` de la V5.0 (trh non importé) en cache.
+- `sw.js` : code et page toujours revalidés auprès du serveur (`cache:'no-cache'`), installation sans cache HTTP (`cache:'reload'`), VERSION 5.02 = purge des anciens caches.
+- Le bandeau d'erreur affiche désormais le message exact (capture d'écran = diagnostic).
+
 ## V5.01 (28/11) : robustesse technique (suite de l'audit statique de ChatGPT sur le commit d37e6b5)
 Règles respectées : aucun équilibrage, aucune direction artistique, aucun contenu ni musique supprimé ; Cauchemar et héros 3D hors lot ; sauvegardes préservées.
 - **Correctif important, présent en V5.0** : `trh` n'était pas importé dans `ui.js` → `ReferenceError` au tutoriel de combat, donc sur **toute partie neuve** (le tutoriel plantait avant l'affichage de l'objectif). Trouvé par le nouveau test de fumée en vrai Chrome, confirmé avec ESLint (`no-undef`, propre sur tout `src/` après correctif).

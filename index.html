@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Tactika">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#16220f">
-<title>Tactika — V5.01</title>
+<title>Tactika — V5.02</title>
 <link rel="preload" as="image" href="assets/village.webp">
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/lilita-one-latin-400-normal.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/nunito-latin-800-normal.woff2" crossorigin>
@@ -40,8 +40,8 @@
 <div id="load">Chargement…</div>
 <script>
 /* V5.01 : erreurs JavaScript jamais silencieuses : les 10 dernières sont gardées (localStorage « landeErr »), un bandeau discret s'affiche (max 3 par session) */
-(function(){var last=0,n=0;function rec(m){try{var a=JSON.parse(localStorage.getItem('landeErr')||'[]');a.push({t:new Date().toISOString().slice(0,19),m:String(m).slice(0,300),v:'5.01'});localStorage.setItem('landeErr',JSON.stringify(a.slice(-10)))}catch(e){}
- var now=Date.now();if(now-last<30000||n>=3)return;last=now;n++;try{var d=document.createElement('div');d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99998;background:#5b2a12;color:#fff;font:700 13px system-ui,sans-serif;padding:8px 12px;border-radius:10px;text-align:center;opacity:.95';d.textContent='⚠ Une erreur est survenue, ta partie est sauvegardée. Si le jeu se fige, recharge la page. / An error occurred, your game is saved. If the game freezes, reload the page.';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d);setTimeout(function(){d.remove()},9000)}catch(e){}}
+(function(){var last=0,n=0;function rec(m){try{var a=JSON.parse(localStorage.getItem('landeErr')||'[]');a.push({t:new Date().toISOString().slice(0,19),m:String(m).slice(0,300),v:'5.02'});localStorage.setItem('landeErr',JSON.stringify(a.slice(-10)))}catch(e){}
+ var now=Date.now();if(now-last<30000||n>=3)return;last=now;n++;try{var d=document.createElement('div');d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99998;background:#5b2a12;color:#fff;font:700 13px system-ui,sans-serif;padding:8px 12px;border-radius:10px;text-align:center;opacity:.95';d.textContent='⚠ Une erreur est survenue, ta partie est sauvegardée. Si le jeu se fige, recharge la page. / An error occurred, your game is saved. If the game freezes, reload the page.\n('+String(m).slice(0,160)+')';d.style.whiteSpace='pre-line';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d);setTimeout(function(){d.remove()},9000)}catch(e){}}
 addEventListener('error',function(e){rec((e.message||'erreur')+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno)});
 addEventListener('unhandledrejection',function(e){rec('promesse : '+(e.reason&&e.reason.message||e.reason))});
 /* V5.01 : hors connexion (service worker, voir sw.js) */
