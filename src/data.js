@@ -59,12 +59,12 @@ export const SP={
  execute:{vx:'sig',snd:'nyra_execute',n:'Exécution',sn:'Exécut.',pa:4,r:[1,1],t:'enemy',dmg:[14,18],exe:[.35,2],fx:7,cd:3,shake:1,d:'Dégâts ×2 sur une cible sous 35 % de ses PV'},
  dance:{vx:'sig',snd:'prism_burst',n:'Danse des ombres',sn:'Danse',pa:6,r:[0,0],t:'self',nova:1,dmg:[22,28],fx:7,cd:99,shake:1,d:'Frappe tous les ennemis collés à Nyra. 1 fois par combat'},
  // V4.54 : les 10 sorts de Lyria (paladine). Valeurs provisoires de Claude, non équilibrées
- hammer:{snd:'lyria_hammer',n:'Marteau',pa:3,r:[1,1],t:'enemy',dmg:[11,15],fx:0,d:'Coup de marteau sacré au corps à corps'},
+ hammer:{snd:'lyria_hammer',n:'Marteau',pa:3,r:[1,1],t:'enemy',dmg:[13,17],fx:0,d:'Coup de marteau sacré au corps à corps'},
  protect:{vx:'support',snd:'lyria_shield',n:'Protection',sn:'Protec.',pa:3,r:[0,4],t:'ally',shield:1,fx:7,cd:3,d:'Rempart sur un allié : dégâts réduits jusqu’à son prochain tour'},
  light:{vx:'support',snd:'aelis_heal',n:'Lumière',pa:3,r:[0,4],t:'ally',heal:[10,14],fx:4,cd:1,d:'Soigne un allié'},
  intercept:{vx:'support',snd:'lyria_intercept',n:'Interception',sn:'Intercep.',pa:2,r:[0,0],t:'self',taunt:3,shield:1,fx:7,cd:4,d:'Rempart sur Lyria ; les ennemis à 3 cases ou moins ne visent qu’elle à leur prochain tour'},
  purge:{vx:'support',snd:'lyria_cleanse',n:'Purge',pa:2,r:[0,4],t:'ally',heal:[4,6],cleanse:1,fx:4,cd:2,d:'Retire poison, brûlure, entrave, malédiction, affaiblissement et armure brisée ; petit soin'},
- smite:{vx:'sig',snd:'prism_burst',n:'Impact sacré',sn:'Impact',pa:4,r:[1,4],t:'cell',los:1,lob:1,zone:1,side:.6,dmg:[12,16],fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 cases voisines'},
+ smite:{vx:'sig',snd:'prism_burst',n:'Impact sacré',sn:'Impact',pa:4,r:[1,4],t:'cell',los:1,lob:1,zone:1,side:.6,dmg:[14,18],fx:1,cd:3,shake:1,d:'Explose sur la case visée ; 60 % des dégâts sur les 4 cases voisines'},
  aegis:{vx:'support',snd:'lyria_aura',n:'Aura défensive',sn:'Égide',pa:4,r:[0,0],t:'self',all:1,ward:[.15,2],fx:7,cd:4,d:'Tous les héros reçoivent un bouclier de 15 % de leurs PV max, 2 tours'},
  rescue:{vx:'support',snd:'aelis_heal',n:'Soin de secours',sn:'Secours',pa:4,r:[0,4],t:'ally',heal:[22,28],fx:4,cd:4,d:'Gros soin sur un allié'},
  oath:{vx:'support',snd:'lyria_bastion',n:'Serment',pa:3,r:[0,0],t:'self',all:1,buff:.2,buffT:2,fx:7,cd:5,d:'+20 % de dégâts à tous les héros, 2 tours'},
@@ -85,7 +85,7 @@ export const SLOTS_SP=6;
 export const ALL_SPELLS=typeof location!=='undefined'&&location.search.includes('apercu=braise')&&location.search.includes('tous'); // &tous (aperçu) : les 10 sorts tout de suite
 export const ORION={at:20,k:'mage',n:'Orion',cls:'Mage',hp:37,init:11,sp:['arcane','flame','frost'],learn:[['fireball',5],['icewall',10],['blink',15],['weaken',20],['nova',25],['glyph',35],['storm',45]]};
 // V4.53 : Nyra (assassin, niveau 30) ; V4.54 : Lyria (paladine, niveau 40). Mêmes règles qu'Orion : PV ≈ 90 % de ceux de Fenn pour Nyra, 93 % de Kael pour Lyria
-export const NYRA={at:30,k:'rogue',n:'Nyra',cls:'Assassin',hp:40,init:16,sp:['dagger','backstab','shadow'],learn:[['toxin',5],['smoke',10],['mark',15],['twin',20],['evade',25],['execute',35],['dance',45]]};
+export const NYRA={at:30,k:'rogue',n:'Nyra',cls:'Assassin',hp:48,init:16,sp:['dagger','backstab','shadow'],learn:[['toxin',5],['smoke',10],['mark',15],['twin',20],['evade',25],['execute',35],['dance',45]]};
 export const LYRIA={at:40,k:'paladin',n:'Lyria',cls:'Paladine',hp:58,init:9,sp:['hammer','protect','light'],learn:[['intercept',5],['purge',10],['smite',15],['aegis',20],['rescue',25],['oath',35],['bastion',45]]};
 export function addRecruit(h,attrs){if(HER.includes(h))return HER.indexOf(h);const i=HER.length;HER.push(h);for(const a of attrs)ATTR[a].who.push(i);
  for(const o of ITEMS)if(Array.isArray(o.who)&&o.who.length===i)o.who=[...Array(i+1).keys()];return i}
@@ -412,6 +412,10 @@ export const AMP=.3, PRISM=.7, PRISM_OFF=2;
 export const PA_CARRY={per:2,max:2};
 // V4.5c (variante B, choisie par Max et ChatGPT) : un héros qui relance le même sort dans le même tour paie +1 PA à partir du 2e lancer
 export const PA_RULE={recast:1};
+// V4.85 (lot 5) : difficulté par région (indice = zone, 0 à 11), sur tous les monstres de la région (boss, élites, vagues, quêtes compris).
+// Réglée au simulateur (tools/sim.mjs) pour les cibles de NOTES.md V4.85. 1 = valeurs d'avant la V4.85.
+export const DIFF={hp:[1.35,1.7,1.85,1.7,1.6,1.6,1.45,1.45,1.75,1.45,1.35,1.12],dmg:[1.35,1.7,1.85,1.7,1.6,1.6,1.45,1.45,1.75,1.45,1.35,1.12],
+ boss:[1,.7,.66,.7,.78,.8,1.45,1.17,1.1,.91,.78,.93]}; // boss : facteur en plus, PV et dégâts du seul boss de la région
 export const PUSH_DMG=5, COMBO=[1,1,1.15,1.3], STAR_ROUNDS={fight:5,boss:7};
 
 addOrion();addRecruit(NYRA,['for','vit','agi']);addRecruit(LYRIA,['for','int','vit']); // V4.40 : recrutable au niveau 20. En fin de fichier : HER, ATTR et ITEMS doivent exister

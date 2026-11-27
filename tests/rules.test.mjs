@@ -1676,3 +1676,17 @@ test('V4.83 bruitages : tous les sons déclarés sont déclenchés quelque part,
   const s=arena();unit(s,'h',3,3);s.lava={n:2,next:[{x:5,y:5}]};if(k)s.lava[k]=1;
   const ev=lavaTick(s);assert.ok(ev.some(e=>e.type==='snd'&&e.n===n),n)}
 });
+
+test('V4.85 lot 5 : difficulté par région (DIFF) appliquée aux monstres et aux boss', async()=>{
+ const {DIFF}=await import('../src/data.js'),{fightSpec}=await import('../src/rules.js');
+ for(const k of ['hp','dmg','boss']){assert.equal(DIFF[k].length,ZONES.length,k);for(const v of DIFF[k])assert.ok(v>=.5&&v<=2,k+' '+v)}
+ assert.ok(DIFF.hp[0]<=DIFF.hp[1],'la Prairie (apprentissage) reste la plus douce');
+ // même combat, même graine : PV et dégâts des monstres ×DIFF de la région, boss ×DIFF.boss en plus
+ const run=zi=>{const F=fightSpec(zi,9,7),s=newBattle(()=>.5),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:F.lvl,items:[]},j)));return s.units.find(u=>u.boss)};
+ const save={hp:[...DIFF.hp],dmg:[...DIFF.dmg],boss:[...DIFF.boss]},b1=run(6);
+ DIFF.hp[6]=DIFF.dmg[6]=DIFF.boss[6]=1;const b0=run(6);Object.assign(DIFF,save);
+ const k=save.hp[6]*save.boss[6];
+ assert.ok(Math.abs(b1.max/b0.max-k)<.02,`PV du boss ×${k}`);
+ assert.ok(Math.abs(b1.atk.dmg[1]/b0.atk.dmg[1]-save.dmg[6]*save.boss[6])<.1,'dégâts du boss');
+ assert.equal(HER.find(h=>h.n==='Nyra').hp,48);assert.deepEqual(SP.hammer.dmg,[13,17]);assert.deepEqual(SP.smite.dmg,[14,18]);
+});
