@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.63 (27/11 soir) : haut du combat façon maquette Royal Arcane (HUD V2 seulement, `?hud=v1` inchangé)
+- `ui.js` (bloc `if(HUD2)`) : logo `#hlogo` (`assets/logo.webp`), flèches `#tlp` / `#tln` qui font défiler la frise `#tl` (cachées si tout tient, grisées aux bouts), boutons ♪ (`.son-m`, coupe la musique) et 🔊 (`.son-s`, coupe les bruitages) en SVG, `#hson` devient ⚙ Réglages (ouvre le panneau des volumes `#hvol`). `style.css`, fin de fichier : titre encadré or, tailles par format (portrait, paysage < 450 px, > 600 px).
+- Vérifié en Chromium 390×844, 844×390, 1024×768, 1440×900 : aucune erreur, flèches, coupure de la musique et panneau testés ; 150 tests OK. WebKit/Safari et Honor non testés (portrait : vérifier que logo et titre ne se serrent pas).
+- Ne touche ni mécanique, ni sauvegarde, ni équilibrage. Quêtes Q19–Q40 : bloquées tant que les régions 7 à 12 ne sont pas dans `ZONES` (carte II) ; portrait peint UI-07 : facultatif, commandes déjà écrites côté Game-studio-ai.
+
 ## V4.39 (27/11) : maîtrise des sorts d'Orion (aperçu)
 - `src/mastery.js` : table `MASTERY` par sort (`[type, rang II, rang III]`), réutilisable pour les 6 héros ; seul Orion a des lignes. Spec : `docs/studio/tactika/mecaniques/V4.39-maitrise.md` (studio).
 - 1 point tous les 2 niveaux (24 au niveau 50), rang II = 2 points, rang III = 3 de plus. Bonus par rapport au rang I, sans cumul entre rangs. Coûts en PA, recharges et zones inchangés.
