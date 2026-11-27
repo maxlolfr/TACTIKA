@@ -2,12 +2,14 @@
 
 Rangement : `musique/` (boucles, victoire, défaite) et `bruitages/` (effets courts). Le jeu choisit le dossier tout seul (`src/audio.js`, `dir()`).
 Source : ElevenLabs, flow `97rZARFgripawZTlXj1N`. Tant qu'un fichier manque, le jeu joue un son de secours (table `FALL`).
-Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur main → le workflow « Récupération des sons ElevenLabs » télécharge, compresse et range.
+Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur main → le workflow « Récupération des sons ElevenLabs » télécharge et range (musiques sans recompression, bruitages compressés).
 
 ## Musiques (`musique/`)
 | Fichier | Où | Lot |
 |---|---|---|
-| main_theme | accueil | lot 1 |
+| main_theme | ouverture du jeu | lot 1 |
+| village | retours au village | V4.20 (qualité d'origine) |
+| boss_v2 | boss des zones 1 à 5 | V4.20 (qualité d'origine) |
 | camp | carte | ancien |
 | forest | Prairie, Bois | lot 1 |
 | coast | Côte dorée | V4.0.3 |
@@ -16,7 +18,7 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | cave | Cavernes de cristal | V4.0.2 |
 | battle | secours / autres combats | ancien |
 | elite_battle | 3e combat des zones 1 à 5 | lot 1 |
-| boss | boss des zones 1 à 5 | ancien |
+| boss | secours de boss_v2 | ancien |
 | titan_boss | Titan prismatique | V4.0.3 |
 | victory, defeat | fin de combat | ancien |
 
