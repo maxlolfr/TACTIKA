@@ -211,7 +211,7 @@ export async function startFight(zi,i,F){
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
  $('panel').classList.toggle('deux',S.units.some(h=>h.team==='h'&&h.sp.length>=5)); // V4.37 : hauteur des 2 rangées réservée avant de placer le plateau
  layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember',sables:'sands',marais:'swamp',citadelle:'skycitadel',givre:'frost',eter:'sanctuary'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2',sables:'boss_map2',marais:'boss_map2',citadelle:'boss_map2',givre:'boss_map2',eter:'final_boss'}[zid]||'boss'):S.goal&&zid!=='cristal'?(ZONES[zi].map===2?'elite2':'elite_battle'):ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const vf=G.fid;setTimeout(()=>{if(G.fid===vf)say1(G.s.units.filter(u=>u.team==='h'),'start')},G.F.boss?2600:1500);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
- const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
+ bossCard(G.F);const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
 const TUTO=['<b>Bienvenue !</b> Tu diriges 3 héros. Chacun joue à son tour : la frise en haut montre l’ordre.','Touche une case <b style="color:#6ab0ff">bleue à pastille</b> : tu vois le chemin, le coût en PM et le nombre d’ennemis visables 🎯. <b>Retouche-la</b> pour y aller.','Choisis un <b>sort</b> en bas (il coûte des PA), puis touche un ennemi (ou son portrait) pour voir l’effet, puis <b>retouche-le</b> pour lancer.','La <b>bulle rouge</b> au-dessus d’un monstre montre qui il va frapper. Repousse-les contre des obstacles pour des dégâts bonus, et frappe le même ennemi avec 2 héros pour un combo.','Quand tu as fini, touche <b>Fin du tour</b>. Gagne le combat pour de l’or, de l’XP et des objets. Bonne chance !'];
@@ -373,6 +373,11 @@ function worldMap(){
  // la région en cours au centre de l'écran (carte I en portrait : défilement horizontal)
  const cz=L.querySelectorAll('.zone:not(.lock)');requestAnimationFrame(()=>cz[cz.length-1]?.scrollIntoView({block:'center',inline:'center'}));
 }
+// V4.88 : carte d'introduction du boss (passable d'un toucher, 2,4 s au plus, aucune pause du combat : le joueur n'a pas encore la main)
+function bossCard(F){if(!F.boss||F.daily)return;const z=ZONES[F.zi],B=MON[F.boss.k],d=document.createElement('div');d.id='bosscard';d.setAttribute('role','status');
+ d.innerHTML=`<div><small>${z.n} · Boss de région</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
+ const off=()=>{d.classList.add('out');setTimeout(()=>d.remove(),260)};d.onclick=off;document.body.append(d);setTimeout(off,save.fast?1400:2400)}
+const TIPS_T={howl:'Appelle la meute',shell:'Se retranche sous sa carapace',quake:'Fait trembler le sol',rage:'Entre en fureur',beam:'Charge un rayon de cristal',forge:'Embrase la forteresse',tomb:'Maudit les intrus',swamp:'Empoisonne le marais',astral:'Se téléporte',frost:'Se couvre de glace',breaker:'Brise toute défense'};
 function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}

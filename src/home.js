@@ -12,7 +12,7 @@ import {specOf} from './talents.js';
 setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargement
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='4.87';
+export const VERSION='4.88';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -342,13 +342,13 @@ function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
  for(const[k,n]of[['m','Volume musique'],['s','Volume bruitages'],['v','Volume voix']]){const l=el('label','v-vol',`<span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" value="${AU.vol[k]}"><b>${AU.vol[k]} %</b>`),i=l.querySelector('input');
   i.oninput=()=>{setVol(k,i.value);l.querySelector('b').textContent=i.value+' %'};if(k==='s')i.onchange=()=>sfx('coin');if(k==='v')i.onchange=()=>voice('warrior','start',{force:true});P.append(l)}
- const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(save.lang==='en'?'🌐 Langue : English':'🌐 Langue : Français',()=>{save.lang=save.lang==='en'?'fr':'en';store();setVoiceLang(save.lang);show('reglages')},'dk'),wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(save.lowfx?'✨ Effets réduits : oui':'✨ Effets réduits : non',()=>{save.lowfx=save.lowfx?0:1;document.documentElement.classList.toggle('lowfx',!!save.lowfx);store();show('reglages')},'dk'),wood(save.lang==='en'?'🌐 Langue : English':'🌐 Langue : Français',()=>{save.lang=save.lang==='en'?'fr':'en';store();setVoiceLang(save.lang);show('reglages')},'dk'),wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
  P.append(el('div','v-card v-how',A.HOW));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
 }
 
-export function renderHome(actions){A=actions;SPEED.k=save.fast?.5:1;const nt=checkTrophies(save);build();if(nt.length)trophyToast(nt);root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
+export function renderHome(actions){A=actions;document.documentElement.classList.toggle('lowfx',!!save.lowfx);SPEED.k=save.fast?.5:1;const nt=checkTrophies(save);build();if(nt.length)trophyToast(nt);root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
 // V4.86 : notification discrète d'un trophée obtenu hors combat (niveau, recrutement, quête...)
 function trophyToast(ids){const t=TROPHIES.find(x=>x.id===ids[ids.length-1]),d=el('div','tro-toast',`<span style="color:${TIER[t.t].c}">🏆</span> <b>${t.n}</b>${ids.length>1?` <small>+${ids.length-1}</small>`:''}`);root.append(d);setTimeout(()=>d.remove(),4200)}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});

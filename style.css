@@ -546,3 +546,20 @@ body.camp #exc{display:none}
 #maptabs{left:50%;right:auto;transform:translateX(-50%);flex-direction:row;gap:8px;padding:5px;border-radius:16px;background:#0b1430cc;border:1px solid #c9a24a88;box-shadow:0 4px 14px #0009}
 #maptabs .btn{min-width:112px;min-height:44px;margin:0}
 #zsheet,#zsheet.on{position:fixed;z-index:6}
+
+/* V4.88 : polish — transitions d'écran, carte d'introduction des boss, effets réduits */
+.ov.on{animation:ovIn .22s ease-out}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+#bosscard{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:14px;padding:12px 20px 12px 12px;max-width:min(92vw,520px);
+ background:linear-gradient(#101c3cf2,#070b16f2);border:2px solid #ffd26a;border-radius:18px;box-shadow:0 0 0 4px #0b1430,0 10px 30px #000c,inset 0 0 24px #ffd26a22;color:#fff3d6;cursor:pointer;animation:bcIn .4s cubic-bezier(.2,1.4,.4,1)}
+#bosscard canvas{width:96px;height:96px;flex:none;border-radius:50%;background:radial-gradient(#3a2a10,#0b1430);border:2px solid #c9a24a}
+#bosscard div{display:flex;flex-direction:column;text-align:left;gap:2px;min-width:0}
+#bosscard small{color:#cfd8e6;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+#bosscard b{font:700 24px/1.1 var(--f-title,serif);color:#ffd65a;text-shadow:0 2px 0 #4a2c0c}
+#bosscard i{font-style:normal;font-size:13px;color:#e9dcc0}
+#bosscard.out{opacity:0;transform:translate(-50%,-12px);transition:.25s}
+@keyframes bcIn{from{opacity:0;transform:translate(-50%,-24px) scale(.9)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media (max-height:500px){#bosscard{top:8%}#bosscard canvas{width:64px;height:64px}#bosscard b{font-size:19px}}
+html.lowfx *,html.lowfx *::before,html.lowfx *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+@media (prefers-reduced-motion:reduce){.ov.on,#bosscard{animation:none}}
+html.lowfx .tro-toast{animation:none!important}
