@@ -57,6 +57,8 @@ export const migratePrairie=save=>grow(save,'prairie','p10');
 export const migrateBois=save=>grow(save,'bois','b10');
 // V4.15 : et la Côte dorée
 export const migrateCote=save=>grow(save,'plage','c10');
+// V4.16 : et les Monts gris
+export const migrateMonts=save=>grow(save,'mont','m10');
 // V4.10 : lumière du village. Choix du joueur, sinon selon l'heure de l'appareil (jour 6-17 h, soir 17-20 h, nuit sinon)
 export const SKIES=['auto','jour','soir','nuit'];
 export const skyOf=(pref,h)=>SKIES.indexOf(pref)>0?pref:h>=6&&h<17?'jour':h>=17&&h<20?'soir':'nuit';
