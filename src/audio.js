@@ -14,18 +14,20 @@ const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
-AU.vol={m:100,s:100,v:100};
+AU.vol={m:100,s:100,v:100,g:100}; // g = volume général (V4.51, aperçu HUD V2 ; 100 = comme avant)
 try{Object.assign(AU.vol,JSON.parse(localStorage.getItem('landeVol')||'{}'))}catch(e){}
 const level=k=>AU.on[k]?GAIN[k]*AU.vol[k]/100:0;
 const apply=k=>{if(AU.c)AU[k].gain.setTargetAtTime(level(k),AU.c.currentTime,.05)};
 export function setVol(k,v){AU.vol[k]=Math.max(0,Math.min(VOLMAX,+v||0));try{localStorage.setItem('landeVol',JSON.stringify(AU.vol))}catch(e){}
  if(k==='v'&&AU.vol.v&&!AU.on.s)setSon('s'); // les voix se coupent avec le bouton des bruitages
  if(AU.vol[k]&&!AU.on[k])setSon(k);else apply(k)}
+export function setMaster(v){AU.vol.g=Math.max(0,Math.min(100,+v||0));try{localStorage.setItem('landeVol',JSON.stringify(AU.vol))}catch(e){}
+ if(AU.c&&AU.mix)AU.mix.gain.setTargetAtTime(AU.vol.g/100,AU.c.currentTime,.05)}
 function auInit(){if(AU.c){if(AU.c.state!=='running')AU.c.resume();return}
  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=AU.c=new C();
  // limiteur en sortie : évite la saturation quand le volume est poussé
  const lim=c.createDynamicsCompressor();lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.25;lim.connect(c.destination);
- AU.mix=c.createGain();AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);AU.v=c.createGain();AU.v.gain.value=level('v');AU.v.connect(AU.mix);
+ AU.mix=c.createGain();AU.mix.gain.value=Math.max(0,Math.min(100,AU.vol.g))/100;AU.mix.connect(lim);AU.m=c.createGain();AU.m.gain.value=level('m');AU.m.connect(AU.mix);AU.s=c.createGain();AU.s.gain.value=level('s');AU.s.connect(AU.mix);AU.v=c.createGain();AU.v.gain.value=level('v');AU.v.connect(AU.mix);
  for(const h of Object.values(VOICES))for(const l of VLINES)load(vname(h,l)).catch(()=>{});
  for(const n of SNDS)load(n).then(()=>{if(n==='village_ambience')ambience()}).catch(()=>{});
  if(AU.want)music(AU.want,1)}
