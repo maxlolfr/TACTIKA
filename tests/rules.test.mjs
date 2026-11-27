@@ -230,7 +230,7 @@ test('intention : le monstre vise le héros qu\'il frapperait, sans rien changer
 test('étoiles : le détail est juste (rapide mais avec un KO)', () => {
  const s=arena();unit(s,'h',0,0,{hp:10});unit(s,'h',1,0);s.round=3;
  assert.deepEqual(starList(s,false),[true,true,false]);assert.equal(stars(s,false),2);
- assert.equal(fightSpec(2,2,1).wave.add[2][2],'knightB');assert.equal(fightSpec(1,2,1).wave.add[2][2],'wolf'); // survie généralisée
+ assert.equal(fightSpec(2,2,1).wave.add[2][2],'knightB');assert.equal(fightSpec(1,7,1).wave.add[2][2],'wolf'); // survie généralisée
 });
 test('carte : jamais d\'échec, même sur 300 graines', () => {
  for(let seed=0;seed<300;seed++)assert.ok(genMap(newBattle(),seed*7919,seed%THEMES.length),'graine '+seed);
@@ -469,7 +469,7 @@ const Z6=ZONES.findIndex(z=>z.id==='cristal');
 const cry=(s,x,y,k)=>Object.assign(cell(s,x,y),{block:1,cry:k});
 
 test('région 6 : 10 combats, boss au dernier, ouverte après le Château', () => {
- assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),10);assert.equal(zlen(ZONES[1]),4);
+ assert.equal(zlen(ZONES[Z6]),10);assert.equal(zlen(ZONES[0]),10);assert.equal(zlen(ZONES[1]),10);assert.equal(zlen(ZONES[2]),4);
  assert.ok(fightSpec(Z6,9,1).boss);assert.ok(!fightSpec(Z6,8,1).boss);assert.ok(fightSpec(0,9,1).boss);assert.ok(!fightSpec(0,3,1).boss);
  assert.equal(fightSpec(Z6,4,1).goal,'chief');assert.equal(fightSpec(Z6,6,1).goal,'survive');assert.equal(fightSpec(Z6,0,1).goal,null);
  assert.equal(fightSpec(2,1,1).goal,'chief'); // anciennes zones inchangées
@@ -606,7 +606,7 @@ test('V4.2 Volée : centre autorisé qui touche indirectement, case vide visable
 
 // ---------- V4.5a : survie à renforts ----------
 import {man,star3,waveTick,waveEmpty,spawnCells} from '../src/rules.js';
-const waveFight=(seed=3)=>{const F=fightSpec(1,2,seed),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:6,items:[],sp:[null,null,null]},j)));return{F,s}};
+const waveFight=(seed=3)=>{const F=fightSpec(1,7,seed),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:6,items:[],sp:[null,null,null]},j)));return{F,s}};
 test('survie à renforts : départ, annonce, arrivée, plafond', ()=>{
  const{F,s}=waveFight(),mons=()=>s.units.filter(u=>u.team==='m'&&!u.dead);
  assert.equal(F.wave.turns,6);assert.equal(mons().length,3);assert.equal(s.wave.q.length,6);assert.equal(s.wave.next.length,1); // 1 annoncé pour le tour 2
@@ -666,7 +666,7 @@ test('arme : une seule active par héros, choix du joueur, autres objets cumulé
 
 // ---------- V4.5e : Loup alpha ----------
 test('Loup alpha : appel de la meute à 50 % PV, une fois, puis hurlement tous les 2 tours', ()=>{
- const F=fightSpec(1,3,5),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:7,items:[],sp:[null,null,null]},j)));
+ const F=fightSpec(1,9,5),s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats({lvl:7,items:[],sp:[null,null,null]},j)));
  const b=s.units.find(u=>u.bs==='howl');const n=s.units.length;hurt(s,b,Math.ceil(b.max*.55));assert.equal(s.units.length,n+2);
  const w=s.units.at(-1);assert.ok(w.n.startsWith('Loup de meute')&&w.xp===0&&w.k==='wolf');hurt(s,b,1);assert.equal(s.units.length,n+2);
  b.bt=0;assert.equal(bossNext(b),2);
@@ -856,4 +856,19 @@ test('V4.13 : gelée toxique, poison 2 × 2 tours, marque distincte', () => {
  const k=s.units.find(u=>u.team==='h'),sp=m.atk;m.x=k.x+1;m.y=k.y;payCost(m,sp,k);const hp=k.hp;applySpell(s,m,sp,k);
  assert.ok(k.hp<hp);assert.deepEqual([k.poison.d,k.poison.turns],[2,2]);
  const ev=poisonTick(s,k);assert.ok(ev.length&&k.poison.turns===1);
+});
+
+// ---------- V4.14 : lot 4, Bois sombre à 10 étapes ----------
+import {migrateBois} from '../src/rules.js';
+test('V4.14 : Bois sombre, 10 étapes, niveaux 4 à 6, objectifs, boss au 10e', () => {
+ const F=[...Array(10).keys()].map(i=>fightSpec(1,i,1));
+ assert.deepEqual(F.map(f=>!!f.boss),[...Array(9).fill(false),true]);assert.deepEqual(F.map(f=>f.lvl),[4,4,4,5,5,5,5,6,6,6]);
+ assert.deepEqual(F.map(f=>f.goal),[null,null,null,null,'chief',null,null,'survive',null,null]);assert.equal(F[7].wave.turns,6);
+ for(const f of F)for(const k of f.en)assert.ok(['wolf','shroom','bat'].includes(k));
+ for(let i=0;i<10;i++)for(let seed=1;seed<=10;seed++){const f=fightSpec(1,i,seed),s=newBattle(),g=genMap(s,seed,f.th);mkUnits(s,f,g.hs,g.es,HS);
+  assert.equal(s.units.filter(u=>u.team==='m').length,f.wave?f.wave.start:f.en.length+(f.boss?1:0))}
+});
+test('V4.14 : sauvegarde, Bois terminé reste terminé, progression partielle gardée', () => {
+ const a=migrateBois({z:{prairie:10,bois:4},st:{bois:[3,2,3,1]}});assert.equal(a.z.bois,10);assert.deepEqual([a.st.bois[3],a.st.bois[9]],[0,1]);assert.ok(zoneDone(a,1));
+ const b=migrateBois({z:{bois:2},st:{}});assert.equal(b.z.bois,2);assert.equal(migrateBois({z:{bois:4},b10:1}).z.bois,4,'une seule fois');
 });

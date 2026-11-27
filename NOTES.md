@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.14 (27/11/2026) : Bois sombre à 10 étapes (lot 4, liste ChatGPT)
+- Niveaux 4,4,4,5,5,5,5,6,6,6 : chauves-souris, loups en meute, champignons (conseil), attaques aériennes, chef de meute, mixte, formation (champignons derrière les loups), survie à renforts (8e), épreuve combinée, Loup alpha (+ loup, champignon, chauve-souris).
+- `migrateBois` (même règle que la Prairie, drapeau `b10`) : Bois terminé → 10/10, étoiles du boss à l'étape 10.
+- Pas de variantes (loup frénétique, champignon toxique) : à décider après test.
+- 104 tests. Simulateur : 75 combats (b5, survie 8, boss ; 5 profils) : std 15/15, sous-équipé 11/15.
+
 ## V4.13 (27/11/2026) : Prairie plus variée, gelée toxique
 - `MON.toxslime` « Gelée toxique » : planche de la gelée recolorée en violet au chargement (`slimeT`, `tint` dans render.js), crâne ☠ au-dessus de sa barre, 24 PV, 3-5 dégâts, poison 2 × 2 tours. Dans `pool` de la Prairie.
 - Étapes 1 à 4 inchangées. Étapes 5 à 10 : une ou deux gelées toxiques (chef 5, 6, 7, survie 8, 9, boss 10), conseils affichés une fois (étape 5 : gelée toxique ; étape 10 : Roi Gelée et ses 2 gelées).
