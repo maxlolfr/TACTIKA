@@ -1,5 +1,11 @@
 # Notes du projet Tactika
 
+## V4.72 (27/11 nuit) : fonds de la région 12 (Sanctuaire de l'Éther), reçus de Max
+- `art/r12/` : originaux sans perte. Fonds en dépôt, **pas encore branchés** (R12 n'existe pas dans `ZONES`) : `assets/bg/eter.webp` (portrait 941×1672, arche brisée dans les nuages, bannières violettes) et `assets/bg/eter-l.webp` (paysage 1536×1024, même arche). Pas d'étoile Gemini à effacer. À ajouter à `BGZ` (render.js) avec l'id `eter` quand R12 sera créée.
+- **Sols : planche reçue = doublon du Temple des sables (R8)** : mêmes 8 dalles désertiques/hiéroglyphes que `sol_sables`. Archivée sous `art/r12/r12-sols-gemini-DOUBLON-sables.webp`, non utilisée. Pour R12 : provisoirement `sol_celeste`, ou redemander de vrais sols éthérés.
+- **Toujours attendu** : monstres R12 (3×2), Briseur primordial A et B (2×2), obstacles. Puis R12 (10 missions, boss), Q36–Q40.
+- Rien de codé côté jeu (aucun test touché).
+
 ## V4.71 — Icônes nettes (liste Équipe du camp)
 - `icon()` (render.js) : définition selon le ratio de pixels de l'écran (×2 à ×4) + réduction en deux temps avec lissage haute qualité ; taille CSS fixée. Avant : canvas 2× flou sur écran dense (Honor).
 - Liste « Équipe » du panneau Commandement : portraits 46 px au lieu de 30. Profite aussi aux onglets héros et à la médaille.
