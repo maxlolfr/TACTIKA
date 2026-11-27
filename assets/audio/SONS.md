@@ -11,7 +11,8 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | village | retours au village | V4.20 (qualité d'origine) |
 | boss_v2 | boss des zones 1 à 5 | V4.20 (qualité d'origine) |
 | camp | carte | ancien |
-| forest | Prairie, Bois | lot 1 |
+| forest | Prairie | lot 1 |
+| darkwood | Bois sombre | V4.21 (qualité d'origine) |
 | coast | Côte dorée | V4.0.3 |
 | mountain | Monts gris | V4.0.3 |
 | castle | Château en ruine | V4.0.3 |

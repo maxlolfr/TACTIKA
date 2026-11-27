@@ -19,7 +19,7 @@ jobs:
             [ -z "$name" ] && continue
             curl -sSfL "$url" -o "/tmp/$name.mp3"
             case "$name" in
-              camp|battle|boss|main_theme|forest|elite_battle|cave|titan_boss|coast|mountain|castle|village|boss_v2|victory|defeat) out="assets/audio/musique/$name.mp3"; cp "/tmp/$name.mp3" "$out" ;; # musiques : fichier d'origine, sans recompression
+              camp|battle|boss|main_theme|forest|elite_battle|cave|titan_boss|coast|mountain|castle|village|boss_v2|darkwood|victory|defeat) out="assets/audio/musique/$name.mp3"; cp "/tmp/$name.mp3" "$out" ;; # musiques : fichier d'origine, sans recompression
               *) out="assets/audio/bruitages/$name.mp3"; ffmpeg -nostdin -loglevel error -y -i "/tmp/$name.mp3" -ac 1 -b:a 64k "$out" ;;
             esac
             echo "$name $(du -h "$out" | cut -f1)"

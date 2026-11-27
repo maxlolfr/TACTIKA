@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.21 (27/11) : musique du Bois sombre
+Nouvelle musique de 90 s `darkwood` pour les combats ordinaires du Bois (la Prairie garde `forest`).
+
 ## V4.20 (27/11) : musiques du village et des boss
 Nouvelles musiques de 90 s `village` et `boss_v2` (boss des zones 1 à 5 ; le Titan garde la sienne). Le thème titre reste à l'ouverture du jeu. Les musiques sont publiées sans recompression et chargées une par une, à la demande.
 
