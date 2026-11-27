@@ -19,6 +19,7 @@ const MAST_ORDER={non:[],deg:['arcane','fireball','storm','flame','frost','nova'
 function mastFill(save){if(!TEAM?.includes(3))return;for(const id of MAST_ORDER[MAST]||[])while(raise(save,3,id));} // sort par sort jusqu'au rang III, tant qu'il reste des points
 ZONES.push(R7); // région 7 mesurable : « 6.0 » à « 6.9 »
 const PILOT=process.argv[2]==='pilote',N=+process.argv[PILOT?3:2]||(PILOT?10:100),MAXR=30;let FIGHTS=0;const CASTS={}; // sorts lancés par les héros
+const SPL={}; // par « héros · sort » : lancers, PA, dégâts et soins directs (brûlure et poison non attribués)
 const alive=(s,t)=>s.units.filter(u=>u.team===t&&!u.dead);
 const avg=a=>(a.reduce((x,y)=>x+y,0)/a.length)||0;
 
@@ -36,11 +37,12 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
 function best(s,u){const rc=reach(s,u,u.pm);let b=null;
  const cells=s.units.filter(x=>!x.dead).map(x=>({x:x.x,y:x.y}));
  for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),p={x,y};
-  for(const id of u.sp){const sp=u.S?.[id]||SP[id]; // V4.39 : le sort du héros (talents et maîtrise compris), plus le sort de baseif(u.pa<costOf(u,sp)||u.cd[sp.n]>0)continue;
+  for(const id of u.sp){const sp=u.S?.[id]||SP[id]; // V4.39 : le sort du héros (talents et maîtrise compris), plus le sort de base
+   if(u.pa<costOf(u,sp)||u.cd[sp.n]>0)continue;
    for(const c of sp.t==='self'?[p]:cells){if(!okTarget(s,u,sp,c,p))continue;const v=value(s,u,sp,c)-d*.5;if(v>0&&(!b||v>b.v))b={p,d,sp,c,v}}}}
  return b}
 function heroTurn(s,u){
- for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}payCost(u,b.sp,b.c);CASTS[b.sp.n]=(CASTS[b.sp.n]||0)+1;tally(s,applySpell(s,u,b.sp,b.c));if(outcome(s))return}
+ for(let g=0;g<6;g++){const b=best(s,u);if(!b)break;if(b.d){u.pm-=b.d;u.x=b.p.x;u.y=b.p.y}const pa=u.pa;payCost(u,b.sp,b.c);CASTS[b.sp.n]=(CASTS[b.sp.n]||0)+1;const ev=applySpell(s,u,b.sp,b.c),r=SPL[HER[u.hi].n+' · '+b.sp.n]||=[0,0,0,0];r[0]++;r[1]+=pa-u.pa;for(const e of ev||[]){if(e.type==='hurt'&&e.t.team==='m')r[2]+=e.amt;if(e.type==='heal')r[3]+=e.amt}tally(s,ev);if(outcome(s))return}
  if(u.pm>0&&!outcome(s)){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
   for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1||u.hi===3?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
   if(bk){u.x=bk[0];u.y=bk[1];u.pm-=bk[2]}}}
@@ -86,6 +88,7 @@ if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,b
   for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&HER.map((_,i)=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:[...p.sp,k==='sous'?null:ORSPEC],z:{},st:{}};if(k!=='sous')mastFill(save);R.push(fight(save,zi,i,g*7919,g*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
   console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
+ console.log('\n| Héros · sort | Lancers | Lancers/combat | PA | Dégâts/PA | Soins/PA |\n|---|---|---|---|---|---|');for(const[k,[n,pa,d,h]]of Object.entries(SPL).sort())console.log(`| ${k} | ${n} | ${f(n/FIGHTS)} | ${pa} | ${f(d/(pa||1))} | ${f(h/(pa||1))} |`);
  console.log(`\nSoins lancés : Soin ${CASTS[SP.heal.n]||0}, Soin collectif ${CASTS[SP.mheal.n]||0}.`);console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}
 
 // Campagne : chaque combat dans l'ordre ; après une défaite, on rejoue le dernier combat gagné (pour l'XP) puis on réessaie.
