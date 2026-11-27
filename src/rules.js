@@ -51,7 +51,10 @@ export const zoneDone=(save,zi)=>((save.z&&save.z[ZONES[zi].id])||0)>=zlen(ZONES
 export const crystalState=save=>[1,2,3,3,4,4,5][Math.min(6,ZONES.filter((_,i)=>zoneDone(save,i)).length)];
 // V4.9 : la Prairie passe de 4 à 10 étapes. Boss déjà battu = région toujours terminée (étoiles du boss déplacées à l'étape 10),
 // sinon les étapes gagnées sont gardées. Une seule fois (save.p10), les étapes ajoutées d'une région terminée restent rejouables.
-export function migratePrairie(save){if(save.p10)return save;save.p10=1;if((save.z?.prairie||0)>=4){save.z.prairie=10;const st=save.st?.prairie;if(st&&st[3]){st[9]=st[3];st[3]=0}}return save}
+function grow(save,id,flag){if(save[flag])return save;save[flag]=1;if((save.z?.[id]||0)>=4){save.z[id]=10;const st=save.st?.[id];if(st&&st[3]){st[9]=st[3];st[3]=0}}return save}
+export const migratePrairie=save=>grow(save,'prairie','p10');
+// V4.14 : même règle pour le Bois sombre (4 → 10 étapes)
+export const migrateBois=save=>grow(save,'bois','b10');
 // V4.10 : lumière du village. Choix du joueur, sinon selon l'heure de l'appareil (jour 6-17 h, soir 17-20 h, nuit sinon)
 export const SKIES=['auto','jour','soir','nuit'];
 export const skyOf=(pref,h)=>SKIES.indexOf(pref)>0?pref:h>=6&&h<17?'jour':h>=17&&h<20?'soir':'nuit';
