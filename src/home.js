@@ -6,10 +6,10 @@ import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn
 import {MON} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet} from './render.js';
-import {setSon,sonBtns,sfx,setVol,AU,VOLMAX} from './audio.js';
+import {setSon,sonBtns,sfx,voice,setVol,AU,VOLMAX} from './audio.js';
 import {specOf,SPECS} from './talents.js';
 
-export const VERSION='4.35';
+export const VERSION='4.36';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -307,8 +307,8 @@ function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
 const SKY_TXT={auto:'selon l’heure',jour:'jour',soir:'soir',nuit:'nuit'};
 function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
- for(const[k,n]of[['m','Volume musique'],['s','Volume bruitages']]){const l=el('label','v-vol',`<span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" value="${AU.vol[k]}"><b>${AU.vol[k]} %</b>`),i=l.querySelector('input');
-  i.oninput=()=>{setVol(k,i.value);l.querySelector('b').textContent=i.value+' %'};if(k==='s')i.onchange=()=>sfx('coin');P.append(l)}
+ for(const[k,n]of[['m','Volume musique'],['s','Volume bruitages'],['v','Volume voix']]){const l=el('label','v-vol',`<span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" value="${AU.vol[k]}"><b>${AU.vol[k]} %</b>`),i=l.querySelector('input');
+  i.oninput=()=>{setVol(k,i.value);l.querySelector('b').textContent=i.value+' %'};if(k==='s')i.onchange=()=>sfx('coin');if(k==='v')i.onchange=()=>voice('warrior','start',{force:true});P.append(l)}
  const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
  P.append(el('div','v-card v-how',A.HOW));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);

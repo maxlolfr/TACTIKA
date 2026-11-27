@@ -6,7 +6,7 @@ import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,x
 import {save,prog,unlocked,store,resetSave,KEY} from './save.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
-import {sfx,music,duck,setSon,sonBtns} from './audio.js';
+import {sfx,voice,VOICES,music,duck,setSon,sonBtns} from './audio.js';
 import {SPECS,TIER,DONE,specOf} from './talents.js';
 import {renderHome} from './home.js';
 
@@ -153,7 +153,7 @@ export async function startFight(zi,i,F){
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
- layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
+ layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2'}[zid]||'boss'):S.goal&&zid!=='cristal'?'elite_battle':ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const vf=G.fid;setTimeout(()=>{if(G.fid===vf)say1(G.s.units.filter(u=>u.team==='h'),'start')},G.F.boss?2600:1500);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[S.wave?GOALS.waves(S.surv):GOALS[S.goal]],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
@@ -281,6 +281,8 @@ function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
+// V4.36 : un héros au hasard parmi ceux qui ont une voix
+const say1=(list,line)=>{const l=list.filter(u=>!u.dead&&VOICES[u.k]);if(l.length)voice(pick(Math.random,l).k,line,{force:true})};
 const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
 function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
  LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>u.n.replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
@@ -294,6 +296,7 @@ function result(win,fled){const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
    <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+  setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));
   const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon(...icOf(ITEMS[it]),48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${whoName(ITEMS[it])} : ${effet(ITEMS[it],rarOf(save,it))}`]);

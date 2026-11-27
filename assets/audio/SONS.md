@@ -35,3 +35,18 @@ Pour en ajouter : `tools/audio-urls.txt` (`nom URL` par ligne), puis fusion sur 
 | Cavernes (V4.0.2) | crystal_amp (cristal turquoise), prism_burst (prisme), beam_charge, beam_fire (rayon du Titan) |
 | Monstres des Cavernes (V4.0.3) | golem_smash, spider_bite, bat_shriek, titan_roar (changement de phase), titan_death |
 | V4.33 | boss_phase (Fureur, Surchauffe), boss_death (mort d'un boss, hors Titan), quest_complete (contrat réclamé), star_earned (étoiles), village_ambience (boucle sous le thème du village) |
+
+## Voix des héros (`voix/`, V4.36)
+Fichiers `v_<héros>_<réplique>.mp3`, fichiers d'origine ElevenLabs (modèle `eleven_v4`, une prise). Voix créées dans la bibliothèque : « Tactika - Kael » (aperçu 1, choisi par Max), « Tactika - Fenn » (voix d'homme) et « Tactika - Aelis » (choisies par Claude sans écoute, à valider par Max). Orion n'a pas encore de voix.
+
+| Réplique | Quand | Kael | Fenn | Aelis |
+|---|---|---|---|---|
+| start | début du combat | En avant ! | Je les vois. | Restons ensemble. |
+| sig | attaque signature (60 %) | Prends ça ! (Fracas, Charge) | En pleine cible ! (Volée, Tir perforant) | Que l'Éther frappe ! (Épine) |
+| support | soutien (60 %) | Je tiens bon ! (Rempart) | Trop lent ! (Bottes) | Je suis là. (Soin, Soin collectif, Renaissance) |
+| hurt | critique ou coup ≥ 25 % des PV max (70 %) | Pas encore… | Aïe, pas mal… | Ça ira… |
+| ko | héros KO | Continuez… | Je… décroche. | Pardonnez-moi… |
+| win | victoire (un héros debout) | Bien joué, tous ! | Trop facile ! | Tout le monde va bien ? |
+| level | victoire avec niveau gagné | Je progresse. | Encore mieux ! | Je le sens. |
+
+Règles (`voice()` dans `src/audio.js`) : jamais deux voix à la fois ; 6 s entre deux voix et 20 s avant la même réplique (sauf début, KO, victoire, niveau) ; musique baissée pendant la voix ; curseur « Volume voix » ; le bouton des bruitages coupe aussi les voix. Volumes égalisés par la table `VTRIM`.

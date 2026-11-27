@@ -1,5 +1,8 @@
 # Notes du projet Tactika
 
+## V4.36 (27/11) : voix des héros
+21 répliques courtes en français (Kael, Fenn, Aelis), dossier `assets/audio/voix/`, détail dans `assets/audio/SONS.md`. `voice()` dans `src/audio.js` (jamais deux voix à la fois, délais anti-répétition, musique baissée), champ `vx` des sorts dans `src/data.js`, curseur « Volume voix ». Pas encore écouté ni essayé sur téléphone. Orion n'a pas de voix.
+
 ## V4.35 (27/11) : Orion et équipe de 3 parmi 4 (aperçu seulement)
 - `?apercu=braise` : fiche des héros → Orion → « Le faire entrer à la place de… ». Choix gardé dans `save.team` (absent ou abîmé = Kael, Fenn, Aelis). Le village montre l'équipe choisie.
 - Orion ajouté par `addOrion()` en aperçu, par les tests et par le simulateur (`TEAM=0,3,2`). Jeu normal : 3 héros, aucun fichier d'Orion chargé.
