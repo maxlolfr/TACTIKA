@@ -1326,6 +1326,8 @@ test('V4.73 : région 12 (Sanctuaire de l’Éther) : 10 missions niveaux 46 à 
  const B=s.units.find(u=>u.boss),h=s.units.find(u=>u.team==='h'&&!u.dead);assert.ok(B&&B.bs==='breaker'&&B.s==='breaker');B.hp=B.max;assert.deepEqual(r.bossTurn(s,B),[]);assert.ok(!h.sunder);
  B.hp=Math.floor(B.max/2);r.bossTurn(s,B);assert.equal(B.raged,1);assert.equal(B.dmgMul,1.25);assert.equal(h.sunder.pct,.15);assert.equal(h.sunder.turns,2);assert.deepEqual(r.bossTurn(s,B),[]);
  const sp=r.summon(s,B);assert.equal(sp.length,2);assert.ok(sp.every(c=>c.minion&&c.hp===20));
+ // V4.78 : fenêtre de vulnérabilité tous les 4 tours : le Briseur subit +30 % et ne bouge pas
+ B.bt=2;assert.ok(!r.bossTurn(s,B).some(e=>e.text&&e.text.startsWith('Défense brisée')));B.bt=3;B.sunder=undefined;const evw=r.bossTurn(s,B);assert.ok(evw.some(e=>e.text==='Défense brisée ! +30 %'));assert.equal(B.sunder.pct,.3);assert.equal(B.pm,0);assert.ok(r.soak(B,100)>r.soak({...B,sunder:undefined},100));
  const{QUESTS}=await import('../src/quests.js'),q36=QUESTS.find(x=>x.id==='Q36');assert.equal(q36.z,11);assert.equal(r.questOpen({z:{[R11.id]:10}},q36),true);assert.equal(r.questOpen({z:{}},q36),false);
  const qf=r.questFight(q36,{});assert.equal(qf.goal,'survive');assert.equal(qf.lvl,47);assert.equal(qf.zi,11);
 });

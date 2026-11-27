@@ -1,5 +1,9 @@
 # Notes du projet Tactika
 
+## V4.78 (27/11 nuit) : Briseur primordial, fenêtre de vulnérabilité
+- `BOSS_P.breaker` = [4, 0] : tous les 4 tours le Briseur s'agenouille (« Défense brisée ! +30 % », il ne bouge pas, `sunder` 30 % sur 2 tours, couvre le tour des héros). La phase à 50 % (Fracas, armure brisée équipe, 2 éclats) reste. Astuce `TIPS.breaker` mise à jour. 161 tests OK. Audit des 12 boss : `docs/studio/tactika/AUDIT-BOSS-V4.78.md` du dépôt studio.
+- Reste pour le lot 1 de la feuille de route V5.0 : ancrages destructibles d'Aetherion, rupture tactique du bouclier du Roi du Givre, éventuelle 3e phase du Briseur.
+
 ## V4.77 (27/11 nuit) : récompenses de Q37 à Q40 vérifiées ; validation ChatGPT de la V4.76
 - **Vérification réelle** : l'attribution des objets passe dans `grantQuest` (rules.js, sortie de l'écran de victoire). Essai navigateur bout en bout (victoire forcée par l'écran de résultat) : Q37 donne l'objet 79 ; Q39 donne 81 à 84 ; le stockage local contient les objets et `save.q` ; après rechargement, rien n'a changé ; rejouer Q37 ne redonne rien (`save.q` vaut 1, et `grantQuest` ignore les objets déjà possédés). Test Node pour Q37 à Q40 (aucun doublon, aller-retour JSON, rareté épique, Q36 = un seul objet de butin). 161 tests OK.
 - **Validé par ChatGPT (V4.76)** : Q37 à Q40 et les 7 objets signature (obtention exclusive par les quêtes, aucune image maintenant), mécanique actuelle de la Reine des marécages.
