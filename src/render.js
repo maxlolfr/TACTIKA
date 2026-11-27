@@ -8,13 +8,15 @@ export const cv=$('cv'),ctx=cv.getContext('2d');
 export let AT=null;export const IMG={};
 // anciennes planches gardées pour legacy/ et comme références, inutiles ici
 // planches au nouveau style (boss et monstres refaits) : 6 cases (+4 de marche pour les monstres)
-const BS=['knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat'];
+const BS=['slimeT','knightB','knightR','knightN','roiG','golemK','crabK','wolfK','knightK','slimeN','boarN','batN','wolfN','shroomN','crabN','gullN','golemN','goblinN','ghostN','skelN','crygolem','qspider','prisbat'];
 const OLD=['tiles','tiles2','tiles3','aelisX','aelisB','fennX','fennB','kaelW','kaelX','kaelK','warrior','archer','healer','kaelF','kaelB','kaelP','fennF','fennP','aelisF','aelisP'];
 // V4.0a : les planches de monstres (MS) ne sont chargées que pour la zone où l'on combat ; celles des autres zones sont libérées
 const MS=new Set(),LD={};
-function load(n){return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;delete LD[n];ok()};i.onerror=()=>{delete LD[n];ko(n)};i.src='assets/'+n+'.webp'}))}
+function tint(src,rgba){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const x=c.getContext('2d');x.drawImage(src,0,0);x.globalCompositeOperation='source-atop';x.fillStyle=rgba;x.fillRect(0,0,c.width,c.height);return c}
+function load(n){if(n==='slimeT')return IMG[n]?Promise.resolve():load('slimeN').then(()=>{IMG[n]=tint(IMG.slimeN,'rgba(150,40,200,.5)')}); // V4.13 : gelée toxique = gelée recolorée
+ return IMG[n]?Promise.resolve():LD[n]||(LD[n]=new Promise((ok,ko)=>{const i=new Image();i.onload=()=>{IMG[n]=i;delete LD[n];ok()};i.onerror=()=>{delete LD[n];ko(n)};i.src='assets/'+n+'.webp'}))}
 export async function loadAssets(){
- AT=await(await fetch('assets/atlas.json')).json();
+ AT=await(await fetch('assets/atlas.json')).json();AT.slimeT=AT.slimeN;
  for(const k of[...Object.values(MON).map(m=>m.s),...ZONES.map(z=>z.boss.s)])for(const n of[k,k+'m',k+'w'])if(AT[n])MS.add(n);
  for(const t of THEMES)if(t.ts)MS.add(t.ts); // sols par région : chargés aussi à l'entrée de la zone
  await Promise.all(Object.keys(AT).filter(n=>!OLD.includes(n)&&!MS.has(n)).map(load));
@@ -260,7 +262,7 @@ export function draw(now){
  const taken=[];
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=sy-hgt(u)-lift(u)-4-(u.hop||0),w=TW*.6;taken.push([sx-w/2-1,y-(u.chief?18:1),sx+w/2+(u.tag?16:1),y+6]);
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
-  {const ss=[u.shield>0&&1,u.buff&&12,u.poison&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
+  {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
  for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*(G.ex?.42:.12);ctx.save();ctx.font=`900 ${Math.round(TW*.22)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);
