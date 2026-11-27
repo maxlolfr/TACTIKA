@@ -17,7 +17,7 @@ function value(s,u,sp,c){const t=occ(s,c.x,c.y),buff=u.buff?1+u.buff.pct:1;
  if(sp.heal){if(!t)return 0;let v=0;for(const p of sp.splash?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c]){const a=occ(s,p.x,p.y);if(a&&a.team===u.team&&a.hp<a.max*.55)v+=Math.min(a.max-a.hp,sp.heal[1])*1.5}return v}
  if(sp.buff)return t&&t.hi===0&&!t.buff&&alive(s,'m').length>1?8:0;
  if(sp.shield)return alive(s,'m').filter(m=>man(m,u)<=2).length>=2?7:0;
- if(sp.pmBonus)return 0;
+ if(sp.pmBonus||sp.revive||sp.trap)return 0; // Renaissance et Piège : non joués par le simulateur
  const tg=sp.zone?[c,{x:c.x+1,y:c.y},{x:c.x-1,y:c.y},{x:c.x,y:c.y+1},{x:c.x,y:c.y-1}]:[c];let v=0;
  for(const p of tg){const m=occ(s,p.x,p.y);if(!m||m.team===u.team)continue;const d=(sp.dmg[0]+sp.dmg[1])/2*(u.mult||1)*buff*(1-(m.armor||0)*(1-(sp.pierce||0)));v+=Math.min(d,m.hp)+(d>=m.hp?10:0)+(sp.poison?4:0)}
  return v}
@@ -65,7 +65,7 @@ PROF.opti.attr=(n,i)=>({[main(i)]:n});
 // V4.12 (lot 3) : anc = les 10 objets historiques, communs, sans forge ; cat = tout le catalogue permis au niveau (raretés fixes des nouveaux), sans forge
 PROF.anc={...PROF.std,items:[...Array(10).keys()]};PROF.cat={...PROF.std,items:null};
 for(const p of Object.values(PROF))p.it=lvl=>p.items?p.items.filter(j=>ITEMS[j]&&(ITEMS[j].lv||1)<=lvl):ITEMS.map((_,j)=>j).filter(j=>(ITEMS[j].lv||1)<=lvl);
-const PIL={m5:['Monts 5 (chevalier rouge)',3,4],m8:['Monts 8 (survie)',3,7],m10:['Golem ancien (boss)',3,9],c5:['Côte 5 (chevalier)',2,4],c8:['Côte 8 (survie)',2,7],c10:['Crabe royal (boss)',2,9],p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 8 (survie)',1,7],loup:['Loup alpha (boss)',1,9],b5:['Bois 5 (chef)',1,4],b7:['Bois 7 (formation)',1,6],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
+const PIL={h5:['Château 5 (chevalier rouge)',4,4],h8:['Château 8 (survie)',4,7],h10:['Chevalier noir (boss)',4,9],m5:['Monts 5 (chevalier rouge)',3,4],m8:['Monts 8 (survie)',3,7],m10:['Golem ancien (boss)',3,9],c5:['Côte 5 (chevalier)',2,4],c8:['Côte 8 (survie)',2,7],c10:['Crabe royal (boss)',2,9],p5:['Prairie 5 (chef)',0,4],p8:['Prairie 8 (survie)',0,7],p10:['Prairie 10 (boss)',0,9],bois1:['Bois 1 (classique)',1,0],bois3:['Bois 8 (survie)',1,7],loup:['Loup alpha (boss)',1,9],b5:['Bois 5 (chef)',1,4],b7:['Bois 7 (formation)',1,6],monts3:['Monts 3 (survie)',3,2],chateau3:['Château 3 (survie)',4,2],golem:['Golem ancien (boss)',3,3]};
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const[name,zi,i]=PIL[m];for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i)+p.dl),R=[];

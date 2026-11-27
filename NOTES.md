@@ -1,5 +1,10 @@
 # Notes du projet Tactika
 
+## V4.17 (27/11/2026) : Château en ruine à 10 étapes (lot 7)
+- Niveaux 13,13,13,14,14,14,14,15,15,15 ; étape 5 = Chevalier rouge en chef, étape 8 = survie (élite de renfort : Chevalier sombre), étape 10 = Chevalier noir (conseil : Fureur).
+- La liste détaillée du monde 5 n'était pas dans le dépôt : formations composées par Claude d'après le plan directeur, à relire par ChatGPT.
+- `migrateChateau` (drapeau `h10`). Carte 1 : 60 niveaux sur 60.
+
 ## V4.16 (27/11/2026) : Monts gris à 10 étapes (lot 6, liste ChatGPT)
 - Niveaux 10,10,10,11,11,11,11,12,12,12 : golems, golems et loups, chevalier bleu, obstacles rocheux, chevalier rouge (chef), formation lourde, rapides soutenant les tanks, **survie** (8e, élite de renfort = chevalier rouge), épreuve de placement, Golem ancien (conseil : Séisme annoncé, évitable à 4 cases ou plus).
 - `migrateMonts` (drapeau `m10`). 106 tests. Simulateur : 75 combats ; boss : sous-équipé 0/5 (comme avant), standard 5/5 (40 % PV restants).
