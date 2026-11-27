@@ -1,6 +1,7 @@
 # Notes du projet Tactika
 
-
+## V4.20 (27/11) : musiques du village et des boss
+Nouvelles musiques de 90 s `village` et `boss_v2` (boss des zones 1 à 5 ; le Titan garde la sienne). Le thème titre reste à l'ouverture du jeu. Les musiques sont publiées sans recompression et chargées une par une, à la demande.
 
 ## V4.19 (27/11) : fonds des Cavernes
 G-14 (paysage) et G-15 (portrait) de Gemini, étoile effacée (`tools/unstar.py`, qui garde le dessin sous l’étoile), taille d'origine. Fin du fond provisoire des Monts teinté en violet.
