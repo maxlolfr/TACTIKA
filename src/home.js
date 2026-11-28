@@ -3,7 +3,7 @@
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
-import {MON,CM_DEV,CM_BOSSES,CM_ZONES} from './data.js';
+import {MON,CM_DEV,CM_PILOTS,CM_ZONES} from './data.js';
 import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
 import {setLang,trh} from './i18n.js';
@@ -14,7 +14,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.14.7';
+export const VERSION='5.15';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
@@ -201,9 +201,9 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
 // ---------- V4.6 : Cristal de l'Éther → expéditions (missions gagnées à rejouer, revanches des boss) ----------
 // V5.14 : passage entre la campagne et le Cauchemar (drapeau + rechargement), section Cauchemar du Cristal
 function cmGate(P){const en=save.lang==='en';
- if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 3 (level 50 monsters, champions and elites, bosses included). Then the pilot bosses awaken here, one after another.':'Régions 1 à 3 (monstres niveau 50, champions et élites, boss compris). Ensuite, les boss pilotes s’éveillent ici, l’un après l’autre.'));
-  const g=el('div','v-actions v-wrap');CM_BOSSES.forEach((b,k)=>{const z=ZONES[b.zi],ok=cmBossOpen(k),won=save.cm.b[b.id],r=el('div','v-row'+(ok?'':' off'));
-   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish Nightmare regions 1 to 3':'Termine les régions 1 à 3 du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_BOSSES[k-1].zi].boss.n}</small>`));
+ if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 6 (level 50 monsters, champions and elites, bosses included; Vampiric and Venomous elites from region 4). Then the pilot bosses awaken here, one after another.':'Régions 1 à 6 (monstres niveau 50, champions et élites, boss compris ; élites Vampiriques et Venimeuses dès la région 4). Ensuite, les boss pilotes s’éveillent ici, l’un après l’autre.'));
+  const g=el('div','v-actions v-wrap');CM_PILOTS.forEach((b,k)=>{const z=ZONES[b.zi],ok=cmBossOpen(k),won=save.cm.b[b.id],r=el('div','v-row'+(ok?'':' off'));
+   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish Nightmare regions 1 to 6':'Termine les régions 1 à 6 du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_PILOTS[k-1].zi].boss.n}</small>`));
    if(ok)r.append(wood(won?(en?'Fight again':'Réaffronter'):(en?'Fight':'Affronter'),()=>A.pilot(b.zi),'sm'));c.append(r)});
   if(CM_DEV.real)g.append(wood(en?'🌅 Back to the world of Lande':'🌅 Revenir au monde de Lande',()=>{setNightmare(0);location.reload()},'dk'));else g.append(el('small',null,en?'Sandbox (?cauchemar): separate save, everything open.':'Bac à sable (?cauchemar) : sauvegarde à part, tout est ouvert.'));
   c.append(g);P.append(c);return}

@@ -15,7 +15,7 @@ test('campagne normale : aucun modificateur, aucun drapeau Cauchemar, sur les 12
 test('le tirage Cauchemar a sa propre graine : le hasard du combat est inchangé, le même tirage se reproduit',()=>{
  const a=battle(1,4),b=battle(1,4,{seed:5,pool:E.MOD_IDS});assert.equal(a.rng(),b.rng(),'hasard du combat intact');
  const c=battle(1,4,{seed:5,pool:E.MOD_IDS});assert.deepEqual(elite(b).mods,elite(c).mods);assert.equal(elite(b).id,elite(c).id);
- const ids=new Set();for(let k=0;k<40;k++)ids.add(elite(battle(2,3,{seed:k,pool:E.MOD_IDS})).mods[0]);assert.equal(ids.size,4,'les 4 modificateurs sortent');
+ const ids=new Set();for(let k=0;k<40;k++)ids.add(elite(battle(2,3,{seed:k,pool:E.MOD_IDS})).mods[0]);assert.equal(ids.size,E.MOD_IDS.length,'tous les modificateurs sortent (6 depuis la V5.15)');
  // une seule élite, jamais le boss, le chef, une élite historique, un renfort
  for(const[zi,i]of[[0,4],[1,1],[2,7],[2,9],[1,9]]){const s=battle(zi,i,{seed:3,pool:E.MOD_IDS});const m=s.units.filter(u=>u.mods);assert.ok(m.length<=1);for(const u of m)assert.ok(!u.boss&&!u.chief&&!u.elite&&!u.reinf)}});
 

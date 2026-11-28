@@ -4,7 +4,7 @@
 import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
-import {elitize,nightmare,modOut,modIn,modTurn,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
+import {elitize,nightmare,modOut,modIn,modTurn,modHit,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -326,13 +326,14 @@ export function applySpell(s,u,sp,c){
   if(!t)continue;
   if(sp.dmg&&dodgeOf(t)&&t.team!==u.team&&rng()<dodgeOf(t)){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  for(let rep=0;rep<(sp.twice||1)&&(rep===0||!t.dead);rep++)if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p)*condK(s,u,sp,t),0,cr,sp.pierce||0);if(h)ev.push(h);if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
+  let dealt=0;for(let rep=0;rep<(sp.twice||1)&&(rep===0||!t.dead);rep++)if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p)*condK(s,u,sp,t),0,cr,sp.pierce||0);if(h)ev.push(h);if(u.mods&&h?.amt)dealt+=h.amt;if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:n>2?'Enraciné':`−${n} PM`,color:'#c9a0ff'})}
   if(sp.curse&&!t.dead&&t.team!==u.team){t.curse=2;ev.push({type:'status',t,text:'Maudit : soins −50 %',color:'#d6b14a'})}
   if(sp.poison&&!t.dead){t.poison={d:sp.poison[0],turns:sp.poison[1]};if(sp.spread)t.poison.spread=1}
   if(sp.burn&&!t.dead&&t.team!==u.team){if(fireproof(t))ev.push({type:'status',t,text:'Insensible au feu',color:'#ffb060'});else t.burn={d:sp.burn[0],turns:sp.burn[1]}} // ne se cumule pas
+  if(dealt)ev.push(...modHit(s,u,t,dealt)); // V5.15 : Vampirique, Venimeux (élites Cauchemar seulement)
   if(sp.sunder&&!t.dead&&t.team!==u.team){t.sunder={pct:sp.sunder[0],turns:sp.sunder[1]};ev.push({type:'status',t,text:`${sp.mk?'Marqué':'Armure brisée'} +${Math.round(sp.sunder[0]*100)} %`,color:'#ff9a5a'})}
   if(sp.dmg&&t.counter&&!t.dead&&!u.dead&&t.team!==u.team&&man(t,u)===1){const r=SP.slash.dmg,h=hurt(s,u,(r[0]+r[1])/2*(t.mult||1)*(t.dmgMul||1)*(t.buff?1+t.buff.pct:1)*t.counter,'counter');if(h)ev.push({type:'status',t,text:'Contre-attaque !',color:'#ffd65a',snd:'slash'},h)}
   if(sp.weaken&&!t.dead&&t.team!==u.team){t.weak={pct:sp.weaken[0],turns:sp.weaken[1]};ev.push({type:'status',t,text:`Affaibli −${Math.round(sp.weaken[0]*100)} %`,color:'#c9a0ff'})}

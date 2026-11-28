@@ -155,7 +155,7 @@ function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||p
 // case marquée : hachures diagonales dans le losange (rayon du Titan, cases touchées par un prisme)
 // V5.10 · élites Cauchemar : aura au sol (couleur du modificateur + motif propre, lisible sans couleur) et quelques étincelles.
 // « Effets réduits » : aura fixe, sans pulsation ni étincelles.
-const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3]};
+const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3],vamp:[9,3,2,3],venin:[1,6]}; // V5.15 : Vampirique (tirets longs-courts), Venimeux (pointillé espacé)
 // V5.11 · niveau Haut : halo lumineux additif (sprite 64 px pré-rendu par couleur, aplati en ellipse au sol)
 const HALO=new Map();function haloAt(c,x,y,r,col,a){let s=HALO.get(col);if(!s){s=document.createElement('canvas');s.width=s.height=64;const q=s.getContext('2d'),g=q.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,col);g.addColorStop(.35,col+'99');g.addColorStop(1,col+'00');q.fillStyle=g;q.fillRect(0,0,64,64);HALO.set(col,s)}
  c.save();c.globalCompositeOperation='lighter';c.globalAlpha=Math.max(0,Math.min(1,a));c.drawImage(s,x-r,y-r*ISO*.9,r*2,r*2*ISO*.9);c.restore()}
@@ -170,7 +170,7 @@ function eliteAura(c,u,sx,sy,now){const m=MODS[u.mods[0]],ch=!!u.champ,m2=ch&&u.
   c.setLineDash([]);c.globalAlpha=.85;c.strokeStyle='#1a0612';c.lineWidth=1.5;c.beginPath();c.ellipse(sx,cy,TW*.46*K,TH*.37*K,0,0,7);c.stroke()}
  c.setLineDash([]);
  if(u.prime){c.globalAlpha=.5+.4*Math.abs(Math.sin(now/120));c.lineWidth=3;c.strokeStyle='#ffe0a0';c.beginPath();c.ellipse(sx,cy,TW*.46,TH*.37,0,0,7);c.stroke()}
- if(!lf){c.globalCompositeOperation='lighter';const nk=ch?6:3;for(let k=0;k<nk;k++){c.fillStyle=k&1&&ch?m2.col:m.col;const a=now/900+k*6.28/nk+u.id.charCodeAt(1),r=TW*.36*K;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0),2.2,0,7);c.fill()}}
+ if(!lf){c.globalCompositeOperation='lighter';const nk=ch?6:3;for(let k=0;k<nk;k++){c.fillStyle=k&1&&ch?m2.col:m.col;const a=now/900+k*6.28/nk+u.id.charCodeAt(1),r=TW*.36*K;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0)+(m.ico==='venin'?((now/14+k*40)%24)*.5:0),2.2,0,7);c.fill()}}
  c.restore()}
 // V5.14.2 · boss du Cauchemar : très grand, halo cramoisi, triple anneau lent et braises en orbite (sous le sprite, comme les auras d'élite)
 function bossAura(c,u,sx,sy,now){const lf=lowFx(),p=lf?0:Math.sin(now/340),cy=sy+TH*.1,K=1.9;c.save();
@@ -180,13 +180,15 @@ function bossAura(c,u,sx,sy,now){const lf=lowFx(),p=lf?0:Math.sin(now/340),cy=sy
  for(const[k,w,col,d]of[[1,6,'#ff3355',1],[1.14,3.5,'#ffb04a',-1],[1.28,2.5,'#c04bff',1]]){c.globalAlpha=.9;c.strokeStyle=col;c.lineWidth=w;c.setLineDash(k===1?[]:[10,7]);c.lineDashOffset=lf?0:d*-now/70;c.beginPath();c.ellipse(sx,cy,TW*.4*K*k,TH*.32*K*k,0,0,7);c.stroke()}
  c.setLineDash([]);if(!lf){c.globalCompositeOperation='lighter';for(let k=0;k<10;k++){const a=now/1100+k*.628,r=TW*.42*K*1.1;c.fillStyle=k&1?'#ff7a3a':'#ff3355';c.globalAlpha=.6+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.34*K,2.8,0,7);c.fill()}}
  c.restore()}
-// badge de 4 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif)
+// badge de 6 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif), goutte pleine (Vampirique), bulle creuse + point (Venimeux)
 // V5.10b : pastille de niveau des héros (dorée et plus grande pour le héros actif)
 function lvChip(c,lv,x,y,r,on){if(on)r*=1.15;c.save();c.fillStyle=on?'#ffd65a':'#16233a';c.strokeStyle=on?'#fff3c0':'#5aa8ff';c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.font=`900 ${Math.round(r*(lv>9?1.15:1.4))}px system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillStyle=on?'#2a1a00':'#fff';c.fillText(lv,x,y+1);c.restore()}
 function modBadge(c,id,x,y,r){const m=MODS[id];c.save();c.fillStyle='#0d0d14';c.strokeStyle=m.col;c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=Math.max(1.5,r*.28);c.lineCap='round';c.beginPath();
  if(m.ico==='berserk'){for(const d of[-1,1]){c.moveTo(x+d*r*.7,y-r*.55);c.lineTo(x+d*r*.1,y-r*.55);c.lineTo(x+d*r*.32,y+r*.7);c.closePath()}c.fill()} // deux crocs
  else if(m.ico==='garde'){c.moveTo(x-r*.6,y-r*.6);c.lineTo(x+r*.6,y-r*.6);c.lineTo(x+r*.55,y+r*.05);c.quadraticCurveTo(x+r*.35,y+r*.55,x,y+r*.75);c.quadraticCurveTo(x-r*.35,y+r*.55,x-r*.55,y+r*.05);c.closePath();c.fill()}
  else if(m.ico==='regen'){c.moveTo(x,y-r*.65);c.lineTo(x,y+r*.65);c.moveTo(x-r*.65,y);c.lineTo(x+r*.65,y);c.stroke()}
+ else if(m.ico==='vamp'){c.moveTo(x,y-r*.8);c.quadraticCurveTo(x+r*.7,y+r*.05,x+r*.5,y+r*.4);c.arc(x,y+r*.3,r*.5,0,Math.PI);c.quadraticCurveTo(x-r*.7,y+r*.05,x,y-r*.8);c.fill()}
+ else if(m.ico==='venin'){c.arc(x,y,r*.55,0,7);c.stroke();c.beginPath();c.arc(x+r*.12,y-r*.1,r*.18,0,7);c.fill();c.beginPath();c.arc(x-r*.55,y+r*.6,r*.14,0,7);c.fill()}
  else{for(let k=0;k<8;k++){const a=k*Math.PI/4,q=k&1?.4:.8;c.lineTo(x+Math.cos(a)*r*q,y+Math.sin(a)*r*q)}c.closePath();c.fill()}
  c.restore()}
 function hatch(c,x,y,col,a){c.save();diamond(c,x,y,.9);c.globalAlpha=a;c.fillStyle=col;c.fill();c.clip();c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=2;c.beginPath();for(let k=-3;k<=3;k++){c.moveTo(x+k*TW*.14-TW*.3,y+TH*.5);c.lineTo(x+k*TW*.14+TW*.3,y-TH*.5)}c.stroke();c.restore();
