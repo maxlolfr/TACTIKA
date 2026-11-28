@@ -14,7 +14,7 @@ let VLANG='fr';const vname=(h,l)=>'v_'+h+'_'+l+(VLANG==='en'?'_en':'');
 export function setVoiceLang(l){l=l==='en'?'en':'fr';if(l===VLANG)return;VLANG=l;for(const h of Object.values(VOICES))for(const x of VLINES)load(vname(h,x)).catch(()=>{})}
 // V5.06 (lot 4 audio, mesures EBU R128 de tous les fichiers) : musiques ramenées vers -13,5 LUFS (marais -18,8, sanctuaire -15,4, défaite -19,6, givre -12,1 étaient hors plage) ;
 // STRIM : bruitages d'impact trop faibles (coup -24 dB crête, soin -19, fracas et esquive -9) remontés, fin de boss à crête > 0 dB légèrement baissée ; le limiteur de sortie évite toute saturation
-const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={nm_battle2:.82,nm_boss:.9,main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75,swamp:1.7,sanctuary:1.2,frost:.9},STRIM={defeat:1.6,hit:3.2,heal:2,aelis_heal:2,smash:1.6,dodge:1.6,boss_death:.85};
+const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={nm_battle2:.82,nm_boss:.9,nm_boss_titan:.85,nm_boss_reine:1.1,nm_boss_briseur:.95,nm_map2:1.15,main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75,swamp:1.7,sanctuary:1.2,frost:.9},STRIM={nm_defeat:7,nm_crystal_touch:.8,nm_champion_spawn:.8,defeat:1.6,hit:3.2,heal:2,aelis_heal:2,smash:1.6,dodge:1.6,boss_death:.85};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
@@ -55,7 +55,7 @@ function ambience(){const c=AU.c;if(!c)return;const nm=AU.want==='nm_village',on
  if(on&&b&&!AU.amb){const s=c.createBufferSource(),g=c.createGain();s.buffer=b;s.loop=true;g.gain.value=0;g.gain.setTargetAtTime(AMB,c.currentTime,1);s.connect(g);g.connect(AU.s);s.start();s.g=g;AU.amb=s}
  else if(!on&&AU.amb){const o=AU.amb;AU.amb=null;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000)}
  // V5.12 : souffle du cristal Cauchemar (boucle douce) sous le thème du village Cauchemar
- if(nm&&AU.buf.nm_crystal_loop&&!AU.cry){const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf.nm_crystal_loop;s.loop=true;g.gain.value=0;g.gain.setTargetAtTime(AMB*.6,c.currentTime,1.5);s.connect(g);g.connect(AU.s);s.start();s.g=g;AU.cry=s}
+ if(nm&&AU.buf.nm_crystal_loop&&!AU.cry){const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf.nm_crystal_loop;s.loop=true;g.gain.value=0;g.gain.setTargetAtTime(AMB*.3,c.currentTime,1.5);s.connect(g);g.connect(AU.s);s.start();s.g=g;AU.cry=s}
  else if(!nm&&AU.cry){const o=AU.cry;AU.cry=null;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000)}
 export function music(n,force){AU.want=n;ambience();const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
  const w=lost[n]?FALL[n]:n,k=AU.buf[w]?w:null;
