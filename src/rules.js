@@ -1,7 +1,7 @@
 // Règles du combat : aucune dépendance au navigateur (ni DOM, ni canvas, ni son, ni horloge).
 // Tout l'état d'un combat vit dans un objet `s` (voir newBattle). Les fonctions qui changent
 // quelque chose renvoient des « événements » que l'affichage rejoue (texte, effet, son…).
-import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
+import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,DEMO,DEMO_ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
 import {elitize,nightmare,modOut,modIn,modTurn,modHit,rooted,modFar,modCmd} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
@@ -108,7 +108,7 @@ export function ctUpdate(save,day,res){const done=[];if(!res.win)return done;
   t.p=Math.min(t.n,t.p+(t.k==='win'?1:t.k==='kill'?res.kills[t.m]||0:t.k==='star'?+(res.st===3):+!!res.boss));if(t.p>=t.n)done.push(t)}return done}
 export function claim(save,day,i){const t=contracts(save,day)[i];if(!t||t.c||t.p<t.n)return 0;t.c=1;save.gold+=t.g;return 1+gainXp(save,t.x)}
 // défi du jour : la zone ouverte la plus avancée, 4 niveaux au-dessus de son premier combat, sans boss
-export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
+export function dailyFight(save,day){let zi=0;while(ZONES[zi+1]&&!ZONES[zi+1].soon&&!(DEMO&&zi+1>=DEMO_ZONES)&&zoneDone(save,zi))zi++;const Z=ZONES[zi];
  return{zi,i:-1,daily:1,lvl:Z.lvl+4,pool:Z.pool,boss:null,seed:day,th:Z.th[day%Z.th.length],cry:Z.id==='cristal'?{a:1,p:1}:undefined}}
 // V4.7a : équipement du héros i, un objet par emplacement. Choix du joueur (save.eq, ou save.wpn d'avant la V4.7a pour l'arme)
 // s'il possède encore l'objet ; sinon le meilleur possédé pour cet emplacement (à égalité, les PV d'abord).
@@ -543,7 +543,7 @@ function revive(s,u,c){const h=koAt(s,u,c),p=h&&reviveSpot(s,h);if(!p)return[];
  return[{type:'fx',x:p.x,y:p.y,i:4,w:1.4},{type:'status',t:h,text:'Renaissance !',color:'#7dff8a',snd:'levelup'},{type:'heal',t:h,amt:h.hp}]}
 
 // ---------- quêtes (V4.55) ----------
-export const questOpen=(save,q)=>(q.z===0||zoneDone(save,q.z-1))&&(q.after==null||zoneDone(save,q.after))&&(q.need==null||recruited(save,q.need)); // V4.75 : after = région à terminer en plus (Q40)
+export const questOpen=(save,q)=>!(DEMO&&q.z>=DEMO_ZONES)&&(q.z===0||zoneDone(save,q.z-1))&&(q.after==null||zoneDone(save,q.after))&&(q.need==null||recruited(save,q.need)); // V4.75 : after = région à terminer en plus (Q40)
 export const questDone=(save,q)=>!!(save.q&&save.q[q.id]);
 // V4.77 : récompense d'objets d'une quête (sortie de l'écran de victoire pour pouvoir la tester). Objets signature `sig` d'abord (jamais en double), puis un objet de butin si r:1. Renvoie les indices obtenus. À n'appeler que pour une quête pas encore faite.
 export function grantQuest(save,Q,rng=Math.random){const got=[];for(const j of Q.sig||[])if(!save.items.includes(j)){save.items.push(j);got.push(j)}

@@ -1,3 +1,9 @@
+## V5.33 — démo publique (29/11/2026, décision de Max : démo gratuite sur maxlolgames.com)
+- Mode démo activé par `?demo` (ex. `https://maxlolfr.github.io/TACTIKA/?demo`) : drapeau `DEMO` et `DEMO_ZONES=2` dans `src/data.js`. Régions 1 (Prairie de Lande) et 2 (Bois sombre) jouables avec les 3 héros de départ (Kael, Fenn, Aelis) ; régions 3 à 12 verrouillées (« 🔒 Version complète » sur la carte, message explicatif au toucher), quêtes des régions 3+ fermées, défi du jour limité aux régions 1–2, Cauchemar désactivé (même avec `?cauchemar` ou l'épilogue vu).
+- Sauvegarde à part (`landeTactique1_demo`) : la vraie partie du navigateur n'est jamais lue ni écrite. Pastille « vX · DÉMO » en jeu ; fin de la région 2 : message « Fin de la démo » ; chapitre « Fin de la démo » au camp. Aucune règle ni équilibrage touchés : sans `?demo`, le jeu est identique.
+- Tests : `tests/demo.test.mjs` (6) + `tests/demo-off.test.mjs` (1) ; `tools/demo-smoke.mjs` (navigateur, captures). 290 tests + smoke démo OK.
+- Limite connue : le code du jeu complet reste dans la démo (le verrou est logique, pas physique) ; un export de démo physique est envisageable plus tard.
+
 ## V5.32 — polissage graphique final, lot 1 (29/11/2026, chantier HD clos)
 - Décision de Max : chantier HD clos, images actuelles conservées, aucune nouvelle image ; polissage sans refonte ni nouveauté. Liste des manques archivée dans le studio (`HD-CLOTURE-ET-MANQUANTS.md`).
 - Audit `tools/ergo.mjs` (9 formats) : 0 débordement, 0 erreur ; 3 défauts visibles corrigés (CSS seul) : titre de combat tronqué en paysage (« … ni… »), niveau du héros actif tronqué dans le panneau (passe à la ligne), bouton « Partir à l'aventure » rogné sur 2 lignes en paysage bas (Honor plié). Cibles hors de portée du ciblage plus lisibles (opacité .38 → .55). Aucune règle ni asset touchés. 283 tests.
