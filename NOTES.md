@@ -1,3 +1,7 @@
+## V5.32 — polissage graphique final, lot 1 (29/11/2026, chantier HD clos)
+- Décision de Max : chantier HD clos, images actuelles conservées, aucune nouvelle image ; polissage sans refonte ni nouveauté. Liste des manques archivée dans le studio (`HD-CLOTURE-ET-MANQUANTS.md`).
+- Audit `tools/ergo.mjs` (9 formats) : 0 débordement, 0 erreur ; 3 défauts visibles corrigés (CSS seul) : titre de combat tronqué en paysage (« … ni… »), niveau du héros actif tronqué dans le panneau (passe à la ligne), bouton « Partir à l'aventure » rogné sur 2 lignes en paysage bas (Honor plié). Cibles hors de portée du ciblage plus lisibles (opacité .38 → .55). Aucune règle ni asset touchés. 283 tests.
+
 ## V5.31 — nouvelles icônes de sorts (29/11/2026, planche sans cadre 1541 de Max)
 - Nouvelle planche `sp16` (16 icônes, 256 px, `tools/prep_icons_hd.py sp16 … 4 4`) : 0 épées, 1 bouclier, 2 course, 3 force, 4 flèches, 5 cible, 6 course feuille, 7 loup, 8 soin, 9 fleur, 10 soin de groupe, 11 dôme, 12 explosion, 13 glace, 14 tourbillon, 15 sablier. `SPI` de `src/ui.js` : 23 sorts rebranchés (slash, smash, guard, volley, boots, heal, aura, arcane, frost, mheal, bless, dagger, shadow, mark, evade, hammer, protect, light, intercept, aegis, rescue, oath), surtout ceux qui réutilisaient des icônes provisoires. Non utilisées : loup (7), sablier (15), cadres 1529 et icônes de classes 1543 (aucun emplacement). Aucune règle touchée. 283 tests.
 
