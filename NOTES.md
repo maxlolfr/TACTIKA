@@ -1,3 +1,9 @@
+## V5.29 — icônes, effets, badges, forge et équipement en HD (29/11/2026, planches de Max 1518/1520/1522/1547 + originaux d'équipement)
+- Nouvel outil `tools/prep_icons_hd.py <planche du jeu> <png> <colonnes> <lignes> [S]` (réutilise `key()` de `prep_r9.py`, cases lues dans l'ordre de lecture, taille à l'écran inchangée car `icon()`/`dic()` ne lisent que le rapport l/h). Rapports l/h vérifiés case par case contre l'ancien atlas : ordre identique.
+- `ico` (statuts, 1518), `ficon` (forge, 1522), `fxi` (effets, 1520), `badge` (rangs, 1547) : cases ≈ 256 px au lieu de ≈ 120. `equip` (53 objets) refaite à 256 px au lieu de 160 (`tools/prep_equip.py`, variable `S`, depuis les 7 planches d'origine déjà dans le studio). Poids : +≈ 1,4 Mo.
+- **HUD V2 (1886 à 1896)** : fichiers identiques à ceux déjà intégrés en V4.51 (`prep_hud2.py`), rien à refaire. **Non placées (nouveaux dessins, pas d'emplacement dans le jeu)** : icônes de sorts 1529/1541, icônes de classes 1543, statuts bonus, symboles de soigneuse, 4 pièces rares : rangées dans le studio.
+- 283 tests + smoke navigateur OK.
+
 ## V5.27 — bâtiments du village en HD (28/11/2026, planche Gemini de Max `batiments-village-4-1254.png`)
 - `bld.webp` (forge, marchand, arène, taverne ; 0 à 3) refaite depuis la planche 2×2 de 1254 px (nouvel outil `tools/prep_bld_hd.py`, réutilise `key/cells/pack` de `prep_r9.py`) : ≈ 520 px de haut par bâtiment au lieu de ≈ 285. Fond magenta et étoile Gemini effacés. Ils ne servent qu'en icône (`icon('bld',i,h)` : forge, boutique, taverne, quêtes) : taille à l'écran inchangée. 289 Ko (avant ≈ 110 Ko). Aucune règle touchée.
 - **Reste en basse définition** : voir la liste « RESTE À FAIRE » plus bas (variantes de héros, décor `deco`…`deco5`, `deco7`…`deco9`, interface). Fonds en pause (décision de Max).
