@@ -195,15 +195,15 @@ export const PREVIEW=!!globalThis.location?.search.includes('apercu=braise');
 export const CM_FLAG='landeTactique1_mode';
 export const cmEligible=o=>!!(o&&o.storySeen&&o.storySeen.epilogue);
 export const CM_DEV=(()=>{try{const q=new URLSearchParams(globalThis.location?.search||'');
- if(q.has('cauchemar')){const v=q.get('cauchemar');return{dev:1,mods:['berserk','garde','regen','bombe','vamp','venin'].includes(v)?[v]:null,champ:v==='sanschampion'?0:1}}
+ if(q.has('cauchemar')){const v=q.get('cauchemar');return{dev:1,mods:['berserk','garde','regen','bombe','vamp','venin','spectre','cmdt'].includes(v)?[v]:null,champ:v==='sanschampion'?0:1}}
  if(PREVIEW||globalThis.localStorage?.getItem(CM_FLAG)!=='cm')return null;
  return cmEligible(JSON.parse(globalThis.localStorage.getItem('landeTactique1')||'null'))?{real:1,mods:null,champ:1}:null}catch(e){return null}})();
-export const CM_LVL=50,CM_ZONES=6; // V5.15 : régions 1 à 6 jouables en Cauchemar (boss compris), monstres au niveau 50 (V5.14 : 1 à 3)
+export const CM_LVL=50,CM_ZONES=9; // V5.22 : régions 1 à 9 (carte II : Forteresse de braise, Temple des sables, Marais des âmes) · V5.15 : régions 1 à 6 jouables en Cauchemar (boss compris), monstres au niveau 50 (V5.14 : 1 à 3)
 // V5.15 : renfort global propre à une région du Cauchemar (indice de zone ; absent = PV ×1,25 et dégâts ×1,2 comme en R1–R3). Réglé au simulateur.
-export const CM_TUNE={3:{hp:1.1,dmg:1.1},4:{hp:1.15,dmg:1.15},5:{hp:.9,dmg:.95}}; // Monts gris, Château en ruine, Cavernes de cristal (V5.15, bot glouton niv. 50)
+export const CM_TUNE={3:{hp:1.1,dmg:1.1},4:{hp:1.15,dmg:1.15},5:{hp:.9,dmg:.95},6:{hp:1.1,dmg:1.1},7:{hp:1.1,dmg:1.1},8:{hp:.85,dmg:.9}}; // Monts gris, Château en ruine, Cavernes de cristal (V5.15), Forteresse de braise, Temple des sables, Marais des âmes (V5.22) ; bot glouton niv. 50, 24 graines
 // V5.14 : trois boss pilotes, ouverts l'un après l'autre au Cristal quand les régions 1 à 3 du Cauchemar sont finies.
 // bhp = PV du boss en plus du renfort global ; rage = seuil de sa phase (0,5 en normal) ; fast = signature plus fréquente ; sum = invocations en plus
-export const CM_BOSSES=[{id:'cristal',zi:5,bhp:1.2,rage:.65,fast:1,sum:0,cry:1,esc:1,ext:0,gh:1.25,gd:1.2},{id:'marais',zi:8,bhp:1.05,rage:.6,fast:0,sum:0,esc:1,ext:0,gh:1,gd:1},{id:'eter',zi:11,bhp:1.1,rage:.6,fast:1,sum:0,esc:1,ext:0,gh:1,gd:1}]; // V5.14 : réglés au simulateur (gh/gd = renfort global de la rencontre, esc = élites d'escorte)
+export const CM_BOSSES=[{id:'cristal',zi:5,bhp:1.2,rage:.65,fast:1,sum:0,cry:1,esc:1,ext:0,gh:1.25,gd:1.2},{id:'marais',zi:8,bhp:1.05,rage:.6,fast:0,sum:0,esc:1,ext:0,gh:1,gd:1},{id:'eter',zi:11,bhp:1.1,rage:.6,fast:1,sum:0,esc:1,ext:0,gh:1,gd:1},{id:'braise',zi:6,bhp:1,rage:.6,fast:0,sum:0,esc:2,ext:0,gh:1.1,gd:1.05}]; // V5.14 : réglés au simulateur (gh/gd = renfort global de la rencontre, esc = élites d'escorte) ; V5.22 : Ignaros (R7) a son paquet propre (renfort ×1,1 / ×1,05, 2 élites, boss sans PV en plus)
 // V5.15 : le Titan prismatique (région 6) est désormais le boss de sa région du Cauchemar (son paquet reste dans CM_BOSSES) ; boss pilotes restants : ceux au-delà des régions jouables
 export const CM_PILOTS=CM_BOSSES.filter(b=>b.zi>=CM_ZONES);
 ZONES.push(R7);
