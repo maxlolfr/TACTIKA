@@ -161,6 +161,23 @@ try {
       await elite.first().waitFor();
       const eliteLabels=await elite.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label')));
       assert.ok(eliteLabels.some(label=>label.includes(zh?'爆裂':'Explosiv')),eliteLabels.join(', '));
+      await page.evaluate(async()=>{
+        const {G,hooks}=await import('/src/game.js');
+        const enemy=G.s.units.find(u=>u.team==='m');
+        Object.assign(enemy,{boss:true,bs:'beam',ph:2});
+        G.s.beam={by:enemy,cells:[]};
+        hooks.renderTL();
+      });
+      await page.locator('#tl .rg.m.b canvas').first().evaluate(canvas=>canvas.click());
+      assert.match(await page.locator('#ufiche').textContent(),zh?/阶段 2.*棱晶射线：下回合/s:/Phase 2.*Prismenstrahl im nächsten Zug/s);
+      await page.evaluate(async()=>{
+        const {G,hooks}=await import('/src/game.js');
+        G.s.cleared=true;
+        G.s.goal=null;
+        hooks.result(true,false);
+      });
+      assert.match(await page.locator('#result .goalwon').textContent(),zh?/已消灭所有波次.*25%/s:/Alle Wellen besiegt: \+25 % Gold/s);
+      console.log('OK',id,'· fiche du Titan et butin des vagues');
       console.log('OK',id,'· sauvegarde et affixe explosif en Cauchemar');
       await page.goto(regular);
       await camp.waitFor();

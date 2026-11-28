@@ -12,7 +12,7 @@ import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {ELITE_UI,eliteName} from './locales/elites.js';
-import {BATTLE_ANNOUNCEMENTS,COMBAT_UI,RESULT_UI} from './locales/combat-ui.js';
+import {BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
 import {MAP_UI} from './locales/map.js';
 import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
 import {INVENTORY_UI} from './locales/equipment.js';
@@ -56,6 +56,10 @@ function toggleFiche(u,anchor){if(fOpen===u){closeFiche();return}closeFiche();fO
  const l2=u.team==='h'?`<span class="pa">${text?.action(u.pa+'/'+u.maxPA)??`${u.pa}/${u.maxPA} PA`}</span><span class="pm">${text?.movement(u.pm+'/'+u.maxPM)??`${u.pm}/${u.maxPM} PM`}</span>`:`<span>${text?.attack(u.atk.dmg.join('–'),u.atk.r[1]>1?u.atk.r.join('–'):text.melee)??`Attaque ${u.atk.dmg.join('–')}, portée ${u.atk.r[1]>1?u.atk.r.join('–'):'contact'}`}</span>`;
  f.innerHTML=`<b class="fn ${u.team==='h'?'fh':'fm'}">${combatName(u)}${u.boss?' ♛ '+(ELITE_UI[save.lang]?tr('Boss'):'boss'):''}</b><div class="fb"><i style="width:${pct}%"></i></div><div class="fl">${text?.hp(u.hp+'/'+u.max)??`${u.hp}/${u.max} PV`}${u.armor?' · '+(text?.armor(Math.round(u.armor*100))??`armure ${Math.round(u.armor*100)} %`):''}</div><div class="fl">${l2}</div>`
   +(st.length?st.map(([i,t,n])=>`<div class="fs"><i>${i}</i>${t}${n?` <small>· ${text?.turns(n)??`${n} tour${n>1?'s':''}`}</small>`:''}</div>`).join(''):`<div class="fl fz">${text?.noStatus??'Aucun statut'}</div>`);
+ const enemyText=ENEMY_DETAILS[save.lang];
+ if(enemyText&&u.boss){const mechanics=bossDetails(u,enemyText);if(mechanics.length){
+  const line=document.createElement('div');line.className='fl';line.textContent=mechanics.join(' · ');f.append(line);
+ }}
  document.body.append(f);const r=anchor.getBoundingClientRect(),w=f.offsetWidth;f.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';f.style.top=(r.bottom+8)+'px'}
 let tipEl=null;
 const hideTip=()=>{if(tipEl){tipEl.remove();tipEl=null}};
@@ -176,8 +180,27 @@ function eliteInfo(o,t){
  }
  return [t,...parts,...modText(o,save.lang)].join(' · ');
 }
-const info0=o=>{if(o.curse&&o.team==='h')return`${combatName(o)} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${combatName(o)}${o.lv?' · niv. '+o.lv:''} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
+const legacyEnemyInfo=o=>{if(o.curse&&o.team==='h')return`${combatName(o)} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${combatName(o)}${o.lv?' · niv. '+o.lv:''} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
 const PHASE50={swamp:'spores et zones toxiques',astral:'jugement céleste',frost:'gel et fissures',breaker:'fracas primordial'}; // V4.76 : phases à 50 % PV (avant, le survol d'un boss sans cycle plantait)
+const ENEMY_THRESHOLDS={forge:'Surchauffe',tomb:'Malédiction',rage:'Fureur',...PHASE50};
+function info0(o){
+ const text=ENEMY_DETAILS[save.lang];
+ if(!text)return legacyEnemyInfo(o);
+ const name=combatName(o);
+ if(o.curse&&o.team==='h')return [name,text.curse(o.hp,o.max,o.curse)].join(' · ');
+ const details=[name,text.base(o.lv,o.hp,o.max,o.maxPM)];
+ if(o.atk)details.push(text.attack(o.atk.dmg.join('–')));
+ const intent=G.intents?.find(i=>i.m===o);
+ if(intent)details.push(text.target(combatName(intent.target),intent.amp));
+ return [...details,...bossDetails(o,text)].join(' · ');
+}
+function bossDetails(o,text){
+ const details=[];
+ if(o.bs==='beam')details.push(text.phase(o.ph||1));
+ if(BOSS_P[o.bs])details.push(text.next(tr(BOSS_P[o.bs][2]),o.bs==='beam'&&G.s.beam?1:bossNext(o)));
+ if(ENEMY_THRESHOLDS[o.bs])details.push(text.threshold(tr(ENEMY_THRESHOLDS[o.bs]),o.raged));
+ return details;
+}
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
 const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=costOf(u,sp)&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
 const canMove=u=>u.pm>0&&!!G.reachC&&G.reachC.dist.size>1;
@@ -479,7 +502,7 @@ function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : 
  closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
  LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>combatName(u).replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?(G.F&&G.F.cm?'nm_victory':'victory'):(G.F&&G.F.cm?'nm_defeat':'defeat'));
- if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 ${villageWord('Objectif atteint')} : ${G.s.goal==='survive'?(text?.survived(G.s.surv||SURVIVE,fled)??`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`):villageWord('le chef est abattu')}</div>`:G.s.cleared?'<div class="goalwon">🎯 Toutes les vagues éliminées : +25 % d’or</div>':'';
+ if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 ${villageWord('Objectif atteint')} : ${G.s.goal==='survive'?(text?.survived(G.s.surv||SURVIVE,fled)??`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`):villageWord('le chef est abattu')}</div>`:G.s.cleared?`<div class="goalwon">🎯 ${villageWord('Toutes les vagues éliminées : +25 % d’or')}</div>`:'';
   const zid=ZONES[F.zi].id,first=!F.daily&&!F.quest&&prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=!F.daily&&!F.quest&&st===3&&(best[F.i]||0)<3;
   let gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(F.daily?2:F.quest?1:first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)*(G.s.cleared?1.25:1)),xp=G.s.killedXp;save.gold+=gold;let up=gainXp(save,xp);
   const free=lootPool(save);let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=lootRare(it,Math.random,F.daily||F.boss);if(r&&ITEMS[it].rr==null)(save.rr||(save.rr={}))[it]=r}
@@ -490,7 +513,7 @@ function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : 
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);const CMR=CM_DEV&&!CM_DEV.dev&&F.cm?cmRecord(save,{win:1,...cmKills(G.s.units),seal:F.boss&&first?F.zi:-1}):null;if(CMR)store(); // V5.24 : sceaux, trophées et titres du Cauchemar (bac à sable exclu)
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+villageWord(t)).join(' · ')}<br>${villageWord(ZONES[F.zi].n)} · ${F.quest?`${text?.quest(tr(Q.t),qNew)??`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}`}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?(text?.boss(tr(F.boss.n))??F.boss.n+' vaincu !'):(text?.won(F.i+1,zlen(ZONES[F.zi]))??`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`)}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?cmLabel(save.lang,'Le Cauchemar est vaincu ! Les 12 régions sont libérées.'):'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+villageWord(t)).join(' · ')}<br>${villageWord(ZONES[F.zi].n)} · ${F.quest?`${text?.quest(tr(Q.t),qNew)??`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}`}<br><i>${villageWord(Q.c)}</i>`:F.daily?villageWord('défi du jour réussi !'):F.boss?(text?.boss(tr(F.boss.n))??F.boss.n+' vaincu !'):(text?.won(F.i+1,zlen(ZONES[F.zi]))??`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`)}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?cmLabel(save.lang,'Le Cauchemar est vaincu ! Les 12 régions sont libérées.'):'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">'+villageWord('Nouvelle zone')+' : '+villageWord(ZONES[F.zi+1].n)+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));

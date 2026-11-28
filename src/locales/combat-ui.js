@@ -144,8 +144,44 @@ Object.assign(COMBAT_TEXTS,{
  'Tu as quitté le combat':['你已退出战斗','Du hast den Kampf verlassen'],
  'Un obstacle bloque le tir':['障碍物挡住了射线','Ein Hindernis blockiert den Schuss'],
  'Un obstacle haut bloque le tir':['高大障碍物挡住了射线','Ein hohes Hindernis blockiert den Schuss'],
+ 'Hurlement':['嚎叫','Heulen'],
+ 'Carapace':['甲壳','Panzer'],
+ 'Séisme':['地震','Erdbeben'],
+ 'Téléportation':['传送','Teleportation'],
+ 'Bouclier de glace':['冰盾','Eisschild'],
+ 'Défense brisée':['防御破碎','Verteidigung gebrochen'],
+ 'Surchauffe':['过热','Überhitzung'],
+ 'Malédiction':['诅咒','Fluch'],
+ 'Fureur':['狂怒','Raserei'],
+ 'spores et zones toxiques':['孢子与毒区','Sporen und Giftzonen'],
+ 'jugement céleste':['天界审判','Himmelsgericht'],
+ 'gel et fissures':['冰冻与裂隙','Frost und Risse'],
+ 'fracas primordial':['原初粉碎','Urzeitlicher Schlag'],
+ 'défi du jour réussi !':['每日挑战已完成！','Tagesherausforderung geschafft!'],
+ 'Nouvelle zone':['新区域','Neues Gebiet'],
  'Victoire':['胜利','Sieg'],
 });
+
+export const ENEMY_DETAILS = {
+ 'zh-Hans': {
+  base:(level,hp,max,move)=>`${level?`${level}级 · `:''}${hp}/${max} 生命值 · ${move} 移动点`,
+  curse:(hp,max,turns)=>`${hp}/${max} 生命值 · 诅咒：受到的治疗 −50%（${turns}回合）`,
+  attack:damage=>`攻击 ${damage}`,
+  target:(name,amp)=>`瞄准${name}${amp?'（水晶 +30%）':''}`,
+  phase:n=>`阶段 ${n}`,
+  next:(name,n)=>n===1?`${name}：下回合`:`${name}：${n}回合后`,
+  threshold:(name,active)=>active?`${name}已触发`:`生命值低于50%时触发${name}`,
+ },
+ de: {
+  base:(level,hp,max,move)=>`${level?`Stufe ${level} · `:''}${hp}/${max} LP · ${move} BP`,
+  curse:(hp,max,turns)=>`${hp}/${max} LP · Verflucht: −50 % erhaltene Heilung (${turns} Z.)`,
+  attack:damage=>`Angriff ${damage}`,
+  target:(name,amp)=>`Zielt auf ${name}${amp?' (Kristall +30 %)':''}`,
+  phase:n=>`Phase ${n}`,
+  next:(name,n)=>n===1?`${name} im nächsten Zug`:`${name} in ${n} Zügen`,
+  threshold:(name,active)=>active?`${name} aktiv`:`${name} unter 50 % LP`,
+ },
+};
 
 export const RESULT_UI = {
  'zh-Hans': {
