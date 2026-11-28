@@ -374,7 +374,7 @@ function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
  if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');
- /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2110), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
+ /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2109), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
  const cm2=!!CM_DEV&&mapNo===2,wi=$('worldimg'),ws=cm2?'assets/cm/world2-l.webp':'assets/world1-l.webp';if(wi&&!wi.src.endsWith(ws))wi.src=ws;M.classList.toggle('cm',!!CM_DEV);M.classList.toggle('cm2',cm2);
  $('mapbox').classList.toggle('m2',mapNo===2&&!cm2);$('mapbox').classList.toggle('m1',mapNo===1||cm2);M.classList.toggle('m1',mapNo===1||cm2);mapTabs();
  if(mapNo===2)secondMap(L,cm2);
