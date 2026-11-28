@@ -350,7 +350,7 @@ regHtml(HOW,HOW_EN);
 let LAST=null;
 const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),pilot:zi=>{const i=zlen(ZONES[zi])-1;return startFight(zi,i,{...fightSpec(zi,i,zi*1000+i*97+save.gold),pilot:1})}, /* V5.14 : boss pilote du Cauchemar */today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
  // partir à l'aventure : la carte, ouverte sur le chapitre en cours
- adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
+ adventure:zi=>{if(zi>=0)mapNo=ZONES[zi].map===2?2:1; /* V5.28 (TQ-03) : ouvrir la carte de la région en cours ; worldMap() referme la carte II si elle est verrouillée */ worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
  G.phase='camp';document.body.classList.add('camp');music(CM_DEV?'nm_village':'main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
  const ev=campEvents(save);if(ev.length)playStory(save,ev,store); // V4.80 : prologue, recrutements, épilogue
