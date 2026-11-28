@@ -9,8 +9,9 @@ from PIL import Image
 from scipy import ndimage as ndi
 args=sys.argv[1:];MAP=None;DRY='--dry' in args
 if '--map' in args:k=args.index('--map');MAP=[int(v) for v in args[k+1].split(',')];del args[k:k+2]
+HOLES='--holes' in args  # V5.19 : trous enclavés (gemme rose/violette proche du magenta, ex. poitrine du golem de cristal) remplis avec la couleur d'origine
 KEY2='--key2' in args  # V5.18 : planches de héros/chevaliers (bulles translucides, halos) : le violet des bulles n'est plus pris pour du fond
-args=[a for a in args if a not in('--dry','--key2')];name=args[0];sheets=args[1:]
+args=[a for a in args if a not in('--dry','--key2','--holes')];name=args[0];sheets=args[1:]
 A=json.load(open('assets/atlas.json'));old=Image.open(f'assets/{name}.webp').convert('RGBA')
 def key(c):
     r,g,b=c[...,0],c[...,1],c[...,2]
@@ -25,6 +26,13 @@ for sh in sheets:
     for j in range(R):
         for i in range(C):
             c=im[j*chh:(j+1)*chh,i*cw:(i+1)*cw];cc,a=key(c)
+            if HOLES:
+                solid=a>.5;fh=ndi.binary_fill_holes(solid)&~solid
+                hl,hn=ndi.label(fh);bgx=(c[...,0]>235)&(c[...,2]>235)&(c[...,1]<35)
+                for L in range(1,hn+1):  # un trou presque entièrement magenta pur = vrai fond visible entre deux membres : on le laisse transparent
+                    m=hl==L
+                    if bgx[m].mean()>.4:fh[m]=False
+                a=np.where(fh,1.0,a);cc=np.where(fh[...,None],c,cc)
             lab,n=ndi.label(a>.1)  # débris des cases voisines (petits morceaux collés au bord) retirés
             if n:
                 ar=ndi.sum(np.ones_like(a),lab,range(1,n+1));big=ar.max();bd=set(lab[0,:])|set(lab[-1,:])|set(lab[:,0])|set(lab[:,-1])
