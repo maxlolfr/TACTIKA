@@ -156,7 +156,7 @@ const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
 zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
 export const regHtml=(fr,en)=>{HTML.set(fr,en)};
 // V5.10a : PA reportés / gardés (bouton Fin du tour et texte flottant) restaient à moitié en français
-Object.assign(EN,{'Langue':'Language','⚔ Combat':'⚔ Battle','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
+Object.assign(EN,{'Langue':'Language','⚔ Combat':'⚔ Battle','voir les héros':'view heroes','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
 const localizedHtml=Object.fromEntries(Object.entries(TUTORIALS).map(
  ([id,lines])=>[id,new Map(TUTO.map((source,i)=>[source,lines[i]]))]
 ));
