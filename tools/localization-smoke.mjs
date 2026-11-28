@@ -19,6 +19,7 @@ const server = http.createServer(async (req,res) => {
     res.end();
   }
 }).listen(0,'127.0.0.1');
+const onlineOnly=process.argv.includes('--online-only');
 let browser;
 try {
   await new Promise(resolve=>server.once('listening',resolve));
@@ -142,7 +143,7 @@ try {
       await character.waitFor();
       assert.match(await character.textContent(),zh?/生命值.*行动点.*移动点/s:/LP.*AP.*BP/s);
       console.log('OK',id,'· objectif, infobulle de sort et fiche de combat');
-      await spellButton.evaluate(button=>button.click());
+      await spellButton.click();
       const target=page.locator('button.tb').first();
       await target.waitFor();
       assert.match(await target.getAttribute('aria-label'),zh?/\d+\/\d+生命值/:/\d+\/\d+ LP/);
@@ -205,18 +206,24 @@ try {
       assert.match(await page.locator('#result .goalwon').textContent(),zh?/已消灭所有波次.*25%/s:/Alle Wellen besiegt: \+25 % Gold/s);
       console.log('OK',id,'· fiche du Titan et butin des vagues');
       console.log('OK',id,'· sauvegarde et affixe explosif en Cauchemar');
+      if(onlineOnly){
+        await page.goto(regular);
+        await camp.waitFor();
+        continue;
+      }
       await page.context().setOffline(true);
       try {
         await page.reload();
         await camp.waitFor();
         await page.locator('.v-go').click();
         await page.locator('.zone').first().evaluate(element=>element.click());
-        await page.locator('#zsheet .btn').nth(1).click();
+        await page.locator('#zsheet .btn').nth(7).click();
+        await page.locator('#tuto.on .btn').first().click();
         await elite.first().waitFor();
         const resultTitle=page.locator('#result.on h1');
         let lastTurn=null;
         let turnsPlayed=0;
-        for(;turnsPlayed<48;turnsPlayed++){
+        for(let observed=0;observed<48;observed++){
           const nextTurn=await page.waitForFunction(async previous=>{
             const {G}=await import('/src/game.js');
             if(document.querySelector('#result.on h1'))return 'finished';
@@ -227,7 +234,15 @@ try {
           lastTurn=await nextTurn.jsonValue();
           await nextTurn.dispose();
           if(lastTurn==='finished')break;
-          await page.locator('#end').click();
+          const played=await page.evaluate(async turn=>{
+            const {G}=await import('/src/game.js');
+            const button=document.getElementById('end');
+            if(G.phase!=='fight'||G.busy||button.disabled||!G.endTurnResolve||
+              G.s.round+':'+G.turn!==turn)return false;
+            button.click();
+            return true;
+          },lastTurn);
+          if(played)turnsPlayed++;
         }
         assert.ok(turnsPlayed>=2,'le combat doit avancer sur plusieurs tours');
         await resultTitle.waitFor();

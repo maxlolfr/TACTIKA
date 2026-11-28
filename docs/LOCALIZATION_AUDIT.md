@@ -117,3 +117,7 @@ Le bilan FR/EN comporte aussi des libellés anglais complets pour les trophées,
 ### Audit FR/EN exécuté sur la V5.28
 
 Chromium a parcouru 13 écrans en français puis les mêmes 13 en anglais. Le premier passage a détecté deux objectifs de contrat restés en français. Les quatre types de contrat ont désormais des libellés anglais complets. Le second passage n’a détecté aucun texte suspect. Les 305 tests Node et la couverture stricte des catalogues passent. Ce résultat valide le parcours FR/EN défini par l’audit. Il ne mesure pas chaque branche du scénario ou chaque écran rare du jeu.
+
+### Parcours mobile en ligne
+
+Le parcours Chromium à 390 × 844 passe avec `--online-only`. Il vérifie le changement de langue et sa persistance sur les quatre langues. En chinois simplifié et en allemand, il vérifie également le camp, la maîtrise, la visée, les libellés accessibles, le bilan de retraite, les phases de boss et les textes du Cauchemar. Le test clique sur le sort avec un événement de pointeur pour fermer l’infobulle avant de sélectionner la cible. Le parcours complet garde les contrôles hors ligne.
