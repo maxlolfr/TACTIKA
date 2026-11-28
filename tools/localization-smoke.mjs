@@ -80,6 +80,13 @@ try {
       assert.match(await spell.textContent(),zh?/当前：基础效果/:/Aktuell: Grundwirkung/);
       await page.locator('#armes .ov-back').click();
       console.log('OK',id,'· maîtrise : rang II et réinitialisation');
+      await page.locator('[data-tab="inventaire"]').evaluate(element=>element.click());
+      const inventory=page.locator('#vpanel .v-count');
+      await inventory.waitFor();
+      assert.match(await inventory.textContent(),zh?/装备 0\/120/:/0 von 120 Gegenständen/);
+      await page.locator('#vpanel .v-slot').first().click();
+      assert.match(await page.locator('#vpanel .v-cols').textContent(),zh?/未发现的装备，适用英雄：/:/Unentdeckter Gegenstand für/);
+      await page.locator('#vpanel .v-x').click();
       await page.locator('[data-tab="chronique"]').evaluate(element=>element.click());
       const trophy=page.locator('.ch-tro').first();
       await trophy.waitFor();

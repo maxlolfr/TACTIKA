@@ -6,6 +6,7 @@ import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn
 import {MON,CM_DEV,CM_PILOTS,CM_ZONES} from './data.js';
 import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
+import {INVENTORY_UI} from './locales/equipment.js';
 import {CHRONICLE_UI} from './locales/chronicle.js';
 import {tr,trh} from './i18n.js';
 import {LANGUAGES} from './locales/languages.js';
@@ -297,17 +298,17 @@ function entrainement(P){
  if(save.lvl<2)R.append(el('p','v-empty','Le premier point arrive au niveau 2.'))}
 const wood=(txt,fn,cls='')=>{const b=el('button','v-btn '+cls,txt);b.onclick=fn;return b};
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
-const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${STAT[k]}`};
+const bonus=j=>{const o=ITEMS[j],k=Object.keys(STAT).find(k=>o[k]);return`+${itemVal(o,k,upLvl(save,j),rarOf(save,j))} ${INVENTORY_UI[save.lang]?tr(STAT[k]):STAT[k]}`};
 // V4.7a : comparaison avant/après, « PV 112 → 118 » (vert : gain, rouge : perte)
 export const diffHTML=(j,i)=>compare(save,j,i).map(([n,a,b])=>`<span class="v-diff ${b>a?'up':'down'}">${n} ${a} → ${b}</span>`).join(' ')||'<span class="v-diff">aucun changement</span>';
 // V4.12 : i = héros de la fiche (sinon, tous les héros compatibles : choix explicite du porteur d'un objet partagé)
-function itemRow(j,who,again,i){const o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),h=save.items.includes(j)?holder(save,j):-1,multi=whoOf(o).length>1,lock=lvOf(j)>save.lvl;
+function itemRow(j,who,again,i){const text=INVENTORY_UI[save.lang],o=ITEMS[j],r=rarOf(save,j),row=el('div','v-row'),h=save.items.includes(j)?holder(save,j):-1,multi=whoOf(o).length>1,lock=lvOf(j)>save.lvl;
  const to=i==null?whoOf(o).filter(k=>k!==h&&recruited(save,k)):h===i?[]:[i];row.append(icon(...icOf(o),42));
- const st=(h>=0&&(i==null||h===i)?`<b class="v-diff up">équipé${multi?' sur '+HER[h].n:''}</b>`:h>=0?`porté par ${HER[h].n}`:'en réserve, sans effet')+
-  (!to.length?'':lock?` · <b>niveau ${o.lv} requis</b>`:' · '+to.map(k=>(multi?HER[k].n+' : ':'si équipé : ')+diffHTML(j,k)).join(' · '));
- row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who||multi?whoName(o)+' · ':''}${SLOTS[o.sl]} · ${bonus(j)}${r?' · '+RARE[r].n:''}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}${o.lv>1?` · niv. ${o.lv}`:''}<br>${st}</small>`));
+ const st=(h>=0&&(i==null||h===i)?`<b class="v-diff up">${text?.equipped(multi?HER[h].n:'')??'équipé'+(multi?' sur '+HER[h].n:'')}</b>`:h>=0?(text?.held(HER[h].n)??`porté par ${HER[h].n}`):tr('en réserve, sans effet'))+
+  (!to.length?'':lock?` · <b>${text?.requires(o.lv)??`niveau ${o.lv} requis`}</b>`:' · '+to.map(k=>(multi?HER[k].n+' : ':(text?.preview??'si équipé : '))+diffHTML(j,k)).join(' · '));
+ row.append(el('div',null,`<b style="color:${RARE[r].c}">${o.n}</b><small>${who||multi?whoName(o)+' · ':''}${tr(SLOTS[o.sl])} · ${bonus(j)}${r?' · '+tr(RARE[r].n):''}${upLvl(save,j)?' · '+(text?.forge(upLvl(save,j))??`forge ${upLvl(save,j)}`):''}${o.lv>1?' · '+(text?.level(o.lv)??`niv. ${o.lv}`):''}<br>${st}</small>`));
  if(!lock&&to.length>1)row.classList.add('multi');
- if(!lock)for(const k of to)row.append(wood(multi&&i==null?'Équiper sur '+HER[k].n:'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
+ if(!lock)for(const k of to)row.append(wood(multi&&i==null?(text?.equip(HER[k].n)??'Équiper sur '+HER[k].n):'Équiper',()=>{equip(save,j,k);store();again()},'sm'));return row}
 function heros(P){
  const tabs=el('div','v-tabs');roster(save).forEach(i=>{const h=HER[i],b=el('button',i===hero?'on':'');b.append(icon(...heroFrame(h.k),44,.62),el('span',null,h.n+(roster(save).length>TEAM_SIZE&&!teamOf(save).includes(i)?'<br><small>réserve</small>':'')));b.onclick=()=>{if(i!==hero){slotOpen=null;draft={}}hero=i;show('heros')};tabs.append(b)});P.append(tabs);
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);P.append(cols);
@@ -347,9 +348,10 @@ function learnList(R,h,tal){const i=hero,load=loadoutOf(save,i),known=knownSpell
  if(later.length){R.append(el('h4',null,'À apprendre'));for(const[id,l]of later)line(id,` · <b>au niveau ${l}</b>`,null,' v-lock')}}
 // V4.7b : filtres par héros et par emplacement ; en filtrant, seuls les objets correspondants restent
 function inventaire(P){
+ const text=INVENTORY_UI[save.lang];
  const chips=(label,list,cur,set)=>{const r=el('div','v-chips');r.setAttribute('role','group');r.setAttribute('aria-label',label);for(const[v,n]of list){const b=el('button',v===cur?'on':'',n);b.setAttribute('aria-pressed',v===cur);b.onclick=()=>{set(v);inv.sel=null;show('inventaire')};r.append(b)}return r};
  const cols=el('div','v-cols'),L=el('div','v-col'),R=el('div','v-col');cols.append(L,R);
- P.append(el('p','v-count',`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),cols);
+ P.append(el('p','v-count',text?.count(save.items.length,ITEMS.length,save.pot||0,POTION.max)??`${save.items.length} objets sur ${ITEMS.length} · potions ${save.pot||0}/${POTION.max}`),cols);
  L.append(chips('Filtrer par héros',[[-1,'Tous'],...roster(save).map(i=>[i,HER[i].n])],inv.who,v=>inv.who=v),chips('Filtrer par emplacement',[['','Tout'],...Object.entries(SLOTS)],inv.sl,v=>inv.sl=v));
  const ids=ITEMS.map((o,j)=>j).filter(j=>(inv.who<0||fits(j,inv.who))&&(!inv.sl||ITEMS[j].sl===inv.sl));
  if(!ids.includes(inv.sel))inv.sel=null;
@@ -359,8 +361,8 @@ function inventaire(P){
  L.append(ids.length?grid:el('p','v-empty','Aucun objet ne correspond à ces filtres.'));
  const info=el('div','v-card'),j=inv.sel;
  if(j==null)info.innerHTML='<p class="v-empty">Touche un objet pour voir son effet. ✓ = équipé.</p>';
- else{const o=ITEMS[j],h=save.items.includes(j)?holder(save,j):-1,f=h>=0?h:whoOf(o)[0];info.append(save.items.includes(j)?itemRow(j,1,()=>show('inventaire')):el('p','v-empty',`Objet à découvrir pour ${whoName(o)} (${SLOTS[o.sl]}${o.lv>1?`, niveau ${o.lv}`:''}).`));
-  info.append(wood('Voir la fiche de '+HER[f].n,()=>{hero=f;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
+ else{const o=ITEMS[j],h=save.items.includes(j)?holder(save,j):-1,f=h>=0?h:whoOf(o)[0];info.append(save.items.includes(j)?itemRow(j,1,()=>show('inventaire')):el('p','v-empty',text?.undiscovered(whoName(o),tr(SLOTS[o.sl]),o.lv)??`Objet à découvrir pour ${whoName(o)} (${SLOTS[o.sl]}${o.lv>1?`, niveau ${o.lv}`:''}).`));
+  info.append(wood(text?.sheet(HER[f].n)??'Voir la fiche de '+HER[f].n,()=>{hero=f;slotOpen=o.sl;show('heros','inventaire')},'dk sm'))}
  R.append(info);
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 // ---------- V4.86 : Chronique (trophées, régions, statistiques, bestiaire, collection) ----------

@@ -34,9 +34,9 @@ Le détecteur anglais utilise une heuristique lexicale et ne valide pas l’int�
 
 ### Couverture des aperçus
 
-Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois en couvre 902 et l’allemand 910. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
+Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois en couvre 916 et l’allemand 924. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
 
-Restent à traduire et vérifier en contexte les fiches d’équipement composées, les autres chaînes composées du combat et du Cauchemar et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
+Restent à traduire et vérifier en contexte les fiches du marchand et de la forge, les autres chaînes composées du combat et du Cauchemar et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
 
 Pour la revue, examiner en premier la conservation des sauvegardes et le traitement du scénario séparé de la traduction DOM. Reprendre ensuite les chaînes par écran, avec le scénario et le Cauchemar testés séparément. Réactualiser l’inventaire sur la prochaine base de développement avant intégration.
 
@@ -49,3 +49,5 @@ Les deux aperçus couvrent les 21 cartes d’aide de combat, les 12 introduction
 L’interface de maîtrise de l’Académie est traduite dans les deux aperçus, avec ses valeurs dynamiques. Le test compare les valeurs affichées pour les trois rangs des 43 sorts couverts. Les coûts, prérequis et effets restent ceux du moteur existant.
 
 Les 18 spécialisations, leurs 90 talents, les 47 variantes de description de sorts, les 40 trophées et toutes les entrées du bestiaire ont une traduction dans les deux aperçus. Les états de l’Académie et les valeurs de la Chronique disposent aussi de textes dynamiques localisés.
+
+L’inventaire affiche dans les deux aperçus des libellés localisés pour les filtres, la capacité, les objets à découvrir et les fiches d’équipement du camp. Les calculs d’équipement et les conditions d’accès sont inchangés.

@@ -121,3 +121,52 @@ export const EQUIPMENT = {
   "Sceptre de l’Éther": ["以太权杖","Ätherzepter"],
   "Bâton du serment commun": ["共同誓言法杖","Stab des gemeinsamen Eids"],
 };
+
+export const INVENTORY_TEXTS = {
+ 'Filtrer par héros':['按英雄筛选','Nach Held filtern'],
+ 'Filtrer par emplacement':['按装备栏筛选','Nach Ausrüstungsplatz filtern'],
+ 'Objet à découvrir':['未发现的装备','Unentdeckter Gegenstand'],
+ 'Aucun objet ne correspond à ces filtres.':['没有符合筛选条件的装备。','Kein Gegenstand entspricht diesen Filtern.'],
+ 'Touche un objet pour voir son effet. ✓ = équipé.':['点击装备查看效果。✓表示已装备。','Tippe auf einen Gegenstand, um seine Wirkung zu sehen. ✓ bedeutet ausgerüstet.'],
+ 'La Forge':['铁匠铺','Schmiede'],
+ 'Le Marchand':['商人','Händler'],
+ 'Arme':['武器','Waffe'],
+ 'Bijou':['饰品','Schmuck'],
+ 'Accessoire':['配件','Zubehör'],
+ 'Commun':['普通','Gewöhnlich'],
+ 'Peu commun':['优良','Ungewöhnlich'],
+ 'Rare':['稀有','Selten'],
+ 'Épique':['史诗','Episch'],
+ 'Légendaire':['传说','Legendär'],
+ 'soin':['治疗量','Heilung'],
+ 'dégâts':['伤害','Schaden'],
+ 'aucun changement':['无变化','Keine Änderung'],
+ 'en réserve, sans effet':['在背包中，未生效','In Reserve, ohne Wirkung'],
+};
+
+export const INVENTORY_UI = {
+ 'zh-Hans': {
+  count:(n,total,p,max)=>`装备 ${n}/${total} · 药水 ${p}/${max}`,
+  undiscovered:(hero,slot,level)=>`未发现的装备，适用英雄：${hero}（${slot}${level>1?`，${level}级`:''}）。`,
+  sheet:hero=>`查看${hero}的资料`,
+  equipped:hero=>hero?`已装备给${hero}`:'已装备',
+  held:hero=>`由${hero}装备`,
+  requires:level=>`需要${level}级`,
+  preview:'装备后：',
+  forge:level=>`强化 ${level}`,
+  level:level=>`${level}级`,
+  equip:hero=>`装备给${hero}`,
+ },
+ de: {
+  count:(n,total,p,max)=>`${n} von ${total} Gegenständen · Tränke ${p}/${max}`,
+  undiscovered:(hero,slot,level)=>`Unentdeckter Gegenstand für ${hero} (${slot}${level>1?`, Stufe ${level}`:''}).`,
+  sheet:hero=>`Profil von ${hero} ansehen`,
+  equipped:hero=>hero?`Ausgerüstet bei ${hero}`:'Ausgerüstet',
+  held:hero=>`Getragen von ${hero}`,
+  requires:level=>`Benötigt Stufe ${level}`,
+  preview:'Beim Ausrüsten: ',
+  forge:level=>`Aufwertung ${level}`,
+  level:level=>`Stufe ${level}`,
+  equip:hero=>`Bei ${hero} ausrüsten`,
+ },
+};
