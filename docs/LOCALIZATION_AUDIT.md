@@ -25,7 +25,7 @@ Branche `localization/chatgpt`, travail repris après `c48cb01`. La migration ac
 
 | Contrôle | Résultat |
 | --- | --- |
-| `npm test` | 276 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
+| `npm test` | 278 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
 | `tools/smoke.mjs` | Démarrage, camp, plateau de combat, dessin, interface et réparation d’une sauvegarde corrompue. |
 | `tools/en-audit.mjs` | Neuf écrans vérifiés dans chaque langue, dont les réglages, la carte, une région et le panneau des sorts en combat. « ⚔ Combat » et le libellé accessible « voir les héros » corrigés. Aucun texte suspect signalé à la dernière exécution. |
 | `tools/localization-smoke.mjs` | Chromium, fenêtre 390 × 844. Parcours FR → EN → zh-Hans → DE → FR avec libellés du camp, attribut de langue, persistance après rechargement, niveau, or et première réplique du prologue vérifiés. |
@@ -34,9 +34,9 @@ Le détecteur anglais utilise une heuristique lexicale et ne valide pas l’int�
 
 ### Couverture des aperçus
 
-Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois en couvre 533 et l’allemand 541. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
+Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois en couvre 902 et l’allemand 910. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
 
-Restent à traduire et vérifier en contexte les textes de talents, les fiches d’équipement composées, les trophées, les autres chaînes composées du combat et du Cauchemar et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
+Restent à traduire et vérifier en contexte les fiches d’équipement composées, les autres chaînes composées du combat et du Cauchemar et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
 
 Pour la revue, examiner en premier la conservation des sauvegardes et le traitement du scénario séparé de la traduction DOM. Reprendre ensuite les chaînes par écran, avec le scénario et le Cauchemar testés séparément. Réactualiser l’inventaire sur la prochaine base de développement avant intégration.
 
@@ -47,3 +47,5 @@ La branche a intégré la V5.21 (`05c5846`), avec résolution du conflit du serv
 Les deux aperçus couvrent les 21 cartes d’aide de combat, les 12 introductions de boss (dont le texte générique), les trois objectifs de combat avec paramètres et 16 textes du Cauchemar (accès, campagne et annonces). Les tests vérifient la présence des traductions, les balises des cartes et les valeurs des objectifs dynamiques.
 
 L’interface de maîtrise de l’Académie est traduite dans les deux aperçus, avec ses valeurs dynamiques. Le test compare les valeurs affichées pour les trois rangs des 43 sorts couverts. Les coûts, prérequis et effets restent ceux du moteur existant.
+
+Les 18 spécialisations, leurs 90 talents, les 47 variantes de description de sorts, les 40 trophées et toutes les entrées du bestiaire ont une traduction dans les deux aperçus. Les états de l’Académie et les valeurs de la Chronique disposent aussi de textes dynamiques localisés.

@@ -28,7 +28,7 @@ try {
   page.on('pageerror',err=>errors.push(err.message));
   await page.addInitScript(()=>{
     const key='landeTactique1';
-    if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify({v:2,fight:1,lvl:8,xp:0,gold:713,items:[],z:{prairie:7},st:{},up:{},lang:'fr',tuto:1}));
+    if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify({v:2,fight:1,lvl:8,xp:0,gold:713,items:[],z:{prairie:7},st:{},up:{},lang:'fr',tuto:1,cr:{be:{slime:{k:3}}}}));
   });
   await page.goto('http://127.0.0.1:'+server.address().port);
   const camp=page.locator('.v-go b');
@@ -68,6 +68,9 @@ try {
       const spell=page.locator('#armes .mrow[data-sp="slash"]');
       await spell.waitFor();
       const zh=id==='zh-Hans';
+      const spec=page.locator('#armes .spec').first();
+      assert.equal(await spec.locator('.sphd b').textContent(),zh?'狂战士':'Berserker');
+      assert.match(await spec.locator('.chain').textContent(),zh?/暴击率从12%提高到22%/:/22 % statt 12 % kritische Trefferchance/);
       assert.match(await spell.textContent(),zh?/当前：基础效果/:/Aktuell: Grundwirkung/);
       await spell.locator('button').click();
       assert.match(await spell.textContent(),zh?/当前：伤害 \+5%/:/Aktuell: \+5 % Schaden/);
@@ -77,6 +80,15 @@ try {
       assert.match(await spell.textContent(),zh?/当前：基础效果/:/Aktuell: Grundwirkung/);
       await page.locator('#armes .ov-back').click();
       console.log('OK',id,'· maîtrise : rang II et réinitialisation');
+      await page.locator('[data-tab="chronique"]').evaluate(element=>element.click());
+      const trophy=page.locator('.ch-tro').first();
+      await trophy.waitFor();
+      assert.match(await trophy.textContent(),zh?/第一步.*赢得第一场战斗/s:/Erster Schritt.*Gewinne deinen ersten Kampf/s);
+      await page.getByRole('button',{name:zh?'怪物图鉴':'Bestiarium',exact:true}).click();
+      const discovered=page.locator('.ch-beast:not(.off)').first();
+      await discovered.waitFor();
+      assert.match(await discovered.textContent(),zh?/史莱姆.*击败次数：3/s:/Schleim.*Besiegt: 3/s);
+      await page.locator('#vpanel .v-x').click();
       await page.locator('.v-cry').evaluate(element=>element.click());
       const nightmare=page.locator('.cm-gate');
       await nightmare.waitFor();

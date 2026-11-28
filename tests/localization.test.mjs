@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeLanguage, LANGUAGES} from '../src/locales/languages.js';
+import {TROPHIES,BEASTS,beastInfo} from '../src/chronicle.js';
+import {SPECS} from '../src/talents.js';
 import {ITEMS,SP} from '../src/data.js';
 import {EQUIPMENT} from '../src/locales/equipment.js';
 import {SC,OUTRO} from '../src/story.js';
@@ -137,5 +139,27 @@ test('les effets de maîtrise traduits conservent les valeurs des 3 rangs', () =
         assert.deepEqual(numbers(translated),numbers(source),id);
       }
     }
+  }
+});
+
+test('toutes les spécialisations, talents et variantes de sorts ont deux traductions', () => {
+  for(const lang of ['zh-Hans','de']){
+    const catalog=TEXT_CATALOGS[lang];
+    for(const spec of SPECS.flat()){
+      for(const key of [spec.n,spec.d])assert.ok(catalog[key]?.trim(),key);
+      for(const [name,desc,fx] of spec.t){
+        for(const key of [name,desc])assert.ok(catalog[key]?.trim(),key);
+        for(const variant of Object.values(fx.sp??{})){
+          if(variant.d)assert.ok(catalog[variant.d]?.trim(),variant.d);
+        }
+      }
+    }
+  }
+});
+
+test('chaque entrée du bestiaire et des trophées est présente dans les deux aperçus', () => {
+  const keys=[...BEASTS.map(k=>beastInfo(k).n),...TROPHIES.flatMap(t=>[t.n,t.d])];
+  for(const id of ['zh-Hans','de']){
+    for(const key of keys)assert.ok(TEXT_CATALOGS[id][key]?.trim(),key);
   }
 });

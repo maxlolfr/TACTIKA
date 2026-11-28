@@ -10,6 +10,7 @@ import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zo
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
+import {ACADEMY_UI} from './locales/talents.js';
 import {MASTERY_UI} from './locales/mastery.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
@@ -281,9 +282,13 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
 const waits=(i,m)=>Math.max(0,...Object.keys(m?.sp||{}).map(id=>(HER[i].learn||[]).find(([s,l])=>s===id&&!knownSpells(save,i).includes(id))?.[1]||0));
 let armH=-1;
 function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=roster(save).find(i=>!specOf(save,i))??0;A.classList.add('on');A.innerHTML='';
- A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`);
- const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
- HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
+ const academy=ACADEMY_UI[save.lang];
+ const academyIntro=academy
+  ? `<h1>${academy.title}</h1><div class="sub">${save.lvl<3?academy.unlock(save.lvl):academy.rules} ${academy.tiers(tiersFor(armH))}</div>`
+  : `<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`;
+ A.insertAdjacentHTML('beforeend',academyIntro);
+ const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':academy?.pick??'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
+ HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:academy?.none??'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');
    const top=document.createElement('div');top.className='sphd';top.append(icon(...x.ic,64));top.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b><small>${x.d}</small></div>`);c.append(top);
@@ -293,9 +298,9 @@ function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.class
     const li=document.createElement('li');li.className=st;const nd=document.createElement('span');nd.className='nd';
     if(sid)nd.append(icon(...SPI[sid],34));else nd.textContent=lv;
     if(sid||st==='lock')nd.insertAdjacentHTML('beforeend',`<u>${st==='lock'?'🔒':lv}</u>`);li.append(nd);
-    li.insertAdjacentHTML('beforeend',`<div><em>${st==='got'?'✓ acquis':st==='lock'?'niveau '+lv:'niveau '+lv+(on?'':' · disponible')}</em> <b>${tn}</b><small>${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</small></div>`);ol.append(li)});
+    li.insertAdjacentHTML('beforeend',`<div><em>${academy?.status(st,lv,on)??(st==='got'?'✓ acquis':st==='lock'?'niveau '+lv:'niveau '+lv+(on?'':' · disponible'))}</em> <b>${tn}</b><small>${td}${w?` <i>${academy?.needs(w)??`(sort appris au niveau ${w})`}</i>`:''}</small></div>`);ol.append(li)});
    c.append(ol);
-   const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('talent_unlock',.8);armes()};c.append(b);row.append(c)}
+   const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?(academy?.active??'Active'):'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('talent_unlock',.8);armes()};c.append(b);row.append(c)}
   A.append(row);if(hasMastery(i))mastBlock(A,i)});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
 // V4.39 : maîtrise des sorts (héros qui ont une table MASTERY : Orion pour l'instant)

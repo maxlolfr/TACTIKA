@@ -6,7 +6,8 @@ import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn
 import {MON,CM_DEV,CM_PILOTS,CM_ZONES} from './data.js';
 import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
-import {trh} from './i18n.js';
+import {CHRONICLE_UI} from './locales/chronicle.js';
+import {tr,trh} from './i18n.js';
 import {LANGUAGES} from './locales/languages.js';
 import {TROPHIES,TIER,REC,BEASTS,beastInfo,beastTraits,completion,checkTrophies,stars3,questsDone} from './chronicle.js';
 import {setSon,sonBtns,sfx,voice,setVol,setVoiceLang,AU,VOLMAX} from './audio.js';
@@ -364,20 +365,20 @@ function inventaire(P){
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 // ---------- V4.86 : Chronique (trophées, régions, statistiques, bestiaire, collection) ----------
 let chTab='tro';
-function chronique(P){const cr=save.cr,tabs=[['tro','Trophées'],['reg','Régions'],['sta','Statistiques'],['bes','Bestiaire'],['col','Collection']];
+function chronique(P){const text=CHRONICLE_UI[save.lang],cr=save.cr,tabs=[['tro','Trophées'],['reg','Régions'],['sta','Statistiques'],['bes','Bestiaire'],['col','Collection']];
  const bar=el('div','v-tabs ch-tabs');for(const[id,n]of tabs){const b=el('button',chTab===id?'on':'',n);b.onclick=()=>{chTab=id;show('chronique')};bar.append(b)}P.append(bar);
- const nb=o=>Object.keys(o||{}).length,fmt=v=>Math.round(v||0).toLocaleString('fr-FR');
- if(chTab==='tro'){const got=TROPHIES.filter(t=>cr.tr[t.id]).length;P.append(el('p','ch-sum',`<b>${got} / ${TROPHIES.length}</b> trophées · ${['b','a','o','p'].map(k=>`<span style="color:${TIER[k].c}">${TIER[k].n} ${TROPHIES.filter(t=>t.t===k&&cr.tr[t.id]).length}/${TROPHIES.filter(t=>t.t===k).length}</span>`).join(' · ')}`));
-  for(const t of TROPHIES){const on=!!cr.tr[t.id],r=el('div','v-row ch-tro'+(on?'':' off')),m=el('span','tro-ic','🏆');m.style.color=TIER[t.t].c;r.append(m,el('div',null,`<b>${t.n}</b> <small style="color:${TIER[t.t].c}">${TIER[t.t].n}</small><br><small>${t.d}${on?' · obtenu le '+new Date(cr.tr[t.id]).toLocaleDateString('fr-FR'):''}</small>`));P.append(r)}}
- if(chTab==='reg')ZONES.forEach((z,zi)=>{if(!unlocked(zi)&&!prog(z.id)){P.append(el('div','v-row ch-reg off',`<span class="tro-ic">🔒</span><div><b>${zi<6?'Carte I':'Carte II'} · région ${zi+1}</b><br><small>Pas encore découverte</small></div>`));return}
-  const c=completion(save,zi);P.append(el('div','v-row ch-reg',`<span class="ch-pct">${c.pct} %</span><div><b>${z.n}</b><span class="ch-bar"><i style="width:${c.pct}%"></i></span><small>Missions ${c.missions}/${c.of} · ★ ${c.stars}/${c.starsOf}${c.questsOf?` · quêtes ${c.quests}/${c.questsOf}`:''} · boss ${c.boss?'✓':'—'}</small></div>`))});
+ const nb=o=>Object.keys(o||{}).length,fmt=v=>Math.round(v||0).toLocaleString(text?.date??'fr-FR');
+ if(chTab==='tro'){const got=TROPHIES.filter(t=>cr.tr[t.id]).length;P.append(el('p','ch-sum',`<b>${got} / ${TROPHIES.length}</b> trophées · ${['b','a','o','p'].map(k=>`<span style="color:${TIER[k].c}">${text?tr(TIER[k].n):TIER[k].n} ${TROPHIES.filter(t=>t.t===k&&cr.tr[t.id]).length}/${TROPHIES.filter(t=>t.t===k).length}</span>`).join(' · ')}`));
+  for(const t of TROPHIES){const on=!!cr.tr[t.id],r=el('div','v-row ch-tro'+(on?'':' off')),m=el('span','tro-ic','🏆');m.style.color=TIER[t.t].c;r.append(m,el('div',null,`<b>${t.n}</b> <small style="color:${TIER[t.t].c}">${TIER[t.t].n}</small><br><small>${t.d}${on?`<span> · ${text?.obtained??'obtenu le '}${new Date(cr.tr[t.id]).toLocaleDateString(text?.date??'fr-FR')}</span>`:''}</small>`));P.append(r)}}
+ if(chTab==='reg')ZONES.forEach((z,zi)=>{if(!unlocked(zi)&&!prog(z.id)){P.append(el('div','v-row ch-reg off',`<span class="tro-ic">🔒</span><div><b>${text?tr(zi<6?'Carte I':'Carte II'):(zi<6?'Carte I':'Carte II')} · ${text?.region(zi+1)??'région '+(zi+1)}</b><br><small>Pas encore découverte</small></div>`));return}
+  const c=completion(save,zi);P.append(el('div','v-row ch-reg',`<span class="ch-pct">${c.pct} %</span><div><b>${z.n}</b><span class="ch-bar"><i style="width:${c.pct}%"></i></span><small>${text?.regionStats(c.missions,c.of,c.stars,c.starsOf,c.quests,c.questsOf,c.boss)??`Missions ${c.missions}/${c.of} · ★ ${c.stars}/${c.starsOf}${c.questsOf?` · quêtes ${c.quests}/${c.questsOf}`:''} · boss ${c.boss?'✓':'—'}`}</small></div>`))});
  if(chTab==='sta'){const s=cr.s,h=Math.floor((s.time||0)/3600),mn=Math.round((s.time||0)%3600/60),fav=Object.entries(cr.hu).sort((a,b)=>b[1]-a[1])[0];
-  const rows=[['Temps de combat',`${h?h+' h ':''}${mn} min`],['Combats',fmt(s.fights)],['Victoires / défaites',`${fmt(s.win)} / ${fmt(s.loss)}`],['Boss vaincus',fmt(s.boss)],['Ennemis vaincus',fmt(s.kills)],['Dégâts infligés',fmt(s.dmg)],['Soins prodigués',fmt(s.heal)],['Dégâts subis',fmt(s.taken)],['Quêtes terminées',`${questsDone(save)}`],['Missions à 3 ★',`${stars3(save)}`],['Héros le plus engagé',fav?`${HER[fav[0]].n} (${fmt(fav[1])} combats)`:'—'],['Trios victorieux',`${nb(cr.tri)} / 20`],...Object.entries(REC).map(([k,n])=>[n,cr.rec[k]?fmt(cr.rec[k]):'—'])];
+  const rows=[['Temps de combat',`${h?h+' h ':''}${mn} min`],['Combats',fmt(s.fights)],['Victoires / défaites',`${fmt(s.win)} / ${fmt(s.loss)}`],['Boss vaincus',fmt(s.boss)],['Ennemis vaincus',fmt(s.kills)],['Dégâts infligés',fmt(s.dmg)],['Soins prodigués',fmt(s.heal)],['Dégâts subis',fmt(s.taken)],['Quêtes terminées',`${questsDone(save)}`],['Missions à 3 ★',`${stars3(save)}`],['Héros le plus engagé',fav?`${HER[fav[0]].n} (${text?.battles(fmt(fav[1]))??fmt(fav[1])+' combats'})`:'—'],['Trios victorieux',`${nb(cr.tri)} / 20`],...Object.entries(REC).map(([k,n])=>[n,cr.rec[k]?fmt(cr.rec[k]):'—'])];
   P.append(el('p','ch-sum','<small>Comptés depuis la version 4.86 : les combats plus anciens ne sont pas inventés.</small>'));
   const t=el('div','v-row ch-sta');t.innerHTML=`<div>${rows.map(([a,b])=>`<p><span>${a}</span><b>${b}</b></p>`).join('')}</div>`;P.append(t)}
  if(chTab==='bes'){P.append(el('p','ch-sum',`<b>${BEASTS.filter(k=>cr.be[k]).length} / ${BEASTS.length}</b> créatures découvertes`));const g=el('div','ch-grid');
   for(const k of BEASTS){const on=cr.be[k],b=beastInfo(k),c=el('div','ch-beast'+(on?'':' off')+(b.boss?' boss':''));c.append(sprite(b.s,b.row*3,64));
-   c.append(el('div',null,on?`<b>${b.n}</b><small>${b.zone}</small><small>${beastTraits(k).join(' · ')}</small><small>Vaincu${b.boss?'':'s'} : ${on.k}</small>`:'<b>???</b><small>Pas encore rencontré</small>'));g.append(c)}P.append(g)}
+   c.append(el('div',null,on?`<b>${b.n}</b><small>${b.zone}</small><small>${beastTraits(k).map(trait=>text?(trait.startsWith('Portée ')?text.range(trait.slice(7)):tr(trait)):trait).join(' · ')}</small><small>${text?.defeated(fmt(on.k))??`Vaincu${b.boss?'':'s'} : ${on.k}`}</small>`:'<b>???</b><small>Pas encore rencontré</small>'));g.append(c)}P.append(g)}
  if(chTab==='col'){P.append(el('p','ch-sum',`<b>${nb(cr.co)} / ${ITEMS.length}</b> équipements découverts (même revendus)`));const g=el('div','ch-grid col');
   ITEMS.forEach((o,j)=>{const on=cr.co[j],c=el('div','ch-item'+(on?'':' off'));c.append(icon(...icOf(o),40));c.append(el('small',null,on?o.n:'???'));if(on)c.title=`${o.n} · ${whoName(o)}`;g.append(c)});P.append(g)}}
 function quetes(P){A.quests(P,()=>{build();fitHome();sonBtns();show('quetes')})}
