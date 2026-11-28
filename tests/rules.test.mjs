@@ -1649,8 +1649,8 @@ test('V4.81 audio V5 : chaque son et musique déclaré existe, chaque snd de sor
  const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8');
  const grab=k=>[...A.match(new RegExp(k+"=\\[([^\\]]*)\\]"))[1].matchAll(/'(\w+)'/g)].map(m=>m[1]);
  const S=grab('SNDS'),M=grab('MUSICS');
- for(const n of S.filter(x=>x!=='victory'&&x!=='defeat'))assert.ok(fs.existsSync(new URL('../assets/audio/bruitages/'+n+'.mp3',import.meta.url)),'bruitage manquant '+n);
  const wait=fs.existsSync(new URL('../tools/audio-urls.txt',import.meta.url))?fs.readFileSync(new URL('../tools/audio-urls.txt',import.meta.url),'utf8').split('\n').map(l=>l.split(' ')[0]):[]; // V5.12 : sons en cours de récupération par le workflow audio
+ for(const n of S.filter(x=>x!=='victory'&&x!=='defeat'&&x!=='nm_victory'&&x!=='nm_defeat'&&!wait.includes(x)))assert.ok(fs.existsSync(new URL('../assets/audio/bruitages/'+n+'.mp3',import.meta.url)),'bruitage manquant '+n);
  for(const n of M)assert.ok(wait.includes(n)||fs.existsSync(new URL('../assets/audio/musique/'+n+'.mp3',import.meta.url)),'musique manquante '+n);
  for(const n of ['sands','swamp','skycitadel','frost','sanctuary','elite2','final_boss','ending','boss_v2','ember'])assert.ok(M.includes(n),n);
  const D=fs.readFileSync(new URL('../src/data.js',import.meta.url),'utf8');
@@ -1671,7 +1671,7 @@ test('V4.82 narration : fichiers vo_ présents, FR et EN, une réplique par fich
 });
 test('V4.83 bruitages : tous les sons déclarés sont déclenchés quelque part, zones de sol avec leur son', async()=>{
  const fs=await import('node:fs'),au=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),SN=[...au.match(/SNDS=\[([^\]]*)\]/)[1].matchAll(/'([^']+)'/g)].map(m=>m[1]),src=['rules','turns','ui','home','story','render','data'].map(f=>fs.readFileSync(new URL('../src/'+f+'.js',import.meta.url),'utf8')).join('\n');
- const dyn=new Set(['combo_2','combo_3','village_ambience']); // combo_ + n, ambiance chargée par son nom
+ const dyn=new Set(['combo_2','combo_3','village_ambience','nm_village_ambience','nm_crystal_loop']); // combo_ + n, ambiance chargée par son nom
  for(const n of SN)if(!dyn.has(n))assert.ok(src.includes("'"+n+"'"),'son jamais déclenché : '+n);
  for(const [k,n] of [['trap','sands_trap'],['cold','frost_crack'],['toxic','poison'],[null,'ember_eruption']]){
   const s=arena();unit(s,'h',3,3);s.lava={n:2,next:[{x:5,y:5}]};if(k)s.lava[k]=1;
@@ -1754,6 +1754,14 @@ test('V4.90 anglais des descriptions de sorts et de talents : tout est couvert',
 test('V5.12 musiques Cauchemar : 6 pistes déclarées, avec repli, jamais en campagne normale', async()=>{
  const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),U=fs.readFileSync(new URL('../src/ui.js',import.meta.url),'utf8');
  for(const n of ['nm_village','nm_map','nm_battle1','nm_battle2','nm_champion','nm_boss']){assert.ok(A.includes("'"+n+"'"),n);assert.ok(new RegExp('FALL=\\{[^}]*'+n+':').test(A),'repli '+n)}
- assert.ok(/music\(CM_DEV\?'nm_map'/.test(U)&&/music\(CM_DEV\?'nm_village'/.test(U),'carte et village : Cauchemar seulement');
+ assert.ok(/music\(CM_DEV\?\(mapNo===2\?'nm_map2':'nm_map'\)/.test(U)&&/music\(CM_DEV\?'nm_village'/.test(U),'carte et village : Cauchemar seulement');
  assert.ok(/music\(G\.F\.cm\?\(/.test(U),'combat : Cauchemar seulement');
+});
+
+test('V5.12 sons Cauchemar : jingles, cristal, champion, boss par région, carte II', async()=>{
+ const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),U=fs.readFileSync(new URL('../src/ui.js',import.meta.url),'utf8'),H=fs.readFileSync(new URL('../src/home.js',import.meta.url),'utf8');
+ for(const n of ['nm_map2','nm_boss_titan','nm_boss_reine','nm_boss_briseur','nm_victory','nm_defeat','nm_village_ambience','nm_crystal_loop','nm_crystal_touch','nm_champion_spawn'])assert.ok(A.includes("'"+n+"'"),n);
+ assert.ok(/nm_boss_titan/.test(U)&&/nm_boss_reine/.test(U)&&/nm_boss_briseur/.test(U),'boss par région');
+ assert.ok(/nm_map2/.test(U)&&/nm_victory/.test(U)&&/nm_champion_spawn/.test(U),'carte II, jingles, champion');
+ assert.equal((H.match(/CM_DEV\)sfx\('nm_crystal_touch'/g)||[]).length,2,'toucher du cristal, Cauchemar seulement');
 });
