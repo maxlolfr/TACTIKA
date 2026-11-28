@@ -5,6 +5,7 @@
 // Règle de Max (V4.5) : au plus 100 combats simulés par étape. Le total est affiché à la fin.
 // Limite connue : le bot joue moins bien qu'un bon joueur (pas de placement défensif ni de poussée vers un obstacle).
 import {SP,HER,ZONES,ITEMS,zlen,PA_RULE,DIFF} from '../src/data.js';
+import {cmSpec} from '../src/elites.js'; // V5.14 : CMSPEC=1 = combat Cauchemar exactement comme dans le jeu
 // V4.85 : DH=1.2 DD=1.1 multiplient la difficulté de toutes les régions (essais de réglage seulement) ; BH/BD idem pour les seuls boss
 for(const[k,e]of[['hp','DH'],['dmg','DD']])if(process.env[e])DIFF[k]=DIFF[k].map(v=>v*+process.env[e]);
 if(process.env.DZ)for(const e of process.env.DZ.split(',')){const[z,h,d]=e.split(/[=/]/).map(Number);DIFF.hp[z]=h;DIFF.dmg[z]=d??h} // DZ=3=1.3/1.2,4=1.4 : une région
@@ -59,7 +60,7 @@ function monTurn(s,u){tally(s,eliteTurn(s,u));if(outcome(s)||u.dead)return;tally
 // mesures : dégâts infligés (hit) et reçus (taken) par les héros, soins (heal)
 function tally(s,ev){for(const e of ev||[]){if(e.type==='hurt'){s.T[e.t.team==='m'?'hit':'taken']+=e.amt;if(e.src==='boom')s.T.boom=(s.T.boom||0)+e.amt;if(e.prot)s.T.prot=(s.T.prot||0)+1;if(e.killed&&e.t.mods)s.T.ek=s.round}if(e.type==='heal')s.T.heal+=e.amt;if(e.type==='heal'&&e.src==='regen')s.T.regen=(s.T.regen||0)+e.amt;if(e.type==='boom')s.T.nb=(s.T.nb||0)+1}}
 // Un combat, comme startFight + runFight de l'interface. rs = graine du hasard du combat (reproductible).
-function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F0=fightSpec(zi,i,seed),F1=LV?{...F0,lvl:LV}:F0,F=CM?{...F1,cm:{seed:F1.seed+rs,mods:CM==='aucun'||CM==='mix'?null:[CM],pool:CM==='mix'?['berserk','garde','regen','bombe']:null,n:CM==='aucun'?0:+process.env.CMN||1,extra:+process.env.CMX||0,champ:+process.env.CMC||0,hp:+process.env.CMH||1,dmg:+process.env.CMD||1}}:F1; // V5.10 : CM=berserk|garde|regen|bombe|aucun (Cauchemar, essais) // LVL= : monstres au niveau demandé
+function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F0=fightSpec(zi,i,seed),F1=LV?{...F0,lvl:LV}:F0,F=process.env.CMSPEC?cmSpec(F0,zi,{seed:F0.seed+rs}):CM?{...F1,cm:{seed:F1.seed+rs,mods:CM==='aucun'||CM==='mix'?null:[CM],pool:CM==='mix'?['berserk','garde','regen','bombe']:null,n:CM==='aucun'?0:+process.env.CMN||1,extra:+process.env.CMX||0,champ:+process.env.CMC||0,hp:+process.env.CMH||1,dmg:+process.env.CMD||1}}:F1; // V5.10 : CM=berserk|garde|regen|bombe|aucun (Cauchemar, essais) // LVL= : monstres au niveau demandé
  const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);if(TEAM)save.team=TEAM;mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
  s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;

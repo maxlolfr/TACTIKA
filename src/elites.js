@@ -1,3 +1,4 @@
+import {CM_BOSSES,CM_LVL} from './data.js'; // V5.14 : boss pilotes du Cauchemar
 // V5.10 · Cauchemar lot 1 : moteur universel des élites à modificateurs.
 // Pur (ni DOM, ni canvas, ni son, ni horloge). Rien ici n'est utilisé par la campagne normale :
 // un monstre n'a de modificateur que si le combat porte une description Cauchemar (F.cm), posée
@@ -87,15 +88,17 @@ export function elitize(s,cm,lang){if(!cm)return[];const rng=mulberry((cm.seed|0
  for(let k=0;k<(cm.champ||0);k++){const c=s.units.filter(eligible);if(!c.length)break;c.sort((a,b)=>b.max-a.max||(a.id<b.id?-1:1));
   const u=c[Math.floor(rng()*Math.min(2,c.length))],P=pairs(cm.pool),ids=cm.cmods||(P.length?P[Math.floor(rng()*P.length)]:null);if(!ids)break;
   if(applyMods(u,ids,lang,1)){ids.forEach(id=>used.add(id));out.push(u)}}
- for(let k=0;k<(cm.n||1);k++){const c=s.units.filter(eligible);if(!c.length)break;
+ for(let k=0;k<(cm.n??1);k++){const c=s.units.filter(eligible);if(!c.length)break;
   c.sort((a,b)=>b.max-a.max||(a.id<b.id?-1:1)); // le plus robuste d'abord, puis tirage parmi les 2 premiers : l'élite compte
   const u=c[Math.floor(rng()*Math.min(2,c.length))],fr0=cm.pool?.filter(id=>!used.has(id)),fr=fr0&&!fr0.length&&cm.champ?cm.pool:fr0,ids=cm.mods||(fr?.length?[fr[Math.floor(rng()*fr.length)]]:null);if(!ids)break;ids.forEach(id=>used.add(id));/* V5.10.2 : élites toutes différentes */if(applyMods(u,ids,lang))out.push(u)}
  return out}
 
 // V5.10.2 : renforcement Cauchemar de tous les monstres de la rencontre (boss compris), avant le tirage des élites.
 // cm.hp / cm.dmg : facteurs globaux (1 = aucun). Distinct des plafonds CAP, qui ne concernent que la part « élite ».
-export function nightmare(s,cm){const h=cm.hp||1,d=cm.dmg||1;if(h===1&&d===1)return;
- for(const u of s.units)if(u.team==='m'){u.hp=u.max=Math.round(u.max*h);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*d))}}}
+export function nightmare(s,cm){const h=cm.hp||1,d=cm.dmg||1;
+ if(h!==1||d!==1)for(const u of s.units)if(u.team==='m'){u.hp=u.max=Math.round(u.max*h);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*d))}}
+ // V5.14 : boss du Cauchemar (cm.boss) : PV en plus, phase plus tôt (rageAt), signature plus fréquente (cmFast) ; nom marqué ☠
+ const B=cm.boss&&s.units.find(u=>u.team==='m'&&u.boss);if(B){B.hp=B.max=Math.round(B.max*(cm.boss.hp||1));if(cm.boss.rage)B.rageAt=cm.boss.rage;if(cm.boss.fast)B.cmFast=1;B.cmBoss=1;B.n='☠ '+B.n}}
 // ---------- accroches (appelées par rules.js ; sans u.mods, valeurs neutres) ----------
 export function modOut(u,t){if(!u.mods)return 1;let k=1;for(const id of u.mods)if(MODS[id].out)k*=MODS[id].out(u,t);return k}
 // Gardien : la meilleure protection seulement (deux gardiens ne s'additionnent pas)
@@ -111,3 +114,11 @@ export const booms=s=>s.units.filter(u=>!u.dead&&u.prime).map(u=>({by:u,cells:u.
 // Sérialisation : l'état Cauchemar d'un monstre ne contient que des nombres, des chaînes et des cases (JSON sûr)
 export const modState=u=>u.mods?{mods:[...u.mods],champ:u.champ?1:0,regen:u.regen||0,bcd:u.bcd||0,prime:u.prime?{o:{...u.prime.o},cells:u.prime.cells.map(c=>({...c})),r:u.prime.r}:null}:null;
 
+
+// V5.14 · Cauchemar lot 2 : description Cauchemar d'un combat (pure, partagée par le jeu et tools/sim.mjs).
+// Rencontre : 1 champion + 2 élites, +2 monstres, PV ×1,25, dégâts ×1,2, niveau 50.
+// Boss des régions 1 à 3 : 2 élites d'escorte, PV ×1,15, phase à 60 %. Boss pilotes : paquet de CM_BOSSES (1 élite). Variables CME, CMX, CMBH, CMBD, CMP* : essais du simulateur seulement.
+export function cmSpec(F,zi,o={}){const base={seed:o.seed??F.seed,mods:o.mods||null,pool:['berserk','garde','regen','bombe'],hp:1.25,dmg:1.2};
+ if(!F.boss)return{...F,lvl:CM_LVL,lang:o.lang,cm:{...base,n:2,champ:o.champ??1,extra:2}};
+ const P=CM_BOSSES.find(b=>b.zi===zi)||{bhp:1.15,rage:.6,fast:0,sum:0,esc:+(globalThis.process?.env?.CME??2),ext:+(globalThis.process?.env?.CMX??0)},B={...F.boss,...(F.boss.summon&&P.sum?{summon:{...F.boss.summon,n:F.boss.summon.n+P.sum}}:{})};
+ return{...F,boss:B,lvl:CM_LVL,lang:o.lang,...(P.cry&&F.cry?{cry:{...F.cry,p:(F.cry.p||0)+P.cry}}:{}),cm:{...base,hp:+(globalThis.process?.env?.CMBH||P.gh||base.hp),dmg:+(globalThis.process?.env?.CMBD||P.gd||base.dmg),mods:null,n:+(globalThis.process?.env?.CMPE??P.esc??1),champ:0,extra:P.ext??1,boss:{hp:+(globalThis.process?.env?.CMPB??P.bhp),rage:+(globalThis.process?.env?.CMPR??P.rage),fast:+(globalThis.process?.env?.CMPF??P.fast)}}}}

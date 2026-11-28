@@ -1,10 +1,10 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
-import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,CM_DEV,CM_LVL,CM_ZONES,icOf,whoOf,whoName} from './data.js';
+import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,CM_DEV,CM_LVL,CM_ZONES,CM_BOSSES,icOf,whoOf,whoName} from './data.js';
 import {QUESTS} from './quests.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,grantQuest,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
-import {save,prog,unlocked,store,resetSave,storeState,hasBackup,restoreBackup,importSave} from './save.js';
+import {save,prog,unlocked,setProg,cmBossOpen,store,resetSave,storeState,hasBackup,restoreBackup,importSave} from './save.js';
 import {encodeCode,decodeCode} from './savecore.js';
 import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zoneAssets,say,view,setView,zoomAt} from './render.js';
 import {cast,moveTo,end,runFight} from './turns.js';
@@ -12,7 +12,7 @@ import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
-import {modText,booms,MODS} from './elites.js'; // V5.10 : élites Cauchemar
+import {modText,booms,MODS,cmSpec} from './elites.js'; // V5.10 : élites Cauchemar
 import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
@@ -218,9 +218,9 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
- if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe'],n:2,champ:CM_DEV.champ,extra:2,hp:1.25,dmg:1.2}}; /* V5.11 : un champion (2 capacités) en plus des 2 élites */ // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
+ if(CM_DEV&&!F.cm&&!F.daily&&!F.quest&&(zi<CM_ZONES||F.pilot))F=cmSpec(F,zi,{seed:F.seed+save.gold,mods:CM_DEV.mods,champ:CM_DEV.champ,lang:save.lang}); // V5.14 : Cauchemar réel ou bac à sable, régions 1 à 3 (boss compris) et boss pilotes
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
+ $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(F.cm.boss?(save.lang==='en'?`☠ Nightmare boss · ${F.cm.n>1?'two elites':'an elite'} at its side, earlier phase`:`☠ Boss du Cauchemar · ${F.cm.n>1?'deux élites':'une élite'} à ses côtés, phase plus tôt`):save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
@@ -347,7 +347,7 @@ const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class
 regHtml(HOW,HOW_EN);
 // V4.6 : dernier combat (données factuelles pour le panneau de commandement et l'écran de défaite)
 let LAST=null;
-const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
+const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),pilot:zi=>{const i=zlen(ZONES[zi])-1;return startFight(zi,i,{...fightSpec(zi,i,zi*1000+i*97+save.gold),pilot:1})}, /* V5.14 : boss pilote du Cauchemar */today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
  // partir à l'aventure : la carte, ouverte sur le chapitre en cours
  adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
@@ -386,13 +386,13 @@ function worldMap(){
 function bossCard(F){if(!F.boss||F.daily)return;const z=ZONES[F.zi],B=MON[F.boss.k],d=document.createElement('div');d.id='bosscard';d.setAttribute('role','status');
  d.innerHTML=`<div><small>${z.n} · Boss de région</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
  const off=()=>{d.classList.add('out');setTimeout(()=>d.remove(),260)};d.onclick=off;document.body.append(d);setTimeout(off,save.fast?1400:2400)}
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
+function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
   b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 // V4.36 : un héros au hasard parmi ceux qui ont une voix
 const say1=(list,line)=>{setVoiceLang(save.lang);const l=list.filter(u=>!u.dead&&VOICES[u.k]);if(l.length)voice(pick(Math.random,l).k,line,{force:true})};
-const starsOf=id=>(save.st||(save.st={}))[id]||(save.st[id]=[]);
+const starsOf=id=>{const T=CM_DEV?save.cm.st:(save.st||(save.st={}));return T[id]||(T[id]=[])}; // V5.14 : étoiles Cauchemar à part
 // V4.86 : Chronique : enregistre le combat (statistiques, bestiaire, records, trophées) et prépare le bilan enrichi
 function chron(win){const F=G.F,S=G.s,H=S.units.filter(u=>u.team==='h'),kills={},seen=new Set();
  for(const u of S.units)if(u.team==='m'&&!u.boss){seen.add(u.k);if(u.dead&&!u.fled)kills[u.k]=(kills[u.k]||0)+1}
@@ -401,6 +401,7 @@ function chron(win){const F=G.F,S=G.s,H=S.units.filter(u=>u.team==='h'),kills={}
  r.html=`<div class="bilan"><span>⏱ ${S.round} tour${S.round>1?'s':''}</span><span>⚔ ${n(T.dmg)} dégâts</span>${T.heal?`<span>✚ ${n(T.heal)} soins</span>`:''}${win&&r.mvp>=0?`<span class="mvp">★ ${HER[r.mvp].n}</span>`:''}</div>`+
   (r.recs.length?`<div class="bilan rec">${r.recs.map(x=>`Nouveau record · ${REC[x.k]} : ${n(x.v)}`).join('<br>')}</div>`:'');return r}
 const trophyRow=id=>{const t=TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">Trophée ${TIER[t.t].n.toLowerCase()} : ${t.n}</b><br>${t.d}`]};
+const cmNextBoss=()=>{const k=CM_BOSSES.findIndex(b=>!save.cm.b[b.id]);return k>=0&&cmBossOpen(k)?ZONES[CM_BOSSES[k].zi].boss.n:''};
 function result(win,fled){closeMenu();const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
  LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>u.n.replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?(G.F&&G.F.cm?'nm_victory':'victory'):(G.F&&G.F.cm?'nm_defeat':'defeat'));
@@ -408,14 +409,14 @@ function result(win,fled){closeMenu();const F=G.F,H=G.s.units.filter(u=>u.team==
   const zid=ZONES[F.zi].id,first=!F.daily&&!F.quest&&prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=!F.daily&&!F.quest&&st===3&&(best[F.i]||0)<3;
   let gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(F.daily?2:F.quest?1:first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)*(G.s.cleared?1.25:1)),xp=G.s.killedXp;save.gold+=gold;let up=gainXp(save,xp);
   const free=lootPool(save);let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=lootRare(it,Math.random,F.daily||F.boss);if(r&&ITEMS[it].rr==null)(save.rr||(save.rr={}))[it]=r}
-  if(!F.daily&&!F.quest)best[F.i]=Math.max(best[F.i]||0,st);if(first)save.z[zid]=F.i+1;
+  if(!F.daily&&!F.quest)best[F.i]=Math.max(best[F.i]||0,st);if(first)setProg(zid,F.i+1);if(F.pilot&&CM_DEV)save.cm.b[zid]=1; // V5.14 : progression Cauchemar à part, boss pilotes notés
   const Q=F.quest&&QUESTS.find(q=>q.id===F.quest),qNew=Q&&!questDone(save,Q);let qIt=null;const qSg=[];
   if(qNew){(save.q||(save.q={}))[Q.id]=1;const qg=Math.round((20+8*save.lvl)*2.5);save.gold+=qg;gold+=qg;up+=gainXp(save,15*save.lvl*2);xp+=15*save.lvl*2;
    const got=grantQuest(save,Q);qIt=got.length?got[0]:null;qSg.push(...got.slice(1))}
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():'Tous les boss pilotes du Cauchemar sont vaincus !')+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));
