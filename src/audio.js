@@ -57,6 +57,7 @@ function ambience(){const c=AU.c;if(!c)return;const nm=AU.want==='nm_village',on
  // V5.12 : souffle du cristal Cauchemar (boucle douce) sous le thème du village Cauchemar
  if(nm&&AU.buf.nm_crystal_loop&&!AU.cry){const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf.nm_crystal_loop;s.loop=true;g.gain.value=0;g.gain.setTargetAtTime(AMB*.3,c.currentTime,1.5);s.connect(g);g.connect(AU.s);s.start();s.g=g;AU.cry=s}
  else if(!nm&&AU.cry){const o=AU.cry;AU.cry=null;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000)}
+}
 export function music(n,force){AU.want=n;ambience();const c=AU.c;if(!c||(AU.cur===n&&!force&&AU.src))return;
  const w=lost[n]?FALL[n]:n,k=AU.buf[w]?w:null;
  if(!k){musicLoad(w);return} // l'ancienne musique continue pendant le chargement
