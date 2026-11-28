@@ -79,3 +79,11 @@ Le survol des ennemis et la fiche des boss affichent leurs phases, leurs seuils 
 Le parcours Chromium à 390 × 844 vérifie dans les deux langues les libellés du Titan, de la surchauffe, de la malédiction du tombeau et du fracas primordial. Ces phases sont déclenchées par le scénario de test.
 
 Le même parcours recharge le jeu hors ligne après avoir visité la mission du Cauchemar en ligne, rouvre cette mission, puis vérifie la victoire localisée via le moteur de fin de combat. Les ennemis sont déclarés vaincus par le scénario de test. Restent à valider une partie jouée tour par tour hors ligne, l’accès aux régions jamais chargées, et le rendu sur téléphone réel.
+
+### Reprise sur la V5.28
+
+La branche intègre la V5.28 de `main` (`765dcbf`), avec les visuels HD de Fenn et la version 5.28 du cache. Les modules de localisation restent précachés.
+
+L’aperçu de visée en chinois simplifié et en allemand affiche les points de vie, les raisons de l’impossibilité de lancer un sort, la portée, les prévisions de dégâts et de soins, la collision, les statuts, le risque de mise à terre et le déclenchement du prisme. Les cibles ont aussi un libellé accessible localisé. Les tests Node vérifient notamment les valeurs de portée et la conservation de la case bloquante. Le scénario Chromium a été étendu à la sélection d’une cible et à la lecture de l’aperçu.
+
+Il reste à contrôler cet écran dans Chromium à 390 × 844 (le binaire local était indisponible lors de cette reprise), puis à vérifier les autres textes dynamiques du plateau et la partie hors ligne tour par tour. Le chinois simplifié et l’allemand restent en aperçu.

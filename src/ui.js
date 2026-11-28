@@ -12,7 +12,7 @@ import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {ELITE_UI,eliteName} from './locales/elites.js';
-import {BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
+import {AIM_UI,BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
 import {MAP_UI} from './locales/map.js';
 import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
 import {INVENTORY_UI} from './locales/equipment.js';
@@ -136,7 +136,7 @@ function render(){renderTL();
  else{$('who').append(ic,`${combatName(u)}${u.lv?' · niv. '+u.lv:''}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
  $('pts').innerHTML='';
  const tg=document.createElement('div');tg.id='tgt';
- if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
+ if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',AIM_UI[save.lang]?.targetLabel(combatName(o),o.hp,o.max,ok||zc,ap)??`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
  $('pts').append(tg);
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
@@ -235,15 +235,15 @@ async function advance(u,sp,E){const fid=G.fid;G.plan=null;G.sel=null;G.ex=null;
 const same=(a,b)=>a&&b&&a.x===b.x&&a.y===b.y;
 const foeOf=(u,sp,o)=>o&&o!==u&&(sp.t==='ally'?o.team===u.team:(sp.t==='enemy'||sp.t==='cell'&&!sp.free)&&o.team!==u.team);
 // ce que viserait un appui sur la case c
-function examine(u,sp,c){const S=G.s,o=occ(S,c.x,c.y),E={tap:{x:c.x,y:c.y},x:c.x,y:c.y};
+function examine(u,sp,c){const S=G.s,o=occ(S,c.x,c.y),text=AIM_UI[save.lang],E={tap:{x:c.x,y:c.y},x:c.x,y:c.y};
  if(G.sel.cells.some(s=>s.ok&&same(s,c))){if(!sp.charge)return E;const d=chargeDest(S,u,sp,c);return{...E,chg:{x:d.x,y:d.y,path:d.path,cost:d.path.length,foes:[],sp,chg:1}}}
  if(sp.zone&&foeOf(u,sp,o)){const z=zoneCenter(S,u,sp,o);if(z)return{...E,...z,indirect:1}}
  if(foeOf(u,sp,o)){const via=sp.zone?from=>!!zoneCenter(S,u,sp,o,from):undefined,ap=approach(S,u,sp,c,G.reachC,via);
-  if(ap){const z=sp.zone&&zoneCenter(S,u,sp,o,ap);return{...E,...(z||{}),why:whyNot(S,u,sp,c)?.t,at:whyNot(S,u,sp,c)?.at,ap:{...ap,path:pathTo(u,ap.k,G.reachC.prev),sp,foes:[o]}}}}
- const w=whyNot(S,u,sp,c),why=sp.zone&&o?`Aucun centre ne peut ${o.team===u.team?'l’atteindre':'le toucher'}${w?' ('+w.t.toLowerCase()+')':''}`:w?w.t:'Hors de portée';
+  if(ap){const z=sp.zone&&zoneCenter(S,u,sp,o,ap),blocked=whyNot(S,u,sp,c,u,text,combatName);return{...E,...(z||{}),why:blocked?.t,at:blocked?.at,ap:{...ap,path:pathTo(u,ap.k,G.reachC.prev),sp,foes:[o]}}}}
+ const w=whyNot(S,u,sp,c,u,text,combatName),why=sp.zone&&o?(text?.noCenter(w?.t)??`Aucun centre ne peut ${o.team===u.team?'l’atteindre':'le toucher'}${w?' ('+w.t.toLowerCase()+')':''}`):w?.t??tr('Hors de portée');
  return{...E,bad:why,at:w&&w.at}}
 function aim(u,c,hover){const sp=G.sel.sp,E=examine(u,sp,c);
- if(E.bad&&!occ(G.s,c.x,c.y)){G.ex=null;render();if(!hover){$('hint').textContent=E.bad+'. Touche une cible, ou retouche le sort pour l’annuler.';G.mark=E.at?{...E.at,until:Date.now()+2200}:null}return}
+ if(E.bad&&!occ(G.s,c.x,c.y)){G.ex=null;render();if(!hover){$('hint').textContent=E.bad+'. '+tr('Touche une cible, ou retouche le sort pour l’annuler.');G.mark=E.at?{...E.at,until:Date.now()+2200}:null}return}
  G.ex=E;G.mark=E.at?{...E.at,until:Date.now()+2200}:null;if(!hover&&!E.bad)sfx('click',.5);render()}
 async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  if(!u||u.team!=='h'){if(o)$('hint').textContent=info(o);return}
@@ -260,33 +260,56 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.ice?`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${cl.ice.until-G.s.round} tour(s))`:cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
 // ---------- carte de visée : qui, validité, effet réel ----------
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
-const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
-function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
- if(sp.burn&&f.dmg)out.push(fireproof(t)?'insensible au feu : pas de brûlure':`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`);
- if(sp.slow&&f.dmg)out.push(slowFor(sp,t)>2?'enraciné : 1 PM au prochain tour':`−${slowFor(sp,t)} PM au prochain tour`);
- if(sp.weaken)out.push(`${Math.round(sp.weaken[0]*100)} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
- if(f.dmg){out.push(`<b>${rg(f.dmg)} dégâts</b>${f.push?` + ${f.push} collision`:''} · critique ${Math.round(f.pc*100)} % : ${rg(f.crit)}${f.dodge?` · esquive ${Math.round(f.dodge*100)} %`:''}`);
-  const why=[u.buff&&`bonus +${Math.round(u.buff.pct*100)} %`,f.combo&&`combo ×${f.combo}`,f.amp&&'cristal',t.shield>0&&'Rempart',t.armor&&`armure ${Math.round(t.armor*(1-(sp.pierce||0))*100)} %`].filter(Boolean);
-  if(f.ko||why.length)out.push((f.ko?KO[f.ko]+' ':'')+why.join(' · '))}
- if(f.heal)out.push(`<b>+${rg(f.heal)} PV</b>`);
- if(sp.poison&&f.dmg)out.push(`poison ${sp.poison[0]} × ${sp.poison[1]} tours`);
- if(sp.buff)out.push(`+${Math.round(sp.buff*100)} % de dégâts`);
- return out}
+const KO={sure:'KO garanti',maybe:'KO possible',crit:'KO si critique'};
+function koBadge(level){
+ const label=AIM_UI[save.lang]?.ko[level]??KO[level];
+ return `<em class="${level==='sure'?'ko':'ko2'}">${label}</em>`;
+}
+function effect(u,sp,t,from){
+ const f=forecast(G.s,u,sp,t,from),out=[],text=AIM_UI[save.lang],combat=COMBAT_UI[save.lang],pct=n=>Math.round(n*100);
+ if(sp.burn&&f.dmg)out.push(fireproof(t)?tr('insensible au feu : pas de brûlure'):(text?.status('burn',...sp.burn)??`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`));
+ if(sp.slow&&f.dmg){const n=slowFor(sp,t);out.push(n>2?tr('enraciné : 1 PM au prochain tour'):(text?.slow(n)??`−${n} PM au prochain tour`))}
+ if(sp.weaken)out.push(text?.weaken(pct(sp.weaken[0]),sp.weaken[1])??`${pct(sp.weaken[0])} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
+ if(f.dmg){
+  const damage=combat?.damage(rg(f.dmg))??rg(f.dmg)+' dégâts';
+  const collision=f.push?(text?.collision(f.push)??` + ${f.push} collision`):'';
+  const critical=text?.critical(pct(f.pc),rg(f.crit))??`critique ${pct(f.pc)} % : ${rg(f.crit)}`;
+  const dodge=f.dodge?(combat?.evade(pct(f.dodge))??`esquive ${pct(f.dodge)} %`):'';
+  out.push([`<b>${damage}</b>${collision}`,critical,dodge].filter(Boolean).join(' · '));
+  const armor=pct(t.armor*(1-(sp.pierce||0)));
+  const why=[u.buff&&(text?.bonus(pct(u.buff.pct))??`bonus +${pct(u.buff.pct)} %`),f.combo&&(text?.combo(f.combo)??`combo ×${f.combo}`),f.amp&&(text?.crystal??'cristal'),t.shield>0&&tr('Rempart'),t.armor&&(combat?.armor(armor)??`armure ${armor} %`)].filter(Boolean);
+  if(f.ko||why.length)out.push((f.ko?koBadge(f.ko)+' ':'')+why.join(' · '));
+ }
+ if(f.heal){const heal='+'+rg(f.heal);out.push(`<b>${combat?.hp(heal)??heal+' PV'}</b>`)}
+ if(sp.poison&&f.dmg)out.push(text?.status('poison',...sp.poison)??`poison ${sp.poison[0]} × ${sp.poison[1]} tours`);
+ if(sp.buff)out.push(combat?.buff(pct(sp.buff))??`+${pct(sp.buff)} % de dégâts`);
+ return out;
+}
 function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.className='';X.innerHTML='';return}
- const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[];
- L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?'prisme':'case visée'}</strong>`);
+ const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[],text=AIM_UI[save.lang],combat=COMBAT_UI[save.lang];
+ const spellName=text?tr(sp.n):sp.n;
+ const target=t?`${combatName(t)} · ${combat?.hp(t.hp+'/'+t.max)??t.hp+'/'+t.max+' PV'}`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?(text?.prism??'prisme'):(text?.target??'case visée');
+ L.push(`<strong>${spellName} → ${target}</strong>`);
  if(E.bad)L.push(`✗ ${E.bad}`);
- else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.chg?`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`:E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
+ else{
+  if(E.ap&&E.why)L.push(text?.fromHere(E.why)??`✗ D’ici : ${E.why}`);
+  L.push(E.chg?(text?.charge(u.n)??`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`)
+   :E.ap?(text?.advance(u.n,E.ap.cost)??`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`)
+   :tr(E.indirect?'✓ Touché en visant une case voisine':'✓ À portée'));
   if(sp.zone||sp.nova){const hit=hitCells(S,sp,E,from).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
-   for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
-   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · ${sp.n} épargne tes héros`:'Aucun ennemi dans la zone')}
-  else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit)L.push(`${o.n} : <b>+${rg(forecast(S,u,sp,o,from).heal)} PV</b>`);L.push('Cible et alliés collés à elle · pas de résurrection')}
-  else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
+   for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${combatName(o)} : <b>${rg(f.dmg)}</b> ${f.ko?koBadge(f.ko):''}`)}
+   const chance=Math.round((u.crit||.12)*100);
+   L.push(hit.length?(text?.zone(chance,spellName)??`critique ${chance} % (×1,5) · ${sp.n} épargne tes héros`):tr('Aucun ennemi dans la zone'))}
+  else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit){const heal='+'+rg(forecast(S,u,sp,o,from).heal);L.push(`${combatName(o)} : <b>${combat?.hp(heal)??heal+' PV'}</b>`)}L.push(text?.splash??'Cible et alliés collés à elle · pas de résurrection')}
+  else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(text?tr(sp.d):sp.d);
   // prisme déclenché : effet à part, qui touche aussi les héros
   const pc=sp.dmg&&!sp.glyph&&hitCells(S,sp,E,from).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
   if(pc){const d=prismDmg(S,{...u,x:from.x,y:from.y},sp),who=prismHits(S,pc).map(p=>E.ap&&p.x===E.ap.x&&p.y===E.ap.y?u:occ(S,p.x,p.y)===u&&E.ap?null:occ(S,p.x,p.y)).filter(Boolean);
-   L.push(`<span class="pz${who.some(o=>o.team==='h')?' danger':''}">◆ Prisme déclenché : ${who.length?who.map(o=>`${o.n} -${soak(o,d)}`).join(', '):'personne autour'}${who.some(o=>o.team==='h')?' — héros touché !':''}</span>`)}
-  L.push('<i>Retouche au même endroit pour lancer</i>')}
+   const ally=who.some(o=>o.team==='h'),targets=who.map(o=>`${combatName(o)} -${soak(o,d)}`).join(', ');
+   const message=text?.prismHit(targets,ally)??`◆ Prisme déclenché : ${targets||'personne autour'}${ally?' — héros touché !':''}`;
+   L.push(`<span class="pz${ally?' danger':''}">${message}</span>`)}
+  L.push(`<i>${tr('Retouche au même endroit pour lancer')}</i>`)}
+
  X.innerHTML=L.map(l=>`<div>${l}</div>`).join('');X.className='on'+(E.bad?' bad':'');
  X.style.top=matchMedia('(orientation:landscape)').matches?'':$('top').getBoundingClientRect().bottom+2+'px';
  $('hint').textContent=E.bad?'Choisis une autre cible, ou retouche le sort pour l’annuler.':'Retouche pour lancer · retouche le sort pour annuler.'}
@@ -300,7 +323,7 @@ export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
  if(CM_DEV&&!F.cm&&!F.daily&&!F.quest&&(zi<CM_ZONES||F.pilot))F=cmSpec(F,zi,{seed:F.seed+save.gold,mods:CM_DEV.mods,champ:CM_DEV.champ,lang:save.lang}); // V5.14 : Cauchemar réel ou bac à sable, régions 1 à 3 (boss compris) et boss pilotes
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(F.cm.boss?(save.lang==='en'?`☠ Nightmare boss · ${F.cm.n>1?'two elites':'an elite'} at its side, earlier phase`:`☠ Boss du Cauchemar · ${F.cm.n>1?'deux élites':'une élite'} à ses côtés, phase plus tôt`):save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
+ $('mapinfo').textContent=tr('Chargement…');try{await zoneAssets(F)}catch(e){$('mapinfo').textContent=tr('Images introuvables')+' : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(F.cm.boss?(save.lang==='en'?`☠ Nightmare boss · ${F.cm.n>1?'two elites':'an elite'} at its side, earlier phase`:tr(F.cm.n>1?'☠ Boss du Cauchemar · deux élites à ses côtés, phase plus tôt':'☠ Boss du Cauchemar · une élite à ses côtés, phase plus tôt')):save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):tr(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;

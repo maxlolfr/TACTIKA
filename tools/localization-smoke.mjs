@@ -142,6 +142,16 @@ try {
       await character.waitFor();
       assert.match(await character.textContent(),zh?/生命值.*行动点.*移动点/s:/LP.*AP.*BP/s);
       console.log('OK',id,'· objectif, infobulle de sort et fiche de combat');
+      await spellButton.evaluate(button=>button.click());
+      const target=page.locator('button.tb').first();
+      await target.waitFor();
+      assert.match(await target.getAttribute('aria-label'),zh?/\d+\/\d+生命值/:/\d+\/\d+ LP/);
+      await target.evaluate(button=>button.click());
+      const aim=page.locator('#exc.on');
+      await aim.waitFor();
+      assert.match(await aim.locator('strong').textContent(),zh?/→ .*生命值/:/→ .*LP/);
+      assert.doesNotMatch(await aim.textContent(),/Hors de portée|portée max|Aucun centre|Touché en visant/);
+      console.log('OK',id,'· aperçu de visée et nom accessible de la cible');
       await page.locator('#flee').evaluate(button=>{button.click();button.click()});
       const retreat=page.locator('#result.on');
       await retreat.waitFor();
