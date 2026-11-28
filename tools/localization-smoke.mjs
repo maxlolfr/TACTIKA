@@ -108,6 +108,13 @@ try {
         await panel.locator('.ov-back').click();
       }
       console.log('OK',id,'· forge, marchand et taverne');
+      await page.locator('.v-gear').evaluate(element=>element.click());
+      await page.getByRole('button',{name:zh?'💾 存档':'💾 Spielstand'}).click();
+      const savePanel=page.locator('#sv[open]');
+      await savePanel.waitFor();
+      assert.match(await savePanel.textContent(),zh?/导出存档文件或复制代码/:/Exportiere deinen Spielstand als Datei/);
+      await savePanel.getByRole('button',{name:zh?'关闭':'Schließen',exact:true}).click();
+      await page.locator('#vpanel .v-x').click();
       await page.locator('.v-cry').evaluate(element=>element.click());
       const nightmare=page.locator('.cm-gate');
       await nightmare.waitFor();
@@ -135,7 +142,23 @@ try {
       await character.waitFor();
       assert.match(await character.textContent(),zh?/生命值.*行动点.*移动点/s:/LP.*AP.*BP/s);
       console.log('OK',id,'· objectif, infobulle de sort et fiche de combat');
-      await page.reload();
+      const regular=page.url();
+      await page.evaluate(()=>{
+        const fixture=JSON.parse(localStorage.getItem('landeTactique1'));
+        fixture.storySeen={prologue:1,join_orion:1,join_nyra:1,join_lyria:1};
+        localStorage.setItem('landeTactique1_cauchemar',JSON.stringify(fixture));
+      });
+      await page.goto(regular+'?cauchemar=bombe');
+      await camp.waitFor();
+      await page.locator('.v-go').click();
+      await page.locator('.zone').first().evaluate(element=>element.click());
+      await page.locator('#zsheet .btn').nth(1).click();
+      const elite=page.locator('#tl .rg.m').filter({has:page.locator('canvas')});
+      await elite.first().waitFor();
+      const eliteLabels=await elite.evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label')));
+      assert.ok(eliteLabels.some(label=>label.includes(zh?'爆裂':'Explosiv')),eliteLabels.join(', '));
+      console.log('OK',id,'· sauvegarde et affixe explosif en Cauchemar');
+      await page.goto(regular);
       await camp.waitFor();
     }
   }

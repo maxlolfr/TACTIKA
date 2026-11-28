@@ -12,6 +12,7 @@ import {CM_BOSSES,CM_LVL,CM_TUNE} from './data.js'; // V5.14 : boss pilotes du C
 // Ajouter un modificateur = ajouter une entrée dans MODS (n, en, d, de, ico, col, cost, tags, hp, dmg + accroches).
 // Le cumul (champions, V5.12) passe par compatible() : MOD_MAX modificateurs, budget, exclusions, une seule accroche
 // d'aura par monstre. Les plafonds de statistiques (CAP) s'appliquent au produit des facteurs : jamais un sac à PV.
+import {eliteAffix} from './locales/elites.js';
 import {CURSE_K} from './data.js';
 
 const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -126,7 +127,10 @@ export function modTurn(s,u,M){if(!u.mods||u.dead)return[];const ev=[];for(const
 export function modHit(s,u,t,amt){if(!u.mods||!(amt>0))return[];const ev=[];for(const id of u.mods)if(MODS[id].hit)ev.push(...MODS[id].hit(s,u,t,amt));return ev}
 export const rooted=u=>!!u.mods&&u.mods.some(id=>MODS[id].root?.(u));
 // Description pour la fiche du monstre et l'aide (FR / EN)
-export const modText=(u,lang='fr')=>(u.mods||[]).map(id=>`${lang==='en'?MODS[id].en:MODS[id].n} : ${lang==='en'?MODS[id].de:MODS[id].d}`);
+export const modText=(u,lang='fr')=>(u.mods||[]).map(id=>{
+ const localized=eliteAffix(lang,id);
+ return localized?localized.join(' : '):`${lang==='en'?MODS[id].en:MODS[id].n} : ${lang==='en'?MODS[id].de:MODS[id].d}`;
+});
 // Cases d'explosion annoncées (pour l'affichage et l'aide)
 export const booms=s=>s.units.filter(u=>!u.dead&&u.prime).map(u=>({by:u,cells:u.prime.cells,d:boomDmg(u)}));
 // Sérialisation : l'état Cauchemar d'un monstre ne contient que des nombres, des chaînes et des cases (JSON sûr)

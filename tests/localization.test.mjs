@@ -11,7 +11,7 @@ import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
 import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
 import {battleGoal} from '../src/locales/battle-tips.js';
-import {regHtml, setLang, tr, trh, TEXT_CATALOGS} from '../src/i18n.js';
+import {regHtml, setLang, tr, trh, EN, TEXT_CATALOGS} from '../src/i18n.js';
 
 test('les identifiants de langue sont stables et les anciennes sauvegardes restent lisibles', () => {
   assert.deepEqual(LANGUAGES.map(({id}) => normalizeLanguage(id)), ['fr', 'en', 'zh-Hans', 'de']);
@@ -171,5 +171,26 @@ test('les contrats et récompenses localisés affichent les valeurs du contrat',
   assert.match(contractLabel(lang,{k:'kill',n:7},'Test'),/Test/);
   assert.match(VILLAGE_UI[lang].reward(125,42),/125.*42/);
   assert.match(VILLAGE_UI[lang].potion(2,5),/40.*2\/5/);
+ }
+});
+
+import {MOD_IDS,modText} from '../src/elites.js';
+import {eliteName} from '../src/locales/elites.js';
+test('les six affixes ont des descriptions localisées et le nom conserve sa lettre de repère', () => {
+ for(const lang of ['zh-Hans','de']){
+  const descriptions=modText({mods:MOD_IDS},lang);
+  assert.equal(descriptions.length,6);
+  assert.notDeepEqual(descriptions,modText({mods:MOD_IDS},'fr'));
+  const unit={n:'Gelée (Champion : Gardien, Explosif) A',tag:'A',champ:1,mods:['garde','bombe']};
+  setLang(lang);
+  assert.equal(eliteName(lang,unit,tr),lang==='de'?'Schleim (Champion: Wächter, Explosiv) A':'史莱姆 (冠军: 守护, 爆裂) A');
+  assert.equal(unit.n,'Gelée (Champion : Gardien, Explosif) A');
+ }
+});
+
+test('les deux catalogues couvrent complètement le registre anglais', () => {
+ for(const lang of ['zh-Hans','de']){
+  const catalog=TEXT_CATALOGS[lang];
+  assert.deepEqual(Object.keys(EN).filter(key=>!catalog[key]?.trim()),[],lang);
  }
 });

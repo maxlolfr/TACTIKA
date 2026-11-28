@@ -25,7 +25,7 @@ Branche `localization/chatgpt`, travail repris après `c48cb01`. La migration ac
 
 | Contrôle | Résultat |
 | --- | --- |
-| `npm test` | 279 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
+| `npm test` | 281 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
 | `tools/smoke.mjs` | Démarrage, camp, plateau de combat, dessin, interface et réparation d’une sauvegarde corrompue. |
 | `tools/en-audit.mjs` | Neuf écrans vérifiés dans chaque langue, dont les réglages, la carte, une région et le panneau des sorts en combat. « ⚔ Combat » et le libellé accessible « voir les héros » corrigés. Aucun texte suspect signalé à la dernière exécution. |
 | `tools/localization-smoke.mjs` | Chromium, fenêtre 390 × 844. Parcours FR → EN → zh-Hans → DE → FR avec libellés du camp, attribut de langue, persistance après rechargement, niveau, or et première réplique du prologue vérifiés. |
@@ -34,7 +34,7 @@ Le détecteur anglais utilise une heuristique lexicale et ne valide pas l’int�
 
 ### Couverture des aperçus
 
-Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois en couvre 939 et l’allemand 947. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
+Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 241 entrées EN. Le chinois simplifié et l’allemand couvrent les 1 241 entrées. Les 16 chaînes du Cauchemar ajoutées dans les deux aperçus sont hors du registre anglais, car le jeu gérait déjà leur anglais séparément. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
 
 Restent à traduire et vérifier en contexte les autres chaînes composées du combat et du Cauchemar et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
 
@@ -57,3 +57,7 @@ La forge, le marchand et la taverne ont des textes localisés en chinois simplif
 La carte et les fiches de région affichent les niveaux, les compteurs, les jalons, les verrous et les libellés accessibles dans les deux langues. La progression et les conditions d’accès restent celles du moteur existant.
 
 Les infobulles de sorts et les valeurs chiffrées des fiches de combat utilisent également des formats chinois et allemands (coûts, portée, zone, recharge, points de vie et armure). Les statuts standards sont traduits. Les effets propres aux élites et aux champions restent à vérifier.
+
+Les six affixes du Cauchemar et les libellés de sauvegarde sont localisés. Les règles et la valeur des champs sauvegardés sont inchangées. Le registre est complet pour ces deux langues. Les textes construits hors registre, notamment certains enchaînements d’annonces et résultats de combat, restent à vérifier en jeu avant de lever le statut d’aperçu.
+
+Les bilans de combat affichent dans les deux langues les tours, les dégâts, les soins, les héros à terre, les ennemis restants et les renforts attendus. Le contrôle strict du registre passe pour les deux langues. Le parcours Chromium vérifie le dialogue de sauvegarde et le nom d’un ennemi avec l’affixe Explosif dans le bac à sable Cauchemar.
