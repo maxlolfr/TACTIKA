@@ -11,9 +11,9 @@ const heroes=s=>s.units.filter(u=>u.team==='h');
 const clear=(s,keep)=>{for(const u of s.units)if(!keep.includes(u)){u.x=u.gx=99;u.y=u.gy=99+s.units.indexOf(u)}};
 const last=zi=>zlen(ZONES[zi])-1;
 
-test('régions 1 à 6 jouables ; le Titan devient le boss de la région 6 ; pilotes restants : Reine puis Briseur',()=>{
- assert.equal(CM_ZONES,6);assert.equal(CM_LVL,50);
- assert.deepEqual(CM_PILOTS.map(b=>ZONES[b.zi].boss.n),['Reine des marécages','Briseur primordial']);
+test('régions 4 à 6 jouables ; le Titan devient le boss de la région 6 (V5.23 : plus aucun pilote)',()=>{
+ assert.ok(CM_ZONES>=6);assert.equal(CM_LVL,50);
+ assert.deepEqual(CM_PILOTS,[]);
  assert.ok(CM_BOSSES.some(b=>b.zi===5),'paquet du Titan conservé (boss R6)');
  for(const zi of [3,4,5]){const F=E.cmSpec(r.fightSpec(zi,last(zi),1),zi,{seed:2});assert.ok(F.cm.boss,'boss Cauchemar');assert.equal(F.lvl,50);assert.equal(F.cm.champ,0);
   const B=battleF(F).units.find(u=>u.boss);assert.ok(B.n.startsWith('☠ '));assert.ok(B.cmBoss);assert.ok(!B.champ&&!B.mods,'le boss n’est jamais une élite')}

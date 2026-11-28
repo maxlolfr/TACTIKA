@@ -63,3 +63,9 @@ Les six affixes du Cauchemar et les libellés de sauvegarde sont localisés. Les
 Les bilans de combat affichent dans les deux langues les tours, les dégâts, les soins, les héros à terre, les ennemis restants et les renforts attendus. Le contrôle strict du registre passe pour les deux langues. Le parcours Chromium vérifie le dialogue de sauvegarde et le nom d’un ennemi avec l’affixe Explosif dans le bac à sable Cauchemar.
 
 Les annonces de vagues, la durée de survie restante, les avertissements d’explosion et de rayon, le changement de tour et les conseils après une retraite ont des formats localisés. Les tests Chromium rejouent une retraite et vérifient le texte du bilan avec ses compteurs.
+
+## Reprise sur la V5.27
+
+Les huit commits de `main` jusqu’à `af0d47a` sont intégrés. Le chinois simplifié et l’allemand couvrent les deux nouveaux affixes (Spectral et Commandant), la présentation de la campagne sur 12 régions, les 12 trophées et les 8 titres du Cauchemar, ainsi que les libellés des sceaux et les nouvelles annonces de récompense. Les modules de récompenses et de traduction sont inclus dans le cache du service worker.
+
+300 tests Node passent. Le contrôle strict retrouve les 1 241 chaînes du registre anglais dans chaque langue, et le contrôle statique du cache confirme la présence des fichiers et de leurs imports. L’audit de neuf écrans en FR/EN et le parcours des quatre langues à 390 × 844 ont passé dans Chromium sur la V5.26. La V5.27 apporte des visuels HD sans nouveau texte. Le rendu sur téléphone reste à valider.

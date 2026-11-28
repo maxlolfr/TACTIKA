@@ -1,3 +1,4 @@
+import {cmLabel} from './locales/nightmare-rewards.js';
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
@@ -21,6 +22,7 @@ import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl
 import {renderHome} from './home.js';
 import {modText,booms,MODS,cmSpec} from './elites.js'; // V5.10 : élites Cauchemar
 import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
+import {cmRecord,cmKills,CM_TROPHIES,CM_TITLES,SEAL_C,tN,tD,sealCount} from './cmrewards.js'; // V5.24 : récompenses honorifiques du Cauchemar
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
 import {battleGoal} from './locales/battle-tips.js';
@@ -162,6 +164,10 @@ function eliteInfo(o,t){
   if(id==='regen'||id==='vamp'){
    const value=id==='regen'?(o.regen||0):(o.drain||0),cap=Math.round(o.max*MODS[id].cap);
    parts.push(id==='regen'?(text?.regen(value,cap)??`régénéré ${value}/${cap}`):(text?.drain(value,cap)??`drainé ${value}/${cap}`));
+  }
+  if(id==='cmdt'){
+   const count=G.s.units.filter(a=>a!==o&&!a.dead&&a.team===o.team&&Math.abs(a.x-o.x)+Math.abs(a.y-o.y)<=MODS.cmdt.r).length;
+   parts.push(text?.command(count)??(save.lang==='en'?`Commands ${count} allies`:`commande ${count} allié(s)`));
   }
   if(id==='bombe'){
    if(o.prime)parts.push(text?.primed??'AMORCÉ : explose à son prochain tour');
@@ -465,8 +471,12 @@ function chron(win){const F=G.F,S=G.s,H=S.units.filter(u=>u.team==='h'),kills={}
  r.html=`<div class="bilan"><span>⏱ ${text?.turns(S.round)??`${S.round} tour${S.round>1?'s':''}`}</span><span>⚔ ${text?.damage(n(T.dmg))??n(T.dmg)+' dégâts'}</span>${T.heal?`<span>✚ ${text?.heal(n(T.heal))??n(T.heal)+' soins'}</span>`:''}${win&&r.mvp>=0?`<span class="mvp">★ ${HER[r.mvp].n}</span>`:''}</div>`+
   (r.recs.length?`<div class="bilan rec">${r.recs.map(x=>`${villageWord('Nouveau record')} · ${villageWord(REC[x.k])} : ${n(x.v)}`).join('<br>')}</div>`:'');return r}
 const trophyRow=id=>{const t=TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">Trophée ${TIER[t.t].n.toLowerCase()} : ${t.n}</b><br>${t.d}`]};
+// V5.24 : icône de sceau (cercle à la couleur de la région ; -1 = titre) et ligne de trophée Cauchemar
+const sealIc=zi=>{const m=document.createElement('span');m.className='tro-ic cm-seal'+(zi<0?' t':'');m.style.setProperty('--sc',zi<0?'#e3b8ff':SEAL_C[zi]);m.textContent=zi<0?'✦':'☠';return m};
+const cmTrophyRow=id=>{const t=CM_TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">${cmLabel(save.lang,'Trophée du Cauchemar')} ${tr(TIER[t.t].n).toLowerCase()} : ${tN(save,t)}</b><br>${tD(save,t)}`]};
 const cmNextBoss=()=>{const k=CM_PILOTS.findIndex(b=>!save.cm.b[b.id]);return k>=0&&cmBossOpen(k)?ZONES[CM_PILOTS[k].zi].boss.n:''}; // V5.15 : boss pilotes au-delà de la région 6
-function result(win,fled){closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
+function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : un combat ne se solde qu'une fois (jamais deux fois l'or, l'XP ni les compteurs)
+ closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
  LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>combatName(u).replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?(G.F&&G.F.cm?'nm_victory':'victory'):(G.F&&G.F.cm?'nm_defeat':'defeat'));
  if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 ${villageWord('Objectif atteint')} : ${G.s.goal==='survive'?(text?.survived(G.s.surv||SURVIVE,fled)??`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`):villageWord('le chef est abattu')}</div>`:G.s.cleared?'<div class="goalwon">🎯 Toutes les vagues éliminées : +25 % d’or</div>':'';
@@ -478,9 +488,9 @@ function result(win,fled){closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.
   if(qNew){(save.q||(save.q={}))[Q.id]=1;const qg=Math.round((20+8*save.lvl)*2.5);save.gold+=qg;gold+=qg;up+=gainXp(save,15*save.lvl*2);xp+=15*save.lvl*2;
    const got=grantQuest(save,Q);qIt=got.length?got[0]:null;qSg.push(...got.slice(1))}
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
-  const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);
+  const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);const CMR=CM_DEV&&!CM_DEV.dev&&F.cm?cmRecord(save,{win:1,...cmKills(G.s.units),seal:F.boss&&first?F.zi:-1}):null;if(CMR)store(); // V5.24 : sceaux, trophées et titres du Cauchemar (bac à sable exclu)
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+villageWord(t)).join(' · ')}<br>${villageWord(ZONES[F.zi].n)} · ${F.quest?`${text?.quest(tr(Q.t),qNew)??`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}`}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?(text?.boss(tr(F.boss.n))??F.boss.n+' vaincu !'):(text?.won(F.i+1,zlen(ZONES[F.zi]))??`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`)}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():'Tous les boss pilotes du Cauchemar sont vaincus !')+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+villageWord(t)).join(' · ')}<br>${villageWord(ZONES[F.zi].n)} · ${F.quest?`${text?.quest(tr(Q.t),qNew)??`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}`}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?(text?.boss(tr(F.boss.n))??F.boss.n+' vaincu !'):(text?.won(F.i+1,zlen(ZONES[F.zi]))??`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`)}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?cmLabel(save.lang,'Le Cauchemar est vaincu ! Les 12 régions sont libérées.'):'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));
@@ -491,6 +501,8 @@ function result(win,fled){closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.
   if(qIt!==null)loot.push([icon(...icOf(ITEMS[qIt]),48),`<b style="color:${RARE[rarOf(save,qIt)].c}">${ITEMS[qIt].n}</b><br>${whoName(ITEMS[qIt])} : ${effet(ITEMS[qIt],rarOf(save,qIt))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const id of CH.tr)loot.push(trophyRow(id));
+  if(CMR){if(CMR.seal>=0)loot.push([sealIc(CMR.seal),`<b style="color:${SEAL_C[CMR.seal]}">${cmLabel(save.lang,'Sceau du Cauchemar')} · ${tr(ZONES[CMR.seal].n)}</b><br>${sealCount(save)} / ${CM_ZONES} ${cmLabel(save.lang,'sceaux')}`]);
+   for(const id of CMR.tr)loot.push(cmTrophyRow(id));for(const id of CMR.ti){const t=CM_TITLES.find(x=>x.id===id);loot.push([sealIc(-1),`<b style="color:#e3b8ff">${cmLabel(save.lang,'Nouveau titre')} : ${tN(save,t)}</b><br>${cmLabel(save.lang,'À porter depuis le Cristal (récompenses du Cauchemar)')}`])}}
   for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${contractLabel(save.lang,t,t.k==='kill'?villageWord(MON[t.m].n):'')??ctTxt(t)}<br>Récompense à la taverne`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
   const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);

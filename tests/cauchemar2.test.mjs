@@ -13,7 +13,7 @@ test('cmSpec : rencontre = 1 champion + 2 élites, +2 monstres, niveau 50 ; boss
  for(const zi of [0,1,2]){const B=E.cmSpec(spec(zi,last(zi)),zi,{seed:5});assert.equal(B.cm.champ,0);assert.equal(B.cm.n,2);assert.equal(B.cm.extra,0);assert.equal(B.cm.boss.rage,.6);assert.equal(B.cm.boss.hp,1.15)}});
 
 test('boss pilotes : Titan, Reine, Briseur, paquet propre, fiche normale intacte',()=>{
- assert.deepEqual(CM_BOSSES.map(b=>ZONES[b.zi].boss.n),['Titan prismatique','Reine des marécages','Briseur primordial']);
+ assert.deepEqual(CM_BOSSES.slice(0,3).map(b=>ZONES[b.zi].boss.n),['Titan prismatique','Reine des marécages','Briseur primordial']); // V5.22 : + Ignaros (paquet de région, en fin de liste)
  for(const b of CM_BOSSES){const F0=spec(b.zi,last(b.zi)),F=E.cmSpec(F0,b.zi,{seed:3});assert.equal(F.cm.n,b.esc);assert.equal(F.cm.boss.rage,b.rage);assert.equal(F.cm.hp,b.gh);
   assert.equal(ZONES[b.zi].boss.summon?.n,F0.boss.summon?.n,'la zone normale n’est pas modifiée')}
  const T=CM_BOSSES[0],F0=spec(T.zi,last(T.zi)),F=E.cmSpec(F0,T.zi,{});if(F0.cry)assert.equal(F.cry.p,(F0.cry.p||0)+1,'un prisme de plus')});
@@ -38,6 +38,6 @@ test('cm.n = 0 : aucune élite (le défaut reste 1 si n est absent)',()=>{
 
 test('accès : épilogue requis ; campagne normale : progression et régions inchangées hors Cauchemar',()=>{
  assert.equal(D.cmEligible({storySeen:{epilogue:1}}),true);assert.equal(D.cmEligible({storySeen:{}}),false);assert.equal(D.cmEligible(null),false);
- assert.equal(D.CM_DEV,null,'pas de mode Cauchemar sans drapeau');assert.deepEqual(Object.keys(SV.save.cm).sort(),['b','st','z']);
+ assert.equal(D.CM_DEV,null,'pas de mode Cauchemar sans drapeau');assert.deepEqual(Object.keys(SV.save.cm).sort(),['b','k','st','tr','z']);
  SV.save.z.prairie=10;SV.save.z.bois=10;SV.save.z.plage=10;assert.equal(SV.prog('prairie'),10);assert.equal(SV.unlocked(3),true,'région 4 ouverte en normal');
  SV.setProg('mont',2);assert.equal(SV.save.z.mont,2);assert.equal(SV.save.cm.z.mont,undefined);assert.equal(SV.cmBossOpen(0),false,'boss pilotes fermés hors Cauchemar')});

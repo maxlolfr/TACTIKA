@@ -4,7 +4,7 @@
 import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
-import {elitize,nightmare,modOut,modIn,modTurn,modHit,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
+import {elitize,nightmare,modOut,modIn,modTurn,modHit,rooted,modFar,modCmd} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -275,7 +275,7 @@ const sideK=(sp,at,p)=>sp.side&&at&&(at.x!==p.x||at.y!==p.y)?sp.side:1;
 export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={amp:amp>1};
  if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(Math.round(healing(u,r,amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),t.max-t.hp));
  if(!sp.dmg||t.team===u.team)return out;
- const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),gk=s.cmOn?modIn(s,t).k:1,hit=(roll,cr)=>{const v=soak(t,power(u,sp,t,roll,amp,cb,cr)*side*condK(s,u,sp,t),sp.pierce||0);return gk<1?Math.max(1,Math.round(v*gk)):v}; // V5.10 : Gardien
+ const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),gk=s.cmOn?modIn(s,t).k:1,hit=(roll,cr)=>{const v=soak(t,power(u,sp,t,roll,amp,cb,cr)*side*condK(s,u,sp,t)*(s.cmOn?modFar(s,t,from)*modCmd(s,u):1),sp.pierce||0);return gk<1?Math.max(1,Math.round(v*gk)):v}; // V5.10 : Gardien
  out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=dodgeOf(t);out.combo=n>1?n:0;out.push=0;
  if(sp.push){const p=pushPlan(s,{...from,pushDmg:u.pushDmg},t,sp.push);if(p.left)out.push=soak(t,(p.k||PUSH_DMG)*p.left)}
  const kills=d=>d+out.push>=t.hp&&!t.lastStand;
@@ -326,7 +326,7 @@ export function applySpell(s,u,sp,c){
   if(!t)continue;
   if(sp.dmg&&dodgeOf(t)&&t.team!==u.team&&rng()<dodgeOf(t)){ev.push({type:'status',t,text:'Esquive !',color:'#7fd0ff',snd:'dodge'});continue} // Insaisissable
   let cb=1;if(sp.dmg&&u.team==='h'&&t.team!==u.team){const hb=t.hitBy||(t.hitBy=new Set()),fresh=!hb.has(u.id);hb.add(u.id);cb=COMBO[hb.size];if(fresh&&hb.size>1)ev.push({type:'combo',t,n:hb.size})}
-  let dealt=0;for(let rep=0;rep<(sp.twice||1)&&(rep===0||!t.dead);rep++)if(sp.dmg){const cr=rng()<(u.crit||.12),h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p)*condK(s,u,sp,t),0,cr,sp.pierce||0);if(h)ev.push(h);if(u.mods&&h?.amt)dealt+=h.amt;if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
+  let dealt=0;for(let rep=0;rep<(sp.twice||1)&&(rep===0||!t.dead);rep++)if(sp.dmg){const cr=rng()<(u.crit||.12),fk=s.cmOn?modFar(s,t,u):1,ck=s.cmOn?modCmd(s,u):1,h=hurt(s,t,power(u,sp,t,ri(rng,...sp.dmg),amp,cb,cr)*sideK(sp,c,p)*condK(s,u,sp,t)*(s.cmOn?fk*ck:1),0,cr,sp.pierce||0);if(h){if(fk<1&&h.type==='hurt')h.spec=1;if(ck>1&&h.type==='hurt')h.cmd=1;ev.push(h)}if(u.mods&&h?.amt)dealt+=h.amt;if(sp.drain&&h?.amt){const w=s.units.filter(o=>o.team===u.team&&!o.dead&&o.hp<o.max).sort((a,b)=>a.hp/a.max-b.hp/b.max)[0];if(w){const g=Math.min(Math.round(h.amt*sp.drain*(w.curse?CURSE_K:1)),w.max-w.hp);if(g>0){w.hp+=g;ev.push({type:'heal',t:w,amt:g})}}}if(cr)ev.push({type:'shake',ms:220})}
   if(sp.push&&!t.dead)ev.push(...push(s,t,pushPlan(s,u,t,sp.push)));
   if(sp.heal){const v=Math.round(healing(u,ri(rng,...sp.heal),amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),g=Math.min(v,t.max-t.hp);t.hp+=g;ev.push({type:'heal',t,amt:g})}
   if(sp.slow&&!t.dead&&t.team!==u.team){const n=slowFor(sp,t);t.slow=Math.max(t.slow||0,n);ev.push({type:'status',t,text:n>2?'Enraciné':`−${n} PM`,color:'#c9a0ff'})}

@@ -176,11 +176,11 @@ test('les contrats et récompenses localisés affichent les valeurs du contrat',
 
 import {MOD_IDS,modText} from '../src/elites.js';
 import {eliteName} from '../src/locales/elites.js';
-test('les six affixes ont des descriptions localisées et le nom conserve sa lettre de repère', () => {
+test('les huit affixes ont des descriptions localisées et le nom conserve sa lettre de repère', () => {
  for(const lang of ['zh-Hans','de']){
   const descriptions=modText({mods:MOD_IDS},lang);
-  assert.equal(descriptions.length,6);
-  assert.notDeepEqual(descriptions,modText({mods:MOD_IDS},'fr'));
+  assert.equal(descriptions.length,8);
+  descriptions.forEach((description,index)=>assert.notEqual(description,modText({mods:MOD_IDS},'fr')[index]));
   const unit={n:'Gelée (Champion : Gardien, Explosif) A',tag:'A',champ:1,mods:['garde','bombe']};
   setLang(lang);
   assert.equal(eliteName(lang,unit,tr),lang==='de'?'Schleim (Champion: Wächter, Explosiv) A':'史莱姆 (冠军: 守护, 爆裂) A');
@@ -192,5 +192,17 @@ test('les deux catalogues couvrent complètement le registre anglais', () => {
  for(const lang of ['zh-Hans','de']){
   const catalog=TEXT_CATALOGS[lang];
   assert.deepEqual(Object.keys(EN).filter(key=>!catalog[key]?.trim()),[],lang);
+ }
+});
+
+import {CM_TITLES,CM_TROPHIES,tN,tD,titleName} from '../src/cmrewards.js';
+test('les nouveaux titres et trophées du Cauchemar sont localisés', () => {
+ for (const lang of ['zh-Hans','de']) {
+  const save={lang,cm:{t:'eveille',k:{w:1}}};
+  for (const reward of [...CM_TITLES,...CM_TROPHIES]) {
+   assert.notEqual(tN(save,reward),reward.n,reward.id);
+   assert.notEqual(tD(save,reward),reward.d,reward.id);
+  }
+  assert.equal(titleName(save),lang==='de'?'Der Erwachte':'觉醒者');
  }
 });

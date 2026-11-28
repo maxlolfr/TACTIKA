@@ -1,15 +1,17 @@
+import {cmLabel} from './locales/nightmare-rewards.js';
 // Accueil (V3.1) : village peint interactif, barre du haut, « Partir à l'aventure », onglets Héros / Inventaire / Quêtes et réglages.
 // Les écrans existants (forge, marchand…) et les actions viennent de ui.js par l'objet `A` (pas d'import circulaire).
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
-import {MON,CM_DEV,CM_PILOTS,CM_ZONES} from './data.js';
+import {MON,CM_DEV,CM_PILOTS,CM_ZONES,cmEligible} from './data.js';
 import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
 import {INVENTORY_UI} from './locales/equipment.js';
 import {CHRONICLE_UI} from './locales/chronicle.js';
 import {tr,trh} from './i18n.js';
 import {LANGUAGES} from './locales/languages.js';
+import {CM_TROPHIES,CM_TITLES,SEAL_C,sealOk,sealCount,cmStars,cmStarsMax,titleName,titleOk,tN,tD} from './cmrewards.js'; // V5.24
 import {TROPHIES,TIER,REC,BEASTS,beastInfo,beastTraits,completion,checkTrophies,stars3,questsDone} from './chronicle.js';
 import {setSon,sonBtns,sfx,voice,setVol,setVoiceLang,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
@@ -17,7 +19,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.21';
+export const VERSION='5.27';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
@@ -195,7 +197,7 @@ function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F0=fightS
 function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.last(),row=(h,fn)=>{const r=el(fn?'button':'div','v-cl',`<span>${h}</span>`);if(fn)r.onclick=fn;return r};
  {const h=el('h3',null,'Commandement'),cv=el('button','v-cmdx','<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9.4 5.6 7.6 7.4l4.6 4.6-4.6 4.6 1.8 1.8L15.8 12z"/></svg>');cv.setAttribute('aria-label','Replier le commandement');cv.onclick=()=>cmdFold(true);h.append(cv);P.append(h)}
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
- P.append(el('h4',null,'Équipe'));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),46,.6));P.append(r)});
+ P.append(el('h4',null,'Équipe'+(titleName(save)?` <small class="cm-title">☠ ${titleName(save)}</small>`:'')));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),46,.6));P.append(r)});
  const todo=[...[[3,'orionVu'],[4,'nyraVu'],[5,'lyriaVu']].map(([i,k])=>[recruited(save,i)&&!save[k],`${HER[i].n} a rejoint le camp : choisis ton équipe`,'recrue'+i]),[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
  if(todo.length){P.append(el('h4',null,'À faire'));for(const[,t,b]of todo)P.append(row('• '+t,()=>open(b)))}
  if(L&&!L.win){P.append(el('h4',null,'Dernier combat'));P.append(row(`Défaite au tour ${L.round} · ${L.ko} KO · ${L.left} ennemi${L.left>1?'s':''} debout<br><small>Rejoue une mission au Cristal, change d'arme ou de talent, puis réessaie.</small>`,()=>show('expe')))}
@@ -204,16 +206,31 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
 // ---------- V4.6 : Cristal de l'Éther → expéditions (missions gagnées à rejouer, revanches des boss) ----------
 // V5.14 : passage entre la campagne et le Cauchemar (drapeau + rechargement), section Cauchemar du Cristal
 function cmGate(P){const en=save.lang==='en';
- if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 6 (level 50 monsters, champions and elites, bosses included; Vampiric and Venomous elites from region 4). Then the pilot bosses awaken here, one after another.':'Régions 1 à 6 (monstres niveau 50, champions et élites, boss compris ; élites Vampiriques et Venimeuses dès la région 4). Ensuite, les boss pilotes s’éveillent ici, l’un après l’autre.'));
+ if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,cmLabel(save.lang,'☠ Campagne du Cauchemar')),el('p','v-empty',cmLabel(save.lang,'Régions 1 à 12 (monstres niveau 50, champions et élites, boss compris ; élites Vampiriques et Venimeuses dès la région 4, Spectrales et Commandants dès la région 7). Le Briseur primordial attend au bout de la région 12.')));
   const g=el('div','v-actions v-wrap');CM_PILOTS.forEach((b,k)=>{const z=ZONES[b.zi],ok=cmBossOpen(k),won=save.cm.b[b.id],r=el('div','v-row'+(ok?'':' off'));
-   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish Nightmare regions 1 to 6':'Termine les régions 1 à 6 du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_PILOTS[k-1].zi].boss.n}</small>`));
+   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish all Nightmare regions':'Termine toutes les régions du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_PILOTS[k-1].zi].boss.n}</small>`));
    if(ok)r.append(wood(won?(en?'Fight again':'Réaffronter'):(en?'Fight':'Affronter'),()=>A.pilot(b.zi),'sm'));c.append(r)});
+  if(cmDone()&&!CM_DEV.dev){const st=ZONES.slice(0,CM_ZONES).reduce((a,z)=>a+(save.cm.st[z.id]||[]).reduce((x,y)=>x+(y||0),0),0),mx=ZONES.slice(0,CM_ZONES).reduce((a,z)=>a+3*zlen(z),0);c.append(el('div','v-row cm-won',`<div><b>☠ ${cmLabel(save.lang,'Cauchemar vaincu')}</b><small>${cmLabel(save.lang,'12 régions et 12 boss')} · ${st} / ${mx} ★</small></div>`))} // V5.23 : fin du Cauchemar
+  c.append(cmRewardsCard());
   if(CM_DEV.real)g.append(wood(en?'🌅 Back to the world of Lande':'🌅 Revenir au monde de Lande',()=>{setNightmare(0);location.reload()},'dk'));else g.append(el('small',null,en?'Sandbox (?cauchemar): separate save, everything open.':'Bac à sable (?cauchemar) : sauvegarde à part, tout est ouvert.'));
   c.append(g);P.append(c);return}
  const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ The Nightmare':'☠ Le Cauchemar'));
  if(canNightmare()){c.append(el('p','v-empty',en?'The Crystal shows the other side of Lande: the same lands, darker and far more dangerous. Your team, gold and gear come with you; Nightmare progress is kept apart.':'Le Cristal montre l’autre face de Lande : les mêmes terres, plus sombres et bien plus dangereuses. Ton équipe, ton or et ton équipement te suivent ; la progression du Cauchemar est gardée à part.'),wood(en?'☠ Enter the Nightmare':'☠ Entrer dans le Cauchemar',()=>{setNightmare(1);location.reload()}))}
  else c.append(el('p','v-empty',en?'🔒 Something stirs inside the Crystal… Finish the story (epilogue) to awaken it.':'🔒 Quelque chose remue dans le Cristal… Termine l’histoire (épilogue) pour l’éveiller.'));
  P.append(c)}
+// V5.24 : récompenses du Cauchemar (honorifiques, aucun gain de puissance) : 12 sceaux, titre porté, accès à l'onglet de la Chronique
+function sealRow(){const d=el('div','cm-seals');ZONES.slice(0,CM_ZONES).forEach((z,i)=>{const on=sealOk(save,i),zone=tr(z.n),m=el('span','cm-seal'+(on?'':' off'),on?'☠':'·');m.style.setProperty('--sc',SEAL_C[i]);m.title=zone;m.setAttribute('aria-label',`${zone} : ${cmLabel(save.lang,on?'sceau obtenu':'sceau manquant')}`);d.append(m)});return d}
+function cmRewardsCard(){const d=el('div','v-row cm-rew'),t=titleName(save),earned=CM_TROPHIES.filter(x=>save.cm.tr[x.id]).length;
+ const b=el('div',null,`<b>${cmLabel(save.lang,'Récompenses du Cauchemar')}</b><small>${sealCount(save)} / ${CM_ZONES} ${cmLabel(save.lang,'sceaux')} · ${earned} / ${CM_TROPHIES.length} ${cmLabel(save.lang,'trophées')} · ${cmLabel(save.lang,'titre')} : ${t||'—'}${CM_DEV?.dev?cmLabel(save.lang,' · bac à sable : rien ne se gagne'):''}</small>`);b.append(sealRow());
+ d.append(b,wood(cmLabel(save.lang,'Voir'),()=>{chTab='cm';show('chronique')},'sm'));return d}
+function cmTab(P){const st=cmStars(save);
+ P.append(el('p','ch-sum',`<b>${sealCount(save)} / ${CM_ZONES}</b> ${cmLabel(save.lang,'sceaux')} · ${st} / ${cmStarsMax()} ★ · ${cmLabel(save.lang,'honorifique : aucun gain de puissance')}`),sealRow());
+ P.append(el('h4',null,cmLabel(save.lang,'Titres')));
+ for(const t of CM_TITLES){const ok=titleOk(save,t.id),on=save.cm.t===t.id,r=el('div','v-row ch-tro'+(ok?'':' off'));r.append(el('span','tro-ic',ok?'✦':'🔒'),el('div',null,`<b>${tN(save,t)}</b>${on?` <small class="cm-title">${cmLabel(save.lang,'porté')}</small>`:''}<br><small>${tD(save,t)}</small>`));
+  if(ok)r.append(wood(cmLabel(save.lang,on?'Retirer':'Porter'),()=>{if(on)delete save.cm.t;else save.cm.t=t.id;store();show('chronique')},'sm'));P.append(r)}
+ const got=CM_TROPHIES.filter(t=>save.cm.tr[t.id]).length;P.append(el('h4',null,`${cmLabel(save.lang,'Trophées du Cauchemar')} · ${got} / ${CM_TROPHIES.length}`));
+ for(const t of CM_TROPHIES){const on=!!save.cm.tr[t.id],r=el('div','v-row ch-tro'+(on?'':' off')),m=el('span','tro-ic','🏆');m.style.color=TIER[t.t].c;r.append(m,el('div',null,`<b>${tN(save,t)}</b> <small style="color:${TIER[t.t].c}">${TIER[t.t].n}</small><br><small>${tD(save,t)}${on?cmLabel(save.lang,' · obtenu le ')+new Date(save.cm.tr[t.id]).toLocaleDateString(save.lang==='en'?'en-GB':save.lang):''}</small>`));P.append(r)}
+ const k=save.cm.k||{};P.append(el('p','ch-sum',`${k.w||0} ${cmLabel(save.lang,'victoires dans le Cauchemar')} · ${k.ch||0} ${cmLabel(save.lang,'champions')} · ${k.el||0} ${cmLabel(save.lang,'élites vaincues')}`))}
 function expe(P){cmGate(P);
  if(CM_DEV){P.append(el('h4',null,save.lang==='en'?'Nightmare missions':'Missions du Cauchemar'));let any=0;
   ZONES.slice(0,CM_ZONES).forEach((z,zi)=>{const L=zlen(z),done=Math.min(prog(z.id),L);if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,'☠ '+z.n));const g=el('div','v-actions v-mgrid');
@@ -367,11 +384,12 @@ function inventaire(P){
  const r=el('div','v-actions');r.append(wood('La Forge',visit(A.forge)),wood('Le Marchand',visit(A.shop),'dk'));R.append(r)}
 // ---------- V4.86 : Chronique (trophées, régions, statistiques, bestiaire, collection) ----------
 let chTab='tro';
-function chronique(P){const text=CHRONICLE_UI[save.lang],cr=save.cr,tabs=[['tro','Trophées'],['reg','Régions'],['sta','Statistiques'],['bes','Bestiaire'],['col','Collection']];
+function chronique(P){const text=CHRONICLE_UI[save.lang],cr=save.cr,tabs=[['tro','Trophées'],['reg','Régions'],['sta','Statistiques'],['bes','Bestiaire'],['col','Collection'],...(CM_DEV||cmEligible(save)||sealCount(save)?[['cm','☠ Cauchemar']]:[])];if(chTab==='cm'&&!tabs.some(t=>t[0]==='cm'))chTab='tro';
  const bar=el('div','v-tabs ch-tabs');for(const[id,n]of tabs){const b=el('button',chTab===id?'on':'',n);b.onclick=()=>{chTab=id;show('chronique')};bar.append(b)}P.append(bar);
  const nb=o=>Object.keys(o||{}).length,fmt=v=>Math.round(v||0).toLocaleString(text?.date??'fr-FR');
  if(chTab==='tro'){const got=TROPHIES.filter(t=>cr.tr[t.id]).length;P.append(el('p','ch-sum',`<b>${got} / ${TROPHIES.length}</b> trophées · ${['b','a','o','p'].map(k=>`<span style="color:${TIER[k].c}">${text?tr(TIER[k].n):TIER[k].n} ${TROPHIES.filter(t=>t.t===k&&cr.tr[t.id]).length}/${TROPHIES.filter(t=>t.t===k).length}</span>`).join(' · ')}`));
   for(const t of TROPHIES){const on=!!cr.tr[t.id],r=el('div','v-row ch-tro'+(on?'':' off')),m=el('span','tro-ic','🏆');m.style.color=TIER[t.t].c;r.append(m,el('div',null,`<b>${t.n}</b> <small style="color:${TIER[t.t].c}">${TIER[t.t].n}</small><br><small>${t.d}${on?`<span> · ${text?.obtained??'obtenu le '}${new Date(cr.tr[t.id]).toLocaleDateString(text?.date??'fr-FR')}</span>`:''}</small>`));P.append(r)}}
+ if(chTab==='cm')cmTab(P);
  if(chTab==='reg')ZONES.forEach((z,zi)=>{if(!unlocked(zi)&&!prog(z.id)){P.append(el('div','v-row ch-reg off',`<span class="tro-ic">🔒</span><div><b>${text?tr(zi<6?'Carte I':'Carte II'):(zi<6?'Carte I':'Carte II')} · ${text?.region(zi+1)??'région '+(zi+1)}</b><br><small>Pas encore découverte</small></div>`));return}
   const c=completion(save,zi);P.append(el('div','v-row ch-reg',`<span class="ch-pct">${c.pct} %</span><div><b>${z.n}</b><span class="ch-bar"><i style="width:${c.pct}%"></i></span><small>${text?.regionStats(c.missions,c.of,c.stars,c.starsOf,c.quests,c.questsOf,c.boss)??`Missions ${c.missions}/${c.of} · ★ ${c.stars}/${c.starsOf}${c.questsOf?` · quêtes ${c.quests}/${c.questsOf}`:''} · boss ${c.boss?'✓':'—'}`}</small></div>`))});
  if(chTab==='sta'){const s=cr.s,h=Math.floor((s.time||0)/3600),mn=Math.round((s.time||0)%3600/60),fav=Object.entries(cr.hu).sort((a,b)=>b[1]-a[1])[0];
