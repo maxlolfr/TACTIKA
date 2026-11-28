@@ -114,5 +114,14 @@ try{
   await p.evaluate(()=>{import('/src/ui.js').then(u=>u.startFight(0,0))});await dismiss(p);await waitHero(p);
   await p.reload();await p.locator('.v-go').waitFor();assert.deepEqual(await read(),before);
  },{v:2,lvl:9,xp:0,gold:123,items:[],z:{prairie:0},st:{},up:{},tuto:1,storySeen:{prologue:1}});
+ await scenario('normal-nightmare-progress-isolation',async p=>{
+  const normal=await p.evaluate(async()=>{const {save,setNightmare}=await import('/src/save.js');const z=JSON.stringify(save.z);setNightmare(true);return z});
+  await p.reload();await p.locator('.v-go').waitFor();
+  const cm=await p.evaluate(async()=>{const {save,setProg,store,setNightmare}=await import('/src/save.js');const {CM_DEV}=await import('/src/data.js');if(!CM_DEV?.real)throw Error('nightmare not active');setProg('prairie',2);if(!store())throw Error('store failed');setNightmare(false);return {normal:JSON.stringify(save.z),cm:save.cm.z.prairie}});
+  assert.equal(cm.normal,normal);assert.equal(cm.cm,2);
+  await p.reload();await p.locator('.v-go').waitFor();
+  const result=await p.evaluate(async()=>{const {save}=await import('/src/save.js');const {CM_DEV}=await import('/src/data.js');return {active:!!CM_DEV,normal:JSON.stringify(save.z),cm:save.cm.z.prairie}});
+  assert.deepEqual(result,{active:false,normal,cm:2});
+ },{v:2,lvl:50,xp:0,gold:123,items:[],z:{prairie:10},st:{},up:{},tuto:1,storySeen:{prologue:1,epilogue:1}});
 }finally{await browser?.close();await new Promise(r=>server.close(r))}
 process.exitCode=fail?1:0;
