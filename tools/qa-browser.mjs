@@ -50,7 +50,9 @@ async function scenario(name,fn,seed){
 try{
  browser=await chromium.launch({...(process.env.CHROME?{executablePath:process.env.CHROME}:{}),args:['--no-sandbox']});
  await scenario('fresh-first-cast',async p=>{
-  await p.locator('.v-go').click();await p.locator('.zone').first().click();await p.locator('#zsheet .btn').first().click();
+  await p.locator('.v-go').click();await p.locator('#map.on').waitFor();
+  if(!await p.locator('#zsheet.on').isVisible())await p.locator('.zone').first().click();
+  await p.locator('#zsheet.on .btn').first().click();
   await p.locator('#tuto.on .btn').first().waitFor();await dismiss(p);await waitHero(p);
   // Read state only; actual selection and targeting go through the visible UI.
   const before=await p.evaluate(async()=>{const {G}=await import('/src/game.js');const {selCells,costOf}=await import('/src/rules.js');const u=G.cur;const id=u.sp.find(id=>u.S[id].dmg&&u.pa>=costOf(u,u.S[id])&&selCells(G.s,u,u.S[id]).some(c=>c.ok&&G.s.units.some(m=>m.team==='m'&&!m.dead&&m.x===c.x&&m.y===c.y)));return {id,index:u.sp.indexOf(id),pa:u.pa,turn:G.turn}});
