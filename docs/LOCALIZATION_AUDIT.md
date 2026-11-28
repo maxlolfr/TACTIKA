@@ -103,3 +103,5 @@ L’aperçu d’un déplacement affiche en chinois simplifié et en allemand le 
 Le titre du plateau, les points d’action et de mouvement, les points reportés, l’aide du sort sélectionné, les instructions du premier combat et les alertes de terrain utilisent désormais des phrases complètes en français, anglais, chinois simplifié et allemand. La terminologie des boutons et des sorts a été comparée aux valeurs des catalogues. Le test vérifie la conservation des valeurs d’étape, de niveau, de mouvement et de dégâts des pièges dans les quatre langues.
 
 301 tests Node passent. Le contrôle strict reste à 1 241 / 1 241 pour chacun des deux aperçus. Ces contrôles couvrent les catalogues et les formats testés. La validation visuelle de ces nouveaux textes et le parcours Chromium hors ligne restent ouverts, le binaire Chromium étant indisponible dans l’environnement.
+
+La relecture anglaise a remplacé les fragments encore assemblés en français dans les aperçus de déplacement, de visée et de statut par des formats anglais complets (AP, MP et HP). Le test vérifie le coût et le nombre de cibles dans les trois langues traduites. 302 tests Node passent.

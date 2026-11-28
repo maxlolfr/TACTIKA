@@ -10,7 +10,7 @@ import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
 import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
 import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
-import {BATTLE_HUD, battleHazard} from '../src/locales/combat-ui.js';
+import {AIM_UI, BATTLE_HUD, battleHazard} from '../src/locales/combat-ui.js';
 import {battleGoal} from '../src/locales/battle-tips.js';
 import {regHtml, setLang, tr, trh, EN, TEXT_CATALOGS} from '../src/i18n.js';
 
@@ -227,5 +227,18 @@ test('le HUD des quatre langues préserve étape, niveau, coûts et danger', () 
     assert.match(warning,/12\s*%/);
     assert.equal(battleHazard(hud,{next:[{}],cold:true},12),hud.cold);
     assert.equal(battleHazard(hud,{next:[{}],toxic:true},12),hud.toxic);
+  }
+});
+
+
+test('les aperçus localisés affichent le coût et le nombre de cibles', () => {
+  for (const [id, units] of [['en','MP'], ['zh-Hans','移动点'], ['de','BP']]) {
+    const text=AIM_UI[id];
+    const summary=text.movePreview(3,text.moveTarget('Arc',2));
+    assert.ok(summary.includes(units));
+    assert.ok(summary.includes('3'));
+    assert.ok(summary.includes('Arc'));
+    assert.ok(summary.includes('2'));
+    assert.doesNotMatch(summary,/Retouche|aucune cible/);
   }
 });
