@@ -1,0 +1,35 @@
+name: QA browser
+on:
+  push:
+    branches: ['quality/chatgpt']
+  pull_request:
+    paths: ['tools/qa-browser.mjs','tools/smoke.mjs','src/**','index.html','assets/**','.github/workflows/qa-browser.yml']
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - id: browser_install
+        run: npx playwright install --with-deps chromium
+      - run: node --check tools/qa-browser.mjs
+      - name: Existing smoke
+        run: |
+          export PW="$PWD/node_modules/playwright/index.mjs"
+          export CHROME="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          node tools/smoke.mjs
+      - name: QA-02 scenarios
+        if: ${{ !cancelled() && steps.browser_install.outcome == 'success' }}
+        run: node tools/qa-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-browser-captures
+          path: |
+            /tmp/tactika-smoke
+            /tmp/tactika-qa02

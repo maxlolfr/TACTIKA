@@ -1,0 +1,39 @@
+name: QA graphics
+on:
+  push:
+    branches: [quality/chatgpt]
+    paths: ['.github/workflows/qa-graphics.yml']
+permissions:
+  contents: read
+jobs:
+  graphics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        cpu: [1, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: qa
+      - uses: actions/checkout@v4
+        with:
+          ref: 4a563d1b2715448b660bd58c9bd568dfdf0280ce
+          path: snapshot
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: snapshot
+        run: |
+          cp ../qa/tools/qa-graphics.mjs tools/
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium
+          export PW="$PWD/node_modules/playwright/index.mjs"
+          export CHROME="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
+          CPU=${{ matrix.cpu }} node tools/qa-graphics.mjs qa-graphics
+          cat qa-graphics/mesures.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: graphics-${{ matrix.cpu }}
+          path: snapshot/qa-graphics

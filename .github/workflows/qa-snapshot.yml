@@ -1,0 +1,44 @@
+name: QA snapshot
+on:
+  push:
+    branches: [quality/chatgpt]
+    paths: ['.github/workflows/qa-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: qa
+      - uses: actions/checkout@v4
+        with:
+          ref: af0d47a98c487ddc0ade1d490f03b6cb9f454bc9
+          path: snapshot
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - working-directory: snapshot
+        run: |
+          git rev-parse HEAD
+          cp ../qa/tests/qa-roster.test.mjs tests/
+          npm test
+      - working-directory: snapshot
+        run: |
+          cp ../qa/tools/qa-browser.mjs tools/
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium
+          export PW="$PWD/node_modules/playwright/index.mjs"
+          export CHROME="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
+          node tools/smoke.mjs qa-smoke
+          OUT=qa-browser node tools/qa-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snapshot-browser
+          path: |
+            snapshot/qa-smoke
+            snapshot/qa-browser
+
