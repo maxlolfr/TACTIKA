@@ -37,7 +37,7 @@ export const MODS={
   d:'Début de son tour : +8 % de ses PV, au plus 40 % par combat. Brûlé : rien ; maudit : moitié.',
   de:'Start of its turn: +8% of its HP, at most 40% per battle. Burning: none; cursed: half.',
   turn(s,u){const left=Math.round(u.max*this.cap)-(u.regen||0);if(left<=0||u.hp>=u.max)return[];
-   if(u.burn)return[{type:'status',t:u,text:'Régénération bloquée',color:'#ffb060'}];
+   if(u.burn)return[{type:'status',t:u,text:'Régénération bloquée',color:'#ffb060',snd:'nm_elite_blocked'}];
    const g=Math.min(left,u.max-u.hp,Math.round(u.max*this.pct*(u.curse?CURSE_K:1)));if(g<=0)return[];
    u.hp+=g;u.regen=(u.regen||0)+g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1.1},{type:'heal',t:u,amt:g,src:'regen'}]}},
  bombe:{n:'Explosif',en:'Volatile',ico:'bombe',col:'#ffa53a',cost:2,tags:['burst'],hp:1.15,dmg:1,
@@ -45,11 +45,11 @@ export const MODS={
   d:'Un héros à 3 cases ou moins : il s’amorce, ne bouge plus et marque les 9 cases autour de lui ; il explose au début de son tour suivant. Sors des cases ou abats-le avant : il est désamorcé.',
   de:'A hero within 3 tiles: it primes, stops moving and marks the 9 tiles around it; it explodes at the start of its next turn. Leave the tiles or kill it first: it is defused.',
   turn(s,u,M){const ev=[];
-   if(u.prime){const P=u.prime,d=boomDmg(u);delete u.prime;u.bcd=this.cd;ev.push({type:'boom',t:u,cells:P.cells},{type:'status',t:u,text:'Explosion !',color:'#ffa53a',snd:'smash'},{type:'shake',ms:320});
+   if(u.prime){const P=u.prime,d=boomDmg(u);delete u.prime;u.bcd=this.cd;ev.push({type:'boom',t:u,cells:P.cells},{type:'status',t:u,text:'Explosion !',color:'#ffa53a',snd:'nm_elite_boom'},{type:'shake',ms:320});
     for(const p of P.cells){const h=s.units.find(o=>!o.dead&&o.team!==u.team&&o.x===p.x&&o.y===p.y);if(h){const e=M.hurt(s,h,d,'boom');if(e)ev.push(e)}}return ev}
    if(u.bcd>0){u.bcd--;return ev}
    if(s.units.some(h=>!h.dead&&h.team!==u.team&&man(h,u)<=this.trig)){u.prime={o:{x:u.x,y:u.y},cells:boomCells(s,u),r:s.round};u.pm=0;
-    ev.push({type:'status',t:u,text:'Amorçage !',color:'#ffa53a',snd:'enemy_warning'})}
+    ev.push({type:'status',t:u,text:'Amorçage !',color:'#ffa53a',snd:'nm_elite_prime'})}
    return ev},
   root(u){return !!u.prime}},
  // V5.15 · deux affixes de plus (régions 4 à 6 du Cauchemar) ; accroche hit(s,u,t,amt) : après chaque coup porté par u
@@ -58,7 +58,7 @@ export const MODS={
   d:'Se soigne de 40 % des dégâts qu’il inflige, au plus 50 % de ses PV par combat. Brûlé : rien ; maudit : moitié.',
   de:'Heals 40% of the damage it deals, at most 50% of its HP per battle. Burning: none; cursed: half.',
   hit(s,u,t,amt){const left=Math.round(u.max*this.cap)-(u.drain||0);if(left<=0||u.hp>=u.max||u.dead)return[];
-   if(u.burn)return[{type:'status',t:u,text:'Drain bloqué',color:'#ffb060'}];
+   if(u.burn)return[{type:'status',t:u,text:'Drain bloqué',color:'#ffb060',snd:'nm_elite_blocked'}];
    const g=Math.min(left,u.max-u.hp,Math.round(amt*this.k*(u.curse?CURSE_K:1)));if(g<=0)return[];
    u.hp+=g;u.drain=(u.drain||0)+g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1},{type:'heal',t:u,amt:g,src:'vamp'}]}},
  venin:{n:'Venimeux',en:'Venomous',ico:'venin',col:'#8ee02a',cost:2,tags:['dot'],hp:1.15,dmg:1,
@@ -67,7 +67,7 @@ export const MODS={
   de:'Its hits poison: 30% of the hit’s damage every turn for 3 turns (the strongest poison stays). Purify removes it.',
   hit(s,u,t,amt){if(t.dead||t.team===u.team)return[];const d=Math.max(3,Math.round(amt*this.k));
    if(t.poison&&t.poison.d*t.poison.turns>=d*this.turns)return[];t.poison={d,turns:this.turns};
-   return[{type:'status',t,text:'Venin −'+d+' / tour',color:'#8ee02a',snd:'poison'}]}}
+   return[{type:'status',t,text:'Venin −'+d+' / tour',color:'#8ee02a',snd:'nm_elite_venom'}]}}
 };
 export const MOD_IDS=Object.keys(MODS);
 // Exclusions (paires interdites au cumul) : deux auras, ou deux façons de durer, rendraient le monstre interminable.

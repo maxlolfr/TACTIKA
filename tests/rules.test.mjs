@@ -1670,7 +1670,7 @@ test('V4.82 narration : fichiers vo_ présents, FR et EN, une réplique par fich
  for(const n of m.VO){assert.ok(fs.existsSync(new URL('../assets/audio/voix/'+n+'.mp3',import.meta.url)),n);const[,id,i,lg]=n.match(/^vo_(.+)_(\d+)_(fr|en)$/);assert.ok(m.SC[id]&&m.SC[id][+i-1],'réplique inconnue '+n);assert.ok(m.VO.has('vo_'+id+'_'+i+'_'+(lg==='fr'?'en':'fr')),'version manquante '+n)}
 });
 test('V4.83 bruitages : tous les sons déclarés sont déclenchés quelque part, zones de sol avec leur son', async()=>{
- const fs=await import('node:fs'),au=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),SN=[...au.match(/SNDS=\[([^\]]*)\]/)[1].matchAll(/'([^']+)'/g)].map(m=>m[1]),src=['rules','turns','ui','home','story','render','data'].map(f=>fs.readFileSync(new URL('../src/'+f+'.js',import.meta.url),'utf8')).join('\n');
+ const fs=await import('node:fs'),au=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),SN=[...au.match(/SNDS=\[([^\]]*)\]/)[1].matchAll(/'([^']+)'/g)].map(m=>m[1]),src=['rules','turns','ui','home','story','render','data','elites'].map(f=>fs.readFileSync(new URL('../src/'+f+'.js',import.meta.url),'utf8')).join('\n');
  const dyn=new Set(['combo_2','combo_3','village_ambience','nm_village_ambience','nm_crystal_loop']); // combo_ + n, ambiance chargée par son nom
  for(const n of SN)if(!dyn.has(n))assert.ok(src.includes("'"+n+"'"),'son jamais déclenché : '+n);
  for(const [k,n] of [['trap','sands_trap'],['cold','frost_crack'],['toxic','poison'],[null,'ember_eruption']]){
