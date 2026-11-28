@@ -83,7 +83,7 @@ function newRound(sp=[]){const w=G.s.wave;if(sp.length){addRefs(sp);for(const m 
  if(G.s.goal==='survive')goalBanner((sp.length?`⚠ ${sp.length} renfort${sp.length>1?'s':''} ! `:'')+(w&&w.next.length?`Encore ${w.next.length} au prochain tour · `:w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead)?'Dernière vague · ':'')+'⏳ '+survTxt())}
 function render(){renderTL();
  const u=G.cur,{sel,F}=G;
- $('title').textContent=F?`${ZONES[F.zi].n}\n${F.quest?'Quête '+F.quest:F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round} · niv. ${F.lvl}${G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round)}`:''}`:''; // V5.09 : 2 lignes au plus (l'objectif complet reste dans le bandeau d'objectif)
+ $('title').classList.toggle('cm',!!F?.cm);$('title').textContent=F?`${F.cm?'☠ ':''}${ZONES[F.zi].n}\n${F.quest?'Quête '+F.quest:F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round} · niv. ${F.lvl}${G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round)}`:''}`:''; // V5.09 : 2 lignes au plus (l'objectif complet reste dans le bandeau d'objectif)
  if(!u){$('exc').className='';return}
  const me=u.team==='h'&&G.phase==='fight';
  G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;

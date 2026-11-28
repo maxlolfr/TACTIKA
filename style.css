@@ -646,3 +646,6 @@ html.lowfx .tro-toast{animation:none!important}
 /* V5.11 : numéro de version discret (camp et carte) */
 #vtag{position:fixed;z-index:60;left:50%;translate:-50% 0;top:calc(env(safe-area-inset-top) + 1px);font:700 9.5px/1 system-ui;letter-spacing:.3px;color:#fff3d6;opacity:.6;text-shadow:0 1px 2px #000;pointer-events:none;display:none}
 body.camp #vtag{display:block}
+/* V5.14.3 : Cauchemar signalé sans assombrir les cartes — cadre cramoisi sur le titre du combat */
+#title.cm{color:#ffd9d9;text-shadow:0 0 6px #ff2a4a,0 1px 2px #000}
+#top:has(#title.cm){box-shadow:0 0 12px #ff2a4a88,inset 0 0 0 1px #ff4a6a99}
