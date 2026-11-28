@@ -1,3 +1,7 @@
+## V5.26 — obstacles du Marais des âmes en HD (28/11/2026, planche Gemini de Max `obstacles-foret-ruines-8-2752x1536.png`)
+- `deco6.webp` recoupée (nouvel outil `tools/prep_deco6_hd.py`, qui réutilise `key/cells/pack` de `prep_r9.py`) à **75 %** de la taille native au lieu de 32 % : statue 194×498 px au lieu de 83×212. La planche reçue est le même dessin que `art/r9/r9-obstacles-gemini.webp` (même ordre : souche, tronc, éboulis, rocher, muret, racines, statue, arche). Étoile Gemini effacée, pixels magenta de bord repeints. Taille à l'écran inchangée (`DECO_W`), aucune règle touchée. 168 Ko (avant : 55 Ko).
+- **Reste à intégrer** : `batiments-village-4` (forge, marchand, arène, taverne ; remplace `bld`). Les autres planches `deco`…`deco9` ne sont pas en HD (pas d'originaux plus grands reçus).
+
 ## V5.25 — sols HD en pierre (Cavernes de cristal) (28/11/2026, planche Gemini de Max `sols-pierre-8-2752x1536.png`)
 - `tiles5.webp` remplacée par les 8 dalles de pierre HD (480 px de large, diamant 2:1 pré-écrasé, mur 48 px), `atlas.json` mis à jour (ancre = coin gauche/droit du dessus). Rien d'autre ne change (équilibrage, contenu, `ts:'tiles5'` et `g` des Cavernes inchangés).
 - Le fond magenta et l'étoile Gemini ont été effacés. 283 tests OK, capture d'un combat des Cavernes 0 erreur.
