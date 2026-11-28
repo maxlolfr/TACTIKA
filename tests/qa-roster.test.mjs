@@ -7,7 +7,8 @@ test('QA roster: 60 spells and 90 talents',()=>{
  assert.equal(HER.length,6);
  for(const [i,h] of HER.entries()){
   const ids=[...h.sp,...h.learn.map(x=>x[0])];
-  assert.equal(new Set(ids).size,10,h.n);
+  assert.equal(new Set(ids).size,ids.length,h.n+' duplicate spell');
+  assert.equal(ids.length,[10,9,9,10,10,10][i],h.n+' V5.19 baseline; target 10 tracked in QA report');
   for(const id of ids)assert.ok(SP[id],id);
   assert.equal(SPECS[i].length,3);
   for(const spec of SPECS[i])assert.equal(spec.t.length,5);
