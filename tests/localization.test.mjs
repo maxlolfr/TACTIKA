@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeLanguage, LANGUAGES} from '../src/locales/languages.js';
+import {TUTO} from '../src/tips.js';
+import {QUESTS} from '../src/quests.js';
+import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
 import {setLang, tr, trh, TEXT_CATALOGS} from '../src/i18n.js';
 
 test('les identifiants de langue sont stables et les anciennes sauvegardes restent lisibles', () => {
@@ -27,6 +30,31 @@ test('les aperçus conservent les chaînes françaises complètes en cas de trad
     for (const text of Object.values(TEXT_CATALOGS[id])) {
       assert.ok(text.trim());
       assert.doesNotMatch(text, /[<>\uFFFD]/);
+    }
+  }
+});
+
+test('les cinq cartes du tutoriel sont traduites dans les deux aperçus et gardent leurs balises', () => {
+  const tags = text => text.match(/<[^>]+>/g);
+  for (const id of ['zh-Hans', 'de']) {
+    setLang(id);
+    for (const source of TUTO) {
+      const translated = trh(source);
+      assert.notEqual(translated, source);
+      assert.deepEqual(tags(translated), tags(source));
+    }
+  }
+});
+
+test('les quarante quêtes sont traduites des titres aux répliques dans les deux aperçus', () => {
+  for (const id of ['zh-Hans', 'de']) {
+    setLang(id);
+    assert.deepEqual(Object.keys(QUEST_TRANSLATIONS[id]).sort(), QUESTS.map(q=>q.id).sort());
+    for (const q of QUESTS) {
+      for (const source of [q.t,q.d,q.c]) {
+        assert.ok(Object.hasOwn(TEXT_CATALOGS[id],source),q.id);
+        assert.notEqual(tr(source),source,q.id);
+      }
     }
   }
 });

@@ -4,6 +4,9 @@
 // Ajouter une traduction : une ligne "français":"anglais" ; aucune autre modification nécessaire.
 import {normalizeLanguage} from './locales/languages.js';
 import {ZH_GLOSSARY} from './locales/zh-glossary.js';
+import {TUTORIALS} from './locales/tutorials.js';
+import {QUEST_TRANSLATIONS} from './locales/quests.js';
+import {QUESTS} from './quests.js';
 import {DE} from './locales/de.js';
 import {EN_DESC} from './i18n-desc.js';
 import {EN_Q} from './i18n-quests.js';
@@ -151,13 +154,20 @@ const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
 zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
 export const regHtml=(fr,en)=>{HTML.set(fr,en)};
 // V5.10a : PA reportés / gardés (bouton Fin du tour et texte flottant) restaient à moitié en français
-Object.assign(EN,{'Langue':'Language','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
-export const trh=s=>language==='en'&&HTML.has(s)?HTML.get(s):s;
+Object.assign(EN,{'Langue':'Language','⚔ Combat':'⚔ Battle','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
+const localizedHtml=Object.fromEntries(Object.entries(TUTORIALS).map(
+ ([id,lines])=>[id,new Map(TUTO.map((source,i)=>[source,lines[i]]))]
+));
+export const trh=s=>language==='en'?(HTML.get(s)??s):(localizedHtml[language]?.get(s)??s);
 // ---------- moteur ----------
 let language='fr';
+const questTexts=id=>Object.fromEntries(QUESTS.flatMap(q=>{
+ const line=QUEST_TRANSLATIONS[id][q.id];
+ return line?[[q.t,line[0]],[q.d,line[1]],[q.c,line[2]]]:[];
+}));
 export const TEXT_CATALOGS=Object.freeze({
- en:EN, de:DE, 'zh-Hans':Object.freeze({...ZH_GLOSSARY,
-  'Langue':'语言','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
+ en:EN, de:Object.freeze({...DE,...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...questTexts('zh-Hans'),
+  'Langue':'语言','⚔ Combat':'⚔ 战斗','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
   '♪ Musique':'♪ 音乐','🔊 Sons':'🔊 声音','Volume musique':'音乐音量',
   'Volume bruitages':'音效音量','Volume voix':'语音音量','Revoir le tutoriel':'重看教程',
   'Recommencer à zéro':'重新开始','Compris !':'明白了！',
