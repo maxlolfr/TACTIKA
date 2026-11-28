@@ -1,3 +1,8 @@
+## V5.25 — sols HD en pierre (Cavernes de cristal) (28/11/2026, planche Gemini de Max `sols-pierre-8-2752x1536.png`)
+- `tiles5.webp` remplacée par les 8 dalles de pierre HD (480 px de large, diamant 2:1 pré-écrasé, mur 48 px), `atlas.json` mis à jour (ancre = coin gauche/droit du dessus). Rien d'autre ne change (équilibrage, contenu, `ts:'tiles5'` et `g` des Cavernes inchangés).
+- Le fond magenta et l'étoile Gemini ont été effacés. 283 tests OK, capture d'un combat des Cavernes 0 erreur.
+- **Reste à intégrer** (même dossier `art/tactika/hd-recus-28-11-soir/` du studio) : `obstacles-foret-ruines-8` (obstacles) et `batiments-village-4` (remplace `bld`).
+
 ## RESTE À FAIRE · passage 100 % HD pour la version Steam (état 28/11, après V5.19)
 Fait en HD (35 sprites, dont toad golemK crygolem en V5.19 ; V5.17 incluse : batN crabN slimeN gullN wolfN boarN goblinN shroomN golemN skelN ghostN prisbat qspider) : pharaoh griffin frostking breaker sanctguard aetherion queen knightK ignaros obsid salam fireel anubis scorp mummy cguard yeti frostel etherknight etherbeast polarwolf astral ent wraith.
 Outil : `python3 tools/cut_boss_hd2.py <nom> <planche.png:CxR> --map ...` (planches originales fond magenta). Originaux déjà reçus rangés dans `art/`.
