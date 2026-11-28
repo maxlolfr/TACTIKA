@@ -217,6 +217,10 @@ export const RESULT_UI = {
   won:(i,total)=>`Stage ${i}/${total} cleared`, boss:name=>`${name} defeated!`,
   quest:(title,first)=>`Quest “${title}” ${first?'completed':'replayed'}`,
   level:n=>`Level ${n} reached!`,
+  trophy:(tier,name)=>`${tier} trophy: ${name}`,
+  pilot:name=>`Pilot boss awakened at the Crystal: ${name}`,
+  pilotsDone:'All Nightmare pilot bosses are defeated!',
+  tavernReward:'Claim your reward at the tavern.',
  },
  'zh-Hans': {
   team:(level,enemy)=>`你的队伍为${level}级，本场战斗为${enemy}级。`,

@@ -256,3 +256,8 @@ test('les alertes, portraits ennemis et bilans anglais conservent les valeurs', 
   setLang('fr');
   assert.equal(battleCallout('fr','Bouclier −12',tr),'Bouclier −12');
 });
+
+test('le bilan anglais localise les trophées et le déblocage des boss pilotes', () => {
+  assert.equal(RESULT_UI.en.trophy('Gold','First victory'),'Gold trophy: First victory');
+  assert.equal(RESULT_UI.en.pilot('Alpha Wolf'),'Pilot boss awakened at the Crystal: Alpha Wolf');
+});
