@@ -271,18 +271,25 @@ function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(c
 function hiGround(g){g.save();const[cx,cy]=scr(R/4,R/4),r=Math.max(W,H);
  g.globalCompositeOperation='soft-light';let e=g.createRadialGradient(cx,cy-TH*2,0,cx,cy,r*.7);e.addColorStop(0,'rgba(255,236,200,.55)');e.addColorStop(.5,'rgba(255,220,170,.12)');e.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=e;g.fillRect(0,0,W,H);
  g.globalCompositeOperation='source-over';e=g.createRadialGradient(cx,cy,Math.min(W,H)*.35,cx,cy,r*.75);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,10,.38)');g.fillStyle=e;g.fillRect(0,0,W,H);g.restore()}
-function nightGround(g){g.save();g.globalCompositeOperation='multiply';g.fillStyle='#8f6f8c';g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over';
- const v=g.createRadialGradient(W/2,H*.52,Math.min(W,H)*.28,W/2,H*.52,Math.max(W,H)*.78);v.addColorStop(0,'rgba(30,0,20,0)');v.addColorStop(1,'rgba(60,0,18,.7)');g.fillStyle=v;g.fillRect(0,0,W,H);g.restore()}
-const NW=[];let nFlash=0,nVig=null,nSpr=null;
+function nightGround(g){g.save();g.globalCompositeOperation='multiply';g.fillStyle='#d2bdd6';g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over'; /* V5.14.1 : teinte pourpre légère (avant #8f6f8c : −45 % de lumière) */
+ const v=g.createRadialGradient(W/2,H*.52,Math.min(W,H)*.34,W/2,H*.52,Math.max(W,H)*.85);v.addColorStop(0,'rgba(30,0,20,0)');v.addColorStop(1,'rgba(60,0,18,.34)');g.fillStyle=v;g.fillRect(0,0,W,H);g.restore()}
+const NW=[],NE=[];let nFlash=0,nVig=null,nSpr=null;
 // sprites pré-rendus (une fois) : vignette à la taille de l'écran, deux volutes 32 px ; aucun dégradé recalculé par image
 function nightCache(){if(nVig&&nVig.w===W&&nVig.h===H)return;const c=document.createElement('canvas');c.width=Math.max(1,Math.round(W/2));c.height=Math.max(1,Math.round(H/2));const g=c.getContext('2d'),e=g.createRadialGradient(c.width/2,c.height/2,Math.min(c.width,c.height)*.4,c.width/2,c.height/2,Math.max(c.width,c.height)*.72);
  e.addColorStop(0,'rgba(20,0,16,0)');e.addColorStop(1,'rgba(70,0,24,1)');g.fillStyle=e;g.fillRect(0,0,c.width,c.height);nVig={c,w:W,h:H};
- if(!nSpr)nSpr=['120,30,90','150,20,30'].map(h=>{const s=document.createElement('canvas');s.width=s.height=32;const q=s.getContext('2d'),gr=q.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${h},1)`);gr.addColorStop(1,`rgba(${h},0)`);q.fillStyle=gr;q.fillRect(0,0,32,32);return s})}
+ if(!nSpr)nSpr=['120,30,90','150,20,30','255,90,60'].map(h=>{const s=document.createElement('canvas');s.width=s.height=32;const q=s.getContext('2d'),gr=q.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${h},1)`);gr.addColorStop(1,`rgba(${h},0)`);q.fillStyle=gr;q.fillRect(0,0,32,32);return s})}
 function nightFx(now,dt){if(globalThis.__noNF)return;const lf=lowFx();nightCache();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
- 
+ /* V5.14.1 : lumières visibles. Dans le repère du sol : pulsation cramoisie sur le bord du plateau et dalles qui s'illuminent ; « Faible » : bord fixe seulement */
+ {const S=G.s,pl=.5+.5*Math.sin(now/950),rm=rimOf();ctx.save();ctx.translate(view.x,view.y);ctx.scale(view.z,view.z);ctx.globalCompositeOperation='lighter';
+  if(rm){ctx.lineJoin='round';ctx.strokeStyle=`rgba(220,30,60,${lf?.1:.07+.07*pl})`;ctx.lineWidth=TW*.16;ctx.stroke(rm.path);ctx.strokeStyle=`rgba(255,90,110,${lf?.28:.22+.26*pl})`;ctx.lineWidth=Math.max(1.5,TW*.035);ctx.stroke(rm.path)}
+  if(!lf&&S&&S.map)for(const m of S.map.values()){if(m.block||m.water)continue;const h=((m.x*73856093)^(m.y*19349663))>>>0;if(h%7)continue;const[sx,sy]=scr(m.x,m.y),a=.5+.5*Math.sin(now/1100+h%628/100);
+   diamond(ctx,sx,sy,.8);ctx.fillStyle=`rgba(200,25,60,${.05+.12*a})`;ctx.fill();ctx.strokeStyle=`rgba(255,80,110,${.12+.3*a})`;ctx.lineWidth=1.5;ctx.stroke()}
+  ctx.restore()}
+ if(!lf){const nE=hiFx()?44:28;if(NE.length>nE)NE.length=nE;while(NE.length<nE)NE.push({x:Math.random()*W,y:Math.random()*H,r:3+Math.random()*5,v:.03+.04*Math.random(),ph:Math.random()*6.28});
+  ctx.globalCompositeOperation='lighter';for(const p of NE){p.y-=p.v*dt;p.x+=Math.sin(now/900+p.ph)*.35;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}ctx.globalAlpha=(.55+.3*Math.sin(now/260+p.ph))*Math.min(1,p.y/(H*.2))*Math.min(1,(H-p.y)/(H*.1));ctx.drawImage(nSpr[2],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}ctx.globalAlpha=1}
  if(!lf){const nN=hiFx()?36:22;if(NW.length>nN)NW.length=nN;while(NW.length<nN)NW.push({x:Math.random()*W,y:H+Math.random()*H*.6,r:6+Math.random()*16,v:.012+Math.random()*.02,ph:Math.random()*6.28,k:Math.random()<.7?0:1});
   ctx.globalCompositeOperation='lighter';for(const p of NW){p.y-=p.v*dt;p.x+=Math.sin(now/1400+p.ph)*.25;if(p.y<-30){p.y=H+20;p.x=Math.random()*W}
-   ctx.globalAlpha=.10*Math.min(1,(H-p.y)/(H*.3))*Math.min(1,Math.max(0,p.y)/(H*.25));ctx.drawImage(nSpr[p.k],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}
+   ctx.globalAlpha=.20*Math.min(1,(H-p.y)/(H*.3))*Math.min(1,Math.max(0,p.y)/(H*.25));ctx.drawImage(nSpr[p.k],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}
   if(now>nFlash+9000&&Math.random()<dt/6000)nFlash=now;const f=now-nFlash;if(f<420){ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle=`rgba(150,20,30,${.10*(1-f/420)*(f<90?f/90:1)})`;ctx.fillRect(0,0,W,H)}}
  ctx.restore()}
 
