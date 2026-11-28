@@ -14,7 +14,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.19';
+export const VERSION='5.20';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
