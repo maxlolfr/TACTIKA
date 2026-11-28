@@ -696,3 +696,18 @@ Tutoriel en 5 cartes au premier combat (`save.tuto`, rejouable depuis « Comment
 - **Défaite utile** : tour, héros KO, ennemis restants, renforts attendus, conseils factuels (niveau, forge, spécialisation, potions, rejeu), boutons Réessayer / Préparer au camp / Carte. `LAST` (ui.js).
 - **Animations rapides** (Réglages, `save.fast`) : `SPEED.k` = 0,5 dans util.js.
 - L'Entraînement (6e bâtiment) attend les caractéristiques (V4.7) : pas de bâtiment vide. 77 tests.
+
+## Feuille de route consolidée post-V5.08 — 28/11/2026
+Campagne principale complète selon NOTES.md V5.0 ; V5.08 livrée selon notes techniques, V5.09 lancée par Max. Versions suivantes indicatives, à ajuster selon correctifs intermédiaires. Ce tableau prévaut sur les ordres antérieurs.
+| Version cible | Lot | Objectif qualité indicatif |
+|---|---|---|
+| 5.08 | Ambiances 12 régions, terminé selon Claude | 92,5/100 provisoire |
+| 5.09 | Ergonomie combat/village/audio, en cours ; validation Honor/iPad avant suite | 94 |
+| 5.10 | Cauchemar : prototype puis rejouabilité, récompenses et records | 95 |
+| 5.11 | Village vivant : animations, PNJ, évolution, trophées selon faisabilité | 96 |
+| 5.12 | Galerie des six héros 3D optimisés, prototype puis intégration | 96,5 |
+| 5.13 | Partage volontaire des exploits et cartes de victoire | 97 |
+| 5.14 | Polissage graphique intégral, captures avant/après | 98 |
+| 5.15 | Micro-frustrations, accessibilité, panel externe proposé 20–30 joueurs | 99 |
+| 5.16 / RC | Audit final et préparation commerciale | 98 minimum visé, ambition 100 |
+À chaque livraison : rapport version/commit, changements, tests, mesures, captures, limites, reste à faire ; ChatGPT réévalue sur preuves et Max valide. Les notes cibles ne sont pas acquises. RC : campagne complète et durée réelle, équilibre sans supprimer les murs voulus, anglais combat/bilan/forge/expéditions/narration, décision doublage restant, droits des 231 fichiers audio, sauvegardes iOS, hors connexion, FPS physiques Honor/iPhone/iPad et PC avant Steam, packaging boutiques, bande-annonce, site et marketing. Prix cible 14,90 €. Ne pas refaire le contenu déjà intégré. Ne pas interrompre V5.09 ni démarrer Cauchemar avant validation. Sonnet pour ergonomie et tâches répétitives, Opus conseillé pour Cauchemar et 3D. Aucun changement de code demandé par cette note.
