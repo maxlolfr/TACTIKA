@@ -149,6 +149,8 @@ Object.assign(COMBAT_TEXTS,{
 
 export const RESULT_UI = {
  'zh-Hans': {
+  team:(level,enemy)=>`你的队伍为${level}级，本场战斗为${enemy}级。`,
+  potions:(n,max,cost)=>`药水：${n}/${max}（商人售价${cost}金币）。`,
   survived:(n,fled)=>`已坚守${n}回合${fled?'，幸存的敌人已撤退':''}`,
   round:n=>`第${n}回合`, down:n=>`${n}名英雄倒地`,
   remaining:n=>`剩余${n}名敌人`, reinforcements:n=>`预计还有${n}名增援`,
@@ -158,6 +160,8 @@ export const RESULT_UI = {
   level:n=>`升到${n}级！`,
  },
  de: {
+  team:(level,enemy)=>`Dein Team ist auf Stufe ${level}, dieser Kampf auf Stufe ${enemy}.`,
+  potions:(n,max,cost)=>`Tränke: ${n}/${max} (für ${cost} Gold beim Händler).`,
   survived:(n,fled)=>`${n} Züge durchgehalten${fled?', überlebende Gegner ziehen sich zurück':''}`,
   round:n=>`Zug ${n}`, down:n=>`${n} ${n===1?'Held':'Helden'} kampfunfähig`,
   remaining:n=>`${n} Gegner übrig`, reinforcements:n=>`${n} ${n===1?'Verstärkung erwartet':'Verstärkungen erwartet'}`,
@@ -165,5 +169,26 @@ export const RESULT_UI = {
   boss:name=>`${name} besiegt!`,
   quest:(title,first)=>`Aufgabe „${title}“ ${first?'abgeschlossen':'wiederholt'}`,
   level:n=>`Stufe ${n} erreicht!`,
+ },
+};
+
+export const BATTLE_ANNOUNCEMENTS = {
+ 'zh-Hans': {
+  survive:(n,short)=>n>1?`${short?'':'目标：'}再坚守${n}回合`:(short?'最后一回合！':'还需坚守最后一回合！'),
+  wave:n=>`⚠ ${n}名增援抵达！`,
+  next:n=>`下回合还有${n}名增援`, last:'最后一波',
+  explosion:(name,damage)=>`✹ ${name}下回合将爆炸（${damage}点伤害）。撤离标记的格子，或先击倒它。 `,
+  beam:n=>`⚠ 泰坦下回合将发射射线（${n}点伤害）。避开条纹格子。 `,
+  crystal:'💎 水晶：+30%。 ', turn:name=>`轮到${name}行动。`,
+  exhausted:name=>`${name}已无可用行动：进入下一回合`,
+ },
+ de: {
+  survive:(n,short)=>n>1?`${short?'':'Ziel: '}Noch ${n} Züge durchhalten`:(short?'Letzter Zug!':'Noch einen Zug durchhalten!'),
+  wave:n=>`⚠ ${n} ${n===1?'Verstärkung trifft':'Verstärkungen treffen'} ein!`,
+  next:n=>`Im nächsten Zug folgen ${n} weitere`, last:'Letzte Welle',
+  explosion:(name,damage)=>`✹ ${name} explodiert im nächsten Zug (${damage} Schaden). Verlass die markierten Felder oder besiege den Gegner vorher. `,
+  beam:n=>`⚠ Der Titan feuert im nächsten Zug seinen Strahl (${n} Schaden). Verlass die schraffierten Felder. `,
+  crystal:'💎 Kristall: +30 %. ', turn:name=>`${name} ist am Zug.`,
+  exhausted:name=>`${name} hat keine Aktion mehr: nächster Zug`,
  },
 };

@@ -11,7 +11,7 @@ import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {ELITE_UI,eliteName} from './locales/elites.js';
-import {COMBAT_UI,RESULT_UI} from './locales/combat-ui.js';
+import {BATTLE_ANNOUNCEMENTS,COMBAT_UI,RESULT_UI} from './locales/combat-ui.js';
 import {MAP_UI} from './locales/map.js';
 import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
 import {INVENTORY_UI} from './locales/equipment.js';
@@ -87,7 +87,8 @@ const SPI={slash:['sico',0],smash:['sico',9],guard:['sico',1],shot:['sico',8],vo
  dagger:['sico',0],backstab:['sico',9],shadow:['spells',11],toxin:['sico',5],smoke:['spells',13],mark:['spells5',11],twin:['spells5',0],evade:['spells5',8],execute:['spells5',15],dance:['sico',13],
  hammer:['sico',9],protect:['spells5',16],light:['sico',4],intercept:['sico',1],purge:['spells5',17],smite:['spells5',15],aegis:['spells5',16],rescue:['spells5',2],oath:['sico',6],bastion:['spells5',20]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
-const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
+const announcements=()=>BATTLE_ANNOUNCEMENTS[save.lang];
+const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return announcements()?.survive(n,short)??(n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !'))};
 const GOALS={survive:`<b>⏳ Objectif : survivre ${SURVIVE} tours</b><br>Garde au moins un héros debout jusqu’à la fin du ${SURVIVE}ᵉ tour. Tu n’as pas besoin de vaincre tous les monstres (le faire gagne aussi).`,
  chief:'<b>♛ Objectif : abattre le chef</b><br>La victoire est immédiate dès que le monstre à la couronne tombe, même s’il reste des ennemis.'};
 GOALS.waves=n=>`<b>⏳ Objectif : tenir ${n} tours</b><br>Des renforts arrivent par vagues : les cases marquées ⚠ annoncent ceux du prochain tour. Garde au moins un héros debout jusqu’à la fin du ${n}ᵉ tour.<br>★ Élimine toutes les vagues : 3ᵉ étoile et +25 % d’or.`;
@@ -105,7 +106,15 @@ function goalTxt(S){
 }
 let goalT=0;function goalBanner(t){const g=$('goal');g.textContent=t;g.classList.add('on');clearTimeout(goalT);goalT=setTimeout(()=>g.classList.remove('on'),2600)}
 function newRound(sp=[]){const w=G.s.wave;if(sp.length){addRefs(sp);for(const m of sp){addFx(m.x,m.y,6,1.1,600,'fxi');say(m,m.elite?'Élite !':'Renfort','#ffa040',!!m.elite)}sfx('enemy_warning',.8);renderTL()}
- if(G.s.goal==='survive')goalBanner((sp.length?`⚠ ${sp.length} renfort${sp.length>1?'s':''} ! `:'')+(w&&w.next.length?`Encore ${w.next.length} au prochain tour · `:w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead)?'Dernière vague · ':'')+'⏳ '+survTxt())}
+ if(G.s.goal==='survive'){
+  const text=announcements(),parts=[];
+  if(sp.length)parts.push(text?.wave(sp.length)??`⚠ ${sp.length} renfort${sp.length>1?'s':''} !`);
+  if(w?.next.length)parts.push(text?.next(w.next.length)??`Encore ${w.next.length} au prochain tour`);
+  else if(w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead))parts.push(text?.last??'Dernière vague');
+  parts.push('⏳ '+survTxt());
+  goalBanner(parts.join(' · '));
+ }
+}
 function render(){renderTL();
  const u=G.cur,{sel,F}=G;
  $('title').classList.toggle('cm',!!F?.cm);$('title').textContent=F?`${F.cm?'☠ ':''}${ZONES[F.zi].n}\n${F.quest?'Quête '+F.quest:F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round} · niv. ${F.lvl}${G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round)}`:''}`:''; // V5.09 : 2 lignes au plus (l'objectif complet reste dans le bandeau d'objectif)
@@ -133,8 +142,9 @@ function render(){renderTL();
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
  $('end').disabled=!me||G.busy;
  const lava=G.s.lava?.next.length&&me?(G.s.lava.trap?`◆ Pièges : les dalles dorées se déclenchent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV, −1 PM). `:G.s.lava.toxic?'☣ Zones toxiques : les cases vertes empoisonnent au prochain tour (4 PV × 2 tours). ':G.s.lava.cold?'❄ Fissures de givre : les cases bleues blessent (6 % des PV) et ralentissent au prochain tour. ':`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `):'';
- const bm=booms(G.s).map(b=>`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
- $('hint').textContent=!me?`${u.n} joue.`:lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
+ const text=announcements();
+ const bm=booms(G.s).map(b=>text?.explosion(combatName(b.by),b.d)??`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?(text?.beam(beamDmg(G.s.beam.by))??`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `):''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?(text?.crystal??'💎 Cristal : +30 %. '):'';
+ $('hint').textContent=!me?(text?.turn(combatName(u))??`${u.n} joue.`):lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
  aimCard(u);
 }
 function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
@@ -169,7 +179,7 @@ function idle(u){const c=castable(u).map(sp=>sp.n).join(', ');
  if(canMove(u))return c?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».';
  return c?`Plus de déplacement. Encore possible : ${c}. Sinon « Fin du tour ».`:'Plus aucune action : touche « Fin du tour ».'}
 function autoEnd(){const u=G.cur;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0||castable(u).length)return;
- $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
+ $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(announcements()?.exhausted(combatName(u))??`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
 
 // ---------- saisie ----------
 // V4.4 : deux doigts = zoom, un doigt qui glisse sur un plateau agrandi = déplacement, molette à la souris.
@@ -490,8 +500,8 @@ function result(win,fled){closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
   if(first&&F.boss){const ev=bossWinEvents(save,zid);if(ev.length)setTimeout(()=>playStory(save,ev,store),2200)} // V4.80 : scènes de fin de région, une seule fois, jamais en farm ni en défaite
- }else{const CH=chron(false),L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
-  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':(text?.round(L.round)??`Tour ${L.round}`)} · ${text?.down(L.ko)??`${L.ko} héros KO`} · ${text?.remaining(L.left)??`${L.left} ennemi${L.left>1?'s':''} encore debout`}${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?' · '+(text?.reinforcements(L.waves)??`${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`):''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div>${CH.html}<ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
+ }else{const CH=chron(false),L=LAST,tips=[save.lvl<L.lvl&&(text?.team(save.lvl,L.lvl)??`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`),save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&(text?.potions(save.pot||0,POTION.max,POTION.cost)??`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`),'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
+  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?villageWord('Tu as quitté le combat'):(text?.round(L.round)??`Tour ${L.round}`)} · ${text?.down(L.ko)??`${L.ko} héros KO`} · ${text?.remaining(L.left)??`${L.left} ennemi${L.left>1?'s':''} encore debout`}${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?' · '+(text?.reinforcements(L.waves)??`${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`):''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div>${CH.html}<ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
  // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi
  const acts=document.createElement('div');acts.className='ractions';let gone=false;
  const act2=(t,f,dark)=>{const b=document.createElement('button');b.className='btn'+(dark?' dark':'');b.textContent=t;b.onclick=()=>{if(gone)return;gone=true;f()};acts.append(b)};

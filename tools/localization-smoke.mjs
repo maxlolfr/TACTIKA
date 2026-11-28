@@ -142,6 +142,10 @@ try {
       await character.waitFor();
       assert.match(await character.textContent(),zh?/生命值.*行动点.*移动点/s:/LP.*AP.*BP/s);
       console.log('OK',id,'· objectif, infobulle de sort et fiche de combat');
+      await page.locator('#flee').evaluate(button=>{button.click();button.click()});
+      const retreat=page.locator('#result.on');
+      await retreat.waitFor();
+      assert.match(await retreat.textContent(),zh?/你已退出战斗.*0名英雄倒地.*剩余\d+名敌人/s:/Du hast den Kampf verlassen.*0 Helden kampfunfähig.*\d+ Gegner übrig/s);
       const regular=page.url();
       await page.evaluate(()=>{
         const fixture=JSON.parse(localStorage.getItem('landeTactique1'));

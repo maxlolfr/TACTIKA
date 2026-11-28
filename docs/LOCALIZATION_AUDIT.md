@@ -61,3 +61,5 @@ Les infobulles de sorts et les valeurs chiffrées des fiches de combat utilisent
 Les six affixes du Cauchemar et les libellés de sauvegarde sont localisés. Les règles et la valeur des champs sauvegardés sont inchangées. Le registre est complet pour ces deux langues. Les textes construits hors registre, notamment certains enchaînements d’annonces et résultats de combat, restent à vérifier en jeu avant de lever le statut d’aperçu.
 
 Les bilans de combat affichent dans les deux langues les tours, les dégâts, les soins, les héros à terre, les ennemis restants et les renforts attendus. Le contrôle strict du registre passe pour les deux langues. Le parcours Chromium vérifie le dialogue de sauvegarde et le nom d’un ennemi avec l’affixe Explosif dans le bac à sable Cauchemar.
+
+Les annonces de vagues, la durée de survie restante, les avertissements d’explosion et de rayon, le changement de tour et les conseils après une retraite ont des formats localisés. Les tests Chromium rejouent une retraite et vérifient le texte du bilan avec ses compteurs.
