@@ -41,3 +41,5 @@ Restent à traduire et vérifier en contexte les textes de maîtrise et de talen
 Pour la revue, examiner en premier la conservation des sauvegardes et le traitement du scénario séparé de la traduction DOM. Reprendre ensuite les chaînes par écran, avec le scénario et le Cauchemar testés séparément. Réactualiser l’inventaire sur la prochaine base de développement avant intégration.
 
 Pour obtenir le delta des registres, lancer `node tools/localization-coverage.mjs --missing`. L’option `--strict` signale toute clé manquante par un code de retour non nul. Ce contrôle ne couvre pas les textes dynamiques et les chaînes absentes du registre de référence.
+
+La branche a intégré la V5.21 (`05c5846`), avec résolution du conflit du service worker. Cette intégration reprend les mises à jour graphiques de la branche principale.
