@@ -89,5 +89,19 @@ try{
   await p.locator('.v-go').waitFor();
   assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('landeTactique1')).gold),123);
  },{v:2,lvl:9,xp:0,gold:123,items:[],z:{prairie:6},st:{},up:{},tuto:1,storySeen:{prologue:1}});
+ for(const win of [true,false])await scenario('synthetic-result-'+(win?'win':'loss'),async p=>{
+  await p.evaluate(()=>{import('/src/ui.js').then(u=>u.startFight(0,0))});
+  await dismiss(p);await waitHero(p);
+  const before=await p.evaluate(()=>JSON.parse(localStorage.getItem('landeTactique1')));
+  // Controlled terminal state, not a real fight: exercise actual result/persistence code.
+  await p.evaluate(async win=>{const {G}=await import('/src/game.js');const {end}=await import('/src/turns.js');for(const u of G.s.units)if(u.team===(win?'m':'h')){u.dead=true;u.hp=0}if(win)G.s.killedXp=20;end()},win);
+  await p.locator('#result h1').waitFor({state:'visible'});
+  const after=await p.evaluate(()=>JSON.parse(localStorage.getItem('landeTactique1')));
+  if(win){assert.ok(after.gold>before.gold);assert.equal(after.z.prairie,1)}
+  else{assert.equal(after.gold,before.gold);assert.equal(after.z.prairie||0,before.z.prairie||0)}
+  await p.reload();await p.locator('.v-go').waitFor();
+  const persisted=await p.evaluate(()=>JSON.parse(localStorage.getItem('landeTactique1')));
+  assert.equal(persisted.gold,after.gold);assert.equal(persisted.z.prairie||0,after.z.prairie||0);
+ },{v:2,lvl:9,xp:0,gold:123,items:[],z:{prairie:0},st:{},up:{},tuto:1,storySeen:{prologue:1}});
 }finally{await browser?.close();await new Promise(r=>server.close(r))}
 process.exitCode=fail?1:0;
