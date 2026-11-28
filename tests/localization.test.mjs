@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeLanguage, LANGUAGES} from '../src/locales/languages.js';
+import {ITEMS,SP} from '../src/data.js';
+import {EQUIPMENT} from '../src/locales/equipment.js';
 import {SC,OUTRO} from '../src/story.js';
 import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
 import {TUTO} from '../src/tips.js';
@@ -70,5 +72,23 @@ test('les deux aperçus couvrent toutes les scènes et les six personnages de l�
       assert.equal(storyLine(locale,id,lines.length),undefined,id);
     }
     assert.deepEqual(Object.keys(locale.outro),OUTRO.map(([name])=>name));
+  }
+});
+
+test('chaque pièce d’équipement a un nom dans les deux aperçus', () => {
+  assert.deepEqual(Object.keys(EQUIPMENT).sort(),ITEMS.map(item=>item.n).sort());
+  for (const id of ['zh-Hans','de']) {
+    setLang(id);
+    for (const {n} of ITEMS) assert.notEqual(tr(n),n);
+  }
+});
+
+test('les sorts ont tous un nom et une description de base dans les deux aperçus', () => {
+  for (const id of ['zh-Hans','de']) {
+    setLang(id);
+    for (const spell of Object.values(SP)) {
+      for (const source of [spell.n,spell.d]) assert.ok(Object.hasOwn(TEXT_CATALOGS[id],source),source);
+      assert.notEqual(tr(spell.d),spell.d);
+    }
   }
 });

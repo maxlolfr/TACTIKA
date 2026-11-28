@@ -7,6 +7,8 @@ import {ZH_GLOSSARY} from './locales/zh-glossary.js';
 import {TUTORIALS} from './locales/tutorials.js';
 import {QUEST_TRANSLATIONS} from './locales/quests.js';
 import {QUESTS} from './quests.js';
+import {EQUIPMENT} from './locales/equipment.js';
+import {SPELLS} from './locales/spells.js';
 import {DE} from './locales/de.js';
 import {EN_DESC} from './i18n-desc.js';
 import {EN_Q} from './i18n-quests.js';
@@ -165,8 +167,9 @@ const questTexts=id=>Object.fromEntries(QUESTS.flatMap(q=>{
  const line=QUEST_TRANSLATIONS[id][q.id];
  return line?[[q.t,line[0]],[q.d,line[1]],[q.c,line[2]]]:[];
 }));
+const translatedLabels=(catalog,i)=>Object.fromEntries(Object.entries(catalog).map(([name,labels])=>[name,labels[i]]));
 export const TEXT_CATALOGS=Object.freeze({
- en:EN, de:Object.freeze({...DE,...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...questTexts('zh-Hans'),
+ en:EN, de:Object.freeze({...DE,...translatedLabels(EQUIPMENT,1),...translatedLabels(SPELLS,1),...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...translatedLabels(EQUIPMENT,0),...translatedLabels(SPELLS,0),...questTexts('zh-Hans'),
   'Langue':'语言','⚔ Combat':'⚔ 战斗','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
   '♪ Musique':'♪ 音乐','🔊 Sons':'🔊 声音','Volume musique':'音乐音量',
   'Volume bruitages':'音效音量','Volume voix':'语音音量','Revoir le tutoriel':'重看教程',

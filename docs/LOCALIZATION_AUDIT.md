@@ -25,7 +25,7 @@ Branche `localization/chatgpt`, travail repris après `c48cb01`. La migration ac
 
 | Contrôle | Résultat |
 | --- | --- |
-| `npm test` | 271 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
+| `npm test` | 273 réussites, dont couverture FR/EN et préservation des balises du tutoriel dans les quatre langues. |
 | `tools/smoke.mjs` | Démarrage, camp, plateau de combat, dessin, interface et réparation d’une sauvegarde corrompue. |
 | `tools/en-audit.mjs` | « ⚔ Combat » repéré avant modification et corrigé en « ⚔ Battle ». Aucun texte suspect signalé après correction dans l’échantillon du script. |
 | `tools/localization-smoke.mjs` | Chromium, fenêtre 390 × 844. Parcours FR → EN → zh-Hans → DE → FR avec libellés du camp, attribut de langue, persistance après rechargement, niveau, or et première réplique du prologue vérifiés. |
@@ -34,8 +34,10 @@ Le détecteur anglais utilise une heuristique lexicale et ne valide pas l’int�
 
 ### Couverture des aperçus
 
-Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, ainsi que les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques) et les textes de fin. Le registre de texte simple compte 1 240 entrées EN. Le chinois en couvre 281 et l’allemand 289. Chaque catalogue ajoute également une clé absente du registre anglais. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
+Les deux aperçus couvrent les 40 quêtes avec titre, description et réplique, les cinq cartes du tutoriel, les 23 scènes du scénario (53 répliques), les textes de fin, les noms des 120 équipements et les 61 noms et descriptions de base des sorts et capacités. Le registre de texte simple compte 1 240 entrées EN. Le chinois en couvre 519 et l’allemand 527. Chaque catalogue ajoute également une clé absente du registre anglais. Ces chiffres mesurent le recoupement des registres, qui ne recensent pas toutes les chaînes du jeu.
 
-Restent à traduire et vérifier en contexte les descriptions de sorts et de talents, les équipements, les trophées, les chaînes composées du combat et du Cauchemar, les astuces et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
+Restent à traduire et vérifier en contexte les textes de maîtrise et de talents, les fiches d’équipement composées, les trophées, les chaînes composées du combat et du Cauchemar, les astuces et les écrans secondaires. Les voix des aperçus utilisent l’audio français existant. La police CJK dépend du système durant l’aperçu. Vérifier la lisibilité sur appareils réels et le cache hors connexion avant de retirer le statut « aperçu ».
 
 Pour la revue, examiner en premier la conservation des sauvegardes et le traitement du scénario séparé de la traduction DOM. Reprendre ensuite les chaînes par écran, avec le scénario et le Cauchemar testés séparément. Réactualiser l’inventaire sur la prochaine base de développement avant intégration.
+
+Pour obtenir le delta des registres, lancer `node tools/localization-coverage.mjs --missing`. L’option `--strict` signale toute clé manquante par un code de retour non nul. Ce contrôle ne couvre pas les textes dynamiques et les chaînes absentes du registre de référence.

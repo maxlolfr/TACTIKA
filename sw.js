@@ -2,11 +2,11 @@
 // Page, code et styles : réseau d'abord (4 s) puis cache, donc une mise à jour est vue dès qu'on est en ligne.
 // Images et sons : cache d'abord, remplis au fil du jeu (les sons sont servis par morceaux, comme le demande <audio>).
 // Pour invalider tout le cache après une version : changer VERSION ci-dessous.
-const VERSION='5.19',CORE='tactika-core-'+VERSION+'-l10n-3',MEDIA='tactika-media-'+VERSION;
+const VERSION='5.19',CORE='tactika-core-'+VERSION+'-l10n-4',MEDIA='tactika-media-'+VERSION;
 const SHELL=['./','index.html','style.css','home.css','manifest.webmanifest','assets/icon-192.png','assets/icon-512.png','assets/icon-180.png',
  'assets/fonts/nunito-latin-700-normal.woff2','assets/fonts/nunito-latin-800-normal.woff2','assets/fonts/nunito-latin-900-normal.woff2','assets/fonts/lilita-one-latin-400-normal.woff2',
  'src/main.js','src/util.js','src/data.js','src/game.js','src/render.js','src/ambiance.js','src/elites.js','src/gfx.js','src/audio.js','src/save.js','src/savecore.js','src/rules.js','src/turns.js','src/talents.js','src/mastery.js','src/story.js','src/chronicle.js','src/quests.js','src/ui.js','src/home.js',
- 'src/i18n.js','src/i18n-desc.js','src/i18n-quests.js','src/locales/languages.js','src/locales/tutorials.js','src/locales/quests.js','src/locales/story.js','src/locales/de.js','src/locales/zh-glossary.js','src/tips.js','src/tips-en.js','assets/village.webp','assets/world1-l.webp'];
+ 'src/i18n.js','src/i18n-desc.js','src/i18n-quests.js','src/locales/languages.js','src/locales/tutorials.js','src/locales/quests.js','src/locales/story.js','src/locales/equipment.js','src/locales/spells.js','src/locales/de.js','src/locales/zh-glossary.js','src/tips.js','src/tips-en.js','assets/village.webp','assets/world1-l.webp'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CORE).then(c=>Promise.all(SHELL.map(u=>c.add(new Request(u,{cache:'reload'})).catch(()=>{})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('tactika-')&&k!==CORE&&k!==MEDIA).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 const isMedia=u=>/\/assets\/.*\.(webp|png|jpg|mp3|ogg|woff2)$/.test(u.pathname);
