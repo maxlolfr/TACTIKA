@@ -1,3 +1,4 @@
+import {cmLabel} from './locales/nightmare-rewards.js';
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
@@ -10,6 +11,13 @@ import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zo
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
+import {ELITE_UI,eliteName} from './locales/elites.js';
+import {AIM_UI,BATTLE_HUD,battleHazard,BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
+import {MAP_UI} from './locales/map.js';
+import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
+import {INVENTORY_UI} from './locales/equipment.js';
+import {ACADEMY_UI} from './locales/talents.js';
+import {MASTERY_UI} from './locales/mastery.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
 import {modText,booms,MODS,cmSpec} from './elites.js'; // V5.10 : élites Cauchemar
@@ -17,41 +25,56 @@ import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.
 import {cmRecord,cmKills,CM_TROPHIES,CM_TITLES,SEAL_C,tN,tD,sealCount} from './cmrewards.js'; // V5.24 : récompenses honorifiques du Cauchemar
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
-import {regHtml,trh} from './i18n.js';
+import {battleGoal} from './locales/battle-tips.js';
+import {regHtml,tr,trh} from './i18n.js';
 import {HOW_EN} from './tips-en.js';
 
 // ---------- panneau de combat ----------
 
 // V4.51 : HUD V2 — statuts (icône, texte, tours restants), fiche au toucher d'un portrait, infobulle de sort (appui long / survol)
-const statusList=u=>{const L=[],pc=v=>Math.round(v*100);
- if(u.poison)L.push(['☠',`Poison ${u.poison.d} par tour`,u.poison.turns,'#8fd36a']);
- if(u.burn)L.push(['🔥',`Brûlure ${u.burn.d} par tour`,u.burn.turns,'#ff9a4a']);
- if(u.shield>0)L.push(['🛡','Rempart : dégâts réduits',0,'#9fd0ff']);
- if(u.ward)L.push(['✦',`Bouclier ${u.ward.hp} PV`,u.ward.turns,'#9fd8ff']);
- if(u.buff)L.push(['⚔',`Dégâts +${pc(u.buff.pct)} %`,u.buff.turns,'#ffd65a']);
- if(u.sunder)L.push(['💔',`Armure brisée : +${pc(u.sunder.pct)} % subis`,u.sunder.turns,'#ff9a5a']);
- if(u.weak)L.push(['⬇',`Affaibli −${pc(u.weak.pct)} %`,u.weak.turns,'#c9a0ff']);
- if(u.slow)L.push(['🕸',u.slow>1?'Enraciné':`−${u.slow} PM`,0,'#c9a0ff']);
- if(u.curse)L.push(['✝','Maudit : soins −50 %',u.curse>0&&u.curse<9?u.curse:0,'#d6b14a']);
- if(u.evade)L.push(['💨',`Esquive ${Math.round(u.evade*100)} %`,0,'#7fd0ff']);
- if(u.counter)L.push(['↩','Contre-attaque prête',0,'#ffd65a']);
- if(u.taunt)L.push(['🎯','Provoqué',0,'#ff8a8a']);
+const combatName=u=>eliteName(save.lang,u,tr);
+const statusList=u=>{const text=COMBAT_UI[save.lang],L=[],pc=v=>Math.round(v*100);
+ if(u.poison)L.push(['☠',text?.poison(u.poison.d)??`Poison ${u.poison.d} par tour`,u.poison.turns,'#8fd36a']);
+ if(u.burn)L.push(['🔥',text?.burn(u.burn.d)??`Brûlure ${u.burn.d} par tour`,u.burn.turns,'#ff9a4a']);
+ if(u.shield>0)L.push(['🛡',text?.guard??'Rempart : dégâts réduits',0,'#9fd0ff']);
+ if(u.ward)L.push(['✦',text?.ward(u.ward.hp)??`Bouclier ${u.ward.hp} PV`,u.ward.turns,'#9fd8ff']);
+ if(u.buff)L.push(['⚔',text?.buff(pc(u.buff.pct))??`Dégâts +${pc(u.buff.pct)} %`,u.buff.turns,'#ffd65a']);
+ if(u.sunder)L.push(['💔',text?.sunder(pc(u.sunder.pct))??`Armure brisée : +${pc(u.sunder.pct)} % subis`,u.sunder.turns,'#ff9a5a']);
+ if(u.weak)L.push(['⬇',text?.weak(pc(u.weak.pct))??`Affaibli −${pc(u.weak.pct)} %`,u.weak.turns,'#c9a0ff']);
+ if(u.slow)L.push(['🕸',u.slow>1?(text?.rooted??'Enraciné'):(text?.slow(u.slow)??`−${u.slow} PM`),0,'#c9a0ff']);
+ if(u.curse)L.push(['✝',text?.curse??'Maudit : soins −50 %',u.curse>0&&u.curse<9?u.curse:0,'#d6b14a']);
+ if(u.evade)L.push(['💨',text?.evade(Math.round(u.evade*100))??`Esquive ${Math.round(u.evade*100)} %`,0,'#7fd0ff']);
+ if(u.counter)L.push(['↩',text?.counter??'Contre-attaque prête',0,'#ffd65a']);
+ if(u.taunt)L.push(['🎯',text?.taunt??'Provoqué',0,'#ff8a8a']);
  return L};
-const chips=u=>statusList(u).map(([i,t,n,c])=>`<span class="ch" style="--c:${c}" title="${t}${n?' · '+n+' tour'+(n>1?'s':''):''}"><i>${i}</i>${n||''}</span>`).join('');
+const chips=u=>statusList(u).map(([i,t,n,c])=>`<span class="ch" style="--c:${c}" title="${t}${n?' · '+(COMBAT_UI[save.lang]?.turns(n)??n+' tour'+(n>1?'s':'')):''}"><i>${i}</i>${n||''}</span>`).join('');
 let fOpen=null;
 const closeFiche=()=>{const f=document.getElementById('ufiche');if(f)f.remove();fOpen=null};
 function toggleFiche(u,anchor){if(fOpen===u){closeFiche();return}closeFiche();fOpen=u;
  const f=document.createElement('div');f.id='ufiche';f.setAttribute('role','dialog');
- const st=statusList(u),pct=Math.max(0,Math.round(100*u.hp/u.max));
- const l2=u.team==='h'?`<span class="pa">${u.pa}/${u.maxPA} PA</span><span class="pm">${u.pm}/${u.maxPM} PM</span>`:`<span>Attaque ${u.atk.dmg.join('–')}, portée ${u.atk.r[1]>1?u.atk.r.join('–'):'contact'}</span>`;
- f.innerHTML=`<b class="fn ${u.team==='h'?'fh':'fm'}">${u.n}${u.boss?' ♛ boss':''}</b><div class="fb"><i style="width:${pct}%"></i></div><div class="fl">${u.hp}/${u.max} PV${u.armor?` · armure ${Math.round(u.armor*100)} %`:''}</div><div class="fl">${l2}</div>`
-  +(st.length?st.map(([i,t,n])=>`<div class="fs"><i>${i}</i>${t}${n?` <small>· ${n} tour${n>1?'s':''}</small>`:''}</div>`).join(''):'<div class="fl fz">Aucun statut</div>');
+ const text=COMBAT_UI[save.lang],st=statusList(u),pct=Math.max(0,Math.round(100*u.hp/u.max));
+ const l2=u.team==='h'?`<span class="pa">${text?.action(u.pa+'/'+u.maxPA)??`${u.pa}/${u.maxPA} PA`}</span><span class="pm">${text?.movement(u.pm+'/'+u.maxPM)??`${u.pm}/${u.maxPM} PM`}</span>`:`<span>${text?.attack(u.atk.dmg.join('–'),u.atk.r[1]>1?u.atk.r.join('–'):text.melee)??`Attaque ${u.atk.dmg.join('–')}, portée ${u.atk.r[1]>1?u.atk.r.join('–'):'contact'}`}</span>`;
+ f.innerHTML=`<b class="fn ${u.team==='h'?'fh':'fm'}">${combatName(u)}${u.boss?' ♛ '+(ELITE_UI[save.lang]?tr('Boss'):'boss'):''}</b><div class="fb"><i style="width:${pct}%"></i></div><div class="fl">${text?.hp(u.hp+'/'+u.max)??`${u.hp}/${u.max} PV`}${u.armor?' · '+(text?.armor(Math.round(u.armor*100))??`armure ${Math.round(u.armor*100)} %`):''}</div><div class="fl">${l2}</div>`
+  +(st.length?st.map(([i,t,n])=>`<div class="fs"><i>${i}</i>${t}${n?` <small>· ${text?.turns(n)??`${n} tour${n>1?'s':''}`}</small>`:''}</div>`).join(''):`<div class="fl fz">${text?.noStatus??'Aucun statut'}</div>`);
+ const enemyText=ENEMY_DETAILS[save.lang];
+ if(enemyText&&u.boss){const mechanics=bossDetails(u,enemyText);if(mechanics.length){
+  const line=document.createElement('div');line.className='fl';line.textContent=mechanics.join(' · ');f.append(line);
+ }}
  document.body.append(f);const r=anchor.getBoundingClientRect(),w=f.offsetWidth;f.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';f.style.top=(r.bottom+8)+'px'}
 let tipEl=null;
 const hideTip=()=>{if(tipEl){tipEl.remove();tipEl=null}};
 function showTip(b,sp,u,pc){hideTip();const cdn=u.cd[sp.n]>0?u.cd[sp.n]:0;
- const stat=[sp.dmg?`Dégâts ${sp.dmg.join('–')}`:'',sp.heal?`Soin ${sp.heal.join('–')}`:'',sp.r&&sp.r[1]?`portée ${sp.r[0]===sp.r[1]?sp.r[1]:sp.r.join('–')}`:'sur soi',sp.zone?`zone ${sp.zone}`:''].filter(Boolean).join(' · ');
- const t=tipEl=document.createElement('div');t.id='sptip';t.innerHTML=`<b>${sp.n}</b> <span class="tc">${pc} PA${sp.cd?` · recharge ${sp.cd}`:''}</span><div>${stat}</div><div class="td">${sp.d||''}</div>`+(cdn?`<div class="tw">Disponible dans ${cdn} tour${cdn>1?'s':''}</div>`:'');
+ const text=COMBAT_UI[save.lang];
+ const range=sp.r?.[1]?(sp.r[0]===sp.r[1]?sp.r[1]:sp.r.join('–')):null;
+ const stat=[
+  sp.dmg&&(text?.damage(sp.dmg.join('–'))??`Dégâts ${sp.dmg.join('–')}`),
+  sp.heal&&(text?.heal(sp.heal.join('–'))??`Soin ${sp.heal.join('–')}`),
+  range==null?(text?.self??'sur soi'):(text?.range(range)??`portée ${range}`),
+  sp.zone&&(text?.area(sp.zone)??`zone ${sp.zone}`),
+ ].filter(Boolean).join(' · ');
+ const cost=text?.action(pc)??`${pc} PA`, cd=sp.cd?' · '+(text?.cooldown(sp.cd)??`recharge ${sp.cd}`):'';
+ const ready=text?.ready(cdn)??`Disponible dans ${cdn} tour${cdn>1?'s':''}`;
+ const t=tipEl=document.createElement('div');t.id='sptip';t.innerHTML=`<b>${sp.n}</b> <span class="tc">${cost}${cd}</span><div>${stat}</div><div class="td">${sp.d||''}</div>`+(cdn?`<div class="tw">${ready}</div>`:'');
  document.body.append(t);const r=b.getBoundingClientRect(),w=t.offsetWidth,h=t.offsetHeight;
  if(innerWidth>innerHeight){t.style.left=Math.max(6,r.left-w-8)+'px';t.style.top=Math.max(6,Math.min(innerHeight-h-6,r.top))+'px'}
  else{t.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';t.style.top=Math.max(6,r.top-h-8)+'px'}}
@@ -64,13 +87,14 @@ function tipFor(b,sp,u,pc){let t=0,shown=0;const run=()=>{shown=1;showTip(b,sp,u
 document.addEventListener('pointerdown',e=>{if(fOpen&&!e.target.closest('#ufiche,#tl .rg'))closeFiche()},true);
 addEventListener('keydown',e=>{if(e.key==='Escape')closeFiche()});
 function renderTL(){const tl=$('tl'),S=G.s;tl.innerHTML='';if(HUD2)closeFiche();const n=S.order.length;let no=0;for(let i=0;i<n;i++){const u=S.order[((G.turn+i)%n+n)%n];if(u.dead)continue;no++;
- const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,HUD2?60:34,u.team==='h'?.62:0);if(HUD2&&u.boss){const g=c.getContext('2d'),z=c.width;g.font=`${Math.round(z*.3)}px serif`;g.textAlign='center';g.lineWidth=z*.05;g.strokeStyle='#1a0f2a';g.fillStyle='#e9cf94';g.strokeText('♛',z*.5,z*.3);g.fillText('♛',z*.5,z*.3)}c.className=u.team+(u.boss?' b':'')+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(HUD2&&!c.classList.contains('tg')){toggleFiche(u,c);return}if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};if(HUD2){const w=document.createElement('span');w.className='rg '+u.team+(u.boss?' b':'')+(u===G.cur?' cur':'')+(c.classList.contains('tg')?' tg':'');w.appendChild(c);const nb=document.createElement('i');nb.className='tn';nb.textContent=no;w.append(nb);if(u.tag){const lt=document.createElement('i');lt.className='tlt';lt.textContent=u.tag;w.append(lt)}w.setAttribute('aria-label',`${no}. ${u.n}`);tl.appendChild(w)}else tl.appendChild(c)}}
+ const[s,idx]=u.team==='h'?heroFrame(u.k):[u.s,u.row*3];const c=icon(s,idx,HUD2?60:34,u.team==='h'?.62:0);if(HUD2&&u.boss){const g=c.getContext('2d'),z=c.width;g.font=`${Math.round(z*.3)}px serif`;g.textAlign='center';g.lineWidth=z*.05;g.strokeStyle='#1a0f2a';g.fillStyle='#e9cf94';g.strokeText('♛',z*.5,z*.3);g.fillText('♛',z*.5,z*.3)}c.className=u.team+(u.boss?' b':'')+(u===G.cur?' cur':'')+(G.sel&&G.sel.cells.some(s=>s.ok&&s.x===u.x&&s.y===u.y)?' tg':'');c.onclick=()=>{if(HUD2&&!c.classList.contains('tg')){toggleFiche(u,c);return}if(G.phase==='fight'&&!G.busy)act({x:u.x,y:u.y})};if(HUD2){const w=document.createElement('span');w.className='rg '+u.team+(u.boss?' b':'')+(u===G.cur?' cur':'')+(c.classList.contains('tg')?' tg':'');w.appendChild(c);const nb=document.createElement('i');nb.className='tn';nb.textContent=no;w.append(nb);if(u.tag){const lt=document.createElement('i');lt.className='tlt';lt.textContent=u.tag;w.append(lt)}w.setAttribute('aria-label',`${no}. ${combatName(u)}`);tl.appendChild(w)}else tl.appendChild(c)}}
 const SPI={slash:['sp16',0],smash:['sp16',12],guard:['sp16',1],shot:['sico',8],volley:['sp16',4],trap:['spells5',3],revive:['spells5',4],potion:['items',10],boots:['sp16',2],heal:['sp16',8],venom:['sico',5],aura:['sp16',3],arcane:['sp16',14],flame:['sico',2],frost:['sp16',13],fireball:['spells',8],icewall:['spells',9],blink:['spells',11],weaken:['sico',7],nova:['sico',13],glyph:['spells',13],storm:['spells',10],charge:['spells5',0],pshot:['spells5',1],venomarrow:['spells5',5],blastarrow:['spells5',6],icearrow:['spells5',7],dodge:['spells5',8],rain:['spells5',9],whirl:['spells5',10],sunder:['spells5',11],taunt:['spells5',12],counter:['spells5',13],rage:['spells5',14],judge:['spells5',15],ward:['spells5',16],cleanse:['spells5',17],roots:['spells5',18],moon:['spells5',19],bless:['sp16',9],mheal:['sp16',10],
  // V4.53 / V4.54 : icônes provisoires (réemploi) en attendant les 20 icônes de Nyra et Lyria (voir COMMANDES-ARTISTIQUES-CHATGPT.md)
  dagger:['sp16',0],backstab:['sico',9],shadow:['sp16',14],toxin:['sico',5],smoke:['spells',13],mark:['sp16',5],twin:['spells5',0],evade:['sp16',6],execute:['spells5',15],dance:['sico',13],
  hammer:['sp16',12],protect:['sp16',1],light:['sp16',8],intercept:['sp16',1],purge:['spells5',17],smite:['spells5',15],aegis:['sp16',11],rescue:['sp16',10],oath:['sp16',3],bastion:['spells5',20]};
 // objectif de survie (V4.1) : tours restants, tour en cours compris
-const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !')};
+const announcements=()=>BATTLE_ANNOUNCEMENTS[save.lang];
+const survTxt=short=>{const n=Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round);return announcements()?.survive(n,short)??(n>1?(short?`Tiens encore ${n} tours`:`Objectif : tiens encore ${n} tours`):(short?'Dernier tour !':'Dernier tour à tenir !'))};
 const GOALS={survive:`<b>⏳ Objectif : survivre ${SURVIVE} tours</b><br>Garde au moins un héros debout jusqu’à la fin du ${SURVIVE}ᵉ tour. Tu n’as pas besoin de vaincre tous les monstres (le faire gagne aussi).`,
  chief:'<b>♛ Objectif : abattre le chef</b><br>La victoire est immédiate dès que le monstre à la couronne tombe, même s’il reste des ennemis.'};
 GOALS.waves=n=>`<b>⏳ Objectif : tenir ${n} tours</b><br>Des renforts arrivent par vagues : les cases marquées ⚠ annoncent ceux du prochain tour. Garde au moins un héros debout jusqu’à la fin du ${n}ᵉ tour.<br>★ Élimine toutes les vagues : 3ᵉ étoile et +25 % d’or.`;
@@ -78,58 +102,132 @@ GOALS.waves=n=>`<b>⏳ Objectif : tenir ${n} tours</b><br>Des renforts arrivent 
 const GOALS_EN={survive:`<b>⏳ Objective: survive ${SURVIVE} turns</b><br>Keep at least one hero standing until the end of turn ${SURVIVE}. You do not need to defeat every monster (doing so also wins).`,
  chief:'<b>♛ Objective: take down the chief</b><br>Victory is immediate once the crowned monster falls, even if enemies remain.',
  waves:n=>`<b>⏳ Objective: hold out ${n} turns</b><br>Reinforcements arrive in waves: tiles marked ⚠ show the ones coming next turn. Keep at least one hero standing until the end of turn ${n}.<br>★ Eliminate every wave: 3rd star and +25% gold.`};
-const goalTxt=S=>{const fr=S.wave?GOALS.waves(S.surv):GOALS[S.goal];regHtml(fr,S.wave?GOALS_EN.waves(S.surv):GOALS_EN[S.goal]);return fr};
+function goalTxt(S){
+ const key=S.wave?'waves':S.goal;
+ const fr=S.wave?GOALS.waves(S.surv):GOALS[key];
+ const en=S.wave?GOALS_EN.waves(S.surv):GOALS_EN[key];
+ const turns=S.wave?S.surv:SURVIVE;
+ regHtml(fr,en,{'zh-Hans':battleGoal('zh-Hans',key,turns),de:battleGoal('de',key,turns)});
+ return fr;
+}
 let goalT=0;function goalBanner(t){const g=$('goal');g.textContent=t;g.classList.add('on');clearTimeout(goalT);goalT=setTimeout(()=>g.classList.remove('on'),2600)}
 function newRound(sp=[]){const w=G.s.wave;if(sp.length){addRefs(sp);for(const m of sp){addFx(m.x,m.y,6,1.1,600,'fxi');say(m,m.elite?'Élite !':'Renfort','#ffa040',!!m.elite)}sfx('enemy_warning',.8);renderTL()}
- if(G.s.goal==='survive')goalBanner((sp.length?`⚠ ${sp.length} renfort${sp.length>1?'s':''} ! `:'')+(w&&w.next.length?`Encore ${w.next.length} au prochain tour · `:w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead)?'Dernière vague · ':'')+'⏳ '+survTxt())}
+ if(G.s.goal==='survive'){
+  const text=announcements(),parts=[];
+  if(sp.length)parts.push(text?.wave(sp.length)??`⚠ ${sp.length} renfort${sp.length>1?'s':''} !`);
+  if(w?.next.length)parts.push(text?.next(w.next.length)??`Encore ${w.next.length} au prochain tour`);
+  else if(w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead))parts.push(text?.last??'Dernière vague');
+  parts.push('⏳ '+survTxt());
+  goalBanner(parts.join(' · '));
+ }
+}
+function battleTitle(F,hud){
+ const zone=ZONES[F.zi],round=G.s.round;
+ const quest=F.quest&&QUESTS.find(q=>q.id===F.quest);
+ const stage=F.quest?hud.quest(quest?tr(quest.t):F.quest):F.daily?hud.daily:hud.stage(F.i+1,zlen(zone))+(F.boss?' · '+hud.boss:'');
+ const goal=G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-round)}`:'';
+ return `${F.cm?'☠ ':''}${tr(zone.n)}\n${stage} · ${hud.round(round)} · ${hud.level(F.lvl)}${goal}`;
+}
+function hudSpell(hud,sp){
+ const details=[sp.dmg&&hud.damage(sp.dmg.join('–')),sp.heal&&hud.heal(sp.heal.join('–')),hud.aim(sp.r[1]?sp.r.join('–'):'',sp.zone)].filter(Boolean);
+ return `${tr(sp.n)} : ${details.join(', ')}. ${tr(sp.d)}.`;
+}
 function render(){renderTL();
- const u=G.cur,{sel,F}=G;
- $('title').classList.toggle('cm',!!F?.cm);$('title').textContent=F?`${F.cm?'☠ ':''}${ZONES[F.zi].n}\n${F.quest?'Quête '+F.quest:F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round} · niv. ${F.lvl}${G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round)}`:''}`:''; // V5.09 : 2 lignes au plus (l'objectif complet reste dans le bandeau d'objectif)
+ const u=G.cur,{sel,F}=G,hud=BATTLE_HUD[save.lang]??BATTLE_HUD.fr;
+ $('title').classList.toggle('cm',!!F?.cm);
+ $('title').textContent=F?battleTitle(F,hud):'';
  if(!u){$('exc').className='';return}
  const me=u.team==='h'&&G.phase==='fight';
  G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;
  $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),HUD2?84:30,u.team==='h'?.62:0);
  const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=HUD2?`${u.hp} / ${u.max}`:`${u.hp}/${u.max} PV`;
  // V4.0.5 : PA et PM sur la ligne du nom ; #pts ne garde que la rangée des cibles (flottante en portrait)
- const pp=`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${HUD2?'PA ':''}${u.pa}${HUD2?'':' PA'}</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${HUD2?'PM ':''}${u.pm}${HUD2?'':' PM'}</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">Tour ennemi…</span>`);
+ const [pa,pm]=hud.points(u.pa,u.pm);
+ const pp=`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${pa}</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${pm}</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">${tr('Tour ennemi…')}</span>`);
  if(HUD2){ // V4.61 : fiche du héros actif comme la maquette (portrait cadré or, nom, PV avec cœur, pastilles PA / PM)
-  ic.classList.add('pt');const wi=document.createElement('div');wi.className='wi';wi.insertAdjacentHTML('beforeend',`<b class="nm">${u.n}${u.lv?` <small class="lv">niv. ${u.lv}</small>`:''}</b>`);wi.append(hb,ht);wi.insertAdjacentHTML('beforeend',`<div class="pp">${pp}</div>`);$('who').append(ic,wi)}
- else{$('who').append(ic,`${u.n}${u.lv?' · niv. '+u.lv:''}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
+  ic.classList.add('pt');const wi=document.createElement('div');wi.className='wi';wi.insertAdjacentHTML('beforeend',`<b class="nm">${combatName(u)}${u.lv?` <small class="lv">${hud.level(u.lv)}</small>`:''}</b>`);wi.append(hb,ht);wi.insertAdjacentHTML('beforeend',`<div class="pp">${pp}</div>`);$('who').append(ic,wi)}
+ else{$('who').append(ic,`${combatName(u)}${u.lv?' · '+hud.level(u.lv):''}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
  $('pts').innerHTML='';
  const tg=document.createElement('div');tg.id='tgt';
- if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
+ if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',AIM_UI[save.lang]?.targetLabel(combatName(o),o.hp,o.max,ok||zc,ap)??`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
  $('pts').append(tg);
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
-  b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));const pc=costOf(u,sp);b.insertAdjacentHTML('beforeend',`<b${pc>sp.pa?' class="up" title="Relance : +1 PA"':''}>${pc}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
-  b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${pc} PA`);
+  b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));const pc=costOf(u,sp);b.insertAdjacentHTML('beforeend',`<b${pc>sp.pa?` class="up" title="${hud.recast}"`:''}>${pc}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
+  b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${tr(sp.n)}, ${hud.points(pc,0)[0]}`);
   if(me&&!sel&&F&&F.guide&&id==='shot'&&u.pa>=pc&&targetsFrom(G.s,u,u).foes.length)b.classList.add('coach');
   b.disabled=!me||G.busy||u.pa<pc||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;G.ex=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};if(HUD2)tipFor(b,sp,u,pc);S.appendChild(b)}
  requestAnimationFrame(()=>{for(const l of S.querySelectorAll('.sp small')){l.style.fontSize='';const k=l.clientWidth/l.scrollWidth;if(k<1)l.style.fontSize=Math.max(6.5,parseFloat(getComputedStyle(l).fontSize)*k*.96)+'px'}});
- const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
+ const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML=tr('Fin du tour')+(keep?`<small>${hud.carry(keep)}</small>`:'');
  $('end').disabled=!me||G.busy;
- const lava=G.s.lava?.next.length&&me?(G.s.lava.trap?`◆ Pièges : les dalles dorées se déclenchent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV, −1 PM). `:G.s.lava.toxic?'☣ Zones toxiques : les cases vertes empoisonnent au prochain tour (4 PV × 2 tours). ':G.s.lava.cold?'❄ Fissures de givre : les cases bleues blessent (6 % des PV) et ralentissent au prochain tour. ':`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `):'';
- const bm=booms(G.s).map(b=>`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
- $('hint').textContent=!me?`${u.n} joue.`:lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
+ const hazard=me?battleHazard(hud,G.s.lava,Math.round(LAVA_DMG*100)):'';
+ const text=announcements();
+ const bm=booms(G.s).map(b=>text?.explosion(combatName(b.by),b.d)??`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?(text?.beam(beamDmg(G.s.beam.by))??`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `):''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?(text?.crystal??'💎 Cristal : +30 %. '):'';
+ $('hint').textContent=!me?(text?.turn(combatName(u))??`${u.n} joue.`):(hazard?hazard+' ':'')+beam+amp+(sel?hudSpell(hud,sel.sp):F&&F.guide&&(canMove(u)||castable(u).length)?coach(u,hud):idle(u,hud));
  aimCard(u);
 }
-function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
- if(u.k==='archer')return t&&u.pa>=3?'🎯 Une Gelée est à portée : touche « Tir », la Gelée, puis retouche-la.':u.pm?go+' Le 🎯 compte les ennemis visables de là.':'Bien joué ! Touche « Fin du tour ».';
- if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
- return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
+function coach(u,hud){
+ const target=targetsFrom(G.s,u,u).foes.length;
+ const move=tr('Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.');
+ const done=tr('Bien joué ! Touche « Fin du tour ».');
+ if(u.k==='archer')return target&&u.pa>=3?hud.tutorialShot:u.pm?move+' '+hud.tutorialTargets:done;
+ if(u.k==='warrior')return target?hud.tutorialPush:u.pm?hud.tutorialKael+' '+move:hud.tutorialGuard;
+ return target&&u.pa>=3?hud.tutorialCombo:u.pm?hud.tutorialAelis+' '+move:tr('Touche « Fin du tour ».');
+}
 const info=o=>eliteInfo(o,info0(o));
 // V5.10 : capacité des élites Cauchemar (fiche du monstre), état en direct
-const eliteInfo=(o,t)=>!o.mods?t:t+(o.champ?(save.lang==='en'?' · CHAMPION (2 abilities)':' · CHAMPION (2 capacités)'):'')+o.mods.map(id=>id==='berserk'&&o.hp<=o.max*MODS.berserk.thr?' · EN FURIE (dégâts ×1,35)':id==='regen'?` · régénéré ${o.regen||0}/${Math.round(o.max*MODS.regen.cap)}`:id==='vamp'?` · drainé ${o.drain||0}/${Math.round(o.max*MODS.vamp.cap)}`:id==='cmdt'?` · commande ${G.s.units.filter(a=>a!==o&&!a.dead&&a.team===o.team&&Math.abs(a.x-o.x)+Math.abs(a.y-o.y)<=MODS.cmdt.r).length} allié(s)`:id==='bombe'?(o.prime?' · AMORCÉ : explose à son prochain tour':o.bcd>0?` · se recharge (${o.bcd} t.)`:''):'').join('')+' · '+modText(o,save.lang).join(' · ');
-const info0=o=>{if(o.curse&&o.team==='h')return`${o.n} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n}${o.lv?' · niv. '+o.lv:''} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
+function eliteInfo(o,t){
+ if(!o.mods)return t;
+ const text=ELITE_UI[save.lang],parts=[];
+ if(o.champ)parts.push(text?.champion??(save.lang==='en'?'CHAMPION (2 abilities)':'CHAMPION (2 capacités)'));
+ for(const id of o.mods){
+  if(id==='berserk'&&o.hp<=o.max*MODS.berserk.thr)parts.push(text?.rage??'EN FURIE (dégâts ×1,35)');
+  if(id==='regen'||id==='vamp'){
+   const value=id==='regen'?(o.regen||0):(o.drain||0),cap=Math.round(o.max*MODS[id].cap);
+   parts.push(id==='regen'?(text?.regen(value,cap)??`régénéré ${value}/${cap}`):(text?.drain(value,cap)??`drainé ${value}/${cap}`));
+  }
+  if(id==='cmdt'){
+   const count=G.s.units.filter(a=>a!==o&&!a.dead&&a.team===o.team&&Math.abs(a.x-o.x)+Math.abs(a.y-o.y)<=MODS.cmdt.r).length;
+   parts.push(text?.command(count)??(save.lang==='en'?`Commands ${count} allies`:`commande ${count} allié(s)`));
+  }
+  if(id==='bombe'){
+   if(o.prime)parts.push(text?.primed??'AMORCÉ : explose à son prochain tour');
+   else if(o.bcd>0)parts.push(text?.cooldown(o.bcd)??`se recharge (${o.bcd} t.)`);
+  }
+ }
+ return [t,...parts,...modText(o,save.lang)].join(' · ');
+}
+const legacyEnemyInfo=o=>{if(o.curse&&o.team==='h')return`${combatName(o)} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${combatName(o)}${o.lv?' · niv. '+o.lv:''} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
 const PHASE50={swamp:'spores et zones toxiques',astral:'jugement céleste',frost:'gel et fissures',breaker:'fracas primordial'}; // V4.76 : phases à 50 % PV (avant, le survol d'un boss sans cycle plantait)
+const ENEMY_THRESHOLDS={forge:'Surchauffe',tomb:'Malédiction',rage:'Fureur',...PHASE50};
+function info0(o){
+ const text=ENEMY_DETAILS[save.lang];
+ if(!text)return legacyEnemyInfo(o);
+ const name=combatName(o);
+ if(o.curse&&o.team==='h')return [name,text.curse(o.hp,o.max,o.curse)].join(' · ');
+ const details=[name,text.base(o.lv,o.hp,o.max,o.maxPM)];
+ if(o.atk)details.push(text.attack(o.atk.dmg.join('–')));
+ const intent=G.intents?.find(i=>i.m===o);
+ if(intent)details.push(text.target(combatName(intent.target),intent.amp));
+ return [...details,...bossDetails(o,text)].join(' · ');
+}
+function bossDetails(o,text){
+ const details=[];
+ if(o.bs==='beam')details.push(text.phase(o.ph||1));
+ if(BOSS_P[o.bs])details.push(text.next(tr(BOSS_P[o.bs][2]),o.bs==='beam'&&G.s.beam?1:bossNext(o)));
+ if(ENEMY_THRESHOLDS[o.bs])details.push(text.threshold(tr(ENEMY_THRESHOLDS[o.bs]),o.raged));
+ return details;
+}
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
 const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=costOf(u,sp)&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
 const canMove=u=>u.pm>0&&!!G.reachC&&G.reachC.dist.size>1;
-function idle(u){const c=castable(u).map(sp=>sp.n).join(', ');
- if(canMove(u))return c?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».';
- return c?`Plus de déplacement. Encore possible : ${c}. Sinon « Fin du tour ».`:'Plus aucune action : touche « Fin du tour ».'}
+function idle(u,hud){
+ const spells=castable(u).map(sp=>tr(sp.n)).join(', ');
+ if(canMove(u))return tr(spells?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».');
+ return spells?hud.idle(spells):tr('Plus aucune action : touche « Fin du tour ».');
+}
 function autoEnd(){const u=G.cur;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0||castable(u).length)return;
- $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
+ $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(announcements()?.exhausted(combatName(u))??`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
 
 // ---------- saisie ----------
 // V4.4 : deux doigts = zoom, un doigt qui glisse sur un plateau agrandi = déplacement, molette à la souris.
@@ -156,15 +254,15 @@ async function advance(u,sp,E){const fid=G.fid;G.plan=null;G.sel=null;G.ex=null;
 const same=(a,b)=>a&&b&&a.x===b.x&&a.y===b.y;
 const foeOf=(u,sp,o)=>o&&o!==u&&(sp.t==='ally'?o.team===u.team:(sp.t==='enemy'||sp.t==='cell'&&!sp.free)&&o.team!==u.team);
 // ce que viserait un appui sur la case c
-function examine(u,sp,c){const S=G.s,o=occ(S,c.x,c.y),E={tap:{x:c.x,y:c.y},x:c.x,y:c.y};
+function examine(u,sp,c){const S=G.s,o=occ(S,c.x,c.y),text=AIM_UI[save.lang],E={tap:{x:c.x,y:c.y},x:c.x,y:c.y};
  if(G.sel.cells.some(s=>s.ok&&same(s,c))){if(!sp.charge)return E;const d=chargeDest(S,u,sp,c);return{...E,chg:{x:d.x,y:d.y,path:d.path,cost:d.path.length,foes:[],sp,chg:1}}}
  if(sp.zone&&foeOf(u,sp,o)){const z=zoneCenter(S,u,sp,o);if(z)return{...E,...z,indirect:1}}
  if(foeOf(u,sp,o)){const via=sp.zone?from=>!!zoneCenter(S,u,sp,o,from):undefined,ap=approach(S,u,sp,c,G.reachC,via);
-  if(ap){const z=sp.zone&&zoneCenter(S,u,sp,o,ap);return{...E,...(z||{}),why:whyNot(S,u,sp,c)?.t,at:whyNot(S,u,sp,c)?.at,ap:{...ap,path:pathTo(u,ap.k,G.reachC.prev),sp,foes:[o]}}}}
- const w=whyNot(S,u,sp,c),why=sp.zone&&o?`Aucun centre ne peut ${o.team===u.team?'l’atteindre':'le toucher'}${w?' ('+w.t.toLowerCase()+')':''}`:w?w.t:'Hors de portée';
+  if(ap){const z=sp.zone&&zoneCenter(S,u,sp,o,ap),blocked=whyNot(S,u,sp,c,u,text,combatName);return{...E,...(z||{}),why:blocked?.t,at:blocked?.at,ap:{...ap,path:pathTo(u,ap.k,G.reachC.prev),sp,foes:[o]}}}}
+ const w=whyNot(S,u,sp,c,u,text,combatName),why=sp.zone&&o?(text?.noCenter(w?.t)??`Aucun centre ne peut ${o.team===u.team?'l’atteindre':'le toucher'}${w?' ('+w.t.toLowerCase()+')':''}`):w?.t??tr('Hors de portée');
  return{...E,bad:why,at:w&&w.at}}
 function aim(u,c,hover){const sp=G.sel.sp,E=examine(u,sp,c);
- if(E.bad&&!occ(G.s,c.x,c.y)){G.ex=null;render();if(!hover){$('hint').textContent=E.bad+'. Touche une cible, ou retouche le sort pour l’annuler.';G.mark=E.at?{...E.at,until:Date.now()+2200}:null}return}
+ if(E.bad&&!occ(G.s,c.x,c.y)){G.ex=null;render();if(!hover){$('hint').textContent=E.bad+'. '+tr('Touche une cible, ou retouche le sort pour l’annuler.');G.mark=E.at?{...E.at,until:Date.now()+2200}:null}return}
  G.ex=E;G.mark=E.at?{...E.at,until:Date.now()+2200}:null;if(!hover&&!E.bad)sfx('click',.5);render()}
 async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
  if(!u||u.team!=='h'){if(o)$('hint').textContent=info(o);return}
@@ -173,41 +271,73 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
   if(sp.t==='self'&&!sp.nova){if(same(c,u))return strike(u,sp,c);$('hint').textContent='Touche ton héros pour confirmer, ou retouche le sort pour l’annuler.';return}
   if(E&&!E.bad&&(same(c,E.tap)||E.ap&&same(c,E.ap)&&!o))return E.ap?advance(u,sp,E):strike(u,sp,{x:E.x,y:E.y});
   return aim(u,c)}
- const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
+ const text=AIM_UI[save.lang],k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
   if(!G.plan||G.plan.x!==c.x||G.plan.y!==c.y){const t=targetsFrom(G.s,u,c),cost=G.reachC.dist.get(k);G.plan={x:c.x,y:c.y,cost,foes:t.foes,path:pathTo(u,k,G.reachC.prev)};sfx('click',.5);
-   $('hint').textContent=`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
+   $('hint').textContent=text?text.movePreview(cost,t.list.map(l=>text.moveTarget(tr(l.sp.n),l.n)).join(', ')):`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
   G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();autoEnd();return}
  if(G.plan){G.plan=null;render()}if(o){$('hint').textContent=info(o);return}
- const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.ice?`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${cl.ice.until-G.s.round} tour(s))`:cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
+ const cl=cell(G.s,c.x,c.y);
+ if(cl&&(cl.water||cl.block)){
+  const terrain=cl.water?'water':cl.cry?'crystal':'obstacle',turns=cl.ice?cl.ice.until-G.s.round:0;
+  const label=cl.ice?(text?.ice(cl.ice.hp,cl.ice.max,turns)??`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${turns} tour(s))`)
+   :(text?.terrain[terrain]??(cl.water?'Eau':cl.cry?'Cristal':'Obstacle'));
+  const message=text?.impassable(label)??label+' · infranchissable';
+  $('hint').textContent=message+'.';
+  say({gx:c.x,gy:c.y},message,cl.water?'#9fd8ff':'#e8dcc0');
+ }
+}
 // ---------- carte de visée : qui, validité, effet réel ----------
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
-const KO={sure:'<em class="ko">KO garanti</em>',maybe:'<em class="ko2">KO possible</em>',crit:'<em class="ko2">KO si critique</em>'};
-function effect(u,sp,t,from){const f=forecast(G.s,u,sp,t,from),out=[];
- if(sp.burn&&f.dmg)out.push(fireproof(t)?'insensible au feu : pas de brûlure':`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`);
- if(sp.slow&&f.dmg)out.push(slowFor(sp,t)>2?'enraciné : 1 PM au prochain tour':`−${slowFor(sp,t)} PM au prochain tour`);
- if(sp.weaken)out.push(`${Math.round(sp.weaken[0]*100)} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
- if(f.dmg){out.push(`<b>${rg(f.dmg)} dégâts</b>${f.push?` + ${f.push} collision`:''} · critique ${Math.round(f.pc*100)} % : ${rg(f.crit)}${f.dodge?` · esquive ${Math.round(f.dodge*100)} %`:''}`);
-  const why=[u.buff&&`bonus +${Math.round(u.buff.pct*100)} %`,f.combo&&`combo ×${f.combo}`,f.amp&&'cristal',t.shield>0&&'Rempart',t.armor&&`armure ${Math.round(t.armor*(1-(sp.pierce||0))*100)} %`].filter(Boolean);
-  if(f.ko||why.length)out.push((f.ko?KO[f.ko]+' ':'')+why.join(' · '))}
- if(f.heal)out.push(`<b>+${rg(f.heal)} PV</b>`);
- if(sp.poison&&f.dmg)out.push(`poison ${sp.poison[0]} × ${sp.poison[1]} tours`);
- if(sp.buff)out.push(`+${Math.round(sp.buff*100)} % de dégâts`);
- return out}
+const KO={sure:'KO garanti',maybe:'KO possible',crit:'KO si critique'};
+function koBadge(level){
+ const label=AIM_UI[save.lang]?.ko[level]??KO[level];
+ return `<em class="${level==='sure'?'ko':'ko2'}">${label}</em>`;
+}
+function effect(u,sp,t,from){
+ const f=forecast(G.s,u,sp,t,from),out=[],text=AIM_UI[save.lang],combat=COMBAT_UI[save.lang],pct=n=>Math.round(n*100);
+ if(sp.burn&&f.dmg)out.push(fireproof(t)?tr('insensible au feu : pas de brûlure'):(text?.status('burn',...sp.burn)??`brûlure ${sp.burn[0]} × ${sp.burn[1]} tours`));
+ if(sp.slow&&f.dmg){const n=slowFor(sp,t);out.push(n>2?tr('enraciné : 1 PM au prochain tour'):(text?.slow(n)??`−${n} PM au prochain tour`))}
+ if(sp.weaken)out.push(text?.weaken(pct(sp.weaken[0]),sp.weaken[1])??`${pct(sp.weaken[0])} % de dégâts infligés en moins, ${sp.weaken[1]} tours`);
+ if(f.dmg){
+  const damage=combat?.damage(rg(f.dmg))??rg(f.dmg)+' dégâts';
+  const collision=f.push?(text?.collision(f.push)??` + ${f.push} collision`):'';
+  const critical=text?.critical(pct(f.pc),rg(f.crit))??`critique ${pct(f.pc)} % : ${rg(f.crit)}`;
+  const dodge=f.dodge?(combat?.evade(pct(f.dodge))??`esquive ${pct(f.dodge)} %`):'';
+  out.push([`<b>${damage}</b>${collision}`,critical,dodge].filter(Boolean).join(' · '));
+  const armor=pct(t.armor*(1-(sp.pierce||0)));
+  const why=[u.buff&&(text?.bonus(pct(u.buff.pct))??`bonus +${pct(u.buff.pct)} %`),f.combo&&(text?.combo(f.combo)??`combo ×${f.combo}`),f.amp&&(text?.crystal??'cristal'),t.shield>0&&tr('Rempart'),t.armor&&(combat?.armor(armor)??`armure ${armor} %`)].filter(Boolean);
+  if(f.ko||why.length)out.push((f.ko?koBadge(f.ko)+' ':'')+why.join(' · '));
+ }
+ if(f.heal){const heal='+'+rg(f.heal);out.push(`<b>${combat?.hp(heal)??heal+' PV'}</b>`)}
+ if(sp.poison&&f.dmg)out.push(text?.status('poison',...sp.poison)??`poison ${sp.poison[0]} × ${sp.poison[1]} tours`);
+ if(sp.buff)out.push(combat?.buff(pct(sp.buff))??`+${pct(sp.buff)} % de dégâts`);
+ return out;
+}
 function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.className='';X.innerHTML='';return}
- const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[];
- L.push(`<strong>${sp.n} → ${t?`${t.n} · ${t.hp}/${t.max} PV`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?'prisme':'case visée'}</strong>`);
+ const S=G.s,sp=sel.sp,t=occ(S,E.tap.x,E.tap.y),from=E.ap||u,L=[],text=AIM_UI[save.lang],combat=COMBAT_UI[save.lang];
+ const spellName=text?tr(sp.n):sp.n;
+ const target=t?`${combatName(t)} · ${combat?.hp(t.hp+'/'+t.max)??t.hp+'/'+t.max+' PV'}`:cell(S,E.tap.x,E.tap.y)?.cry==='p'?(text?.prism??'prisme'):(text?.target??'case visée');
+ L.push(`<strong>${spellName} → ${target}</strong>`);
  if(E.bad)L.push(`✗ ${E.bad}`);
- else{if(E.ap&&E.why)L.push(`✗ D’ici : ${E.why}`);L.push(E.chg?`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`:E.ap?`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`:E.indirect?'✓ Touché en visant une case voisine':'✓ À portée');
+ else{
+  if(E.ap&&E.why)L.push(text?.fromHere(E.why)??`✗ D’ici : ${E.why}`);
+  L.push(E.chg?(text?.charge(u.n)??`✓ ${u.n} fonce jusqu’à la case blanche (aucun PM)`)
+   :E.ap?(text?.advance(u.n,E.ap.cost)??`↷ ${u.n} avance de ${E.ap.cost} PM puis lance`)
+   :tr(E.indirect?'✓ Touché en visant une case voisine':'✓ À portée'));
   if(sp.zone||sp.nova){const hit=hitCells(S,sp,E,from).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team!==u.team);
-   for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${o.n} : <b>${rg(f.dmg)}</b> ${f.ko?KO[f.ko]:''}`)}
-   L.push(hit.length?`critique ${Math.round((u.crit||.12)*100)} % (×1,5) · ${sp.n} épargne tes héros`:'Aucun ennemi dans la zone')}
-  else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit)L.push(`${o.n} : <b>+${rg(forecast(S,u,sp,o,from).heal)} PV</b>`);L.push('Cible et alliés collés à elle · pas de résurrection')}
-  else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(sp.d);
+   for(const o of hit){const f=forecast(S,u,sp,o,from,E);L.push(`${combatName(o)} : <b>${rg(f.dmg)}</b> ${f.ko?koBadge(f.ko):''}`)}
+   const chance=Math.round((u.crit||.12)*100);
+   L.push(hit.length?(text?.zone(chance,spellName)??`critique ${chance} % (×1,5) · ${sp.n} épargne tes héros`):tr('Aucun ennemi dans la zone'))}
+  else if(sp.splash){const hit=zoneCells(S,E).map(p=>occ(S,p.x,p.y)).filter(o=>o&&o.team===u.team);for(const o of hit){const heal='+'+rg(forecast(S,u,sp,o,from).heal);L.push(`${combatName(o)} : <b>${combat?.hp(heal)??heal+' PV'}</b>`)}L.push(text?.splash??'Cible et alliés collés à elle · pas de résurrection')}
+  else if(t&&!sp.all)L.push(...effect(u,sp,t,from));else L.push(text?tr(sp.d):sp.d);
   // prisme déclenché : effet à part, qui touche aussi les héros
   const pc=sp.dmg&&!sp.glyph&&hitCells(S,sp,E,from).map(p=>cell(S,p.x,p.y)).find(c=>prismOn(S,c));
   if(pc){const d=prismDmg(S,{...u,x:from.x,y:from.y},sp),who=prismHits(S,pc).map(p=>E.ap&&p.x===E.ap.x&&p.y===E.ap.y?u:occ(S,p.x,p.y)===u&&E.ap?null:occ(S,p.x,p.y)).filter(Boolean);
-   L.push(`<span class="pz${who.some(o=>o.team==='h')?' danger':''}">◆ Prisme déclenché : ${who.length?who.map(o=>`${o.n} -${soak(o,d)}`).join(', '):'personne autour'}${who.some(o=>o.team==='h')?' — héros touché !':''}</span>`)}
-  L.push('<i>Retouche au même endroit pour lancer</i>')}
+   const ally=who.some(o=>o.team==='h'),targets=who.map(o=>`${combatName(o)} -${soak(o,d)}`).join(', ');
+   const message=text?.prismHit(targets,ally)??`◆ Prisme déclenché : ${targets||'personne autour'}${ally?' — héros touché !':''}`;
+   L.push(`<span class="pz${ally?' danger':''}">${message}</span>`)}
+  L.push(`<i>${tr('Retouche au même endroit pour lancer')}</i>`)}
+
  X.innerHTML=L.map(l=>`<div>${l}</div>`).join('');X.className='on'+(E.bad?' bad':'');
  X.style.top=matchMedia('(orientation:landscape)').matches?'':$('top').getBoundingClientRect().bottom+2+'px';
  $('hint').textContent=E.bad?'Choisis une autre cible, ou retouche le sort pour l’annuler.':'Retouche pour lancer · retouche le sort pour annuler.'}
@@ -221,7 +351,7 @@ export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
  if(CM_DEV&&!F.cm&&!F.daily&&!F.quest&&(zi<CM_ZONES||F.pilot))F=cmSpec(F,zi,{seed:F.seed+save.gold,mods:CM_DEV.mods,champ:CM_DEV.champ,lang:save.lang}); // V5.14 : Cauchemar réel ou bac à sable, régions 1 à 3 (boss compris) et boss pilotes
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(F.cm.boss?(save.lang==='en'?`☠ Nightmare boss · ${F.cm.n>1?'two elites':'an elite'} at its side, earlier phase`:`☠ Boss du Cauchemar · ${F.cm.n>1?'deux élites':'une élite'} à ses côtés, phase plus tôt`):save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
+ $('mapinfo').textContent=tr('Chargement…');try{await zoneAssets(F)}catch(e){$('mapinfo').textContent=tr('Images introuvables')+' : '+e;return}G.F=F;if(F.cm&&F.cm.champ)setTimeout(()=>sfx('nm_champion_spawn',.9),1300);if(F.cm)setTimeout(()=>goalBanner(F.cm.boss?(save.lang==='en'?`☠ Nightmare boss · ${F.cm.n>1?'two elites':'an elite'} at its side, earlier phase`:tr(F.cm.n>1?'☠ Boss du Cauchemar · deux élites à ses côtés, phase plus tôt':'☠ Boss du Cauchemar · une élite à ses côtés, phase plus tôt')):save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):tr(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
@@ -246,22 +376,25 @@ function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-
  const done=o=>{if(!o)return say('Fichier ou code invalide : rien n’a été changé.',1);if(importSave(o))location.reload();else say('Écriture impossible : rien n’a été changé.',1)};
  mk('Copier',()=>{t.select();try{navigator.clipboard.writeText(t.value);say('Copié !')}catch(e){document.execCommand('copy');say('Copié !')}});
  mk('Exporter (fichier)',()=>{try{const u=URL.createObjectURL(new Blob([JSON.stringify(save)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='tactika-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);say('Fichier exporté.')}catch(e){say('Export impossible : utilise « Copier ».',1)}});
- const fi=document.createElement('input');fi.type='file';fi.accept='.json,application/json,text/plain';fi.style.display='none';fi.onchange=()=>{const f=fi.files&&fi.files[0];if(!f)return;if(f.size>4e6)return say('Fichier invalide : rien n’a été changé.',1);const r=new FileReader();r.onload=()=>done(decodeCode(String(r.result)));r.onerror=()=>say('Lecture impossible : rien n’a été changé.',1);r.readAsText(f)};D.append(fi);
+ const fi=document.createElement('input');fi.type='file';fi.accept='.json,application/json,text/plain';fi.style.display='none';fi.onchange=()=>{const f=fi.files&&fi.files[0];if(!f)return;if(f.size>4e6)return say('Fichier ou code invalide : rien n’a été changé.',1);const r=new FileReader();r.onload=()=>done(decodeCode(String(r.result)));r.onerror=()=>say('Lecture impossible : rien n’a été changé.',1);r.readAsText(f)};D.append(fi);
  mk('Importer (fichier)',()=>fi.click());
  mk('Importer',()=>done(decodeCode(t.value)));
  if(hasBackup())mk('Copie de secours',()=>{if(restoreBackup())location.reload();else say('Aucune copie de secours lisible.',1)});
  mk('Fermer',()=>D.close());D.showModal()}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
+const villageText=()=>VILLAGE_UI[save.lang];
+const villageWord=s=>villageText()?tr(s):s;
+const villageGold=()=>villageText()?.gold(save.gold)??save.gold+' or';
 function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList.add('on');F.innerHTML='';
  F.insertAdjacentHTML('beforeend',`<h1>La Forge</h1><div class="sub">Chaque niveau renforce le bonus de l’objet (+50 %). 3 niveaux au maximum.</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);F.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);F.append(top);
  const owner=j=>{const h=holder(save,j);return h>=0?h:whoOf(ITEMS[j])[0]}; // objet partagé : rangé chez son porteur
  roster(save).forEach(i=>{const h=HER[i],own=save.items.filter(j=>owner(j)===i),all=ITEMS.filter(o=>whoOf(o).includes(i)).length;
-  F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${own.length}/${all} objets</small></h3>`);
+  F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${villageText()?.items(own.length,all)??`${own.length}/${all} objets`}</small></h3>`);
   if(!own.length)F.insertAdjacentHTML('beforeend','<div class="sub">Aucun objet pour l’instant : gagne des combats pour en trouver.</div>');
   for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon(...icOf(o),44));
-   const rr=rarOf(save,j);r.insertAdjacentHTML('beforeend',`<div><b style="color:${RARE[rr].c}">${o.n}</b> <span class="pips"></span><br><small>${isOn(save,j)?'':'<b>En réserve (sans effet)</b> · '}${rr?RARE[rr].n+' · ':''}+${itemVal(o,k,l,rr)} ${STAT[k]}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1,rr)}</b>`:' · maximum'}</small></div>`);
+   const rr=rarOf(save,j);r.insertAdjacentHTML('beforeend',`<div><b style="color:${RARE[rr].c}">${o.n}</b> <span class="pips"></span><br><small>${isOn(save,j)?'':'<b>En réserve (sans effet)</b> · '}${rr?villageWord(RARE[rr].n)+' · ':''}+${itemVal(o,k,l,rr)} ${villageWord(STAT[k])}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1,rr)}</b>`:' · '+villageWord('maximum')}</small></div>`);
    r.querySelector('.pips').append(icon('badge',l?l-1:3,30)); // badge du niveau d'amélioration (cadenas = jamais amélioré)
    const b=document.createElement('button');b.className='btn'+(c!=null&&save.gold>=c?'':' dark');b.disabled=c==null||save.gold<c;b.innerHTML=c==null?'Max':`${c} <img src="${uiURL(14)}">`;
    b.onclick=()=>{F.querySelectorAll('.frow .btn').forEach(x=>x.disabled=true);if(!upgrade(save,j))return forge();store();
@@ -273,9 +406,13 @@ function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList
 const waits=(i,m)=>Math.max(0,...Object.keys(m?.sp||{}).map(id=>(HER[i].learn||[]).find(([s,l])=>s===id&&!knownSpells(save,i).includes(id))?.[1]||0));
 let armH=-1;
 function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.classList.contains('on'))armH=roster(save).find(i=>!specOf(save,i))??0;A.classList.add('on');A.innerHTML='';
- A.insertAdjacentHTML('beforeend',`<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`);
- const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
- HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:'aucune spécialisation'}</small>`);A.append(hd);
+ const academy=ACADEMY_UI[save.lang];
+ const academyIntro=academy
+  ? `<h1>${academy.title}</h1><div class="sub">${save.lvl<3?academy.unlock(save.lvl):academy.rules} ${academy.tiers(tiersFor(armH))}</div>`
+  : `<h1>L’Académie</h1><div class="sub">${save.lvl<3?`Les spécialisations s’ouvrent au <b>niveau 3</b> (tu es niveau ${save.lvl}).`:'Une spécialisation par héros, changeable gratuitement ici.'} Ses talents s’ajoutent aux niveaux ${tiersFor(armH).join(', ').replace(/, (\d+)$/,' et $1')}.</div>`;
+ A.insertAdjacentHTML('beforeend',academyIntro);
+ const tabs=document.createElement('div');tabs.className='htabs';roster(save).forEach(i=>{const h=HER[i],b=document.createElement('button');b.className=i===armH?'on':'';b.append(icon(...heroFrame(h.k),40,.62),h.n);b.insertAdjacentHTML('beforeend',`<small>${specOf(save,i)?.n||(save.lvl<3?'—':academy?.pick??'à choisir')}</small>`);b.onclick=()=>{armH=i;armes();A.scrollTop=0};tabs.append(b)});A.append(tabs);
+ HER.forEach((h,i)=>{if(i!==armH)return;const cur=specOf(save,i),hd=document.createElement('h3');hd.className='fh';hd.append(icon(...heroFrame(h.k),34,.62),` ${h.n} `);hd.insertAdjacentHTML('beforeend',`<small>${cur?cur.n:academy?.none??'aucune spécialisation'}</small>`);A.append(hd);
   const row=document.createElement('div');row.className='specs';
   for(const x of SPECS[i]){const on=cur===x,c=document.createElement('div');c.className='spec'+(on?' on':'');
    const top=document.createElement('div');top.className='sphd';top.append(icon(...x.ic,64));top.insertAdjacentHTML('beforeend',`<div><b>${x.n}</b><small>${x.d}</small></div>`);c.append(top);
@@ -285,67 +422,71 @@ function armes(){$('camp').classList.remove('on');const A=$('armes');if(!A.class
     const li=document.createElement('li');li.className=st;const nd=document.createElement('span');nd.className='nd';
     if(sid)nd.append(icon(...SPI[sid],34));else nd.textContent=lv;
     if(sid||st==='lock')nd.insertAdjacentHTML('beforeend',`<u>${st==='lock'?'🔒':lv}</u>`);li.append(nd);
-    li.insertAdjacentHTML('beforeend',`<div><em>${st==='got'?'✓ acquis':st==='lock'?'niveau '+lv:'niveau '+lv+(on?'':' · disponible')}</em> <b>${tn}</b><small>${td}${w?` <i>(sort appris au niveau ${w})</i>`:''}</small></div>`);ol.append(li)});
+    li.insertAdjacentHTML('beforeend',`<div><em>${academy?.status(st,lv,on)??(st==='got'?'✓ acquis':st==='lock'?'niveau '+lv:'niveau '+lv+(on?'':' · disponible'))}</em> <b>${tn}</b><small>${td}${w?` <i>${academy?.needs(w)??`(sort appris au niveau ${w})`}</i>`:''}</small></div>`);ol.append(li)});
    c.append(ol);
-   const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?'Active':'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('talent_unlock',.8);armes()};c.append(b);row.append(c)}
+   const b=document.createElement('button');b.className='btn'+(on?' dark':'');b.textContent=on?(academy?.active??'Active'):'Choisir';b.disabled=on||save.lvl<3;b.onclick=()=>{save.sp[i]=x.id;store();sfx('talent_unlock',.8);armes()};c.append(b);row.append(c)}
   A.append(row);if(hasMastery(i))mastBlock(A,i)});
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{A.classList.remove('on');camp()};A.append(back)}
 // V4.39 : maîtrise des sorts (héros qui ont une table MASTERY : Orion pour l'instant)
 const RK=['','I','II','III'];
 function mastBlock(A,i){const h=HER[i],known=knownSpells(save,i),left=mastLeft(save,i),tot=mastPts(save.lvl),nx=nextPtLvl(save.lvl),ids=[...h.sp,...(h.learn||[]).map(([id])=>id)].filter(id=>MASTERY[id]);
- const hd=document.createElement('h3');hd.className='fh';hd.innerHTML=`Maîtrise des sorts <small>${left} point${left>1?'s':''} libre${left>1?'s':''} sur ${tot}</small>`;A.append(hd);
- A.insertAdjacentHTML('beforeend',`<div class="sub">1 point tous les 2 niveaux${save.lvl<50?` (prochain au niveau ${nx})`:''}. Rang II : 2 points, rang III : 3 de plus. Impossible de tout maîtriser : choisis. Réinitialisation gratuite.</div>`);
+ const text=MASTERY_UI[save.lang];
+ const hd=document.createElement('h3');hd.className='fh';hd.innerHTML=`${text?.title??'Maîtrise des sorts'} <small>${text?.budget(left,tot)??`${left} point${left>1?'s':''} libre${left>1?'s':''} sur ${tot}`}</small>`;A.append(hd);
+ A.insertAdjacentHTML('beforeend',text?`<div class="sub">${text.rules(save.lvl<50?nx:0)}</div>`:`<div class="sub">1 point tous les 2 niveaux${save.lvl<50?` (prochain au niveau ${nx})`:''}. Rang II : 2 points, rang III : 3 de plus. Impossible de tout maîtriser : choisis. Réinitialisation gratuite.</div>`);
  const L=document.createElement('div');L.className='mast';
  for(const id of ids){const r=rankOf(save,i,id),ok=known.includes(id),lv=(h.learn||[]).find(([s])=>s===id)?.[1],c=document.createElement('div');c.className='mrow'+(ok?'':' off');c.dataset.sp=id;c.append(icon(...SPI[id],40));
   const cost=r<3?MAST_COST[r+1]-MAST_COST[r]:0;
-  c.insertAdjacentHTML('beforeend',`<div><b>${SP[id].n}</b> <span class="rk">${[1,2,3].map(k=>k<=r?'<i class="on">◆</i>':'<i>◇</i>').join('')} rang ${RK[r]}</span><small>${!ok?`🔒 sort appris au niveau ${lv}`:`Actuel : ${mastTxt(id,r)}${r<3?` · rang ${RK[r+1]} : <b>${mastTxt(id,r+1)}</b> (${cost} points)`:' · maîtrise complète'}`}</small></div>`);
-  if(ok&&r<3){const b=document.createElement('button');b.className='btn';b.textContent=`Rang ${RK[r+1]} · ${cost} pts`;b.disabled=!canRaise(save,i,id);b.onclick=()=>{if(raise(save,i,id)){store();sfx('talent_unlock',.8);armes()}};c.append(b)}
+  const current=mastTxt(id,r,save.lang);
+  const next=r<3?mastTxt(id,r+1,save.lang):'';
+  const detail=text?(!ok?text.locked(lv):text.current+current+(r<3?` · ${text.rank(RK[r+1])}: <b>${next}</b> (${text.cost(cost)})`:text.complete)):(!ok?`🔒 sort appris au niveau ${lv}`:`Actuel : ${current}${r<3?` · rang ${RK[r+1]} : <b>${next}</b> (${cost} points)`:' · maîtrise complète'}`);
+  c.insertAdjacentHTML('beforeend',`<div><b>${SP[id].n}</b> <span class="rk">${[1,2,3].map(k=>k<=r?'<i class="on">◆</i>':'<i>◇</i>').join('')} ${text?.rank(RK[r])??'rang '+RK[r]}</span><small>${detail}</small></div>`);
+  if(ok&&r<3){const b=document.createElement('button');b.className='btn';b.textContent=text?`${text.rank(RK[r+1])} · ${text.cost(cost)}`:`Rang ${RK[r+1]} · ${cost} pts`;b.disabled=!canRaise(save,i,id);b.onclick=()=>{if(raise(save,i,id)){store();sfx('talent_unlock',.8);armes()}};c.append(b)}
   L.append(c)}
  A.append(L);
- if(mastSpent(save,i)){const z=document.createElement('button');z.className='btn dark';z.textContent='Réinitialiser la maîtrise (gratuit)';z.onclick=()=>{if(z.dataset.arm){resetMast(save,i);store();armes()}else{z.dataset.arm=1;z.textContent='Touche encore pour rendre les points'}};A.append(z)}}
+ if(mastSpent(save,i)){const z=document.createElement('button');z.className='btn dark';z.textContent=text?.reset??'Réinitialiser la maîtrise (gratuit)';z.onclick=()=>{if(z.dataset.arm){resetMast(save,i);store();armes()}else{z.dataset.arm=1;z.textContent=text?.confirm??'Touche encore pour rendre les points'}};A.append(z)}}
 // ---------- marchand (V2.6a) ----------
-const effet=(o,r=0)=>{const k=o.dmg?'dmg':o.hp?'hp':'heal';return(r?RARE[r].n+' · ':'')+`+${itemVal(o,k,0,r)} ${STAT[k]}`};
+const effet=(o,r=0)=>{const k=o.dmg?'dmg':o.hp?'hp':'heal';return(r?villageWord(RARE[r].n)+' · ':'')+`+${itemVal(o,k,0,r)} ${villageWord(STAT[k])}`};
 function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classList.add('on');S.innerHTML='';const sellTab=tab==='v';
  S.insertAdjacentHTML('beforeend',`<h1>Le Marchand</h1><div class="sub">${sellTab?'Revente : la moitié du prix et de l’or mis dans la forge.':'Nouveaux objets chaque jour. Les potions se boivent en combat (4 PA, 1 par héros et par combat).'}</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',1,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);S.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',1,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);S.append(top);
  const tabs=document.createElement('div');tabs.style.cssText='display:flex;gap:8px;margin:6px 0';
  for(const[k,n]of[['a','Acheter'],['v','Vendre']]){const b=document.createElement('button');b.className='btn'+((k==='v')===sellTab?'':' dark');b.textContent=n;b.onclick=()=>shop(k);tabs.append(b)}S.append(tabs);
  const row=(ic,html,label,ok,act)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...ic,44));r.insertAdjacentHTML('beforeend',`<div>${html}</div>`);
   const b=document.createElement('button');b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.innerHTML=label;b.onclick=()=>{if(!act())return shop(tab);store();sfx('coin',.8);addPop(r,'');setTimeout(()=>shop(tab),350)};r.append(b);S.append(r)};
  const price=n=>`${n} <img src="${uiURL(14)}">`;
  if(sellTab){if(!save.items.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu n’as aucun objet à vendre.</div>');
-  for(const j of save.items){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
- else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>Soigne 40 % des PV · tu en as ${p}/${POTION.max}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
+  for(const j of save.items){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?' · '+(INVENTORY_UI[save.lang]?.forge(upLvl(save,j))??`forge ${upLvl(save,j)}`):''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
+ else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>${villageText()?.potion(p,POTION.max)??`Soigne 40 % des PV · tu en as ${p}/${POTION.max}`}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
   const st=shopStock(save,today());if(!st.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu as déjà tous les objets !</div>');
-  for(const j of st){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${SLOTS[o.sl]} · ${effet(o,rarOf(save,j))}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
+  for(const j of st){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${villageWord(SLOTS[o.sl])} · ${effet(o,rarOf(save,j))}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{S.classList.remove('on');camp()};S.append(back)}
 // ---------- taverne (V2.6b) ----------
 const ctTxt=t=>t.k==='win'?`Gagne ${t.n} combats`:t.k==='kill'?`Vaincs ${t.n} ${MON[t.m].n.toLowerCase()}${t.n>1?'s':''}`:t.k==='star'?`Gagne ${t.n>1?t.n+' combats':'un combat'} avec 3 ★`:'Bats un boss (même déjà vaincu)';
 function tav(){music(CM_DEV?'nm_village':'village');$('camp').classList.remove('on');const T=$('tav');T.classList.add('on');T.innerHTML='';const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend',`<h1>La Taverne</h1><div class="sub">Trois contrats par jour, et un défi difficile une fois par jour.</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);T.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);T.append(top);
  quests(T,tav);
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
 // contrats du jour et défi (taverne et onglet Quêtes) ; `again` redessine l'écran après une récompense
 function quests(T,again){const d=today(),l=contracts(save,d);store();
  const ql=QUESTS.filter(q=>questOpen(save,q));
- if(ql.length){T.insertAdjacentHTML('beforeend',`<h3 class="fh">Quêtes · ${QUESTS.filter(q=>questDone(save,q)).length}/${QUESTS.length}</h3>`);
+ if(ql.length){T.insertAdjacentHTML('beforeend',`<h3 class="fh">${villageText()?.quests(QUESTS.filter(q=>questDone(save,q)).length,QUESTS.length)??`Quêtes · ${QUESTS.filter(q=>questDone(save,q)).length}/${QUESTS.length}`}</h3>`);
   ql.forEach(q=>{const dn=questDone(save,q),r=document.createElement('div');r.className='loot frow';r.append(icon('items',17,44));qban(r,q.e||q.g==='chief'?'boss':'win');
    r.insertAdjacentHTML('beforeend',`<div><b>${q.t}</b> <small>· ${ZONES[q.z].n}</small><br><small>${dn?q.c:q.d}</small></div>`);
    const b=document.createElement('button');b.className='btn'+(dn?' dark':'');b.textContent=dn?'Rejouer':'Partir';b.onclick=()=>{$('tav').classList.remove('on');startFight(q.z,-1,questFight(q,save))};r.append(b);T.append(r)})}
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
-  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
+  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${contractLabel(save.lang,t,t.k==='kill'?tr(MON[t.m].n):'')??ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${villageText()?.reward(t.g,t.x)??`${t.g} or, ${t.x} XP`}</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
   const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓ Reçu':ok?'Réclamer':'En cours';
   b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('quest_complete',1.6);if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
- T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
+ T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${villageText()?.challenge(villageWord(Z.n),F.lvl)??`${Z.n} · niveau ${F.lvl}`}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
  const b=document.createElement('button');b.className='btn'+(done?' dark':'');b.disabled=done;b.textContent=done?'✓':'Combattre';b.onclick=()=>{$('tav').classList.remove('on');startFight(F.zi,-1,F)};dd.append(b);T.append(dd)}
 // bandeaux illustrés des contrats (Gemini, 26/11) : image à droite, texte sur le quart gauche assombri
 function qban(r,k){r.classList.add('qrow');r.style.backgroundImage=`linear-gradient(90deg,#000d 0,#000b 42%,#0000 78%),url(assets/q/${k}.webp)`}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• PA non dépensés : +1 au tour suivant par tranche de 2 (au plus +2).<br>• Cible trop loin : l’aperçu montre le héros avancer avant de lancer.<br>• Volée : la zone rouge montre les cases touchées ; la portée limite son centre.<br>• Les flèches de Fenn passent par-dessus les décors bas (buissons, cailloux, souches, caisses…), pas par-dessus les arbres, rochers et murs.<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, touche une cible pour voir les dégâts, retouche-la pour lancer. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• Écarte deux doigts pour agrandir le plateau, glisse pour le déplacer (molette à la souris). « Vue entière » revient en arrière.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
-regHtml(HOW,HOW_EN);
+regHtml(HOW,HOW_EN,COMBAT_HELP);
 // V4.6 : dernier combat (données factuelles pour le panneau de commandement et l'écran de défaite)
 let LAST=null;
 const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),pilot:zi=>{const i=zlen(ZONES[zi])-1;return startFight(zi,i,{...fightSpec(zi,i,zi*1000+i*97+save.gold),pilot:1})}, /* V5.14 : boss pilote du Cauchemar */today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
@@ -358,7 +499,7 @@ export function camp(){
 // V4.25 : sélecteur Carte I / Carte II ; la carte II reste verrouillée jusqu'au Titan
 let mapNo=1;
 function mapTabs(){const T=$('maptabs');T.innerHTML='';[1,2].forEach(n=>{const b=document.createElement('button'),lock=n===2&&!map2Open(save);
- b.className='btn'+(n===mapNo?'':' dark');b.textContent=(n===1?'Carte I':'Carte II')+(lock?' 🔒':'');b.setAttribute('aria-pressed',n===mapNo);
+ b.className='btn'+(n===mapNo?'':' dark');b.textContent=villageWord(n===1?'Carte I':'Carte II')+(lock?' 🔒':'');b.setAttribute('aria-pressed',n===mapNo);
  b.onclick=()=>{if(lock)return mapNote('Carte II','Bats le Titan prismatique, dans les Cavernes de cristal, pour ouvrir la carte II.');mapNo=n;worldMap()};T.append(b)})}
 function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${txt}</small>`;
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
@@ -367,13 +508,13 @@ const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="no
 function zoneBtn(L,zi,pos,num){const z=ZONES[zi],ok=zi>=0&&!z.soon&&unlocked(zi),p=zi>=0?prog(z.id):0,b=document.createElement('button');
  b.className='zone'+(ok?'':' lock')+((pos.x<12||pos.x>88)?' edge':'');for(const[k,v]of[['x',pos.x],['y',pos.y],['lx',pos.lx??pos.x],['ly',pos.ly??pos.y]])b.style.setProperty('--'+k,v+'%');
  const B=z?.boss&&MON[z.boss.k];if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,52));else b.insertAdjacentHTML('beforeend',`<span class="q">${num}</span>`);
- const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',`Région ${num} : ${z?z.n:pos.n}`);
- b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
+ const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',MAP_UI[save.lang]?.region(num,tr(z?z.n:pos.n))??`Région ${num} : ${z?z.n:pos.n}`);
+ b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${villageWord(!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`)}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
  b.onclick=()=>zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
 function secondMap(L,land){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),land?{...z,x:z.lx,y:z.ly}:z,i+7))} /* V5.11 : land = carte paysage seule (Cauchemar) */
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
- const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
+ const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=MAP_UI[save.lang]?.info(save.lvl,save.gold)??`Niv ${save.lvl} · ${save.gold} or`;
  if(!map2Open(save))mapNo=1;music(CM_DEV?(mapNo===2?'nm_map2':'nm_map'):mapNo===2?'map2':'camp');
  /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2109), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
  const cm2=!!CM_DEV&&mapNo===2,wi=$('worldimg'),ws=cm2?'assets/cm/world2-l.webp':'assets/world1-l.webp';if(wi&&!wi.src.endsWith(ws))wi.src=ws;M.classList.toggle('cm',!!CM_DEV);M.classList.toggle('cm2',cm2);
@@ -385,11 +526,13 @@ function worldMap(){
 }
 // V4.88 : carte d'introduction du boss (passable d'un toucher, 2,4 s au plus, aucune pause du combat : le joueur n'a pas encore la main)
 function bossCard(F){if(!F.boss||F.daily)return;const z=ZONES[F.zi],B=MON[F.boss.k],d=document.createElement('div');d.id='bosscard';d.setAttribute('role','status');
- d.innerHTML=`<div><small>${z.n} · Boss de région</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
+ d.innerHTML=`<div><small>${tr(z.n)} · ${tr('Boss de région')}</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
  const off=()=>{d.classList.add('out');setTimeout(()=>d.remove(),260)};d.onclick=off;document.body.append(d);setTimeout(off,save.fast?1400:2400)}
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
+function zoneSheet(zi){const text=MAP_UI[save.lang],z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${text?.summary(L,lv(0),lv(L-1))??`${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}`}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
-  b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
+  const goal={survive:'⏳ Survie',chief:'♛ Chef'}[fightSpec(zi,i,0).goal];
+  const mission=text?.mission(i+1,lv(i),i===L-1?tr(z.boss.n):'')??(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`;
+  b.textContent=mission+(goal?' · '+villageWord(goal):'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 // V4.36 : un héros au hasard parmi ceux qui ont une voix
 const say1=(list,line)=>{setVoiceLang(save.lang);const l=list.filter(u=>!u.dead&&VOICES[u.k]);if(l.length)voice(pick(Math.random,l).k,line,{force:true})};
@@ -398,19 +541,19 @@ const starsOf=id=>{const T=CM_DEV?save.cm.st:(save.st||(save.st={}));return T[id
 function chron(win){const F=G.F,S=G.s,H=S.units.filter(u=>u.team==='h'),kills={},seen=new Set();
  for(const u of S.units)if(u.team==='m'&&!u.boss){seen.add(u.k);if(u.dead&&!u.fled)kills[u.k]=(kills[u.k]||0)+1}
  const r=recordFight(save,{win,zi:F.zi,boss:!!F.boss,daily:!!F.daily,quest:!!F.quest,wave:!!S.wave,rounds:S.round,secs:(Date.now()-(G.t0||Date.now()))/1000,team:H.map(u=>u.hi),ko:H.filter(u=>u.dead).length,kills,seen:[...seen],T:S.T});store();
- const T=S.T||{dmg:0,heal:0},n=v=>Math.round(v).toLocaleString('fr-FR');
- r.html=`<div class="bilan"><span>⏱ ${S.round} tour${S.round>1?'s':''}</span><span>⚔ ${n(T.dmg)} dégâts</span>${T.heal?`<span>✚ ${n(T.heal)} soins</span>`:''}${win&&r.mvp>=0?`<span class="mvp">★ ${HER[r.mvp].n}</span>`:''}</div>`+
-  (r.recs.length?`<div class="bilan rec">${r.recs.map(x=>`Nouveau record · ${REC[x.k]} : ${n(x.v)}`).join('<br>')}</div>`:'');return r}
-const trophyRow=id=>{const t=TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">Trophée ${TIER[t.t].n.toLowerCase()} : ${t.n}</b><br>${t.d}`]};
+ const text=COMBAT_UI[save.lang],T=S.T||{dmg:0,heal:0},n=v=>Math.round(v).toLocaleString(text?save.lang:'fr-FR');
+ r.html=`<div class="bilan"><span>⏱ ${text?.turns(S.round)??`${S.round} tour${S.round>1?'s':''}`}</span><span>⚔ ${text?.damage(n(T.dmg))??n(T.dmg)+' dégâts'}</span>${T.heal?`<span>✚ ${text?.heal(n(T.heal))??n(T.heal)+' soins'}</span>`:''}${win&&r.mvp>=0?`<span class="mvp">★ ${HER[r.mvp].n}</span>`:''}</div>`+
+  (r.recs.length?`<div class="bilan rec">${r.recs.map(x=>`${villageWord('Nouveau record')} · ${villageWord(REC[x.k])} : ${n(x.v)}`).join('<br>')}</div>`:'');return r}
+const trophyRow=id=>{const t=TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';const title=RESULT_UI[save.lang]?.trophy?.(tr(TIER[t.t].n),tr(t.n))??`Trophée ${TIER[t.t].n.toLowerCase()} : ${t.n}`;return[m,`<b style="color:${TIER[t.t].c}">${title}</b><br>${tr(t.d)}`]};
 // V5.24 : icône de sceau (cercle à la couleur de la région ; -1 = titre) et ligne de trophée Cauchemar
 const sealIc=zi=>{const m=document.createElement('span');m.className='tro-ic cm-seal'+(zi<0?' t':'');m.style.setProperty('--sc',zi<0?'#e3b8ff':SEAL_C[zi]);m.textContent=zi<0?'✦':'☠';return m};
-const cmTrophyRow=id=>{const t=CM_TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">${save.lang==='en'?'Nightmare trophy':'Trophée du Cauchemar'} ${TIER[t.t].n.toLowerCase()} : ${tN(save,t)}</b><br>${tD(save,t)}`]};
+const cmTrophyRow=id=>{const t=CM_TROPHIES.find(x=>x.id===id),m=document.createElement('span');m.className='tro-ic';m.style.color=TIER[t.t].c;m.textContent='🏆';return[m,`<b style="color:${TIER[t.t].c}">${cmLabel(save.lang,'Trophée du Cauchemar')} ${tr(TIER[t.t].n).toLowerCase()} : ${tN(save,t)}</b><br>${tD(save,t)}`]};
 const cmNextBoss=()=>{const k=CM_PILOTS.findIndex(b=>!save.cm.b[b.id]);return k>=0&&cmBossOpen(k)?ZONES[CM_PILOTS[k].zi].boss.n:''}; // V5.15 : boss pilotes au-delà de la région 6
 function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : un combat ne se solde qu'une fois (jamais deux fois l'or, l'XP ni les compteurs)
- closeMenu();const F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
- LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>u.n.replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
+ closeMenu();const text=RESULT_UI[save.lang],F=G.F,H=G.s.units.filter(u=>u.team==='h'),M=G.s.units.filter(u=>u.team==='m'&&!u.dead&&!u.fled);
+ LAST={win,fled,zi:F.zi,i:F.i,daily:F.daily,lvl:F.lvl,round:G.s.round,ko:H.filter(u=>u.dead).length,left:M.length,leftN:[...new Set(M.map(u=>combatName(u).replace(/ [A-Z]$/,'')))],goal:G.s.goal,waves:G.s.wave?G.s.wave.q.length:0};$('tuto').classList.remove('on');$('goal').classList.remove('on');
  const Rs=$('result');Rs.innerHTML='';if(G.s.pot!=null){save.pot=G.s.pot;store()}G.cur=null;document.body.classList.add('camp');duck(4500);sfx(win?(G.F&&G.F.cm?'nm_victory':'victory'):(G.F&&G.F.cm?'nm_defeat':'defeat'));
- if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 Objectif atteint : ${G.s.goal==='survive'?`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`:'le chef est abattu'}</div>`:G.s.cleared?'<div class="goalwon">🎯 Toutes les vagues éliminées : +25 % d’or</div>':'';
+ if(win){const left=G.s.units.some(u=>u.team==='m'&&!u.dead),fled=G.s.units.some(u=>u.fled),goalWon=(left||fled)&&G.s.goal?`<div class="goalwon">🎯 ${villageWord('Objectif atteint')} : ${G.s.goal==='survive'?(text?.survived(G.s.surv||SURVIVE,fled)??`tu as tenu ${G.s.surv||SURVIVE} tours${fled?', les survivants se replient':''}`):villageWord('le chef est abattu')}</div>`:G.s.cleared?`<div class="goalwon">🎯 ${villageWord('Toutes les vagues éliminées : +25 % d’or')}</div>`:'';
   const zid=ZONES[F.zi].id,first=!F.daily&&!F.quest&&prog(zid)===F.i,sl=starList(G.s,!!F.boss),st=stars(G.s,!!F.boss),best=starsOf(zid),new3=!F.daily&&!F.quest&&st===3&&(best[F.i]||0)<3;
   let gold=Math.round(((6*F.lvl+ri(Math.random,0,8))*(F.daily?2:F.quest?1:first?1:.5)+(F.boss&&first?40:0))*(new3?1.5:1)*(G.s.cleared?1.25:1)),xp=G.s.killedXp;save.gold+=gold;let up=gainXp(save,xp);
   const free=lootPool(save);let it=null;if(free.length&&Math.random()<(F.daily||F.boss&&first?1:first?.5:.15)){it=pick(Math.random,free);save.items.push(it);const r=lootRare(it,Math.random,F.daily||F.boss);if(r&&ITEMS[it].rr==null)(save.rr||(save.rr={}))[it]=r}
@@ -421,30 +564,30 @@ function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : 
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);const CMR=CM_DEV&&!CM_DEV.dev&&F.cm?cmRecord(save,{win:1,...cmKills(G.s.units),seal:F.boss&&first?F.zi:-1}):null;if(CMR)store(); // V5.24 : sceaux, trophées et titres du Cauchemar (bac à sable exclu)
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?'Le Cauchemar est vaincu ! Les 12 régions sont libérées.':'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+villageWord(t)).join(' · ')}<br>${villageWord(ZONES[F.zi].n)} · ${F.quest?`${text?.quest(tr(Q.t),qNew)??`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}`}<br><i>${villageWord(Q.c)}</i>`:F.daily?villageWord('défi du jour réussi !'):F.boss?(text?.boss(tr(F.boss.n))??F.boss.n+' vaincu !'):(text?.won(F.i+1,zlen(ZONES[F.zi]))??`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`)}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?(text?.pilot?.(tr(cmNextBoss()))??'Boss pilote éveillé au Cristal : '+cmNextBoss()):(F.zi+1>=CM_ZONES?cmLabel(save.lang,'Le Cauchemar est vaincu ! Les 12 régions sont libérées.'):(text?.pilotsDone??'Tous les boss pilotes du Cauchemar sont vaincus !')))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">'+villageWord('Nouvelle zone')+' : '+villageWord(ZONES[F.zi+1].n)+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));
-  const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span style="color:#ffd65a">Niveau ${save.lvl} ! PV et dégâts en hausse.${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' Nouveaux sorts : Charge, Tir perforant, Soin collectif !':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
+  const loot=[[icon('spells',6,48),`<b>+${xp} XP</b>${up?`<br><span class="level-reward" style="color:#ffd65a">${text?.level(save.lvl)??`Niveau ${save.lvl} !`} <span>PV et dégâts en hausse.</span>${save.lvl>=SP5_LVL&&save.lvl-up<SP5_LVL?' <span>Nouveaux sorts : Charge, Tir perforant, Soin collectif !</span>':''}</span>`:''}`],[icon('items',15,48),`<b>+${gold} or</b>${new3?' <span style="color:#ffd65a">(+50 %, premier 3 ★)</span>':''}`]];
   if(it!==null)loot.push([icon(...icOf(ITEMS[it]),48),`<b style="color:${RARE[rarOf(save,it)].c}">${ITEMS[it].n}</b><br>${whoName(ITEMS[it])} : ${effet(ITEMS[it],rarOf(save,it))}`]);
   if(qNew)loot.push([icon('bld',3,48),`<b>Quête terminée : ${Q.t}</b><br>+${Math.round((20+8*save.lvl)*2.5)} or, +${15*save.lvl*2} XP`]);
   for(const j of qSg)loot.push([icon(...icOf(ITEMS[j]),48),`<b style="color:${RARE[rarOf(save,j)].c}">${ITEMS[j].n}</b><br>${whoName(ITEMS[j])} : ${effet(ITEMS[j],rarOf(save,j))}`]);
   if(qIt!==null)loot.push([icon(...icOf(ITEMS[qIt]),48),`<b style="color:${RARE[rarOf(save,qIt)].c}">${ITEMS[qIt].n}</b><br>${whoName(ITEMS[qIt])} : ${effet(ITEMS[qIt],rarOf(save,qIt))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const id of CH.tr)loot.push(trophyRow(id));
-  if(CMR){const en=save.lang==='en';if(CMR.seal>=0)loot.push([sealIc(CMR.seal),`<b style="color:${SEAL_C[CMR.seal]}">${en?'Seal of the Nightmare':'Sceau du Cauchemar'} · ${ZONES[CMR.seal].n}</b><br>${sealCount(save)} / ${CM_ZONES} ${en?'seals':'sceaux'}`]);
-   for(const id of CMR.tr)loot.push(cmTrophyRow(id));for(const id of CMR.ti){const t=CM_TITLES.find(x=>x.id===id);loot.push([sealIc(-1),`<b style="color:#e3b8ff">${en?'New title':'Nouveau titre'} : ${tN(save,t)}</b><br>${en?'Wear it from the Crystal (Nightmare rewards)':'À porter depuis le Cristal (récompenses du Cauchemar)'}`])}}
-  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);
+  if(CMR){if(CMR.seal>=0)loot.push([sealIc(CMR.seal),`<b style="color:${SEAL_C[CMR.seal]}">${cmLabel(save.lang,'Sceau du Cauchemar')} · ${tr(ZONES[CMR.seal].n)}</b><br>${sealCount(save)} / ${CM_ZONES} ${cmLabel(save.lang,'sceaux')}`]);
+   for(const id of CMR.tr)loot.push(cmTrophyRow(id));for(const id of CMR.ti){const t=CM_TITLES.find(x=>x.id===id);loot.push([sealIc(-1),`<b style="color:#e3b8ff">${cmLabel(save.lang,'Nouveau titre')} : ${tN(save,t)}</b><br>${cmLabel(save.lang,'À porter depuis le Cristal (récompenses du Cauchemar)')}`])}}
+  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${contractLabel(save.lang,t,t.k==='kill'?tr(MON[t.m].n):'')??ctTxt(t)}<br>${text?.tavernReward??'Récompense à la taverne'}`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
   const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);
   const box=document.createElement('div');box.className='lootbox';Rs.appendChild(box);
   const open=()=>{if(ch.classList.contains('open'))return;ch.classList.add('open');sfx('chest_open');if(it!==null&&rarOf(save,it))setTimeout(()=>sfx('loot_rare',.9),300+2*380);
-   loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);if(/style="color:/.test(html)&&!/Niveau/.test(html))d.classList.add('shine');box.appendChild(d);if(!document.documentElement.classList.contains('lowfx'))for(const b of d.querySelectorAll('b')){const m=/^\+(\d+) (XP|or)$/.exec(b.textContent);if(!m)continue;const n=+m[1],t0=performance.now(),f=now=>{const k=Math.min(1,(now-t0)/650);b.textContent=`+${Math.round(n*(1-Math.pow(1-k,3)))} ${m[2]}`;if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}sfx(i===2?'levelup':'coin',.6)},300+i*380));
+   loot.forEach(([ic,html],i)=>setTimeout(()=>{const d=document.createElement('div');d.className='loot pop';d.append(ic);d.insertAdjacentHTML('beforeend',`<div>${html}</div>`);if(/style="color:/.test(html)&&!/level-reward/.test(html))d.classList.add('shine');box.appendChild(d);if(!document.documentElement.classList.contains('lowfx'))for(const b of d.querySelectorAll('b')){const m=/^\+(\d+) (XP|or)$/.exec(b.textContent);if(!m)continue;const n=+m[1],t0=performance.now(),f=now=>{const k=Math.min(1,(now-t0)/650);b.textContent=`+${Math.round(n*(1-Math.pow(1-k,3)))} ${m[2]}`;if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}sfx(i===2?'levelup':'coin',.6)},300+i*380));
    if(up)setTimeout(()=>sfx('levelup'),400+loot.length*380)};
   ch.onclick=open;setTimeout(open,3000);
   if(first&&F.boss){const ev=bossWinEvents(save,zid);if(ev.length)setTimeout(()=>playStory(save,ev,store),2200)} // V4.80 : scènes de fin de région, une seule fois, jamais en farm ni en défaite
- }else{const CH=chron(false),L=LAST,tips=[save.lvl<L.lvl&&`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`,save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`,'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
-  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?'Tu as quitté le combat':`Tour ${L.round}`} · ${L.ko} héros KO · ${L.left} ennemi${L.left>1?'s':''} encore debout${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?` · ${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`:''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div>${CH.html}<ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
+ }else{const CH=chron(false),L=LAST,tips=[save.lvl<L.lvl&&(text?.team(save.lvl,L.lvl)??`Ton équipe est niveau ${save.lvl}, ce combat niveau ${L.lvl}.`),save.items.some(j=>{const c=upCost(save,j);return c!=null&&save.gold>=c})&&'Une amélioration est abordable à la Forge.',save.lvl>=3&&save.sp.includes(null)&&'Un héros n’a pas encore de spécialisation.',(save.pot||0)<POTION.max&&save.gold>=POTION.cost&&(text?.potions(save.pot||0,POTION.max,POTION.cost)??`Potions : ${save.pot||0}/${POTION.max} (${POTION.cost} or chez le Marchand).`),'Rejouer une mission gagnée (Cristal de l’Éther) rapporte XP et or.'].filter(Boolean);
+  Rs.innerHTML=`<h1>${fled?'Retraite':'Défaite'}</h1><div class="sub">${fled?villageWord('Tu as quitté le combat'):(text?.round(L.round)??`Tour ${L.round}`)} · ${text?.down(L.ko)??`${L.ko} héros KO`} · ${text?.remaining(L.left)??`${L.left} ennemi${L.left>1?'s':''} encore debout`}${L.leftN.length?' ('+L.leftN.join(', ')+')':''}${L.waves?' · '+(text?.reinforcements(L.waves)??`${L.waves} renfort${L.waves>1?'s':''} attendu${L.waves>1?'s':''}`):''}.<br>Rien n’est perdu : héros, objets et progression restent acquis.</div>${CH.html}<ul class="rtips">${tips.map(t=>`<li>${t}</li>`).join('')}</ul>`}
  // actions : les récompenses sont déjà enregistrées, quel que soit le bouton choisi
  const acts=document.createElement('div');acts.className='ractions';let gone=false;
  const act2=(t,f,dark)=>{const b=document.createElement('button');b.className='btn'+(dark?' dark':'');b.textContent=t;b.onclick=()=>{if(gone)return;gone=true;f()};acts.append(b)};

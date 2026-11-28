@@ -1,5 +1,6 @@
 // Sauvegarde locale (localStorage). `save` est un objet unique, modifié sur place.
 import {ZONES,zlen,PREVIEW,CM_DEV,CM_ZONES,CM_PILOTS,CM_FLAG,cmEligible} from './data.js';
+import {normalizeLanguage} from './locales/languages.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
@@ -31,7 +32,7 @@ if(CM_DEV?.dev){save.lvl=50;save.xp=0;save.attr=cleanAttr(save.attr,save.lvl);fo
 {const c=save.cm&&typeof save.cm==='object'?save.cm:{},n=o=>o&&typeof o==='object'&&!Array.isArray(o)?o:{};save.cm={z:n(c.z),st:n(c.st),b:n(c.b),k:c.k,tr:c.tr,t:c.t};cleanCmRewards(save); // V5.24 : + k (compteurs), tr (trophées Cauchemar), t (titre porté)
  for(const k of Object.keys(save.cm.z))if(!Number.isFinite(save.cm.z[k])||save.cm.z[k]<0)delete save.cm.z[k];
  if(CM_DEV?.dev)for(let i=0;i<CM_ZONES;i++)save.cm.z[ZONES[i].id]=zlen(ZONES[i])} // bac à sable : régions 1 à 3 et boss pilotes ouverts
-save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
+save.lang=normalizeLanguage(save.lang);
 cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids validés, anciennes sauvegardes : rien à rejouer)
 cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu

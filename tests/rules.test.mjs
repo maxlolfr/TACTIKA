@@ -411,11 +411,17 @@ test('objectifs : chef abattu = victoire, survie', ()=>{
 
 // ---------- V3.0b ciblage : raisons ----------
 import {whyNot,losBlock} from '../src/rules.js';
+import {AIM_UI} from '../src/locales/combat-ui.js';
 test('whyNot : portée, obstacle, allié bloquant, cohérent avec okTarget', ()=>{
  const s=newBattle(()=>.5);for(let x=0;x<8;x++)for(let y=0;y<3;y++)s.map.set(K(x,y),{x,y,block:0});
  const f={team:'h',x:0,y:0,n:'Fenn',hp:9,max:9},al={team:'h',x:2,y:0,n:'Kael',hp:9,max:9},e={team:'m',x:5,y:0,n:'Gelée',hp:9,max:9},far={team:'m',x:7,y:2,n:'Gelée B',hp:9,max:9};
  s.units=[f,al,e,far];const shot=SP.shot;
  assert.equal(whyNot(s,f,shot,e).t,'Kael bloque le tir');{const b=losBlock(s,f,e,f);assert.ok(b.x===2&&b.y==0&&b.u===al)}
+ const zh=AIM_UI['zh-Hans'],de=AIM_UI.de;
+ assert.deepEqual(whyNot(s,f,shot,far,f,zh),{t:'相距9格，最大射程6格'});
+ assert.deepEqual(whyNot(s,f,shot,e,f,de,()=> 'Übersetzter Name'),{
+  t:'Übersetzter Name blockiert die Schusslinie',at:losBlock(s,f,e,f),
+ });
  assert.match(whyNot(s,f,shot,far).t,/À 9 cases, portée max. 6/);assert.match(whyNot(s,f,shot,al).t,/Trop près|allié/);
  s.map.get(K(3,0)).block=1;al.x=0;al.y=2;assert.equal(whyNot(s,f,shot,e).t,'Un obstacle haut bloque le tir');
  s.map.get(K(3,0)).block=0;assert.equal(whyNot(s,f,shot,e),null);assert.ok(okTarget(s,f,shot,e));
@@ -1733,22 +1739,22 @@ test('V4.87 carte I : 6 marqueurs sur la nouvelle image, bien séparés, rien d�
 });
 
 test('V4.89 anglais de l’interface : dictionnaire, fragments, idempotence, français intact', async()=>{
- const I=await import('../src/i18n.js');I.L.on=false;assert.equal(I.tr('Victoire !'),'Victoire !','français : rien ne change');
- I.L.on=true;
+ const I=await import('../src/i18n.js');I.setLang('fr');assert.equal(I.tr('Victoire !'),'Victoire !','français : rien ne change');
+ I.setLang('en');
  for(const[k,v]of Object.entries(I.EN)){assert.ok(typeof v==='string'&&v.length,k);assert.equal(I.tr(v),v,'retraduction : '+v)} // pas de boucle avec l'observateur
  assert.equal(I.tr('Étape 3 · niv 12 · ⏳ Survie'),'Stage 3 · lvl 12 · ⏳ Survival');assert.equal(I.tr('Niv 12 · 340 or'),'Lvl 12 · 340 gold');
  assert.equal(I.tr('  Fin du tour '),'  End turn ');assert.equal(I.tr('Critique ! -12'),'Critical! -12');
  for(const z of ZONES){assert.ok(I.EN[z.n],z.n);assert.ok(I.EN[z.boss.n]||z.boss.n==='Ignaros'||z.boss.n==='Aetherion',z.boss.n)}
  for(const o of ITEMS)assert.ok(I.EN[o.n],o.n);for(const m of Object.values(MON))assert.ok(I.EN[m.n],m.n);
  const C=await import('../src/chronicle.js');for(const t of C.TROPHIES){assert.ok(I.EN[t.n],t.n);assert.ok(I.tr(t.d)!==t.d,t.d)}
- I.L.on=false;
+ I.setLang('fr');
 });
 
 test('V4.90 anglais des descriptions de sorts et de talents : tout est couvert', async()=>{
- const I=await import('../src/i18n.js'),T=await import('../src/talents.js');I.L.on=true;
+ const I=await import('../src/i18n.js'),T=await import('../src/talents.js');I.setLang('en');
  const all=[...Object.values(SP).map(x=>x.d),...T.SPECS.flat().flatMap(s=>[s.n,s.d,...s.t.flatMap(x=>[x[0],x[1],...Object.values(x[2]?.sp||{}).map(v=>v.d)])])].filter(Boolean);
  for(const s of all)assert.ok(I.EN[s],'sans anglais : '+s);for(const v of Object.values(I.EN))assert.equal(I.tr(v),v,v);
- assert.equal(I.tr('Niv 12 · 340 or'),'Lvl 12 · 340 gold');I.L.on=false;
+ assert.equal(I.tr('Niv 12 · 340 or'),'Lvl 12 · 340 gold');I.setLang('fr');
 });
 
 test('V5.12 musiques Cauchemar : 6 pistes déclarées, avec repli, jamais en campagne normale', async()=>{

@@ -210,14 +210,14 @@ export function losBlock(s,a,b,ign,lob){const n=Math.max(Math.abs(b.x-a.x),Math.
  for(let i=1;i<n;i++){const t=i/n,x=Math.round(a.x+(b.x-a.x)*t+1e-4),y=Math.round(a.y+(b.y-a.y)*t-1e-4);
   if((x===a.x&&y===a.y)||(x===b.x&&y===b.y))continue;const c=cell(s,x,y);if(wall(c,lob))return{x,y,u:null};const o=occ(s,x,y);if(o&&o!==ign)return{x,y,u:o}}return null}
 // Pourquoi une cible n'est pas valable (même règles que okTarget) : {t:'texte court',at:{x,y}|undefined}, ou null si elle l'est
-export function whyNot(s,u,sp,c,from=u){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
- if(sp.nova&&c.x===from.x&&c.y===from.y)return{t:'Aucun ennemi collé à toi'};
- if(d>sp.r[1])return{t:`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:`Trop près, portée min. ${sp.r[0]}`};
- if(sp.los&&d>1&&!los(s,from,c,u,sp.lob)){const b=losBlock(s,from,c,u,sp.lob);return{t:b?(b.u?`${b.u.n} bloque le tir`:sp.lob?'Un obstacle haut bloque le tir':'Un obstacle bloque le tir'):'Ligne de tir bloquée',at:b||undefined}}
- if(sp.charge&&o&&o.team!==u.team)return{t:'Aucun chemin libre jusqu’à une case voisine'};
- if(sp.t==='enemy')return{t:!o?'Personne ici':o.team===u.team?`${o.n} est un allié`:'Cible invalide'};
- if(sp.t==='ally')return{t:!o?'Personne ici':'Ce n’est pas un allié'};
- if(sp.t==='dead')return{t:'Aucun héros à relever ici'};if(sp.free)return{t:'Case occupée ou bloquée'};return okTarget(s,u,sp,c,from)?null:{t:'Cible invalide'}}
+export function whyNot(s,u,sp,c,from=u,text,name=unit=>unit.n){if(okTarget(s,u,sp,c,from))return null;const d=man(from,c),o=occ(s,c.x,c.y);
+ if(sp.nova&&c.x===from.x&&c.y===from.y)return{t:(text?.noAdjacent??'Aucun ennemi collé à toi')};
+ if(d>sp.r[1])return{t:text?.maxRange(d,sp.r[1])??`À ${d} cases, portée max. ${sp.r[1]}`};if(d<sp.r[0])return{t:text?.minRange(sp.r[0])??`Trop près, portée min. ${sp.r[0]}`};
+ if(sp.los&&d>1&&!los(s,from,c,u,sp.lob)){const b=losBlock(s,from,c,u,sp.lob);return{t:b?(b.u?(text?.blockedBy(name(b.u))??`${b.u.n} bloque le tir`):sp.lob?(text?.highObstacle??'Un obstacle haut bloque le tir'):(text?.obstacle??'Un obstacle bloque le tir')):(text?.blocked??'Ligne de tir bloquée'),at:b||undefined}}
+ if(sp.charge&&o&&o.team!==u.team)return{t:(text?.noPath??'Aucun chemin libre jusqu’à une case voisine')};
+ if(sp.t==='enemy')return{t:!o?(text?.empty??'Personne ici'):o.team===u.team?(text?.ally(name(o))??`${o.n} est un allié`):(text?.invalid??'Cible invalide')};
+ if(sp.t==='ally')return{t:!o?(text?.empty??'Personne ici'):(text?.notAlly??'Ce n’est pas un allié')};
+ if(sp.t==='dead')return{t:(text?.noHero??'Aucun héros à relever ici')};if(sp.free)return{t:(text?.occupied??'Case occupée ou bloquée')};return okTarget(s,u,sp,c,from)?null:{t:(text?.invalid??'Cible invalide')}}
 export function okTarget(s,u,sp,c,from=u){const d=man(from,c);if(d<sp.r[0]||d>sp.r[1])return 0;if(sp.los&&d>1&&!los(s,from,c,u,sp.lob))return 0;const o=occ(s,c.x,c.y);
  if(sp.t==='self')return c.x===from.x&&c.y===from.y&&(!sp.nova||s.units.some(f=>!f.dead&&f.team!==u.team&&man(f,from)===1));if(sp.t==='cell')return !!cell(s,c.x,c.y)&&(!sp.free||(!o&&passable(s,c.x,c.y)));
  if(sp.t==='dead'){const h=koAt(s,u,c);return h&&reviveSpot(s,h)?1:0}if(!o)return sp.t==='enemy'&&sp.dmg&&!sp.charge&&prismOn(s,cell(s,c.x,c.y))?1:0;return sp.t==='enemy'?o.team!==u.team&&(!sp.charge||!!chargeDest(s,u,sp,c,from)):o.team===u.team}

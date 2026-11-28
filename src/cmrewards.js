@@ -1,3 +1,4 @@
+import {cmLabel} from './locales/nightmare-rewards.js';
 // V5.24 : récompenses du Cauchemar, purement honorifiques (aucun gain de puissance : ni PV, ni dégâts, ni or, ni objet en plus).
 // Sceaux : un par région, obtenu en battant son boss du Cauchemar (lu dans save.cm.z, rien à stocker).
 // Trophées Cauchemar : liste à part (save.cm.tr), les 40 trophées de la Chronique et leur platine ne changent pas.
@@ -41,8 +42,8 @@ export const CM_TITLES=[
  {id:'etoile',n:'Étoile noire',ne:'Black star',d:'300 ★ dans le Cauchemar',de:'300 ★ in the Nightmare',ok:s=>cmStars(s)>=300},
  {id:'seigneur',n:'Seigneur du Cauchemar',ne:'Lord of the Nightmare',d:'Trophée platine du Cauchemar',de:'Nightmare platinum trophy',ok:s=>!!s.cm?.tr?.cm_platine}];
 export const titleOk=(save,id)=>{const t=CM_TITLES.find(x=>x.id===id);return!!(t&&t.ok(save))};
-export const titleName=(save,id=save.cm?.t)=>{const t=CM_TITLES.find(x=>x.id===id);return t&&t.ok(save)?(save.lang==='en'?t.ne:t.n):''};
-export const tN=(save,o)=>save.lang==='en'?o.ne:o.n,tD=(save,o)=>save.lang==='en'?o.de:o.d;
+export const titleName=(save,id=save.cm?.t)=>{const t=CM_TITLES.find(x=>x.id===id);return t&&t.ok(save)?tN(save,t):''};
+export const tN=(save,o)=>save.lang==='en'?o.ne:cmLabel(save.lang,o.n),tD=(save,o)=>save.lang==='en'?o.de:cmLabel(save.lang,o.d);
 
 // nettoyage additif (appelé par save.js après save.cm) : compteurs finis et positifs, trophées connus, titre connu ou aucun
 export function cleanCmRewards(save){const c=save.cm,o=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{};
