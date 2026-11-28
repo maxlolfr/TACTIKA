@@ -324,7 +324,7 @@ body.camp #exc{display:none}
  .hud2 .sp,.hud2 #spells:has(>:nth-child(5))>.sp{width:100%;max-width:56px;min-width:0;justify-self:center}
  .hud2 .sp small{font-size:9px}
  .hud2 #exc,.hud2 #hint{grid-column:1/-1}
- .hud2 #hint{height:auto;min-height:0;max-height:2.7em;overflow:hidden;margin:0;font-size:11px;line-height:1.3}
+ .hud2 #hint{height:auto;min-height:3.9em;max-height:5.3em;overflow-y:auto;margin:0;font-size:11px;line-height:1.3}
  .hud2 #tl canvas{width:40px;height:40px}
 }
 /* paysage et grands écrans : colonne 20–22 %, contenu groupé en haut, aide courte */
@@ -332,10 +332,10 @@ body.camp #exc{display:none}
  .hud2{--side:clamp(176px,21vw,300px)}
  .hud2 #panel{gap:6px;justify-content:flex-start;border-top:0!important;border-left:1px solid var(--ra-or)!important;box-shadow:inset 1px 0 0 #e9cf9433,-6px 0 18px #0007}
  .hud2 #spells{gap:6px!important;padding-top:2px}
- .hud2 #hint{flex:0 1 auto;max-height:6.5em;order:3}
+ .hud2 #hint{flex:0 1 auto;max-height:9.5em;order:3}
  .hud2 #end{order:2;padding:8px!important}
 }
-@media (orientation:landscape) and (max-height:450px){.hud2 #tl canvas{width:38px;height:38px}.hud2 #hint{max-height:3.9em}.hud2 #panel{padding-top:calc(env(safe-area-inset-top) + 8px)}}
+@media (orientation:landscape) and (max-height:450px){.hud2 #tl canvas{width:38px;height:38px}.hud2 #hint{flex:none;min-height:0;max-height:none;font-size:10px;line-height:1.2;overflow:visible}.hud2 #panel{overflow-y:auto;overscroll-behavior:contain}.hud2 #end{min-height:0;padding:4px 6px!important;font-size:17px}.hud2 #tgt canvas{width:30px;height:30px}.hud2 #panel{padding-top:calc(env(safe-area-inset-top) + 8px)}}
 @media (orientation:landscape) and (min-height:600px){.hud2 #tl canvas{width:52px;height:52px}.hud2 #top{padding-top:calc(env(safe-area-inset-top) + 8px)}.hud2 .sp{max-width:70px}.hud2 #who{font-size:15px}}
 @media (min-width:1000px) and (min-height:700px){.hud2{--side:clamp(220px,19vw,320px)}.hud2 #tl canvas{width:58px;height:58px}.hud2 .sp{max-width:76px}}
 /* cibles (vignettes d'ennemis) sous Fin du tour : rien ne bouge sous le doigt quand on choisit un sort */

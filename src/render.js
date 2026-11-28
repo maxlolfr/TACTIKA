@@ -4,6 +4,7 @@ import {G} from './game.js';
 import {$,HUD2} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,VET_LVL,VET_FORCE} from './data.js';
 import {save} from './save.js';
+import {drawAmb,resetAmb} from './ambiance.js';
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,hitCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -203,8 +204,8 @@ function frameOf(u){const now=performance.now(),p=u.pose&&u.poseT>now?u.pose:'i'
  return[u.s,u.row*3+{i:0,a:1,h:2,s:3}[p],right,u.ref]}
 
 // ---------- effets visuels ----------
-let fx=[],texts=[],shakeT=0,parts=[],lastA=0;
-export function resetFx(){fx=[];texts=[];parts=[];view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}
+let fx=[],texts=[],shakeT=0,lastA=0;
+export function resetFx(){fx=[];texts=[];resetAmb();view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}
 export const addFx=(x,y,i,w,dur=550,sh='fx',dy=0)=>fx.push({x,y,i,w,sh,dy,t0:performance.now(),dur});
 const dic=(c,s,i,x,y,w)=>{const f=AT[s][i],k=w/Math.max(f[2],f[3]);c.drawImage(IMG[s],f[0],f[1],f[2],f[3],x,y,f[2]*k,f[3]*k)};
 // V4.0.4 : effets du Titan — rayon prismatique (traits lumineux de l'origine vers chaque case, colonnes de lumière) et onde de choc
@@ -222,22 +223,14 @@ let punchE=0,punchP=null;export const punch=(u,k=.05,ms=220)=>{punchE=performanc
 export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<(lowFx()?3:12);i++){const a=Math.random()*6.28,v=.6+Math.random();fx.push({burst:1,x:u.gx,y:u.gy,k:kind,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,t0,dur:650})}};
 export function say(u,s,c,big){s=tr(s);texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
-// particules d'ambiance par décor : 0 luciole 1 étincelle 2 feuille 3 neige 4 braise 6 feu follet
-const AMB=[[0,2],[0,2,0],[1,0],[1],[3,3],[4,6,4],[6,0,6]];
-// V5.05 lot 3 : prototype d'ambiance animée de la Forteresse de braise (décor 7) : braises procédurales qui montent en vacillant
-// et lueur de lave qui respire en bas de l'écran ; très discret, sans image ajoutée ; « Effets réduits » : 6 braises, lueur fixe
-let emb=[];function forge(now,dt){const lf=lowFx(),N=lf?6:22;if(emb.length>N)emb.length=N;
- while(emb.length<N)emb.push({x:Math.random()*W,y:H*(.5+Math.random()*.6),vy:-.02-Math.random()*.035,vx:(Math.random()-.5)*.012,r:.8+Math.random()*1.8,ph:Math.random()*7,life:0,max:2500+Math.random()*3500});
- ctx.save();ctx.globalCompositeOperation='lighter';
- const k=lf?.5:.5+.5*Math.sin(now/1700),g=ctx.createLinearGradient(0,H,0,H*.55);g.addColorStop(0,`rgba(255,90,20,${.10+.06*k})`);g.addColorStop(1,'rgba(255,90,20,0)');ctx.fillStyle=g;ctx.fillRect(0,H*.55,W,H*.45);
- for(const p of emb){p.life+=dt;p.x+=p.vx*dt+Math.sin(now/500+p.ph)*.25;p.y+=p.vy*dt;if(p.life>p.max||p.y<-10)Object.assign(p,{x:Math.random()*W,y:H*(.75+Math.random()*.3),life:0});
-  const a=Math.min(1,p.life/400)*Math.min(1,(p.max-p.life)/700)*(.55+.45*Math.sin(now/90+p.ph*3)),r=p.r*(TW/55),gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*3);gr.addColorStop(0,`rgba(255,220,140,${a})`);gr.addColorStop(.35,`rgba(255,120,30,${a*.7})`);gr.addColorStop(1,'rgba(255,60,0,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y,r*3,0,7);ctx.fill()}
- ctx.restore()}
-function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;if(G.F&&G.F.th===7)return forge(now,dt);const kinds=AMB[G.F?G.F.th:0]||[0];
- while(parts.length<26){const k=kinds[parts.length%kinds.length],fall=k===2||k===3;parts.push({k,x:Math.random()*W,y:fall?-20-Math.random()*H:Math.random()*H,vx:(Math.random()-.5)*.02,vy:fall?.03+Math.random()*.03:k===4||k===6?-.03-Math.random()*.03:(Math.random()-.5)*.01,s:.12+Math.random()*.14,ph:Math.random()*7,r:Math.random()*6})}
- ctx.save();for(const p of parts){p.x+=p.vx*dt+Math.sin(now/900+p.ph)*.15;p.y+=p.vy*dt;if(p.y>H+30||p.y<-40||p.x<-30||p.x>W+30){Object.assign(p,{x:Math.random()*W,y:p.vy>0?-20:H+20})}
-  const f=AT.parts[p.k],w=TW*p.s*(p.k===2?1.4:1);ctx.globalAlpha=p.k===0?.5+.5*Math.sin(now/300+p.ph):.85;ctx.save();ctx.translate(p.x,p.y);if(p.k===2)ctx.rotate(Math.sin(now/600+p.ph)*1.2);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],-w/2,-w/2,w,w*f[3]/f[2]);ctx.restore()}
- ctx.restore()}
+// V5.08 : ambiances des 12 régions dans src/ambiance.js ; la bordure du plateau (arêtes n'appartenant qu'à une case) sert aux reflets
+let rimK='',rimE=null;
+function rimOf(){const S=G.s;if(!S||!S.map||!S.map.size)return null;const k=[ox|0,oy|0,TW|0,V,S.map.size].join();if(k===rimK)return rimE;rimK=k;const cnt=new Map();
+ for(const m of S.map.values()){const x=m.x,y=m.y;for(const e of[[x-.5,y-.5,x+.5,y-.5],[x+.5,y-.5,x+.5,y+.5],[x-.5,y+.5,x+.5,y+.5],[x-.5,y-.5,x-.5,y+.5]]){const key=e.join();cnt.set(key,(cnt.get(key)||0)+1)}}
+ const path=new Path2D(),segs=[];let ya=1e9,yb=-1e9;
+ for(const[key,n]of cnt){if(n!==1)continue;const[a,b,c2,d]=key.split(',').map(Number),[x1,y1]=scr(a,b),[x2,y2]=scr(c2,d);path.moveTo(x1,y1);path.lineTo(x2,y2);segs.push([x1,y1,x2,y2]);ya=Math.min(ya,y1,y2);yb=Math.max(yb,y1,y2)}
+ const[cx,cy]=scr(R/4,R/4);return rimE={path,segs,y0:ya,y1:yb,cx,cy}}
+function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(ctx,G.F?G.F.th:0,now,dt,rimOf(),{W,H,TW,TH,lf:lowFx()})}
 
 // ---------- boucle de dessin ----------
 // mode test (V4.0.2) : ?fps dans l'adresse affiche les images par seconde (moyenne sur 1 s) et le plus long écart
