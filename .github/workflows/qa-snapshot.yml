@@ -15,7 +15,7 @@ jobs:
           path: qa
       - uses: actions/checkout@v4
         with:
-          ref: 4a563d1b2715448b660bd58c9bd568dfdf0280ce
+          ref: af0d47a98c487ddc0ade1d490f03b6cb9f454bc9
           path: snapshot
       - uses: actions/setup-node@v4
         with:
@@ -34,12 +34,6 @@ jobs:
           export CHROME="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
           node tools/smoke.mjs qa-smoke
           OUT=qa-browser node tools/qa-browser.mjs
-      - working-directory: snapshot
-        if: always()
-        run: |
-          cp ../qa/tools/qa-campaign.mjs tools/
-          set -o pipefail
-          node tools/qa-campaign.mjs | tee qa-campaign.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -47,4 +41,4 @@ jobs:
           path: |
             snapshot/qa-smoke
             snapshot/qa-browser
-            snapshot/qa-campaign.txt
+
