@@ -10,6 +10,7 @@ import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zo
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
+import {COMBAT_UI} from './locales/combat-ui.js';
 import {MAP_UI} from './locales/map.js';
 import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
 import {INVENTORY_UI} from './locales/equipment.js';
@@ -28,35 +29,44 @@ import {HOW_EN} from './tips-en.js';
 // ---------- panneau de combat ----------
 
 // V4.51 : HUD V2 — statuts (icône, texte, tours restants), fiche au toucher d'un portrait, infobulle de sort (appui long / survol)
-const statusList=u=>{const L=[],pc=v=>Math.round(v*100);
- if(u.poison)L.push(['☠',`Poison ${u.poison.d} par tour`,u.poison.turns,'#8fd36a']);
- if(u.burn)L.push(['🔥',`Brûlure ${u.burn.d} par tour`,u.burn.turns,'#ff9a4a']);
- if(u.shield>0)L.push(['🛡','Rempart : dégâts réduits',0,'#9fd0ff']);
- if(u.ward)L.push(['✦',`Bouclier ${u.ward.hp} PV`,u.ward.turns,'#9fd8ff']);
- if(u.buff)L.push(['⚔',`Dégâts +${pc(u.buff.pct)} %`,u.buff.turns,'#ffd65a']);
- if(u.sunder)L.push(['💔',`Armure brisée : +${pc(u.sunder.pct)} % subis`,u.sunder.turns,'#ff9a5a']);
- if(u.weak)L.push(['⬇',`Affaibli −${pc(u.weak.pct)} %`,u.weak.turns,'#c9a0ff']);
- if(u.slow)L.push(['🕸',u.slow>1?'Enraciné':`−${u.slow} PM`,0,'#c9a0ff']);
- if(u.curse)L.push(['✝','Maudit : soins −50 %',u.curse>0&&u.curse<9?u.curse:0,'#d6b14a']);
- if(u.evade)L.push(['💨',`Esquive ${Math.round(u.evade*100)} %`,0,'#7fd0ff']);
- if(u.counter)L.push(['↩','Contre-attaque prête',0,'#ffd65a']);
- if(u.taunt)L.push(['🎯','Provoqué',0,'#ff8a8a']);
+const statusList=u=>{const text=COMBAT_UI[save.lang],L=[],pc=v=>Math.round(v*100);
+ if(u.poison)L.push(['☠',text?.poison(u.poison.d)??`Poison ${u.poison.d} par tour`,u.poison.turns,'#8fd36a']);
+ if(u.burn)L.push(['🔥',text?.burn(u.burn.d)??`Brûlure ${u.burn.d} par tour`,u.burn.turns,'#ff9a4a']);
+ if(u.shield>0)L.push(['🛡',text?.guard??'Rempart : dégâts réduits',0,'#9fd0ff']);
+ if(u.ward)L.push(['✦',text?.ward(u.ward.hp)??`Bouclier ${u.ward.hp} PV`,u.ward.turns,'#9fd8ff']);
+ if(u.buff)L.push(['⚔',text?.buff(pc(u.buff.pct))??`Dégâts +${pc(u.buff.pct)} %`,u.buff.turns,'#ffd65a']);
+ if(u.sunder)L.push(['💔',text?.sunder(pc(u.sunder.pct))??`Armure brisée : +${pc(u.sunder.pct)} % subis`,u.sunder.turns,'#ff9a5a']);
+ if(u.weak)L.push(['⬇',text?.weak(pc(u.weak.pct))??`Affaibli −${pc(u.weak.pct)} %`,u.weak.turns,'#c9a0ff']);
+ if(u.slow)L.push(['🕸',u.slow>1?(text?.rooted??'Enraciné'):(text?.slow(u.slow)??`−${u.slow} PM`),0,'#c9a0ff']);
+ if(u.curse)L.push(['✝',text?.curse??'Maudit : soins −50 %',u.curse>0&&u.curse<9?u.curse:0,'#d6b14a']);
+ if(u.evade)L.push(['💨',text?.evade(Math.round(u.evade*100))??`Esquive ${Math.round(u.evade*100)} %`,0,'#7fd0ff']);
+ if(u.counter)L.push(['↩',text?.counter??'Contre-attaque prête',0,'#ffd65a']);
+ if(u.taunt)L.push(['🎯',text?.taunt??'Provoqué',0,'#ff8a8a']);
  return L};
-const chips=u=>statusList(u).map(([i,t,n,c])=>`<span class="ch" style="--c:${c}" title="${t}${n?' · '+n+' tour'+(n>1?'s':''):''}"><i>${i}</i>${n||''}</span>`).join('');
+const chips=u=>statusList(u).map(([i,t,n,c])=>`<span class="ch" style="--c:${c}" title="${t}${n?' · '+(COMBAT_UI[save.lang]?.turns(n)??n+' tour'+(n>1?'s':'')):''}"><i>${i}</i>${n||''}</span>`).join('');
 let fOpen=null;
 const closeFiche=()=>{const f=document.getElementById('ufiche');if(f)f.remove();fOpen=null};
 function toggleFiche(u,anchor){if(fOpen===u){closeFiche();return}closeFiche();fOpen=u;
  const f=document.createElement('div');f.id='ufiche';f.setAttribute('role','dialog');
- const st=statusList(u),pct=Math.max(0,Math.round(100*u.hp/u.max));
- const l2=u.team==='h'?`<span class="pa">${u.pa}/${u.maxPA} PA</span><span class="pm">${u.pm}/${u.maxPM} PM</span>`:`<span>Attaque ${u.atk.dmg.join('–')}, portée ${u.atk.r[1]>1?u.atk.r.join('–'):'contact'}</span>`;
- f.innerHTML=`<b class="fn ${u.team==='h'?'fh':'fm'}">${u.n}${u.boss?' ♛ boss':''}</b><div class="fb"><i style="width:${pct}%"></i></div><div class="fl">${u.hp}/${u.max} PV${u.armor?` · armure ${Math.round(u.armor*100)} %`:''}</div><div class="fl">${l2}</div>`
-  +(st.length?st.map(([i,t,n])=>`<div class="fs"><i>${i}</i>${t}${n?` <small>· ${n} tour${n>1?'s':''}</small>`:''}</div>`).join(''):'<div class="fl fz">Aucun statut</div>');
+ const text=COMBAT_UI[save.lang],st=statusList(u),pct=Math.max(0,Math.round(100*u.hp/u.max));
+ const l2=u.team==='h'?`<span class="pa">${text?.action(u.pa+'/'+u.maxPA)??`${u.pa}/${u.maxPA} PA`}</span><span class="pm">${text?.movement(u.pm+'/'+u.maxPM)??`${u.pm}/${u.maxPM} PM`}</span>`:`<span>${text?.attack(u.atk.dmg.join('–'),u.atk.r[1]>1?u.atk.r.join('–'):text.melee)??`Attaque ${u.atk.dmg.join('–')}, portée ${u.atk.r[1]>1?u.atk.r.join('–'):'contact'}`}</span>`;
+ f.innerHTML=`<b class="fn ${u.team==='h'?'fh':'fm'}">${u.n}${u.boss?' ♛ boss':''}</b><div class="fb"><i style="width:${pct}%"></i></div><div class="fl">${text?.hp(u.hp+'/'+u.max)??`${u.hp}/${u.max} PV`}${u.armor?' · '+(text?.armor(Math.round(u.armor*100))??`armure ${Math.round(u.armor*100)} %`):''}</div><div class="fl">${l2}</div>`
+  +(st.length?st.map(([i,t,n])=>`<div class="fs"><i>${i}</i>${t}${n?` <small>· ${text?.turns(n)??`${n} tour${n>1?'s':''}`}</small>`:''}</div>`).join(''):`<div class="fl fz">${text?.noStatus??'Aucun statut'}</div>`);
  document.body.append(f);const r=anchor.getBoundingClientRect(),w=f.offsetWidth;f.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';f.style.top=(r.bottom+8)+'px'}
 let tipEl=null;
 const hideTip=()=>{if(tipEl){tipEl.remove();tipEl=null}};
 function showTip(b,sp,u,pc){hideTip();const cdn=u.cd[sp.n]>0?u.cd[sp.n]:0;
- const stat=[sp.dmg?`Dégâts ${sp.dmg.join('–')}`:'',sp.heal?`Soin ${sp.heal.join('–')}`:'',sp.r&&sp.r[1]?`portée ${sp.r[0]===sp.r[1]?sp.r[1]:sp.r.join('–')}`:'sur soi',sp.zone?`zone ${sp.zone}`:''].filter(Boolean).join(' · ');
- const t=tipEl=document.createElement('div');t.id='sptip';t.innerHTML=`<b>${sp.n}</b> <span class="tc">${pc} PA${sp.cd?` · recharge ${sp.cd}`:''}</span><div>${stat}</div><div class="td">${sp.d||''}</div>`+(cdn?`<div class="tw">Disponible dans ${cdn} tour${cdn>1?'s':''}</div>`:'');
+ const text=COMBAT_UI[save.lang];
+ const range=sp.r?.[1]?(sp.r[0]===sp.r[1]?sp.r[1]:sp.r.join('–')):null;
+ const stat=[
+  sp.dmg&&(text?.damage(sp.dmg.join('–'))??`Dégâts ${sp.dmg.join('–')}`),
+  sp.heal&&(text?.heal(sp.heal.join('–'))??`Soin ${sp.heal.join('–')}`),
+  range==null?(text?.self??'sur soi'):(text?.range(range)??`portée ${range}`),
+  sp.zone&&(text?.area(sp.zone)??`zone ${sp.zone}`),
+ ].filter(Boolean).join(' · ');
+ const cost=text?.action(pc)??`${pc} PA`, cd=sp.cd?' · '+(text?.cooldown(sp.cd)??`recharge ${sp.cd}`):'';
+ const ready=text?.ready(cdn)??`Disponible dans ${cdn} tour${cdn>1?'s':''}`;
+ const t=tipEl=document.createElement('div');t.id='sptip';t.innerHTML=`<b>${sp.n}</b> <span class="tc">${cost}${cd}</span><div>${stat}</div><div class="td">${sp.d||''}</div>`+(cdn?`<div class="tw">${ready}</div>`:'');
  document.body.append(t);const r=b.getBoundingClientRect(),w=t.offsetWidth,h=t.offsetHeight;
  if(innerWidth>innerHeight){t.style.left=Math.max(6,r.left-w-8)+'px';t.style.top=Math.max(6,Math.min(innerHeight-h-6,r.top))+'px'}
  else{t.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';t.style.top=Math.max(6,r.top-h-8)+'px'}}

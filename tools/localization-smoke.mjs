@@ -122,7 +122,19 @@ try {
       const objective=page.locator('#tuto.on p');
       await objective.waitFor();
       assert.match(await objective.textContent(),id==='zh-Hans'?/目标：坚守\d+回合/:/Ziel: \d+ Züge durchhalten/);
-      console.log('OK',id,'· objectif de survie en vagues');
+      await page.locator('#tuto.on .btn').first().click();
+      const spellButton=page.locator('#spells button:enabled').first();
+      await spellButton.waitFor();
+      await spellButton.evaluate(element=>element.dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse'})));
+      const tooltip=page.locator('#sptip');
+      await tooltip.waitFor();
+      assert.match(await tooltip.textContent(),zh?/行动点.*伤害/s:/AP.*Schaden/s);
+      await spellButton.evaluate(element=>element.dispatchEvent(new PointerEvent('pointerleave',{pointerType:'mouse'})));
+      await page.locator('#tl .rg.h canvas').first().evaluate(element=>element.click());
+      const character=page.locator('#ufiche');
+      await character.waitFor();
+      assert.match(await character.textContent(),zh?/生命值.*行动点.*移动点/s:/LP.*AP.*BP/s);
+      console.log('OK',id,'· objectif, infobulle de sort et fiche de combat');
       await page.reload();
       await camp.waitFor();
     }

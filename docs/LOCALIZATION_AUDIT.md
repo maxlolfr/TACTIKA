@@ -55,3 +55,5 @@ L’inventaire affiche dans les deux aperçus des libellés localisés pour les 
 La forge, le marchand et la taverne ont des textes localisés en chinois simplifié et en allemand, y compris les stocks de potions, les prix, les objectifs des contrats et leurs récompenses. L’aide de combat des réglages est également traduite.
 
 La carte et les fiches de région affichent les niveaux, les compteurs, les jalons, les verrous et les libellés accessibles dans les deux langues. La progression et les conditions d’accès restent celles du moteur existant.
+
+Les infobulles de sorts et les valeurs chiffrées des fiches de combat utilisent également des formats chinois et allemands (coûts, portée, zone, recharge, points de vie et armure). Les statuts standards sont traduits. Les effets propres aux élites et aux champions restent à vérifier.
