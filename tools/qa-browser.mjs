@@ -57,7 +57,11 @@ try{
   // Read state only; actual selection and targeting go through the visible UI.
   const before=await p.evaluate(async()=>{const {G}=await import('/src/game.js');const {selCells,costOf}=await import('/src/rules.js');const u=G.cur;const id=u.sp.find(id=>u.S[id].dmg&&u.pa>=costOf(u,u.S[id])&&selCells(G.s,u,u.S[id]).some(c=>c.ok&&G.s.units.some(m=>m.team==='m'&&!m.dead&&m.x===c.x&&m.y===c.y)));return {id,index:u.sp.indexOf(id),pa:u.pa,turn:G.turn}});
   assert.ok(before.id,'first hero must have a reachable damaging spell');
-  await p.locator('#spells button').nth(before.index).click();
+  const spell=p.locator('#spells button').nth(before.index);
+  await spell.waitFor({state:'visible'});assert.ok(await spell.isEnabled());
+  // Tutorial coach pulses continuously; freeze only its CSS animation in this test.
+  await p.addStyleTag({content:'.coach { animation-play-state: paused !important; }'});
+  await spell.click();
   const target=p.locator('#tl canvas.m.tg').first();await target.click();
   // First click previews, second confirms. Locator resolves again after render.
   await target.click();
