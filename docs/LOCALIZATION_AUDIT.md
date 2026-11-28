@@ -87,3 +87,9 @@ La branche intègre la V5.28 de `main` (`765dcbf`), avec les visuels HD de Fenn 
 L’aperçu de visée en chinois simplifié et en allemand affiche les points de vie, les raisons de l’impossibilité de lancer un sort, la portée, les prévisions de dégâts et de soins, la collision, les statuts, le risque de mise à terre et le déclenchement du prisme. Les cibles ont aussi un libellé accessible localisé. Les tests Node vérifient notamment les valeurs de portée et la conservation de la case bloquante. Le scénario Chromium a été étendu à la sélection d’une cible et à la lecture de l’aperçu.
 
 Il reste à contrôler cet écran dans Chromium à 390 × 844 (le binaire local était indisponible lors de cette reprise), puis à vérifier les autres textes dynamiques du plateau et la partie hors ligne tour par tour. Le chinois simplifié et l’allemand restent en aperçu.
+
+### Partie hors ligne et région jamais chargée
+
+Le scénario Chromium du Cauchemar utilise désormais le bouton de fin de tour jusqu’au bilan. Il laisse les ennemis jouer et accepte une victoire ou une défaite produite par les règles du combat. Après le bilan, le parcours recharge la carte hors ligne et tente d’ouvrir le Bois sombre en vérifiant que le sprite `wolfN.webp` est absent des caches.
+
+Un essai isolé du gestionnaire du service worker, avec le réseau coupé et les deux caches vides pour le média demandé, renvoie HTTP 504. Le sprite `wolfN.webp` ne figure pas dans la liste de précache. `zoneAssets` attend les images avant l’initialisation du plateau. Une première visite hors ligne reste donc bloquée si le fichier n’a jamais été mis en cache. Le parcours vérifie le message de chargement de ce cas. Le changement est limité au scénario et à cet audit. Le parcours Chromium reste à exécuter, l’environnement d’exécution étant indisponible lors de cette reprise.

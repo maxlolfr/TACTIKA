@@ -213,16 +213,44 @@ try {
         await page.locator('.zone').first().evaluate(element=>element.click());
         await page.locator('#zsheet .btn').nth(1).click();
         await elite.first().waitFor();
-        await page.evaluate(async()=>{
+        const resultTitle=page.locator('#result.on h1');
+        let lastTurn=null;
+        let turnsPlayed=0;
+        for(;turnsPlayed<48;turnsPlayed++){
+          const nextTurn=await page.waitForFunction(async previous=>{
+            const {G}=await import('/src/game.js');
+            if(document.querySelector('#result.on h1'))return 'finished';
+            if(G.phase!=='fight'||G.cur?.team!=='h'||!G.endTurnResolve||G.busy)return false;
+            const turn=G.s.round+':'+G.turn;
+            return turn!==previous?turn:false;
+          },lastTurn);
+          lastTurn=await nextTurn.jsonValue();
+          await nextTurn.dispose();
+          if(lastTurn==='finished')break;
+          await page.locator('#end').click();
+        }
+        assert.ok(turnsPlayed>=2,'le combat doit avancer sur plusieurs tours');
+        await resultTitle.waitFor();
+        assert.match(await resultTitle.textContent(),zh?/胜利|失败|战败/:/Sieg|Niederlage/);
+        console.log('OK',id,'· combat du Cauchemar hors ligne joué jusqu’au bilan');
+
+        await page.reload();
+        await camp.waitFor();
+        await page.locator('.v-go').click();
+        const coldRegion=await page.evaluate(async()=>{
           const {G}=await import('/src/game.js');
-          const {end}=await import('/src/turns.js');
-          for(const enemy of G.s.units.filter(unit=>unit.team==='m'))enemy.dead=true;
-          end();
+          const {startFight}=await import('/src/ui.js');
+          const {tr}=await import('/src/i18n.js');
+          const sprite=new URL('/assets/wolfN.webp',location.href);
+          const cached=!!await caches.match(sprite.href);
+          await startFight(1,0);
+          return {cached,phase:G.phase,feedback:document.getElementById('mapinfo').textContent,
+            expected:tr('Images introuvables')+' : '};
         });
-        const victory=page.locator('#result.on h1');
-        await victory.waitFor();
-        assert.match(await victory.textContent(),zh?/胜利/:/Sieg/);
-        console.log('OK',id,'· combat du Cauchemar hors ligne jusqu’au bilan');
+        assert.equal(coldRegion.cached,false,'le sprite du Bois sombre doit être absent du cache');
+        assert.equal(coldRegion.phase,'camp');
+        assert.ok(coldRegion.feedback.startsWith(coldRegion.expected),coldRegion.feedback);
+        console.log('OK',id,'· refus de chargement pour une région jamais chargée hors ligne');
       } finally {
         await page.context().setOffline(false);
       }
