@@ -205,18 +205,17 @@ const P9=(n,F,B,iB)=>({F,B,iB,i:[n,0],a:[n,2],h:[n,3],c:[n,4],b:[n,5],ko:[n,6],v
 const HN={warrior:P9('kael9',['kaelM',[5,6,7,8]],['kaelM',[1,2,3,4]],['kaelM',0]),
  archer:P9('fenn9',['fennM',[5,6,7,8]],['fennM',[1,2,3,4]],['fennM',0]),
  healer:P9('aelis9',['aelisM',[5,6,7,8]],['aelisM',[1,2,3,4]],['aelisM',0]),
- // V4.33 : Orion, sans planche de marche (pose fixe qui glisse)
- mage:{...P9('orion9',['orion9',[0,0,0,0]],['orion9',[0,0,0,0]],['orion9',0]),still:1},
- // V4.53 / V4.54 : Nyra et Lyria, même principe (pas de planche de marche)
- rogue:{...P9('nyra9',['nyra9',[0,0,0,0]],['nyra9',[0,0,0,0]],['nyra9',0]),still:1},
+ // V5.13 : Orion et Nyra ont leur vraie planche de marche (orionM, nyraM) ; Lyria n'en a pas encore (pose fixe qui glisse, marche procédurale)
+ mage:P9('orion9',['orionM',[5,6,7,8]],['orionM',[1,2,3,4]],['orionM',0]),
+ rogue:P9('nyra9',['nyraM',[5,6,7,8]],['nyraM',[1,2,3,4]],['nyraM',0]),
  paladin:{...P9('lyria9',['lyria9',[0,0,0,0]],['lyria9',[0,0,0,0]],['lyria9',0]),still:1}};
 // V4.32 : héros « vétérans » dès le niveau 25 (ou avec &veterans).
-// Pas de planche de marche : la pose de repos glisse avec le petit rebond de chaque case.
-const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','aelisV']].map(([k,n])=>{const still=[n,[0,0,0,0]];return[k,{...P9(n,still,still,[n,0]),vet:1}]}));
+// V5.13 : vraies planches de marche des vétérans (kaelVM, fennVM, aelisVM) ; avant, la pose de repos glissait avec le petit rebond de chaque case.
+const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','aelisV']].map(([k,n])=>[k,P9(n,[n+'M',[5,6,7,8]],[n+'M',[1,2,3,4]],[n+'M',0])]));
 export const isVet=()=>VET_FORCE||save.lvl>=VET_LVL;
 const hn=k=>isVet()&&HV[k]||HN[k];
 export const heroFrame=k=>hn(k).i;
-const stillWalk=u=>u.team==='h'&&u.walk&&!u.dead&&!!(hn(u.k).still||hn(u.k).vet); // V5.12
+const stillWalk=u=>u.team==='h'&&u.walk&&!u.dead&&!!hn(u.k).still; // V5.12 (V5.13 : plus que Lyria)
 // images de marche [planche, 4 cases], tournées vers la droite (réutilisées au village, V4.8b)
 export const walkFrames=(k,back)=>hn(k)[back?'B':'F'];
 // renvoie [planche, case, miroir, hauteur de référence]
