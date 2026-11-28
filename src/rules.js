@@ -4,7 +4,7 @@
 import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
-import {elitize,modOut,modIn,modTurn,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
+import {elitize,nightmare,modOut,modIn,modTurn,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -181,13 +181,13 @@ export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
  team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...(st.spells||[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[])]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',lv:st.lvl,k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,mastered({...SP[id],...tf.sp[id]},id,st.mast?.[id]||1)])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
- const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
+ const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=Math.min(es.length,(F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8))+(F.cm?.extra||0)); // V5.10.2 : Cauchemar = renforts au départ
  const spots=[...es].sort(()=>rng()-.5);
- for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L?L[i]:i===1&&F.elite&&!F.wave?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}
+ for(let i=0;i<cnt;i++){const B=i===0&&F.boss,t=B?B.k:L&&i<L.length?L[i]:i===1&&F.elite&&!F.wave?F.elite:pick(rng,pool);s.units.push(monUnit(F,t,spots[i],'m'+i,rng,B))}
  // repères stables A/B/C pour les monstres identiques
  for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+MON[c.k].n.toLowerCase()+(c.tag?' '+c.tag:''); // la lettre de repère reste en majuscule
-  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}if(F.cm){s.cmOn=1;elitize(s,F.cm,F.lang)}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
+  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}if(F.cm){s.cmOn=1;nightmare(s,F.cm);elitize(s,F.cm,F.lang)}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
  s.lava=F.lava?{...F.lava,next:[]}:null;lavaMark(s);
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }

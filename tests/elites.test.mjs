@@ -101,3 +101,11 @@ test('combats Cauchemar complets (règles seules) : les 4 élites, R1 à R3, san
    else{r.eliteTurn(s,u);if(!u.dead&&!r.outcome(s)){r.bossTurn(s,u);for(let g=0;g<6&&!u.dead;g++){const a=r.aiStep(s,u);if(!a)break;if(a.type==='cast'){r.payCost(u,a.sp,a.target);r.applySpell(s,u,a.sp,a.target);if(r.outcome(s))break;continue}const[x,y]=a.to.split(',').map(Number);u.pm-=r.reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}}}
    r.endTurn(u)}
   assert.ok(guard<2000,`${id} ${zi}.${i}`);assert.ok(s.units.every(u=>Number.isFinite(u.hp)&&u.hp>=0&&u.hp<=u.max),`${id} ${zi}.${i} PV`)}});
+
+test('V5.10.2 : composition Cauchemar (2 élites différentes, +2 monstres, renfort global), campagne intacte',()=>{
+ const a=battle(1,4,{seed:9,pool:E.MOD_IDS,n:0}),b=battle(1,4,{seed:9,pool:E.MOD_IDS,n:2,extra:2,hp:1.25,dmg:1.2});
+ const ma=a.units.filter(u=>u.team==='m'),mb=b.units.filter(u=>u.team==='m'),el=mb.filter(u=>u.mods);
+ assert.equal(mb.length,ma.length+2);assert.equal(el.length,2);assert.notEqual(el[0].mods[0],el[1].mods[0],'élites différentes');
+ const n=mb.find(u=>!u.mods&&u.k===ma[0].k);if(n)assert.equal(n.max,Math.round(ma.find(u=>u.k===n.k).max*1.25));
+ // mission à liste fixe d'ennemis : les monstres en plus viennent de la région
+ const c=battle(0,0,{seed:2,pool:E.MOD_IDS,n:1,extra:2});assert.ok(c.units.filter(u=>u.team==='m').every(u=>u.k&&u.atk&&u.max>0))});

@@ -127,6 +127,7 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  for(const m of S.map.values())if(m.cry==='a')for(const p of prismHits(S,m)){const c=cell(S,p.x,p.y);if(c.block||c.water)continue;const[sx,sy]=scr(p.x,p.y);
   diamond(g,sx,sy,.8);g.fillStyle='rgba(60,230,215,.16)';g.fill();g.setLineDash([5,4]);g.strokeStyle='rgba(120,255,240,.85)';g.lineWidth=2;g.stroke();g.setLineDash([]);chevron(g,sx,sy,TW*.09)}
  for(const m of S.map.values())if(m.block&&m.d!=null){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.94);g.fillStyle='rgba(12,14,6,.42)';g.fill();g.beginPath();g.ellipse(sx,sy+TH*.12,TW*.34,TH*.26,0,0,7);g.fillStyle='rgba(0,0,0,.4)';g.fill()}
+ if(G.F?.cm)nightGround(g); // V5.10.2 : ambiance Cauchemar (sol assombri, teinte pourpre ; personnages vifs)
 }
 // V4.37 : mur de glace (cristaux existants), barre de PV et tours restants
 function iceWall(c,m){const[x,y]=scr(m.x,m.y),z=TW*1.05,i=m.ice,left=i.until-G.s.round;diamond(c,x,y,.92);c.fillStyle='rgba(120,200,255,.35)';c.fill();c.strokeStyle='#bfe8ff';c.lineWidth=2;c.stroke();
@@ -249,7 +250,25 @@ function rimOf(){const S=G.s;if(!S||!S.map||!S.map.size)return null;const k=[ox|
  const path=new Path2D(),segs=[];let ya=1e9,yb=-1e9;
  for(const[key,n]of cnt){if(n!==1)continue;const[a,b,c2,d]=key.split(',').map(Number),[x1,y1]=scr(a,b),[x2,y2]=scr(c2,d);path.moveTo(x1,y1);path.lineTo(x2,y2);segs.push([x1,y1,x2,y2]);ya=Math.min(ya,y1,y2);yb=Math.max(yb,y1,y2)}
  const[cx,cy]=scr(R/4,R/4);return rimE={path,segs,y0:ya,y1:yb,cx,cy}}
-function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(ctx,G.F?G.F.th:0,now,dt,rimOf(),{W,H,TW,TH,lf:lowFx()})}
+function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(ctx,G.F?G.F.th:0,now,dt,rimOf(),{W,H,TW,TH,lf:lowFx()});if(G.F?.cm)nightFx(now,dt)}
+// ---------- V5.10.2 · ambiance Cauchemar (procédurale, sans image) ----------
+// Sol : teinte pourpre en multiplication + vignette rouge sombre, calculées une fois avec le sol pré-dessiné (coût nul par image).
+// Par image : brume sombre qui respire sur les bords, volutes pourpres qui montent, rares éclairs rouges lointains.
+// « Effets réduits » : sol teinté et vignette fixe seulement.
+function nightGround(g){g.save();g.globalCompositeOperation='multiply';g.fillStyle='#8f6f8c';g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over';
+ const v=g.createRadialGradient(W/2,H*.52,Math.min(W,H)*.28,W/2,H*.52,Math.max(W,H)*.78);v.addColorStop(0,'rgba(30,0,20,0)');v.addColorStop(1,'rgba(60,0,18,.7)');g.fillStyle=v;g.fillRect(0,0,W,H);g.restore()}
+const NW=[];let nFlash=0,nVig=null,nSpr=null;
+// sprites pré-rendus (une fois) : vignette à la taille de l'écran, deux volutes 32 px ; aucun dégradé recalculé par image
+function nightCache(){if(nVig&&nVig.w===W&&nVig.h===H)return;const c=document.createElement('canvas');c.width=Math.max(1,Math.round(W/2));c.height=Math.max(1,Math.round(H/2));const g=c.getContext('2d'),e=g.createRadialGradient(c.width/2,c.height/2,Math.min(c.width,c.height)*.4,c.width/2,c.height/2,Math.max(c.width,c.height)*.72);
+ e.addColorStop(0,'rgba(20,0,16,0)');e.addColorStop(1,'rgba(70,0,24,1)');g.fillStyle=e;g.fillRect(0,0,c.width,c.height);nVig={c,w:W,h:H};
+ if(!nSpr)nSpr=['120,30,90','150,20,30'].map(h=>{const s=document.createElement('canvas');s.width=s.height=32;const q=s.getContext('2d'),gr=q.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${h},1)`);gr.addColorStop(1,`rgba(${h},0)`);q.fillStyle=gr;q.fillRect(0,0,32,32);return s})}
+function nightFx(now,dt){if(globalThis.__noNF)return;const lf=lowFx();nightCache();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+ 
+ if(!lf){while(NW.length<22)NW.push({x:Math.random()*W,y:H+Math.random()*H*.6,r:6+Math.random()*16,v:.012+Math.random()*.02,ph:Math.random()*6.28,k:Math.random()<.7?0:1});
+  ctx.globalCompositeOperation='lighter';for(const p of NW){p.y-=p.v*dt;p.x+=Math.sin(now/1400+p.ph)*.25;if(p.y<-30){p.y=H+20;p.x=Math.random()*W}
+   ctx.globalAlpha=.10*Math.min(1,(H-p.y)/(H*.3))*Math.min(1,Math.max(0,p.y)/(H*.25));ctx.drawImage(nSpr[p.k],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}
+  if(now>nFlash+9000&&Math.random()<dt/6000)nFlash=now;const f=now-nFlash;if(f<420){ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle=`rgba(150,20,30,${.10*(1-f/420)*(f<90?f/90:1)})`;ctx.fillRect(0,0,W,H)}}
+ ctx.restore()}
 
 // ---------- boucle de dessin ----------
 // mode test (V4.0.2) : ?fps dans l'adresse affiche les images par seconde (moyenne sur 1 s) et le plus long écart
