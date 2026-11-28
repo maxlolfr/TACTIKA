@@ -8,14 +8,14 @@ permissions:
 jobs:
   snapshot:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           path: qa
       - uses: actions/checkout@v4
         with:
-          ref: 05c584659d85fcd9f4453b2ac967cd7a79c4e72e
+          ref: 4a563d1b2715448b660bd58c9bd568dfdf0280ce
           path: snapshot
       - uses: actions/setup-node@v4
         with:
@@ -33,7 +33,13 @@ jobs:
           export PW="$PWD/node_modules/playwright/index.mjs"
           export CHROME="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
           node tools/smoke.mjs qa-smoke
-          node tools/qa-browser.mjs qa-browser
+          OUT=qa-browser node tools/qa-browser.mjs
+      - working-directory: snapshot
+        if: always()
+        run: |
+          cp ../qa/tools/qa-campaign.mjs tools/
+          set -o pipefail
+          node tools/qa-campaign.mjs | tee qa-campaign.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -41,3 +47,4 @@ jobs:
           path: |
             snapshot/qa-smoke
             snapshot/qa-browser
+            snapshot/qa-campaign.txt
