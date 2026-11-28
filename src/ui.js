@@ -103,6 +103,7 @@ function render(){renderTL();
   b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${pc} PA`);
   if(me&&!sel&&F&&F.guide&&id==='shot'&&u.pa>=pc&&targetsFrom(G.s,u,u).foes.length)b.classList.add('coach');
   b.disabled=!me||G.busy||u.pa<pc||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;G.ex=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};if(HUD2)tipFor(b,sp,u,pc);S.appendChild(b)}
+ requestAnimationFrame(()=>{for(const l of S.querySelectorAll('.sp small')){l.style.fontSize='';const k=l.clientWidth/l.scrollWidth;if(k<1)l.style.fontSize=Math.max(6.5,parseFloat(getComputedStyle(l).fontSize)*k*.96)+'px'}});
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
  $('end').disabled=!me||G.busy;
  const lava=G.s.lava?.next.length&&me?(G.s.lava.trap?`◆ Pièges : les dalles dorées se déclenchent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV, −1 PM). `:G.s.lava.toxic?'☣ Zones toxiques : les cases vertes empoisonnent au prochain tour (4 PV × 2 tours). ':G.s.lava.cold?'❄ Fissures de givre : les cases bleues blessent (6 % des PV) et ralentissent au prochain tour. ':`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `):'';
