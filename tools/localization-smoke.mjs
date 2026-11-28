@@ -33,6 +33,12 @@ try {
   await page.goto('http://127.0.0.1:'+server.address().port);
   const camp=page.locator('.v-go b');
   const labels={fr:'Partir à l’aventure',en:'Set off on an adventure','zh-Hans':'出发冒险',de:'Ins Abenteuer aufbrechen'};
+  const prologues={
+    fr:'Je ne me souviens plus de la suite de la chanson…',
+    en:'I can’t remember the rest of the song…',
+    'zh-Hans':'我想不起这首歌的下一句了……',
+    de:'Ich weiß nicht mehr, wie das Lied weitergeht …',
+  };
   for(const id of ['fr','en','zh-Hans','de','fr']){
     const current=await page.locator('html').getAttribute('lang');
     if(current!==id){
@@ -47,7 +53,16 @@ try {
     assert.equal(saved.lang,id);
     assert.equal(saved.gold,713);
     assert.equal(saved.lvl,8);
-    console.log('OK',id,labels[id]);
+    await page.evaluate(async lang=>{
+      const {playStory}=await import('./src/story.js');
+      playStory({lang},['prologue']);
+    },id);
+    const dialogue=page.locator('#story .tx');
+    await dialogue.waitFor();
+    assert.equal(await dialogue.textContent(),prologues[id]);
+    await page.locator('#story .sp').click();
+    await dialogue.waitFor({state:'detached'});
+    console.log('OK',id,labels[id],'· prologue');
   }
   assert.deepEqual(errors,[]);
 } finally {

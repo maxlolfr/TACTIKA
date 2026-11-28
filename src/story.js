@@ -2,6 +2,7 @@
 // Contrat : données séparées, clés stables, une scène à la première occurrence (jamais en farm, revanche ou défaite),
 // passable en un geste, sauvegarde additive `save.storySeen`, aucun effet sur le combat, les récompenses ou l'équipe.
 import {ZONES,zlen} from './data.js';
+import {STORY_LOCALES,storyLine} from './locales/story.js';
 import {recruited} from './rules.js';
 // [locuteur, FR, EN] ; « Voix » = l'Architecte avant qu'on connaisse son nom (avant la région 9)
 const L=(...a)=>a;
@@ -82,17 +83,17 @@ function voiceLine(l,en){stopVoice();const n='vo_'+l[3]+'_'+l[4]+'_'+(en?'en':'f
  import('./audio.js').then(a=>{if(!a.AU.on.s||!a.AU.vol.v)return;stopVoice();const e=new Audio('assets/audio/voix/'+n+'.mp3');e.volume=Math.min(1,a.AU.vol.v/100);curVoice=e;e.play().catch(()=>{})}).catch(()=>{})}
 // joue une liste d'identifiants de scènes ; renvoie une promesse résolue à la fermeture (jamais bloquant : « Passer » ferme tout)
 export function playStory(save,ids,persist){ids=ids.filter(id=>SC[id]);if(!ids.length||typeof document==='undefined')return Promise.resolve();
- const run=()=>new Promise(res=>{const en=save.lang==='en',el=mount();const lines=[];
+ const run=()=>new Promise(res=>{const en=save.lang==='en',locale=STORY_LOCALES[save.lang],el=mount();const lines=[];
   for(const id of ids){markSeen(save,id);SC[id].forEach((l,i)=>lines.push([l[0],l[1],l[2],id,i+1]));}
   if(persist)persist();
   import('./audio.js').then(a=>{if(ids.some(i=>i.startsWith('join_')))a.sfx('recruit_hero',.9);if(ids.includes('epilogue'))a.music('ending')}).catch(()=>{});
   const hasEpi=ids.includes('epilogue');let k=0,card=false,closed=false;
   const close=()=>{if(closed)return;closed=true;stopVoice();el.remove();removeEventListener('keydown',key);res()};
-  const draw=()=>{el.innerHTML='';const sp=document.createElement('button');sp.className='sp';sp.textContent=en?'Skip ▶▶':'Passer ▶▶';sp.onclick=e=>{e.stopPropagation();close()};el.append(sp);
+  const draw=()=>{el.innerHTML='';const sp=document.createElement('button');sp.className='sp';sp.textContent=locale?.skip??(en?'Skip ▶▶':'Passer ▶▶');sp.onclick=e=>{e.stopPropagation();close()};el.append(sp);
    const bx=document.createElement('div');bx.className='bx';
-   if(card){stopVoice();bx.className='bx card';for(const[n,fr,e2]of OUTRO){const p=document.createElement('p');const b=document.createElement('b');b.textContent=n;p.append(b,document.createTextNode((en?e2:fr).slice(n.length)));bx.append(p)}
-    const t=document.createElement('p');t.style.textAlign='center';t.textContent=OUTRO_END[en?1:0];bx.append(t);const g=document.createElement('button');g.className='go';g.textContent=en?'Return to camp':'Retour au camp';g.onclick=e=>{e.stopPropagation();close()};bx.append(g)}
-   else{voiceLine(lines[k],en);const[w,fr,e2]=lines[k];const nm=document.createElement('div');nm.className='nm';nm.textContent=nameOf(w,en);const tx=document.createElement('div');tx.className='tx';tx.textContent=en?e2:fr;const hn=document.createElement('div');hn.className='hn';hn.textContent=(k+1)+' / '+lines.length+(en?' · tap to continue':' · toucher pour continuer');bx.append(nm,tx,hn)}
+   if(card){stopVoice();bx.className='bx card';for(const[n,fr,e2]of OUTRO){const p=document.createElement('p');const b=document.createElement('b');b.textContent=locale?.names[n]??n;const suffix=locale?.outro[n];p.append(b,document.createTextNode(suffix?(save.lang==='zh-Hans'?'':' ')+suffix:(en?e2:fr).slice(n.length)));bx.append(p)}
+    const t=document.createElement('p');t.style.textAlign='center';t.textContent=locale?.end??OUTRO_END[en?1:0];bx.append(t);const g=document.createElement('button');g.className='go';g.textContent=locale?.back??(en?'Return to camp':'Retour au camp');g.onclick=e=>{e.stopPropagation();close()};bx.append(g)}
+   else{voiceLine(lines[k],en);const[w,fr,e2,id,index]=lines[k];const nm=document.createElement('div');nm.className='nm';nm.textContent=locale?.names[w]??nameOf(w,en);const tx=document.createElement('div');tx.className='tx';tx.textContent=storyLine(locale,id,index-1)??(en?e2:fr);const hn=document.createElement('div');hn.className='hn';hn.textContent=(k+1)+' / '+lines.length+' · '+(locale?.continue??(en?'tap to continue':'toucher pour continuer'));bx.append(nm,tx,hn)}
    el.append(bx)};
   const next=()=>{if(card)return;if(k+1<lines.length){k++;draw()}else if(hasEpi){card=true;draw()}else close()};
   const key=e=>{if(e.key==='Escape'){close()}else if(e.key==='Enter'||e.key===' '){e.preventDefault();next()}};
