@@ -63,7 +63,10 @@ export function music(n,force){AU.want=n;ambience();const c=AU.c;if(!c||(AU.cur=
  if(!k){musicLoad(w);return} // l'ancienne musique continue pendant le chargement
  if(AU.src){const o=AU.src;o.g.gain.setTargetAtTime(0,c.currentTime,.4);setTimeout(()=>{try{o.stop()}catch(e){}},2000);AU.src=null}
  AU.cur=n;for(const m of MUSICS)if(m!==k)delete AU.buf[m];
- const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf[k];s.loop=true;s.g=g;g.gain.value=0;s.vol=TRIM[k]||1;g.gain.setTargetAtTime(s.vol,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start();AU.src=s}
+ const s=c.createBufferSource(),g=c.createGain();s.buffer=AU.buf[k];s.loop=true;const lp=loopPts(s.buffer);if(lp){s.loopStart=lp[0];s.loopEnd=lp[1]}s.g=g;g.gain.value=0;s.vol=TRIM[k]||1;g.gain.setTargetAtTime(s.vol,c.currentTime,.5);s.connect(g);g.connect(AU.m);s.start(0,lp?lp[0]:0);AU.src=s}
+// V5.14.3 : boucle sans trou. Les MP3 d'origine commencent (et parfois finissent) par du silence (camp 0,8 s, main_theme 0,4 s) : la boucle ne couvre que la partie sonore (seuil −50 dB). Aucun fichier modifié.
+function loopPts(b){if(b._lp!==undefined)return b._lp;const n=b.length,sr=b.sampleRate,ch=[...Array(b.numberOfChannels).keys()].map(i=>b.getChannelData(i)),T=.003,loud=i=>ch.some(d=>Math.abs(d[i])>T);let a=0,z=n-1;while(a<n&&!loud(a))a++;while(z>a&&!loud(z))z--;
+ z=Math.min(n,z+Math.round(sr*.02));return b._lp=(a>sr*.02||n-z>sr*.02)&&z-a>sr*5?[a/sr,z/sr]:null}
 export function duck(ms,depth=.25){if(!AU.src)return;const g=AU.src.g.gain,t=AU.c.currentTime,v=AU.src.vol;g.setTargetAtTime(depth*v,t,.08);g.setTargetAtTime(v,t+ms/1000,.6)}
 // Jamais deux voix à la fois ; en dehors des moments forts (force), 6 s de silence entre deux voix et 20 s avant de redire la même réplique
 export function voice(k,line,{chance=1,force=false}={}){const c=AU.c,h=VOICES[k];if(!c||!h||!AU.on.s||!AU.vol.v||Math.random()>chance)return false;
