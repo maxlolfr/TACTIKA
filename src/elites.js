@@ -98,7 +98,7 @@ export function elitize(s,cm,lang){if(!cm)return[];const rng=mulberry((cm.seed|0
 export function nightmare(s,cm){const h=cm.hp||1,d=cm.dmg||1;
  if(h!==1||d!==1)for(const u of s.units)if(u.team==='m'){u.hp=u.max=Math.round(u.max*h);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*d))}}
  // V5.14 : boss du Cauchemar (cm.boss) : PV en plus, phase plus tôt (rageAt), signature plus fréquente (cmFast) ; nom marqué ☠
- const B=cm.boss&&s.units.find(u=>u.team==='m'&&u.boss);if(B){B.hp=B.max=Math.round(B.max*(cm.boss.hp||1));if(cm.boss.rage)B.rageAt=cm.boss.rage;if(cm.boss.fast)B.cmFast=1;B.cmBoss=1;B.h*=1.35;B.n='☠ '+B.n}}
+ const B=cm.boss&&s.units.find(u=>u.team==='m'&&u.boss);if(B){B.hp=B.max=Math.round(B.max*(cm.boss.hp||1));if(cm.boss.rage)B.rageAt=cm.boss.rage;if(cm.boss.fast)B.cmFast=1;B.cmBoss=1;B.h=Math.min(3,Math.max(B.h*1.35,2.3));B.n='☠ '+B.n}}
 // ---------- accroches (appelées par rules.js ; sans u.mods, valeurs neutres) ----------
 export function modOut(u,t){if(!u.mods)return 1;let k=1;for(const id of u.mods)if(MODS[id].out)k*=MODS[id].out(u,t);return k}
 // Gardien : la meilleure protection seulement (deux gardiens ne s'additionnent pas)

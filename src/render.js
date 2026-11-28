@@ -172,6 +172,14 @@ function eliteAura(c,u,sx,sy,now){const m=MODS[u.mods[0]],ch=!!u.champ,m2=ch&&u.
  if(u.prime){c.globalAlpha=.5+.4*Math.abs(Math.sin(now/120));c.lineWidth=3;c.strokeStyle='#ffe0a0';c.beginPath();c.ellipse(sx,cy,TW*.46,TH*.37,0,0,7);c.stroke()}
  if(!lf){c.globalCompositeOperation='lighter';const nk=ch?6:3;for(let k=0;k<nk;k++){c.fillStyle=k&1&&ch?m2.col:m.col;const a=now/900+k*6.28/nk+u.id.charCodeAt(1),r=TW*.36*K;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0),2.2,0,7);c.fill()}}
  c.restore()}
+// V5.14.2 · boss du Cauchemar : très grand, halo cramoisi, triple anneau lent et braises en orbite (sous le sprite, comme les auras d'élite)
+function bossAura(c,u,sx,sy,now){const lf=lowFx(),p=lf?0:Math.sin(now/340),cy=sy+TH*.1,K=1.9;c.save();
+ if(!lf)haloAt(c,sx,cy,TW*1.5,'#ff2a4a',.5+.14*p);
+ c.globalAlpha=.55;c.fillStyle='#16020a';c.beginPath();c.ellipse(sx,cy,TW*.44*K,TH*.36*K,0,0,7);c.fill();
+ c.globalAlpha=.3+.08*p;c.fillStyle='#ff1f45';c.beginPath();c.ellipse(sx,cy,TW*.42*K,TH*.34*K,0,0,7);c.fill();
+ for(const[k,w,col,d]of[[1,6,'#ff3355',1],[1.14,3.5,'#ffb04a',-1],[1.28,2.5,'#c04bff',1]]){c.globalAlpha=.9;c.strokeStyle=col;c.lineWidth=w;c.setLineDash(k===1?[]:[10,7]);c.lineDashOffset=lf?0:d*-now/70;c.beginPath();c.ellipse(sx,cy,TW*.4*K*k,TH*.32*K*k,0,0,7);c.stroke()}
+ c.setLineDash([]);if(!lf){c.globalCompositeOperation='lighter';for(let k=0;k<10;k++){const a=now/1100+k*.628,r=TW*.42*K*1.1;c.fillStyle=k&1?'#ff7a3a':'#ff3355';c.globalAlpha=.6+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.34*K,2.8,0,7);c.fill()}}
+ c.restore()}
 // badge de 4 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif)
 // V5.10b : pastille de niveau des héros (dorée et plus grande pour le héros actif)
 function lvChip(c,lv,x,y,r,on){if(on)r*=1.15;c.save();c.fillStyle=on?'#ffd65a':'#16233a';c.strokeStyle=on?'#fff3c0':'#5aa8ff';c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.font=`900 ${Math.round(r*(lv>9?1.15:1.4))}px system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillStyle=on?'#2a1a00':'#fff';c.fillText(lv,x,y+1);c.restore()}
@@ -348,6 +356,7 @@ export function draw(now){
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*(o.m.block?DK[o.m.d]??.84:1)*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':u.elite?'#ffd65a':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
+  if(u.cmBoss&&!u.dead)bossAura(ctx,u,sx,sy,now);
   if(u.mods&&!u.dead)eliteAura(ctx,u,sx,sy,now);
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,up=lift(u),jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0+(u.dgT>now?Math.sin((u.dgT-now)/320*Math.PI)*TW*.22*(u.team==='h'?-1:1):0);
   if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
