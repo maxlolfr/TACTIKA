@@ -152,6 +152,7 @@ try {
         fixture.storySeen={prologue:1,join_orion:1,join_nyra:1,join_lyria:1};
         localStorage.setItem('landeTactique1_cauchemar',JSON.stringify(fixture));
       });
+      await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
       await page.goto(regular+'?cauchemar=bombe');
       await camp.waitFor();
       await page.locator('.v-go').click();
@@ -170,6 +171,21 @@ try {
       });
       await page.locator('#tl .rg.m.b canvas').first().evaluate(canvas=>canvas.click());
       assert.match(await page.locator('#ufiche').textContent(),zh?/阶段 2.*棱晶射线：下回合/s:/Phase 2.*Prismenstrahl im nächsten Zug/s);
+      for (const [phase,active,label] of [
+        ['forge',false,zh?/低于50%时触发过热/:/Überhitzung unter 50 % LP/],
+        ['tomb',true,zh?/诅咒已触发/:/Fluch aktiv/],
+        ['breaker',true,zh?/原初粉碎已触发/:/Urzeitlicher Schlag aktiv/],
+      ]) {
+        await page.evaluate(async({phase,active})=>{
+          const {G,hooks}=await import('/src/game.js');
+          const enemy=G.s.units.find(u=>u.team==='m');
+          Object.assign(enemy,{bs:phase,raged:active});
+          G.s.beam=null;
+          hooks.renderTL();
+        },{phase,active});
+        await page.locator('#tl .rg.m.b canvas').first().evaluate(canvas=>canvas.click());
+        assert.match(await page.locator('#ufiche').textContent(),label);
+      }
       await page.evaluate(async()=>{
         const {G,hooks}=await import('/src/game.js');
         G.s.cleared=true;
@@ -179,6 +195,27 @@ try {
       assert.match(await page.locator('#result .goalwon').textContent(),zh?/已消灭所有波次.*25%/s:/Alle Wellen besiegt: \+25 % Gold/s);
       console.log('OK',id,'· fiche du Titan et butin des vagues');
       console.log('OK',id,'· sauvegarde et affixe explosif en Cauchemar');
+      await page.context().setOffline(true);
+      try {
+        await page.reload();
+        await camp.waitFor();
+        await page.locator('.v-go').click();
+        await page.locator('.zone').first().evaluate(element=>element.click());
+        await page.locator('#zsheet .btn').nth(1).click();
+        await elite.first().waitFor();
+        await page.evaluate(async()=>{
+          const {G}=await import('/src/game.js');
+          const {end}=await import('/src/turns.js');
+          for(const enemy of G.s.units.filter(unit=>unit.team==='m'))enemy.dead=true;
+          end();
+        });
+        const victory=page.locator('#result.on h1');
+        await victory.waitFor();
+        assert.match(await victory.textContent(),zh?/胜利/:/Sieg/);
+        console.log('OK',id,'· combat du Cauchemar hors ligne jusqu’au bilan');
+      } finally {
+        await page.context().setOffline(false);
+      }
       await page.goto(regular);
       await camp.waitFor();
     }

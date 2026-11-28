@@ -73,3 +73,9 @@ Les huit commits de `main` jusqu’à `af0d47a` sont intégrés. Le chinois simp
 Sur la V5.27 à 390 × 844, le démarrage hors ligne depuis le cache initial, une image précachée, le camp et les 20 entrées de récompense du Cauchemar ont été vérifiés en chinois simplifié et en allemand. L’atlas est désormais précaché, et les médias du cache principal restent accessibles hors ligne. Ce parcours couvre le démarrage et la Chronique.
 
 Le survol des ennemis et la fiche des boss affichent leurs phases, leurs seuils de vie et le délai avant leurs capacités en chinois simplifié et en allemand. Le bilan localise aussi la récompense pour toutes les vagues éliminées, la confirmation du défi quotidien, la réplique de quête et l’annonce d’une nouvelle zone. Le parcours Chromium simule la charge du rayon du Titan et la victoire après toutes les vagues dans les deux langues.
+
+### Contrôles complémentaires du 29 novembre
+
+Le parcours Chromium à 390 × 844 vérifie dans les deux langues les libellés du Titan, de la surchauffe, de la malédiction du tombeau et du fracas primordial. Ces phases sont déclenchées par le scénario de test.
+
+Le même parcours recharge le jeu hors ligne après avoir visité la mission du Cauchemar en ligne, rouvre cette mission, puis vérifie la victoire localisée via le moteur de fin de combat. Les ennemis sont déclarés vaincus par le scénario de test. Restent à valider une partie jouée tour par tour hors ligne, l’accès aux régions jamais chargées, et le rendu sur téléphone réel.
