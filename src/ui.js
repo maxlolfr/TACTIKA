@@ -118,7 +118,7 @@ function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case b
  return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
 const info=o=>eliteInfo(o,info0(o));
 // V5.10 : capacité des élites Cauchemar (fiche du monstre), état en direct
-const eliteInfo=(o,t)=>!o.mods?t:t+o.mods.map(id=>id==='berserk'&&o.hp<=o.max*MODS.berserk.thr?' · EN FURIE (dégâts ×1,35)':id==='regen'?` · régénéré ${o.regen||0}/${Math.round(o.max*MODS.regen.cap)}`:id==='bombe'?(o.prime?' · AMORCÉ : explose à son prochain tour':o.bcd>0?` · se recharge (${o.bcd} t.)`:''):'').join('')+' · '+modText(o,save.lang).join(' · ');
+const eliteInfo=(o,t)=>!o.mods?t:t+(o.champ?(save.lang==='en'?' · CHAMPION (2 abilities)':' · CHAMPION (2 capacités)'):'')+o.mods.map(id=>id==='berserk'&&o.hp<=o.max*MODS.berserk.thr?' · EN FURIE (dégâts ×1,35)':id==='regen'?` · régénéré ${o.regen||0}/${Math.round(o.max*MODS.regen.cap)}`:id==='bombe'?(o.prime?' · AMORCÉ : explose à son prochain tour':o.bcd>0?` · se recharge (${o.bcd} t.)`:''):'').join('')+' · '+modText(o,save.lang).join(' · ');
 const info0=o=>{if(o.curse&&o.team==='h')return`${o.n} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n}${o.lv?' · niv. '+o.lv:''} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
 const PHASE50={swamp:'spores et zones toxiques',astral:'jugement céleste',frost:'gel et fissures',breaker:'fracas primordial'}; // V4.76 : phases à 50 % PV (avant, le survol d'un boss sans cycle plantait)
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
@@ -218,9 +218,9 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
- if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe'],n:2,extra:2,hp:1.25,dmg:1.2}}; // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
+ if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe'],n:2,champ:CM_DEV.champ,extra:2,hp:1.25,dmg:1.2}}; /* V5.11 : un champion (2 capacités) en plus des 2 élites */ // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?'☠ Nightmare · two elites, enemies empowered':'☠ Cauchemar · deux élites, ennemis renforcés'),900);
+ $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?(F.cm.champ?'☠ Nightmare · a champion, two elites, enemies empowered':'☠ Nightmare · two elites, enemies empowered'):(F.cm.champ?'☠ Cauchemar · un champion, deux élites, ennemis renforcés':'☠ Cauchemar · deux élites, ennemis renforcés')),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
@@ -369,12 +369,15 @@ function zoneBtn(L,zi,pos,num){const z=ZONES[zi],ok=zi>=0&&!z.soon&&unlocked(zi)
  const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',`Région ${num} : ${z?z.n:pos.n}`);
  b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
  b.onclick=()=>zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
-function secondMap(L){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),z,i+7))}
+function secondMap(L,land){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),land?{...z,x:z.lx,y:z.ly}:z,i+7))} /* V5.11 : land = carte paysage seule (Cauchemar) */
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
- if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');$('mapbox').classList.toggle('m2',mapNo===2);$('mapbox').classList.toggle('m1',mapNo===1);M.classList.toggle('m1',mapNo===1);mapTabs();
- if(mapNo===2)secondMap(L);
+ if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');
+ /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2110), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
+ const cm2=!!CM_DEV&&mapNo===2,wi=$('worldimg'),ws=cm2?'assets/cm/world2-l.webp':'assets/world1-l.webp';if(wi&&!wi.src.endsWith(ws))wi.src=ws;M.classList.toggle('cm',!!CM_DEV);M.classList.toggle('cm2',cm2);
+ $('mapbox').classList.toggle('m2',mapNo===2&&!cm2);$('mapbox').classList.toggle('m1',mapNo===1||cm2);M.classList.toggle('m1',mapNo===1||cm2);mapTabs();
+ if(mapNo===2)secondMap(L,cm2);
  else{L.insertAdjacentHTML('beforeend',road(ZONES.filter(z=>!z.map)));ZONES.forEach((z,zi)=>{if(!z.map)zoneBtn(L,zi,z,zi+1)})}
  // la région en cours au centre de l'écran (carte I en portrait : défilement horizontal)
  const cz=L.querySelectorAll('.zone:not(.lock)');requestAnimationFrame(()=>cz[cz.length-1]?.scrollIntoView({block:'center',inline:'center'}));

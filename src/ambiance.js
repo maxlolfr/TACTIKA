@@ -3,7 +3,7 @@
 // sprites de lueur pré-rendus (un drawImage par particule, pas de dégradé par image), peu de particules (N), « Effets réduits » : N réduit,
 // pas de papillons, pas de pulsations ni de vent (lueurs fixes). Aucune règle de jeu n'est touchée.
 // Régions (G.F.th) : 0/2 prairie · 1 bois · 3 plage · 4 monts · 5 château · 6 cristal · 7 braise · 8 sables · 9 marais · 10 citadelle · 11 givre · 12 éther
-let W=0,H=0,TW=0,TH=0,LF=false,E=null,SC=1;
+let W=0,H=0,TW=0,TH=0,LF=false,HI=false,E=null,SC=1; // V5.11 : HI = réglage graphique Haut (particules ×1,7)
 const SPR={},rnd=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.random()*a.length|0],TAU=Math.PI*2;
 // sprite de lueur : disque flou de couleur « r,g,b »
 function sp(c){const k=c+'';if(SPR[k])return SPR[k];const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);
@@ -15,7 +15,7 @@ const wind=now=>LF?0:.55*Math.sin(now/2900)+.45*Math.sin(now/1100+2);
 const env=p=>Math.sin(Math.PI*Math.min(1,p.life/p.max));
 // ---------- fabriques de couches ----------
 const L=(n,lf,init,step,draw,mode)=>({n,lf,init,step,draw,mode:mode||'source-over',a:[]});
-function run(c,l,now,dt){const n=LF?l.lf:l.n;if(!n){l.a.length=0;return}
+function run(c,l,now,dt){const n=LF?l.lf:HI?Math.round(l.n*1.7):l.n;if(!n){l.a.length=0;return}
  while(l.a.length<n){const p={};l.init(p,1);l.a.push(p)}if(l.a.length>n)l.a.length=n;c.globalCompositeOperation=l.mode;
  for(const p of l.a){l.step(p,dt,now);if(p.dead){p.dead=0;l.init(p,0)}l.draw(c,p,now)}}
 // grains lumineux : pollen, spores, embruns, poussière, sable, neige, particules magiques
@@ -104,6 +104,6 @@ const REG={
 let cur=null,curTh=-1;
 export const resetAmb=()=>{cur=null;curTh=-1};
 // dessine l'ambiance de la région th ; rim = bordure du plateau (voir render.js), env = dimensions et « Effets réduits »
-export function drawAmb(c,th,now,dt,rim,o){W=o.W;H=o.H;TW=o.TW;TH=o.TH;LF=o.lf;E=rim;SC=Math.max(.8,TW/70);
+export function drawAmb(c,th,now,dt,rim,o){W=o.W;H=o.H;TW=o.TW;TH=o.TH;LF=o.lf;HI=!!o.hi;E=rim;SC=Math.max(.8,TW/70);
  if(curTh!==th||!cur){curTh=th;const d=REG[th]||REG[0];cur={layers:d.layers.map(l=>({...l,a:[]})),pre:d.pre,post:d.post,rim:d.rim}}
  c.save();if(cur.pre)cur.pre(c,now);for(const l of cur.layers)run(c,l,now,dt);if(cur.rim)edge(c,cur.rim.main,cur.rim.light,LF?cur.rim.a:cur.rim.a*(.7+.3*Math.sin(now/2300)));if(cur.post)cur.post(c,now);c.restore()}

@@ -635,3 +635,14 @@ html.lowfx .tro-toast{animation:none!important}
 @media (orientation:landscape){.hud2 #who>canvas.pt{width:var(--ptw)!important;height:var(--ptw)!important}.hud2 #who{flex:none}}
 @media (orientation:landscape) and (max-height:450px){.hud2{--ptw:46px}.hud2 #who .nm{font-size:14px}}
 .hud2 #who .nm .lv{font:800 .72em system-ui,sans-serif;color:#cfe3ff;background:#0d1a2e;border:1px solid #5aa8ff;border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:2px;text-shadow:none} /* V5.10b : niveau du héros actif */
+
+/* V5.11 · cartes du monde en mode Cauchemar (accès ?cauchemar) */
+#map.cm2::before{background-image:url(assets/cm/world2-l.webp)}
+/* carte I : pas encore de peinture Cauchemar → teinte pourpre (multiplication) + vignette rouge sombre */
+#map.cm:not(.cm2) #worldimg{filter:saturate(.8) brightness(.9) contrast(1.1)}
+#map.cm:not(.cm2)::before{filter:blur(22px) brightness(.3) saturate(.6)}
+#map.cm #mapbox::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 90px 30px #2a0010b0}
+#map.cm:not(.cm2) #mapbox::after{background:linear-gradient(#6a2a80,#8a2a60);mix-blend-mode:multiply}
+/* V5.11 : numéro de version discret (camp et carte) */
+#vtag{position:fixed;z-index:60;left:50%;translate:-50% 0;top:calc(env(safe-area-inset-top) + 1px);font:700 9.5px/1 system-ui;letter-spacing:.3px;color:#fff3d6;opacity:.6;text-shadow:0 1px 2px #000;pointer-events:none;display:none}
+body.camp #vtag{display:block}

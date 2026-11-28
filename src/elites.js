@@ -66,20 +66,30 @@ export function compatible(ids){if(!Array.isArray(ids)||!ids.length||ids.length>
  if(ids.reduce((a,id)=>a+MODS[id].cost,0)>MOD_BUDGET)return false;
  if(EXCL.some(([a,b])=>ids.includes(a)&&ids.includes(b)))return false;
  return ids.filter(id=>MODS[id].aura).length<=1}
-export const statK=ids=>({hp:Math.min(CAP.hp,ids.reduce((a,id)=>a*MODS[id].hp,1)),dmg:Math.min(CAP.dmg,ids.reduce((a,id)=>a*MODS[id].dmg,1))});
+// V5.11 · champions : palier au-dessus des élites. Toujours 2 modificateurs compatibles (= 2 capacités), bonus propre
+// (CH_K) et plafonds propres (CAP_CH), plus gros (h ×1,7 au lieu de ×1,3), plus d'XP. Les élites restent comme en V5.10.2.
+export const CAP_CH={hp:1.6,dmg:1.25},CH_K={hp:1.2,dmg:1.08,h:1.7,xp:2.6};
+export const statK=(ids,ch)=>{const C=ch?CAP_CH:CAP,b=ch?CH_K:{hp:1,dmg:1};return{hp:Math.min(C.hp,b.hp*ids.reduce((a,id)=>a*MODS[id].hp,1)),dmg:Math.min(C.dmg,b.dmg*ids.reduce((a,id)=>a*MODS[id].dmg,1))}};
+// paires compatibles (champions), dans un ordre stable
+export const pairs=pool=>{const P=pool||MOD_IDS,o=[];for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++)if(compatible([P[i],P[j]]))o.push([P[i],P[j]]);return o};
 // Applique des modificateurs à un monstre déjà créé (stats de la région comprises). Ignore une combinaison invalide.
-export function applyMods(u,ids,lang='fr'){if(!compatible(ids)||u.team!=='m')return false;const k=statK(ids);
- u.mods=[...ids];u.hp=u.max=Math.round(u.max*k.hp);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*k.dmg))};
+export function applyMods(u,ids,lang='fr',ch){if(!compatible(ids)||u.team!=='m'||(ch&&ids.length!==2))return false;const k=statK(ids,ch);
+ u.mods=[...ids];if(ch)u.champ=1;u.hp=u.max=Math.round(u.max*k.hp);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*k.dmg))};
  const base=u.tag&&u.n.endsWith(' '+u.tag)?u.n.slice(0,-u.tag.length-1):u.n; // la lettre de repère reste à la fin
- u.n=base+' ('+ids.map(id=>lang==='en'?MODS[id].en:MODS[id].n).join(', ')+')'+(u.tag?' '+u.tag:''); /* « Gelée (Gardien) » : neutre, sans accord */u.h*=1.3;u.xp=Math.round(u.xp*1.6);return true}
+ u.n=base+' ('+(ch?'Champion'+(lang==='en'?': ':' : '):'')+ids.map(id=>lang==='en'?MODS[id].en:MODS[id].n).join(', ')+')'+(u.tag?' '+u.tag:''); /* « Gelée (Gardien) » : neutre, sans accord */u.h*=ch?CH_K.h:1.3;u.xp=Math.round(u.xp*(ch?CH_K.xp:1.6));return true}
 // Monstre éligible : ni boss, ni sbire, ni chef, ni élite historique, ni renfort, ni déjà modifié
 export const eligible=u=>u.team==='m'&&!u.dead&&!u.boss&&!u.minion&&!u.chief&&!u.elite&&!u.reinf&&!u.mods;
 // Tirage reproductible, sur sa propre graine (ne consomme jamais le hasard du combat).
 // cm = {seed, mods:[ids] | pool:[ids], n:nombre d'élites (1 au lot 1)}. Renvoie les monstres modifiés.
 export function elitize(s,cm,lang){if(!cm)return[];const rng=mulberry((cm.seed|0)+7177),out=[];
- const used=new Set();for(let k=0;k<(cm.n||1);k++){const c=s.units.filter(eligible);if(!c.length)break;
+ const used=new Set();
+ // V5.11 : champions d'abord (cm.champ, 0 par défaut : sans lui, le tirage des élites est celui de la V5.10.2) ; cm.cmods force la paire
+ for(let k=0;k<(cm.champ||0);k++){const c=s.units.filter(eligible);if(!c.length)break;c.sort((a,b)=>b.max-a.max||(a.id<b.id?-1:1));
+  const u=c[Math.floor(rng()*Math.min(2,c.length))],P=pairs(cm.pool),ids=cm.cmods||(P.length?P[Math.floor(rng()*P.length)]:null);if(!ids)break;
+  if(applyMods(u,ids,lang,1)){ids.forEach(id=>used.add(id));out.push(u)}}
+ for(let k=0;k<(cm.n||1);k++){const c=s.units.filter(eligible);if(!c.length)break;
   c.sort((a,b)=>b.max-a.max||(a.id<b.id?-1:1)); // le plus robuste d'abord, puis tirage parmi les 2 premiers : l'élite compte
-  const u=c[Math.floor(rng()*Math.min(2,c.length))],fr=cm.pool?.filter(id=>!used.has(id)),ids=cm.mods||(fr?.length?[fr[Math.floor(rng()*fr.length)]]:null);if(!ids)break;ids.forEach(id=>used.add(id));/* V5.10.2 : élites toutes différentes */if(applyMods(u,ids,lang))out.push(u)}
+  const u=c[Math.floor(rng()*Math.min(2,c.length))],fr0=cm.pool?.filter(id=>!used.has(id)),fr=fr0&&!fr0.length&&cm.champ?cm.pool:fr0,ids=cm.mods||(fr?.length?[fr[Math.floor(rng()*fr.length)]]:null);if(!ids)break;ids.forEach(id=>used.add(id));/* V5.10.2 : élites toutes différentes */if(applyMods(u,ids,lang))out.push(u)}
  return out}
 
 // V5.10.2 : renforcement Cauchemar de tous les monstres de la rencontre (boss compris), avant le tirage des élites.
@@ -99,5 +109,5 @@ export const modText=(u,lang='fr')=>(u.mods||[]).map(id=>`${lang==='en'?MODS[id]
 // Cases d'explosion annoncées (pour l'affichage et l'aide)
 export const booms=s=>s.units.filter(u=>!u.dead&&u.prime).map(u=>({by:u,cells:u.prime.cells,d:boomDmg(u)}));
 // Sérialisation : l'état Cauchemar d'un monstre ne contient que des nombres, des chaînes et des cases (JSON sûr)
-export const modState=u=>u.mods?{mods:[...u.mods],regen:u.regen||0,bcd:u.bcd||0,prime:u.prime?{o:{...u.prime.o},cells:u.prime.cells.map(c=>({...c})),r:u.prime.r}:null}:null;
+export const modState=u=>u.mods?{mods:[...u.mods],champ:u.champ?1:0,regen:u.regen||0,bcd:u.bcd||0,prime:u.prime?{o:{...u.prime.o},cells:u.prime.cells.map(c=>({...c})),r:u.prime.r}:null}:null;
 

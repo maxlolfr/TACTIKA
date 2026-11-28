@@ -6,6 +6,7 @@ import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,VET_LVL,VET_FORCE} from './data.js';
 import {save} from './save.js';
 import {drawAmb,resetAmb} from './ambiance.js';
 import {MODS,booms} from './elites.js'; // V5.10 : élites Cauchemar
+import {dprFor,hiFx} from './gfx.js'; // V5.11 : réglage graphique Faible / Moyen / Haut
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,hitCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -85,7 +86,7 @@ export const zoomAt=(z,px,py)=>{const k=Math.min(ZMAX,Math.max(1,z))/view.z;setV
 export function keepInView(x,y){if(view.z===1)return;const[wx,wy]=scr(x,y),sx=wx*view.z+view.x,sy=wy*view.z+view.y,m=TW*view.z*.6,P=$('panel').getBoundingClientRect(),side=matchMedia('(orientation:landscape)').matches,r=side?P.left:W,b=side?H:P.top;
  if(sx<m||sx>r-m||sy<hudB+m*1.6||sy>b-m*.6)setView(view.z,r/2-wx*view.z,(hudB+b)/2-wy*view.z)}
 export function layout(){
- const box=cv.getBoundingClientRect();if(box.width!==W||box.height!==H){view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}W=box.width||innerWidth;H=box.height||innerHeight;dpr=Math.min(devicePixelRatio||1,3);cv.width=W*dpr;cv.height=H*dpr;
+ const box=cv.getBoundingClientRect();if(box.width!==W||box.height!==H){view.z=1;view.x=view.y=0;$('unzoom').classList.remove('on')}W=box.width||innerWidth;H=box.height||innerHeight;dpr=dprFor(devicePixelRatio,W*H);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
  const side=matchMedia('(orientation:landscape)').matches,P=$('panel').getBoundingClientRect(),pad=(id,k)=>parseFloat(getComputedStyle($(id))[k])||0;
  const top=$('top').getBoundingClientRect().bottom;hudB=top;
  // paysage : le panneau est une colonne à droite ; on retire les zones sûres (encoche à gauche, barre du bas)
@@ -127,6 +128,7 @@ function buildGround(){const S=G.s,theme=S.theme,bg=bgOf();
  for(const m of S.map.values())if(m.cry==='a')for(const p of prismHits(S,m)){const c=cell(S,p.x,p.y);if(c.block||c.water)continue;const[sx,sy]=scr(p.x,p.y);
   diamond(g,sx,sy,.8);g.fillStyle='rgba(60,230,215,.16)';g.fill();g.setLineDash([5,4]);g.strokeStyle='rgba(120,255,240,.85)';g.lineWidth=2;g.stroke();g.setLineDash([]);chevron(g,sx,sy,TW*.09)}
  for(const m of S.map.values())if(m.block&&m.d!=null){const[sx,sy]=scr(m.x,m.y);diamond(g,sx,sy,.94);g.fillStyle='rgba(12,14,6,.42)';g.fill();g.beginPath();g.ellipse(sx,sy+TH*.12,TW*.34,TH*.26,0,0,7);g.fillStyle='rgba(0,0,0,.4)';g.fill()}
+ if(hiFx())hiGround(g); /* V5.11 Haut : éclairage précalculé (coût nul par image) */
  if(G.F?.cm)nightGround(g); // V5.10.2 : ambiance Cauchemar (sol assombri, teinte pourpre ; personnages vifs)
 }
 // V4.37 : mur de glace (cristaux existants), barre de PV et tours restants
@@ -154,11 +156,21 @@ function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||p
 // V5.10 · élites Cauchemar : aura au sol (couleur du modificateur + motif propre, lisible sans couleur) et quelques étincelles.
 // « Effets réduits » : aura fixe, sans pulsation ni étincelles.
 const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3]};
-function eliteAura(c,u,sx,sy,now){const m=MODS[u.mods[0]],lf=lowFx(),p=lf?0:Math.sin(now/260+u.id.charCodeAt(1)),cy=sy+TH*.1;
- c.save();c.globalAlpha=.28+.08*p;c.fillStyle=m.col;c.beginPath();c.ellipse(sx,cy,TW*.42,TH*.34,0,0,7);c.fill();
- c.globalAlpha=.9;c.strokeStyle=m.col;c.lineWidth=3.5;c.setLineDash(PAT[m.ico]||[]);c.lineDashOffset=lf?0:-now/60;c.beginPath();c.ellipse(sx,cy,TW*.4,TH*.32,0,0,7);c.stroke();c.setLineDash([]);
+// V5.11 · niveau Haut : halo lumineux additif (sprite 64 px pré-rendu par couleur, aplati en ellipse au sol)
+const HALO=new Map();function haloAt(c,x,y,r,col,a){let s=HALO.get(col);if(!s){s=document.createElement('canvas');s.width=s.height=64;const q=s.getContext('2d'),g=q.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,col);g.addColorStop(.35,col+'99');g.addColorStop(1,col+'00');q.fillStyle=g;q.fillRect(0,0,64,64);HALO.set(col,s)}
+ c.save();c.globalCompositeOperation='lighter';c.globalAlpha=Math.max(0,Math.min(1,a));c.drawImage(s,x-r,y-r*ISO*.9,r*2,r*2*ISO*.9);c.restore()}
+// V5.11 · champion : aura plus large, trait plus épais (5,5 au lieu de 3,5), double anneau (le 2e à la couleur de sa 2e capacité,
+// tournant en sens inverse), cœur sombre et 6 étincelles. Haut : halo additif sous l'unité.
+function eliteAura(c,u,sx,sy,now){const m=MODS[u.mods[0]],ch=!!u.champ,m2=ch&&u.mods[1]?MODS[u.mods[1]]:m,lf=lowFx(),p=lf?0:Math.sin(now/260+u.id.charCodeAt(1)),cy=sy+TH*.1,K=ch?1.18:1;
+ c.save();if(hiFx())haloAt(c,sx,cy,TW*(ch?.95:.75),m.col,.45+.12*p);
+ if(ch){c.globalAlpha=.5;c.fillStyle='#120310';c.beginPath();c.ellipse(sx,cy,TW*.44*K,TH*.36*K,0,0,7);c.fill()}
+ c.globalAlpha=(ch?.34:.28)+.08*p;c.fillStyle=m.col;c.beginPath();c.ellipse(sx,cy,TW*.42*K,TH*.34*K,0,0,7);c.fill();
+ c.globalAlpha=.9;c.strokeStyle=m.col;c.lineWidth=ch?5.5:3.5;c.setLineDash(PAT[m.ico]||[]);c.lineDashOffset=lf?0:-now/60;c.beginPath();c.ellipse(sx,cy,TW*.4*K,TH*.32*K,0,0,7);c.stroke();
+ if(ch){c.strokeStyle=m2.col;c.lineWidth=3.5;c.setLineDash(PAT[m2.ico]||[]);c.lineDashOffset=lf?0:now/50;c.beginPath();c.ellipse(sx,cy,TW*.52*K,TH*.42*K,0,0,7);c.stroke();
+  c.setLineDash([]);c.globalAlpha=.85;c.strokeStyle='#1a0612';c.lineWidth=1.5;c.beginPath();c.ellipse(sx,cy,TW*.46*K,TH*.37*K,0,0,7);c.stroke()}
+ c.setLineDash([]);
  if(u.prime){c.globalAlpha=.5+.4*Math.abs(Math.sin(now/120));c.lineWidth=3;c.strokeStyle='#ffe0a0';c.beginPath();c.ellipse(sx,cy,TW*.46,TH*.37,0,0,7);c.stroke()}
- if(!lf){c.globalCompositeOperation='lighter';c.fillStyle=m.col;for(let k=0;k<3;k++){const a=now/900+k*2.09+u.id.charCodeAt(1),r=TW*.36;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0),2.2,0,7);c.fill()}}
+ if(!lf){c.globalCompositeOperation='lighter';const nk=ch?6:3;for(let k=0;k<nk;k++){c.fillStyle=k&1&&ch?m2.col:m.col;const a=now/900+k*6.28/nk+u.id.charCodeAt(1),r=TW*.36*K;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0),2.2,0,7);c.fill()}}
  c.restore()}
 // badge de 4 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif)
 // V5.10b : pastille de niveau des héros (dorée et plus grande pour le héros actif)
@@ -240,7 +252,7 @@ export const lowFx=()=>typeof document!=='undefined'&&document.documentElement.c
 export const shake=ms=>{if(lowFx())return;shakeT=performance.now()+ms};
 // impacts : zoom bref vers un point, éclats de particules (coup critique, KO, collision)
 let punchE=0,punchP=null;export const punch=(u,k=.05,ms=220)=>{punchE=performance.now()+ms;punchP={x:u.gx,y:u.gy,k,ms}};
-export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<(lowFx()?3:12);i++){const a=Math.random()*6.28,v=.6+Math.random();fx.push({burst:1,x:u.gx,y:u.gy,k:kind,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,t0,dur:650})}};
+export const burst=(u,kind=1)=>{const t0=performance.now();for(let i=0;i<(lowFx()?3:hiFx()?20:12);i++){const a=Math.random()*6.28,v=.6+Math.random();fx.push({burst:1,x:u.gx,y:u.gy,k:kind,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.2,t0,dur:650})}};
 export function say(u,s,c,big){s=tr(s);texts.push({x:u.gx,y:u.gy,s,c,big,t0:performance.now()+texts.filter(t=>t.x===u.gx&&t.y===u.gy&&performance.now()-t.t0<300).length*250})}
 export function pose(u,p,ms=380){u.pose=p;u.poseT=performance.now()+ms}
 // V5.08 : ambiances des 12 régions dans src/ambiance.js ; la bordure du plateau (arêtes n'appartenant qu'à une case) sert aux reflets
@@ -250,11 +262,15 @@ function rimOf(){const S=G.s;if(!S||!S.map||!S.map.size)return null;const k=[ox|
  const path=new Path2D(),segs=[];let ya=1e9,yb=-1e9;
  for(const[key,n]of cnt){if(n!==1)continue;const[a,b,c2,d]=key.split(',').map(Number),[x1,y1]=scr(a,b),[x2,y2]=scr(c2,d);path.moveTo(x1,y1);path.lineTo(x2,y2);segs.push([x1,y1,x2,y2]);ya=Math.min(ya,y1,y2);yb=Math.max(yb,y1,y2)}
  const[cx,cy]=scr(R/4,R/4);return rimE={path,segs,y0:ya,y1:yb,cx,cy}}
-function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(ctx,G.F?G.F.th:0,now,dt,rimOf(),{W,H,TW,TH,lf:lowFx()});if(G.F?.cm)nightFx(now,dt)}
+function ambient(now){const dt=Math.min(50,now-(lastA||now));lastA=now;drawAmb(ctx,G.F?G.F.th:0,now,dt,rimOf(),{W,H,TW,TH,lf:lowFx(),hi:hiFx()});if(G.F?.cm)nightFx(now,dt)}
 // ---------- V5.10.2 · ambiance Cauchemar (procédurale, sans image) ----------
 // Sol : teinte pourpre en multiplication + vignette rouge sombre, calculées une fois avec le sol pré-dessiné (coût nul par image).
 // Par image : brume sombre qui respire sur les bords, volutes pourpres qui montent, rares éclairs rouges lointains.
 // « Effets réduits » : sol teinté et vignette fixe seulement.
+// V5.11 · niveau Haut : lumière douce venue du haut sur le plateau et vignette légère, calculées une fois avec le sol
+function hiGround(g){g.save();const[cx,cy]=scr(R/4,R/4),r=Math.max(W,H);
+ g.globalCompositeOperation='soft-light';let e=g.createRadialGradient(cx,cy-TH*2,0,cx,cy,r*.7);e.addColorStop(0,'rgba(255,236,200,.55)');e.addColorStop(.5,'rgba(255,220,170,.12)');e.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=e;g.fillRect(0,0,W,H);
+ g.globalCompositeOperation='source-over';e=g.createRadialGradient(cx,cy,Math.min(W,H)*.35,cx,cy,r*.75);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,10,.38)');g.fillStyle=e;g.fillRect(0,0,W,H);g.restore()}
 function nightGround(g){g.save();g.globalCompositeOperation='multiply';g.fillStyle='#8f6f8c';g.fillRect(0,0,W,H);g.globalCompositeOperation='source-over';
  const v=g.createRadialGradient(W/2,H*.52,Math.min(W,H)*.28,W/2,H*.52,Math.max(W,H)*.78);v.addColorStop(0,'rgba(30,0,20,0)');v.addColorStop(1,'rgba(60,0,18,.7)');g.fillStyle=v;g.fillRect(0,0,W,H);g.restore()}
 const NW=[];let nFlash=0,nVig=null,nSpr=null;
@@ -264,7 +280,7 @@ function nightCache(){if(nVig&&nVig.w===W&&nVig.h===H)return;const c=document.cr
  if(!nSpr)nSpr=['120,30,90','150,20,30'].map(h=>{const s=document.createElement('canvas');s.width=s.height=32;const q=s.getContext('2d'),gr=q.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${h},1)`);gr.addColorStop(1,`rgba(${h},0)`);q.fillStyle=gr;q.fillRect(0,0,32,32);return s})}
 function nightFx(now,dt){if(globalThis.__noNF)return;const lf=lowFx();nightCache();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
  
- if(!lf){while(NW.length<22)NW.push({x:Math.random()*W,y:H+Math.random()*H*.6,r:6+Math.random()*16,v:.012+Math.random()*.02,ph:Math.random()*6.28,k:Math.random()<.7?0:1});
+ if(!lf){const nN=hiFx()?36:22;if(NW.length>nN)NW.length=nN;while(NW.length<nN)NW.push({x:Math.random()*W,y:H+Math.random()*H*.6,r:6+Math.random()*16,v:.012+Math.random()*.02,ph:Math.random()*6.28,k:Math.random()<.7?0:1});
   ctx.globalCompositeOperation='lighter';for(const p of NW){p.y-=p.v*dt;p.x+=Math.sin(now/1400+p.ph)*.25;if(p.y<-30){p.y=H+20;p.x=Math.random()*W}
    ctx.globalAlpha=.10*Math.min(1,(H-p.y)/(H*.3))*Math.min(1,Math.max(0,p.y)/(H*.25));ctx.drawImage(nSpr[p.k],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}
   if(now>nFlash+9000&&Math.random()<dt/6000)nFlash=now;const f=now-nFlash;if(f<420){ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle=`rgba(150,20,30,${.10*(1-f/420)*(f<90?f/90:1)})`;ctx.fillRect(0,0,W,H)}}
@@ -288,6 +304,7 @@ export function draw(now){
   if(sel){const dim=sel.sp.zone&&G.ex&&!G.ex.bad;for(const c of sel.cells){const[sx,sy]=scr(c.x,c.y);diamond(ctx,sx,sy,.92);ctx.fillStyle=c.ok?(dim?'rgba(255,140,40,.3)':'rgba(255,140,40,.62)'):c.los?'rgba(255,170,60,.22)':'rgba(120,120,140,.28)';ctx.fill();if(c.ok&&!dim){ctx.strokeStyle='#ffe2a8';ctx.lineWidth=2;ctx.stroke()}}}
   else if(reachC)for(const[k,d]of reachC.dist){if(!d)continue;const[x,y]=k.split(',').map(Number),[sx,sy]=scr(x,y);diamond(ctx,sx,sy,.9);ctx.fillStyle=HUD2?'rgba(70,160,255,.26)':'rgba(70,160,255,.5)';ctx.fill();ctx.strokeStyle=HUD2?'rgba(200,230,255,.55)':'rgba(220,240,255,.7)';ctx.lineWidth=HUD2?1:1.5;ctx.stroke();ctx.beginPath();ctx.ellipse(sx,sy,TW*.075,TW*.075*ISO,0,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='rgba(10,50,110,.9)';ctx.stroke()}}
  if(sel&&cur&&!busy)for(const c of sel.cells)if(c.ok&&occ(S,c.x,c.y)){const[sx,sy]=scr(c.x,c.y),f=AT.parts[8],w=TW*.9;ctx.save();ctx.globalAlpha=.7+.3*Math.sin(now/150);ctx.drawImage(IMG.parts,f[0],f[1],f[2],f[3],sx-w/2,sy-w*f[3]/f[2]/2,w,w*f[3]/f[2]);ctx.restore()}
+ if(hiFx()&&cur&&!cur.dead&&phase==='fight'){const[hx,hy]=scr(cur.gx,cur.gy);haloAt(ctx,hx,hy+TH*.1,TW*.8,cur.team==='h'?'#ffd65a':'#ff5a48',.32+.08*Math.sin(now/300))} /* V5.11 Haut : lumière sous l'unité active */
  // cible visée par un monstre : losange rouge
  if(G.intents&&!busy)for(const t of new Set(G.intents.map(i=>i.target))){const[sx,sy]=scr(t.gx,t.gy);ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/170);diamond(ctx,sx,sy,.86);ctx.strokeStyle='#ff4a3a';ctx.lineWidth=3;ctx.setLineDash([6,4]);ctx.stroke();ctx.restore()}
  // cible examinée : empreinte de la zone (rouge, distincte des centres orange)
@@ -328,7 +345,7 @@ export function draw(now){
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,up=lift(u),jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0+(u.dgT>now?Math.sin((u.dgT-now)/320*Math.PI)*TW*.22*(u.team==='h'?-1:1):0);
   if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
    if(ch){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5+.3*Math.sin(now/70);const g=ctx.createRadialGradient(sx,sy-hgt(u)*.55,0,sx,sy-hgt(u)*.55,TW*.9);g.addColorStop(0,'rgba(230,190,255,.9)');g.addColorStop(1,'rgba(160,80,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy-hgt(u)*.55,TW*.9,0,7);ctx.fill()}ctx.restore()}
-  const glow=tg.includes(u)||(u.mods&&!u.dead);if(glow){ctx.save();ctx.shadowColor=tg.includes(u)?'#ffb040':MODS[u.mods[0]].col;ctx.shadowBlur=TW*(tg.includes(u)?.18+.08*Math.sin(now/160):lowFx()?.2:.22+.07*Math.sin(now/240))} // V5.10b : contour lumineux des élites
+  const glow=tg.includes(u)||(u.mods&&!u.dead);if(glow){ctx.save();ctx.shadowColor=tg.includes(u)?'#ffb040':MODS[u.mods[0]].col;ctx.shadowBlur=TW*(tg.includes(u)?.18+.08*Math.sin(now/160):(u.champ?1.45:1)*(lowFx()?.2:.22+.07*Math.sin(now/240)))} // V5.10b : contour lumineux des élites
   drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  for(const u of ghost){const[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u);drawF(ctx,s,i,sx,sy+TH*.12-lift(u)-(u.hop||0),hgt(u)/rf,flip,u===cur||tg.includes(u)?.6:.35)} // silhouette derrière un décor
