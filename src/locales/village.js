@@ -42,6 +42,13 @@ export const VILLAGE_UI = {
 };
 
 export function contractLabel(locale,contract,enemy){
+ if(locale==='en'){
+  const {k,n}=contract,battles=n===1?'battle':'battles';
+  if(k==='win')return `Win ${n} ${battles}`;
+  if(k==='kill')return `Defeat ${n} ${n===1?'enemy':'enemies'} of this type: ${enemy}`;
+  if(k==='star')return `Win ${n} ${battles} with 3 stars`;
+  return 'Defeat a boss. Rematches count.';
+ }
  const text=VILLAGE_UI[locale];
  if(!text)return;
  if(contract.k==='win')return text.wins(contract.n);

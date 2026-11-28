@@ -261,3 +261,11 @@ test('le bilan anglais localise les trophées et le déblocage des boss pilotes'
   assert.equal(RESULT_UI.en.trophy('Gold','First victory'),'Gold trophy: First victory');
   assert.equal(RESULT_UI.en.pilot('Alpha Wolf'),'Pilot boss awakened at the Crystal: Alpha Wolf');
 });
+
+
+test('les contrats anglais couvrent les quatre types et gardent les quantités', () => {
+  assert.equal(contractLabel('en',{k:'kill',n:6},'Slime'),'Defeat 6 enemies of this type: Slime');
+  assert.equal(contractLabel('en',{k:'win',n:1}),'Win 1 battle');
+  assert.equal(contractLabel('en',{k:'star',n:2}),'Win 2 battles with 3 stars');
+  assert.equal(contractLabel('en',{k:'boss'}),'Defeat a boss. Rematches count.');
+});

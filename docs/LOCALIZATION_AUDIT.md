@@ -113,3 +113,7 @@ La revue statique a relevé des fragments français en anglais dans les textes d
 303 tests Node passent. La couverture stricte des catalogues chinois et allemand reste à 1 241 / 1 241. Le scénario navigateur élargi reste à exécuter. Le binaire Chromium attendu est absent de l’environnement, donc la couverture visuelle FR/EN à 100 % n’est pas établie.
 
 Le bilan FR/EN comporte aussi des libellés anglais complets pour les trophées, les récompenses de taverne et le déblocage des boss pilotes du Cauchemar. L’import d’un fichier trop volumineux réutilise le message d’erreur traduit. Le test couvre les formats du bilan. L’environnement d’exécution étant indisponible, le test navigateur et la suite Node restent à relancer pour ce commit.
+
+### Audit FR/EN exécuté sur la V5.28
+
+Chromium a parcouru 13 écrans en français puis les mêmes 13 en anglais. Le premier passage a détecté deux objectifs de contrat restés en français. Les quatre types de contrat ont désormais des libellés anglais complets. Le second passage n’a détecté aucun texte suspect. Les 305 tests Node et la couverture stricte des catalogues passent. Ce résultat valide le parcours FR/EN défini par l’audit. Il ne mesure pas chaque branche du scénario ou chaque écran rare du jeu.

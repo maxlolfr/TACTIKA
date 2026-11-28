@@ -476,7 +476,7 @@ function quests(T,again){const d=today(),l=contracts(save,d);store();
    const b=document.createElement('button');b.className='btn'+(dn?' dark':'');b.textContent=dn?'Rejouer':'Partir';b.onclick=()=>{$('tav').classList.remove('on');startFight(q.z,-1,questFight(q,save))};r.append(b);T.append(r)})}
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
-  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${contractLabel(save.lang,t,t.k==='kill'?villageWord(MON[t.m].n):'')??ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${villageText()?.reward(t.g,t.x)??`${t.g} or, ${t.x} XP`}</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
+  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${contractLabel(save.lang,t,t.k==='kill'?tr(MON[t.m].n):'')??ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${villageText()?.reward(t.g,t.x)??`${t.g} or, ${t.x} XP`}</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
   const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓ Reçu':ok?'Réclamer':'En cours';
   b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('quest_complete',1.6);if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
@@ -577,7 +577,7 @@ function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : 
   for(const id of CH.tr)loot.push(trophyRow(id));
   if(CMR){if(CMR.seal>=0)loot.push([sealIc(CMR.seal),`<b style="color:${SEAL_C[CMR.seal]}">${cmLabel(save.lang,'Sceau du Cauchemar')} · ${tr(ZONES[CMR.seal].n)}</b><br>${sealCount(save)} / ${CM_ZONES} ${cmLabel(save.lang,'sceaux')}`]);
    for(const id of CMR.tr)loot.push(cmTrophyRow(id));for(const id of CMR.ti){const t=CM_TITLES.find(x=>x.id===id);loot.push([sealIc(-1),`<b style="color:#e3b8ff">${cmLabel(save.lang,'Nouveau titre')} : ${tN(save,t)}</b><br>${cmLabel(save.lang,'À porter depuis le Cristal (récompenses du Cauchemar)')}`])}}
-  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${contractLabel(save.lang,t,t.k==='kill'?villageWord(MON[t.m].n):'')??ctTxt(t)}<br>${text?.tavernReward??'Récompense à la taverne'}`]);
+  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${contractLabel(save.lang,t,t.k==='kill'?tr(MON[t.m].n):'')??ctTxt(t)}<br>${text?.tavernReward??'Récompense à la taverne'}`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
   const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);
   const box=document.createElement('div');box.className='lootbox';Rs.appendChild(box);
