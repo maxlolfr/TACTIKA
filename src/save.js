@@ -1,5 +1,5 @@
 // Sauvegarde locale (localStorage). `save` est un objet unique, modifié sur place.
-import {ZONES,zlen,PREVIEW,CM_DEV,CM_ZONES,CM_BOSSES,CM_FLAG,cmEligible} from './data.js';
+import {ZONES,zlen,PREVIEW,CM_DEV,CM_ZONES,CM_PILOTS,CM_FLAG,cmEligible} from './data.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
@@ -39,7 +39,7 @@ export const prog=id=>zmap()[id]||0,unlocked=zi=>!ZONES[zi].soon&&!(CM_DEV&&zi>=
 export const setProg=(id,v)=>{zmap()[id]=v};
 // boss pilotes : le premier quand les 3 régions du Cauchemar sont finies, puis chacun après le précédent (tous ouverts en bac à sable)
 export const cmDone=()=>ZONES.slice(0,CM_ZONES).every(z=>(save.cm.z[z.id]||0)>=zlen(z));
-export const cmBossOpen=k=>!!CM_DEV&&(CM_DEV.dev||cmDone()&&CM_BOSSES.slice(0,k).every(b=>save.cm.b[b.id]));
+export const cmBossOpen=k=>!!CM_DEV&&(CM_DEV.dev||cmDone()&&CM_PILOTS.slice(0,k).every(b=>save.cm.b[b.id]));
 export const canNightmare=()=>!PREVIEW&&cmEligible(save);
 // passage d'un monde à l'autre : drapeau puis rechargement (le mode est fixé au démarrage)
 export function setNightmare(on){try{if(on)localStorage.setItem(CM_FLAG,'cm');else localStorage.removeItem(CM_FLAG)}catch(e){}}

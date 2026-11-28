@@ -1,4 +1,4 @@
-import {CM_BOSSES,CM_LVL} from './data.js'; // V5.14 : boss pilotes du Cauchemar
+import {CM_BOSSES,CM_LVL,CM_TUNE} from './data.js'; // V5.14 : boss pilotes du Cauchemar
 // V5.10 · Cauchemar lot 1 : moteur universel des élites à modificateurs.
 // Pur (ni DOM, ni canvas, ni son, ni horloge). Rien ici n'est utilisé par la campagne normale :
 // un monstre n'a de modificateur que si le combat porte une description Cauchemar (F.cm), posée
@@ -51,11 +51,27 @@ export const MODS={
    if(s.units.some(h=>!h.dead&&h.team!==u.team&&man(h,u)<=this.trig)){u.prime={o:{x:u.x,y:u.y},cells:boomCells(s,u),r:s.round};u.pm=0;
     ev.push({type:'status',t:u,text:'Amorçage !',color:'#ffa53a',snd:'enemy_warning'})}
    return ev},
-  root(u){return !!u.prime}}
+  root(u){return !!u.prime}},
+ // V5.15 · deux affixes de plus (régions 4 à 6 du Cauchemar) ; accroche hit(s,u,t,amt) : après chaque coup porté par u
+ vamp:{n:'Vampirique',en:'Vampiric',ico:'vamp',col:'#e0284e',cost:2,tags:['sustain'],hp:1.15,dmg:1.05,
+  k:.4,cap:.5,
+  d:'Se soigne de 40 % des dégâts qu’il inflige, au plus 50 % de ses PV par combat. Brûlé : rien ; maudit : moitié.',
+  de:'Heals 40% of the damage it deals, at most 50% of its HP per battle. Burning: none; cursed: half.',
+  hit(s,u,t,amt){const left=Math.round(u.max*this.cap)-(u.drain||0);if(left<=0||u.hp>=u.max||u.dead)return[];
+   if(u.burn)return[{type:'status',t:u,text:'Drain bloqué',color:'#ffb060'}];
+   const g=Math.min(left,u.max-u.hp,Math.round(amt*this.k*(u.curse?CURSE_K:1)));if(g<=0)return[];
+   u.hp+=g;u.drain=(u.drain||0)+g;return[{type:'fx',x:u.x,y:u.y,i:4,w:1},{type:'heal',t:u,amt:g,src:'vamp'}]}},
+ venin:{n:'Venimeux',en:'Venomous',ico:'venin',col:'#8ee02a',cost:2,tags:['dot'],hp:1.15,dmg:1,
+  k:.3,turns:3,
+  d:'Ses coups empoisonnent : 30 % des dégâts du coup à chaque tour, pendant 3 tours (le plus fort poison reste). La Purification le retire.',
+  de:'Its hits poison: 30% of the hit’s damage every turn for 3 turns (the strongest poison stays). Purify removes it.',
+  hit(s,u,t,amt){if(t.dead||t.team===u.team)return[];const d=Math.max(3,Math.round(amt*this.k));
+   if(t.poison&&t.poison.d*t.poison.turns>=d*this.turns)return[];t.poison={d,turns:this.turns};
+   return[{type:'status',t,text:'Venin −'+d+' / tour',color:'#8ee02a',snd:'poison'}]}}
 };
 export const MOD_IDS=Object.keys(MODS);
 // Exclusions (paires interdites au cumul) : deux auras, ou deux façons de durer, rendraient le monstre interminable.
-export const EXCL=[['garde','regen']];
+export const EXCL=[['garde','regen'],['regen','vamp'],['garde','vamp']]; // V5.15 : le Vampirique dure déjà, il ne se cumule ni avec un Régénérateur ni avec un Gardien
 
 // Explosif : 9 cases (lui et ses 8 voisines, diagonales comprises) existant sur le plateau
 export function boomCells(s,u){const out=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const x=u.x+dx,y=u.y+dy;if(s.map.has(x+','+y))out.push({x,y})}return out}
@@ -106,19 +122,21 @@ export function modIn(s,t){if(t.team!=='m'||!s.cmOn)return{k:1};let k=1,by=null;
  for(const g of s.units)if(g.mods&&!g.dead&&g.team===t.team)for(const id of g.mods){const f=MODS[id].aura?.(s,g,t)??1;if(f<k){k=f;by=g}}
  return{k,by}}
 export function modTurn(s,u,M){if(!u.mods||u.dead)return[];const ev=[];for(const id of u.mods)if(MODS[id].turn)ev.push(...MODS[id].turn(s,u,M));return ev}
+// V5.15 : accroche après un coup porté (Vampirique, Venimeux) ; amt = dégâts réellement infligés à t
+export function modHit(s,u,t,amt){if(!u.mods||!(amt>0))return[];const ev=[];for(const id of u.mods)if(MODS[id].hit)ev.push(...MODS[id].hit(s,u,t,amt));return ev}
 export const rooted=u=>!!u.mods&&u.mods.some(id=>MODS[id].root?.(u));
 // Description pour la fiche du monstre et l'aide (FR / EN)
 export const modText=(u,lang='fr')=>(u.mods||[]).map(id=>`${lang==='en'?MODS[id].en:MODS[id].n} : ${lang==='en'?MODS[id].de:MODS[id].d}`);
 // Cases d'explosion annoncées (pour l'affichage et l'aide)
 export const booms=s=>s.units.filter(u=>!u.dead&&u.prime).map(u=>({by:u,cells:u.prime.cells,d:boomDmg(u)}));
 // Sérialisation : l'état Cauchemar d'un monstre ne contient que des nombres, des chaînes et des cases (JSON sûr)
-export const modState=u=>u.mods?{mods:[...u.mods],champ:u.champ?1:0,regen:u.regen||0,bcd:u.bcd||0,prime:u.prime?{o:{...u.prime.o},cells:u.prime.cells.map(c=>({...c})),r:u.prime.r}:null}:null;
+export const modState=u=>u.mods?{mods:[...u.mods],champ:u.champ?1:0,regen:u.regen||0,drain:u.drain||0,bcd:u.bcd||0,prime:u.prime?{o:{...u.prime.o},cells:u.prime.cells.map(c=>({...c})),r:u.prime.r}:null}:null;
 
 
 // V5.14 · Cauchemar lot 2 : description Cauchemar d'un combat (pure, partagée par le jeu et tools/sim.mjs).
 // Rencontre : 1 champion + 2 élites, +2 monstres, PV ×1,25, dégâts ×1,2, niveau 50.
 // Boss des régions 1 à 3 : 2 élites d'escorte, PV ×1,15, phase à 60 %. Boss pilotes : paquet de CM_BOSSES (1 élite). Variables CME, CMX, CMBH, CMBD, CMP* : essais du simulateur seulement.
-export function cmSpec(F,zi,o={}){const base={seed:o.seed??F.seed,mods:o.mods||null,pool:['berserk','garde','regen','bombe'],hp:1.25,dmg:1.2};
+export function cmSpec(F,zi,o={}){const T=CM_TUNE[zi]||{},base={seed:o.seed??F.seed,mods:o.mods||null,pool:zi>=3?MOD_IDS:['berserk','garde','regen','bombe'],hp:T.hp||1.25,dmg:T.dmg||1.2}; // V5.15 : Vampirique et Venimeux dès la région 4 ; CM_TUNE = renfort propre aux régions 4 à 6
  if(!F.boss)return{...F,lvl:CM_LVL,lang:o.lang,cm:{...base,n:2,champ:o.champ??1,extra:2}};
  const P=CM_BOSSES.find(b=>b.zi===zi)||{bhp:1.15,rage:.6,fast:0,sum:0,esc:+(globalThis.process?.env?.CME??2),ext:+(globalThis.process?.env?.CMX??0)},B={...F.boss,...(F.boss.summon&&P.sum?{summon:{...F.boss.summon,n:F.boss.summon.n+P.sum}}:{})};
  return{...F,boss:B,lvl:CM_LVL,lang:o.lang,...(P.cry&&F.cry?{cry:{...F.cry,p:(F.cry.p||0)+P.cry}}:{}),cm:{...base,hp:+(globalThis.process?.env?.CMBH||P.gh||base.hp),dmg:+(globalThis.process?.env?.CMBD||P.gd||base.dmg),mods:null,n:+(globalThis.process?.env?.CMPE??P.esc??1),champ:0,extra:P.ext??1,boss:{hp:+(globalThis.process?.env?.CMPB??P.bhp),rage:+(globalThis.process?.env?.CMPR??P.rage),fast:+(globalThis.process?.env?.CMPF??P.fast)}}}}
