@@ -12,6 +12,8 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 ROOT = os.path.join(os.path.dirname(__file__), '..')
+HD = '--hd' in sys.argv  # V5.18 : pas de réduction (k = 1) : la planche garde la pleine définition, les proportions entre cases restent identiques
+sys.argv = [a for a in sys.argv if a != '--hd']
 name, idle, src = sys.argv[1:4]
 atlas_fp = os.path.join(ROOT, 'assets', 'atlas.json'); A = json.load(open(atlas_fp))
 idle_h = A[idle][0][3]
@@ -33,7 +35,7 @@ for k in range(9):
     f = np.zeros((y1 - y0, x1 - x0, 4), np.uint8); sub = a[y0:y1, x0:x1].copy(); sub[~m[y0:y1, x0:x1]] = 0; f[:] = sub
     fr.append(Image.fromarray(f, 'RGBA'))
 hs = [f.height for f in fr]
-k = idle_h / max(hs[0], hs[1], hs[5])
+k = 1.0 if HD else idle_h / max(hs[0], hs[1], hs[5])
 fr = [f.resize((max(1, round(f.width * k)), max(1, round(f.height * k))), Image.LANCZOS) for f in fr]
 Hm = max(fr[0].height, fr[1].height, fr[5].height)
 for i in (0, 1, 5):
@@ -51,6 +53,6 @@ for r in rows:
     for f in r:
         sheet.paste(f, (x, y)); out.append([x, y, f.width, f.height, ax(f), float(f.height)]); x += f.width + 2
     y += max(f.height for f in r) + 2
-sheet.save(os.path.join(ROOT, 'assets', name + '.webp'), quality=92, method=6)
+sheet.save(os.path.join(ROOT, 'assets', name + '.webp'), quality=88 if HD else 92, method=6)
 A[name] = out; json.dump(A, open(atlas_fp, 'w'), separators=(',', ':'))
 print(name, 'échelle', round(k, 3), 'feuille', sheet.size, 'hauteur de réf.', Hm, 'repos', idle_h, 'poids', os.path.getsize(os.path.join(ROOT, 'assets', name + '.webp')) // 1024, 'Ko')

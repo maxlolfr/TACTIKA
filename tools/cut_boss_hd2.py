@@ -9,11 +9,13 @@ from PIL import Image
 from scipy import ndimage as ndi
 args=sys.argv[1:];MAP=None;DRY='--dry' in args
 if '--map' in args:k=args.index('--map');MAP=[int(v) for v in args[k+1].split(',')];del args[k:k+2]
-args=[a for a in args if a!='--dry'];name=args[0];sheets=args[1:]
+KEY2='--key2' in args  # V5.18 : planches de héros/chevaliers (bulles translucides, halos) : le violet des bulles n'est plus pris pour du fond
+args=[a for a in args if a not in('--dry','--key2')];name=args[0];sheets=args[1:]
 A=json.load(open('assets/atlas.json'));old=Image.open(f'assets/{name}.webp').convert('RGBA')
 def key(c):
     r,g,b=c[...,0],c[...,1],c[...,2]
     m=np.minimum(r,b)-g;a=np.clip((95-m)/20,0,1)
+    if KEY2:mm=m-1.6*np.maximum(np.abs(r-b)-25,0);a=a+(np.clip((95-mm)/20,0,1)-a)*.5
     sp=np.maximum(0,np.minimum(r,b)-g)*(a<.98);c=c.copy();c[...,0]-=sp*.9;c[...,2]-=sp*.9
     return np.clip(c,0,255),a
 cells=[]
