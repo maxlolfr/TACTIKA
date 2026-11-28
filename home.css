@@ -289,3 +289,51 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 .ch-item canvas{width:40px;height:40px}
 .tro-toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translateX(-50%);z-index:60;background:#0b1430ee;color:#fff3d6;border:1.5px solid #ffd26a;border-radius:14px;padding:8px 14px;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 4px 14px #0008;animation:troIn 4.2s ease forwards;pointer-events:none}
 @keyframes troIn{0%{opacity:0;transform:translate(-50%,-10px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+/* ===== V5.09 : village responsive (Honor déplié, tablette, paysage, PC) ===== */
+/* cartouche du Cristal posé au niveau des bâtiments : jamais recouvert par un héros qui passe devant */
+.v-cryp{position:absolute;z-index:3;background:none;border:0;padding:0;cursor:pointer;color:var(--cream)}
+.v-cryp .v-plate{left:0;top:0;transform:translate(-50%,-55%)}
+.v-cryp:active .v-plate{transform:translate(-50%,-62%) scale(1.08)}
+.v-cmdo,.v-cmdx{display:none}
+@media (orientation:landscape),(min-width:760px) and (min-aspect-ratio:4/5){
+ /* colonne de commandement ≈ 22 % de la largeur (Honor déplié : 184–199 px au lieu de 220 px) */
+ #camp{--dock:clamp(172px,22vw,290px);--navh:52px}
+ /* barre de navigation sur toute la largeur, en bas : les 5 boutons toujours entiers */
+ #camp .v-nav{position:fixed;left:0;right:0;bottom:0;width:auto;z-index:7;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:4px;height:calc(var(--navh) + env(safe-area-inset-bottom));box-sizing:border-box;padding:3px max(10px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(10px,env(safe-area-inset-left));border-radius:0;border-left:0}
+ #camp .v-nav button{flex-direction:row;justify-content:center;gap:6px;min-width:0;padding:2px 4px}
+ #camp .v-nav canvas{width:30px;height:30px;flex:none}
+ #camp .v-nav span{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+ #camp .v-nav button.on canvas{transform:scale(1.1)}
+ #camp .v-nav .v-badge{right:auto;left:calc(50% - 10px);top:-4px}
+ #camp .v-dock{bottom:calc(var(--navh) + env(safe-area-inset-bottom));padding-top:56px;padding-bottom:8px;gap:7px}
+ #camp .v-logo{bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 6px)}
+ #camp .v-panel{bottom:calc(var(--navh) + env(safe-area-inset-bottom) + 8px)}
+ /* fiches plus compactes */
+ #camp .v-cmd{padding:7px 8px 9px;gap:4px;font-size:12px;width:94%!important}
+ #camp .v-cmd h3{position:relative;font-size:clamp(14px,1.9vw,18px);padding:0 30px}
+ #camp .v-cmd .v-cl canvas{width:30px;height:30px}
+ #camp .v-cmd h4{margin-top:3px}
+ #camp .v-cmd .v-cl{min-height:34px;padding:4px 7px;gap:6px}
+ /* repli / redéploiement */
+ #camp .v-cmdx{display:flex;position:absolute;right:-4px;top:50%;translate:0 -50%;width:34px;height:34px;align-items:center;justify-content:center;padding:0;border:0;border-radius:9px;background:#0000;color:#ffd98a;cursor:pointer}
+ #camp .v-cmdx:active{background:#ffffff1a}
+ #camp.cmd-off{--dock:clamp(150px,17vw,220px)}
+ #camp.cmd-off .v-cmd,#camp.cmd-off .v-chap{display:none!important}
+ #camp.cmd-off .v-cmdo{display:flex;align-items:center;gap:4px;align-self:flex-end;margin-right:6px;padding:6px 10px 6px 6px;min-height:40px;border-radius:12px;border:2px solid var(--rim);background:linear-gradient(#3d2210f2,#22120af2);color:#ffd98a;font:400 13px var(--f-title);cursor:pointer}
+ #camp.cmd-off .v-dock{justify-content:flex-start}
+ #camp.cmd-off .v-go{margin-top:auto}
+}
+@media (orientation:landscape) and (max-height:500px){
+ #camp{--navh:44px}
+ #camp .v-nav canvas{width:24px;height:24px}#camp .v-nav span{font-size:12px}
+ #camp .v-dock{padding-top:50px}
+}
+@media (min-width:1200px) and (min-height:700px){#camp{--navh:60px}#camp .v-nav canvas{width:34px;height:34px}#camp .v-nav span{font-size:15px}#camp .v-nav{padding-left:18%;padding-right:18%}}
+@media (orientation:landscape) and (max-height:500px){#camp .v-go b{font-size:clamp(13px,1.8vw,16px)}#camp .v-go{gap:5px;padding:6px 6px 7px}#camp .v-go canvas{width:22px;height:22px}}
+@media (orientation:landscape),(min-width:760px) and (min-aspect-ratio:4/5){
+ #camp.cmd-off{--dock:clamp(150px,16vw,210px)}
+ #camp.cmd-off .v-dock{background:linear-gradient(90deg,#1d0f0700,#1d0f0766 40%)}
+ /* « Partir à l'aventure » : sur deux lignes équilibrées plutôt que coupé quand la colonne est étroite */
+ #camp .v-go b{white-space:normal!important;text-wrap:balance;line-height:1.05;font-size:clamp(14px,1.75vw,20px)}
+}

@@ -13,7 +13,7 @@ import {specOf} from './talents.js';
 setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargement
 import {masteredFor,rankOf} from './mastery.js';
 
-export const VERSION='5.08';
+export const VERSION='5.09';
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -99,7 +99,9 @@ function scene(k){
  // Cristal de l'Éther → Expéditions
  {const st=crystalState(save),[w,h]=CRY[st-1].map(v=>v*Q.ck[st===5?1:0]);
   const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
-  const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.append(p);c.onclick=()=>show('expe');stage.append(c)}
+  const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.onclick=()=>show('expe');stage.append(c);
+  // V5.09 : le cartouche n'est plus dans le cristal : un héros qui marche devant (z-index 2, comme le cristal) le recouvrait
+  const pb=el('button','v-cryp');pb.style.cssText=pc(Q.cry[0],Q.cry[1],0,0);pb.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');pb.append(p);pb.onclick=()=>show('expe');stage.append(pb)}
  // héros : leur poste est autour du feu, ils vont faire un tour puis reviennent (V4.8b)
  // V4.33 : les 3 places du feu reviennent à l'équipe de combat (W.i = héros, W.p = place)
  const walkers=Q.camp.map(([x,y,p,flip])=>{const i=teamOf(save)[p],[hw,hh]=Q.hero,b=el('button','v-hero');b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
@@ -165,19 +167,23 @@ function build(){
  const dock=el('div','v-dock'),ch=chapter();
  const go=el('button','v-go',`<b>Partir à l’aventure</b>`);go.prepend(icon('ico',0,40));go.onclick=()=>A.adventure(ch.i);
  const chap=el('button','v-chap',`<b>${ch.t}</b><small>${ch.s}</small>`);chap.onclick=()=>root.querySelector('.v-cmd').classList.toggle('open');
- dock.append(cmdPanel(ch),chap,go);
+ const un=el('button','v-cmdo','<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M14.6 5.6 16.4 7.4 11.8 12l4.6 4.6-1.8 1.8L8.2 12z"/></svg><span>Commandement</span>');un.setAttribute('aria-label','Déployer le commandement');un.onclick=()=>cmdFold(false);
+ dock.append(un,cmdPanel(ch),chap,go);root.classList.toggle('cmd-off',cmdOff);
  const nav=el('nav','v-nav');
  for(const[id,n,ic]of[['camp','Camp',['ficon',13]],['heros','Héros',['ui',21]],['inventaire','Inventaire',['ui',26]],['quetes','Quêtes',['ui',20]],['chronique','Chronique',['spells',6]]]){
   const b=el('button');b.dataset.tab=id;b.append(icon(...ic,34),el('span',null,n));const q=id==='quetes'?claimable():id==='heros'&&talentNews()?'!':0;if(q)b.append(el('u','v-badge',q));b.onclick=()=>fresh(id);nav.append(b)}
  dock.append(nav);C.append(dock);
  const P=el('section','v-panel');P.id='vpanel';C.append(P);
 }
+// V5.09 : colonne de commandement repliable (mémorisé) : repliée, il reste « Partir à l'aventure » et un chevron pour la rouvrir
+let cmdOff=(()=>{try{return localStorage.getItem('tkCmdOff')==='1'}catch(e){return false}})();
+function cmdFold(v){cmdOff=v;try{localStorage.setItem('tkCmdOff',v?'1':'0')}catch(e){}root.classList.toggle('cmd-off',v);fitHome();requestAnimationFrame(fitHome)}
 // ---------- V4.6 : panneau de commandement (colonne sur grand écran, tiroir en portrait) ----------
 const GOAL={survive:'⏳ Survie',chief:'♛ Chef'};
 function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F=fightSpec(ch.i,i,0),names=F.en?[...new Set(F.en.map(k=>MON[k].n))]:F.pool.map(k=>MON[k].n);
  return{F,type:F.boss?'💀 Boss : '+F.boss.n:GOAL[F.goal]?GOAL[F.goal]+(F.wave?` ${F.wave.turns} tours, renforts`:''):'⚔ Combat',foes:[...new Set([...(F.boss?[F.boss.n]:[]),...names,...(F.elite&&!F.wave?[MON[F.elite].n]:[])])]}}
 function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.last(),row=(h,fn)=>{const r=el(fn?'button':'div','v-cl',`<span>${h}</span>`);if(fn)r.onclick=fn;return r};
- P.append(el('h3',null,'Commandement'));
+ {const h=el('h3',null,'Commandement'),cv=el('button','v-cmdx','<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9.4 5.6 7.6 7.4l4.6 4.6-4.6 4.6 1.8 1.8L15.8 12z"/></svg>');cv.setAttribute('aria-label','Replier le commandement');cv.onclick=()=>cmdFold(true);h.append(cv);P.append(h)}
  if(n){const gap=n.F.lvl-save.lvl;P.append(el('h4',null,'Prochaine mission'),row(`<b>${ch.z.n}</b> · étape ${n.F.i+1}/${zlen(ch.z)}<br>${n.type}<br><small>Ennemis : ${n.foes.join(', ')}</small><br><small>Niveau ${n.F.lvl} · ton équipe : <b style="color:${gap>=2?'#ff8a6a':gap<=-2?'#9fd0ff':'#7dff8a'}">${save.lvl}</b></small>`,()=>A.adventure(ch.i)))}
  P.append(el('h4',null,'Équipe'));teamOf(save).forEach(i=>{const h=HER[i],st=heroStats(save,i),w=weaponOf(save,i);const r=row(`<b>${h.n}</b> <small>${st.hp} PV${w!=null?' · '+ITEMS[w].n:''}</small>`,()=>{hero=i;show('heros')});r.prepend(icon(...heroFrame(h.k),46,.6));P.append(r)});
  const todo=[...[[3,'orionVu'],[4,'nyraVu'],[5,'lyriaVu']].map(([i,k])=>[recruited(save,i)&&!save[k],`${HER[i].n} a rejoint le camp : choisis ton équipe`,'recrue'+i]),[talentNews(),'Choisir une spécialisation','talents'],[trainNews(),'Points de caractéristiques à répartir','entrainement'],[forgeNews(),'Amélioration abordable à la Forge','forge'],[claimable(),'Contrat à réclamer à la Taverne','taverne'],[save.dd!==today(),'Défi du jour disponible','taverne'],[(save.pot||0)<POTION.max,`Potions ${save.pot||0}/${POTION.max}`,'marchand']].filter(t=>t[0]);
@@ -203,7 +209,8 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
  // peut contredire le CSS, et le village prenait alors une taille négative (il disparaissait)
  const land=D.top<H*.3&&D.left>W*.3;
  // zone libre : au-dessus du bas en portrait, à gauche de la colonne en paysage
- const x1=land?D.left:W,y0=land?top-6:top+4,y1=land?H-16:D.top-6;
+ const NV=root.querySelector('.v-nav'),navTop=NV&&getComputedStyle(NV).position==='fixed'?NV.getBoundingClientRect().top:H; // V5.09 : barre du bas pleine largeur
+ const x1=land?D.left:W,y0=land?top-6:top+4,y1=land?navTop-10:D.top-6;
  if(!W||!H)return;
  // menu en colonne et zone libre au moins presque carrée : peinture horizontale (V4.30 : écrans pliants ouverts) ; sinon la verticale
  const k=land&&x1>(y1-y0)*.8?'l':'p';
@@ -216,6 +223,18 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
  for(const e of S.querySelectorAll('[data-crop]')){const[x,y]=e.dataset.crop.split(',');e.style.backgroundSize=`${Q.w*s}px ${Q.h*s}px`;e.style.backgroundPosition=`${-x*s}px ${-y*s}px`}
  // bords de la peinture : fondus seulement quand elle ne couvre pas l'écran
  S.classList.toggle('framed',Q.w*s<(land?x1:W)-2);
+ // V5.09 : aucun cartouche coupé par un bord, la barre du haut, la colonne de commandement ou la barre du bas : on le décale juste assez
+ const nv=root.querySelector('.v-nav'),nb=nv&&getComputedStyle(nv).position==='fixed'?nv.getBoundingClientRect().top:H,X0=6,X1=x1-6,Y0=top+2,Y1=(land?Math.min(H,nb):D.top)-4;
+ for(const p of S.querySelectorAll('.v-plate')){p.style.translate='';const r=p.getBoundingClientRect();if(!r.width)continue;
+  const dx=r.left<X0?X0-r.left:r.right>X1?Math.max(X0-r.left,X1-r.right):0,dy=r.top<Y0?Y0-r.top:r.bottom>Y1?Math.max(Y0-r.top,Y1-r.bottom):0;
+  if(dx||dy)p.style.translate=`${Math.round(dx)}px ${Math.round(dy)}px`}
+ // petits écrans (Honor plié en paysage) : deux cartouches qui se chevauchent sont écartés verticalement, dans la zone libre
+ const PL=[...S.querySelectorAll('.v-plate')].filter(p=>p.offsetWidth);
+ for(let it=0;it<4;it++){let moved=0;const R=PL.map(p=>p.getBoundingClientRect());
+  for(let i=0;i<PL.length;i++)for(let j=i+1;j<PL.length;j++){const a=R[i],b=R[j];if(a.left<b.right-2&&a.right>b.left+2&&a.top<b.bottom-1&&a.bottom>b.top+1){
+   const[lo,hi,rl,rh]=a.top<=b.top?[PL[j],PL[i],b,a]:[PL[i],PL[j],a,b],need=rh.bottom-rl.top+2,cur=(lo.style.translate||'0px 0px').split(' ').map(parseFloat);
+   if(rl.bottom+need<=Y1){lo.style.translate=`${cur[0]||0}px ${(cur[1]||0)+need}px`;moved=1}else{const ch=(hi.style.translate||'0px 0px').split(' ').map(parseFloat);if(rh.top-need>=Y0){hi.style.translate=`${ch[0]||0}px ${(ch[1]||0)-need}px`;moved=1}}}}
+  if(!moved)break}
 }
 
 // ---------- panneaux ----------
