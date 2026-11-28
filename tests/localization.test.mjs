@@ -10,6 +10,7 @@ import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
 import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
 import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
+import {BATTLE_HUD, battleHazard} from '../src/locales/combat-ui.js';
 import {battleGoal} from '../src/locales/battle-tips.js';
 import {regHtml, setLang, tr, trh, EN, TEXT_CATALOGS} from '../src/i18n.js';
 
@@ -205,4 +206,26 @@ test('les nouveaux titres et trophées du Cauchemar sont localisés', () => {
   }
   assert.equal(titleName(save),lang==='de'?'Der Erwachte':'觉醒者');
  }
+});
+
+
+test('le HUD des quatre langues préserve étape, niveau, coûts et danger', () => {
+  const samples = {
+    fr:['Étape 4/10','niv. 12','PM 3','dalles dorées'],
+    en:['Stage 4/10','lvl 12','3 MP','gold tiles'],
+    'zh-Hans':['关卡 4/10','12级','3移动点','金色地砖'],
+    de:['Etappe 4/10','Stufe 12','3 BP','Goldene Platten'],
+  };
+  for (const [id,[stage,level,move,trap]] of Object.entries(samples)) {
+    const hud=BATTLE_HUD[id];
+    assert.equal(hud.stage(4,10),stage);
+    assert.equal(hud.level(12),level);
+    assert.equal(hud.points(2,3)[1],move);
+    assert.equal(battleHazard(hud,{next:[]},12),'');
+    const warning=battleHazard(hud,{next:[{}],trap:true},12);
+    assert.ok(warning.includes(trap));
+    assert.match(warning,/12\s*%/);
+    assert.equal(battleHazard(hud,{next:[{}],cold:true},12),hud.cold);
+    assert.equal(battleHazard(hud,{next:[{}],toxic:true},12),hud.toxic);
+  }
 });

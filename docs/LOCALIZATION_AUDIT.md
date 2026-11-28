@@ -97,3 +97,9 @@ Un essai isolé du gestionnaire du service worker, avec le réseau coupé et les
 ### Déplacement et terrain
 
 L’aperçu d’un déplacement affiche en chinois simplifié et en allemand le coût en points de mouvement, les sorts disponibles depuis la case, le nombre de cibles et l’instruction de confirmation. Le plateau localise aussi les cases infranchissables, dont le mur de glace avec ses points de vie et sa durée restante. Ce lot reprend les traductions du plateau pendant que le contrôle Chromium hors ligne attend un environnement utilisable.
+
+### HUD et tutoriel de combat dans les quatre langues
+
+Le titre du plateau, les points d’action et de mouvement, les points reportés, l’aide du sort sélectionné, les instructions du premier combat et les alertes de terrain utilisent désormais des phrases complètes en français, anglais, chinois simplifié et allemand. La terminologie des boutons et des sorts a été comparée aux valeurs des catalogues. Le test vérifie la conservation des valeurs d’étape, de niveau, de mouvement et de dégâts des pièges dans les quatre langues.
+
+301 tests Node passent. Le contrôle strict reste à 1 241 / 1 241 pour chacun des deux aperçus. Ces contrôles couvrent les catalogues et les formats testés. La validation visuelle de ces nouveaux textes et le parcours Chromium hors ligne restent ouverts, le binaire Chromium étant indisponible dans l’environnement.

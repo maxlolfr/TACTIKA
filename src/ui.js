@@ -12,7 +12,7 @@ import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {ELITE_UI,eliteName} from './locales/elites.js';
-import {AIM_UI,BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
+import {AIM_UI,BATTLE_HUD,battleHazard,BATTLE_ANNOUNCEMENTS,COMBAT_UI,ENEMY_DETAILS,RESULT_UI} from './locales/combat-ui.js';
 import {MAP_UI} from './locales/map.js';
 import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
 import {INVENTORY_UI} from './locales/equipment.js';
@@ -121,42 +121,59 @@ function newRound(sp=[]){const w=G.s.wave;if(sp.length){addRefs(sp);for(const m 
   goalBanner(parts.join(' · '));
  }
 }
+function battleTitle(F,hud){
+ const zone=ZONES[F.zi],round=G.s.round;
+ const quest=F.quest&&QUESTS.find(q=>q.id===F.quest);
+ const stage=F.quest?hud.quest(quest?tr(quest.t):F.quest):F.daily?hud.daily:hud.stage(F.i+1,zlen(zone))+(F.boss?' · '+hud.boss:'');
+ const goal=G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-round)}`:'';
+ return `${F.cm?'☠ ':''}${tr(zone.n)}\n${stage} · ${hud.round(round)} · ${hud.level(F.lvl)}${goal}`;
+}
+function hudSpell(hud,sp){
+ const details=[sp.dmg&&hud.damage(sp.dmg.join('–')),sp.heal&&hud.heal(sp.heal.join('–')),hud.aim(sp.r[1]?sp.r.join('–'):'',sp.zone)].filter(Boolean);
+ return `${tr(sp.n)} : ${details.join(', ')}. ${tr(sp.d)}.`;
+}
 function render(){renderTL();
- const u=G.cur,{sel,F}=G;
- $('title').classList.toggle('cm',!!F?.cm);$('title').textContent=F?`${F.cm?'☠ ':''}${ZONES[F.zi].n}\n${F.quest?'Quête '+F.quest:F.daily?'Défi':`Étape ${F.i+1}/${zlen(ZONES[F.zi])}${F.boss?' · Boss':''}`} · tour ${G.s.round} · niv. ${F.lvl}${G.s.goal==='chief'?' · ♛':G.s.goal==='survive'?` · ⏳ ${Math.max(1,(G.s.surv||SURVIVE)+1-G.s.round)}`:''}`:''; // V5.09 : 2 lignes au plus (l'objectif complet reste dans le bandeau d'objectif)
+ const u=G.cur,{sel,F}=G,hud=BATTLE_HUD[save.lang]??BATTLE_HUD.fr;
+ $('title').classList.toggle('cm',!!F?.cm);
+ $('title').textContent=F?battleTitle(F,hud):'';
  if(!u){$('exc').className='';return}
  const me=u.team==='h'&&G.phase==='fight';
  G.intents=me&&!G.busy?G.s.units.filter(m=>m.team==='m'&&!m.dead).map(m=>({m,...intent(G.s,m)})).filter(i=>i.target):null;
  $('who').innerHTML='';const ic=icon(...(u.team==='h'?heroFrame(u.k):[u.s,u.row*3]),HUD2?84:30,u.team==='h'?.62:0);
  const hb=document.createElement('div');hb.id='hpb';hb.innerHTML=`<i style="width:${100*u.hp/u.max}%"></i>`;const ht=document.createElement('span');ht.id='hpt';ht.textContent=HUD2?`${u.hp} / ${u.max}`:`${u.hp}/${u.max} PV`;
  // V4.0.5 : PA et PM sur la ligne du nom ; #pts ne garde que la rangée des cibles (flottante en portrait)
- const pp=`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${HUD2?'PA ':''}${u.pa}${HUD2?'':' PA'}</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${HUD2?'PM ':''}${u.pm}${HUD2?'':' PM'}</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">Tour ennemi…</span>`);
+ const [pa,pm]=hud.points(u.pa,u.pm);
+ const pp=`<span class="pa"><img src="${HUD2?'assets/hud2/ic-pa.webp':uiURL(12)}"> ${pa}</span><span class="pm"><img src="${HUD2?'assets/hud2/ic-pm.webp':uiURL(13)}"> ${pm}</span>`+(HUD2&&chips(u)?`<span class="stt">${chips(u)}</span>`:'')+(me?'':`<span class="en">${tr('Tour ennemi…')}</span>`);
  if(HUD2){ // V4.61 : fiche du héros actif comme la maquette (portrait cadré or, nom, PV avec cœur, pastilles PA / PM)
-  ic.classList.add('pt');const wi=document.createElement('div');wi.className='wi';wi.insertAdjacentHTML('beforeend',`<b class="nm">${combatName(u)}${u.lv?` <small class="lv">niv. ${u.lv}</small>`:''}</b>`);wi.append(hb,ht);wi.insertAdjacentHTML('beforeend',`<div class="pp">${pp}</div>`);$('who').append(ic,wi)}
- else{$('who').append(ic,`${combatName(u)}${u.lv?' · niv. '+u.lv:''}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
+  ic.classList.add('pt');const wi=document.createElement('div');wi.className='wi';wi.insertAdjacentHTML('beforeend',`<b class="nm">${combatName(u)}${u.lv?` <small class="lv">${hud.level(u.lv)}</small>`:''}</b>`);wi.append(hb,ht);wi.insertAdjacentHTML('beforeend',`<div class="pp">${pp}</div>`);$('who').append(ic,wi)}
+ else{$('who').append(ic,`${combatName(u)}${u.lv?' · '+hud.level(u.lv):''}`);$('who').append(hb,ht);$('who').insertAdjacentHTML('beforeend',pp)}
  $('pts').innerHTML='';
  const tg=document.createElement('div');tg.id='tgt';
  if(me&&sel&&!G.busy)(sel.sp.t==='self'?[u]:G.s.units.filter(o=>sel.sp.t==='dead'?o.dead&&o.team==='h'&&o!==u:!o.dead&&o.team===(sel.sp.t==='ally'?'h':'m'))).map(o=>[o,sel.cells.some(s=>s.ok&&s.x===o.x&&s.y===o.y)]).forEach(([o,ok])=>{const w=document.createElement('button'),zc=!ok&&sel.sp.zone&&zoneCenter(G.s,u,sel.sp,o),ap=!ok&&!zc&&o!==u&&approach(G.s,u,sel.sp,o,G.reachC,sel.sp.zone?from=>!!zoneCenter(G.s,u,sel.sp,o,from):undefined),isEx=same(G.ex?.tap,o);w.className='tb'+(ok||zc?' ok':ap?' ap':'')+(isEx?' ex':'');if(isEx)setTimeout(()=>w.scrollIntoView({block:'nearest',inline:'nearest'}));w.append(icon(...(o.team==='h'?heroFrame(o.k):[o.s,o.row*3]),40,o.team==='h'?.62:0));w.insertAdjacentHTML('beforeend',`<i style="width:${100*o.hp/o.max}%"></i>${o.tag?`<u>${o.tag}</u>`:''}`);w.setAttribute('aria-label',AIM_UI[save.lang]?.targetLabel(combatName(o),o.hp,o.max,ok||zc,ap)??`${o.n}, ${o.hp} sur ${o.max} PV${ok||zc?', cible possible':ap?', cible possible après déplacement':''}`);w.onclick=()=>act({x:o.x,y:o.y});tg.appendChild(w)});
  $('pts').append(tg);
  const S=$('spells');S.innerHTML='';
  if(u.team==='h')for(const id of u.sp){const sp=u.S[id],b=document.createElement('button');b.className='sp'+(sel&&sel.sp===sp?' sel':'');
-  b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));const pc=costOf(u,sp);b.insertAdjacentHTML('beforeend',`<b${pc>sp.pa?' class="up" title="Relance : +1 PA"':''}>${pc}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
-  b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${sp.n}, ${pc} PA`);
+  b.style.backgroundImage=`url(${uiURL(sel&&sel.sp===sp?4:3)})`;b.appendChild(icon(...SPI[id],58));const pc=costOf(u,sp);b.insertAdjacentHTML('beforeend',`<b${pc>sp.pa?` class="up" title="${hud.recast}"`:''}>${pc}</b>`+(u.cd[sp.n]?`<em>${u.cd[sp.n]>50?'—':u.cd[sp.n]}</em>`:''));
+  b.insertAdjacentHTML('beforeend',`<small>${sp.sn||sp.n}</small>`);b.setAttribute('aria-label',`${tr(sp.n)}, ${hud.points(pc,0)[0]}`);
   if(me&&!sel&&F&&F.guide&&id==='shot'&&u.pa>=pc&&targetsFrom(G.s,u,u).foes.length)b.classList.add('coach');
   b.disabled=!me||G.busy||u.pa<pc||u.cd[sp.n]>0||(sp.potion&&!(G.s.pot>0));b.onclick=()=>{G.plan=null;G.ex=null;if(G.sel&&G.sel.sp===sp)G.sel=null;else G.sel={sp,cells:selCells(G.s,u,sp)};render()};if(HUD2)tipFor(b,sp,u,pc);S.appendChild(b)}
  requestAnimationFrame(()=>{for(const l of S.querySelectorAll('.sp small')){l.style.fontSize='';const k=l.clientWidth/l.scrollWidth;if(k<1)l.style.fontSize=Math.max(6.5,parseFloat(getComputedStyle(l).fontSize)*k*.96)+'px'}});
- const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
+ const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML=tr('Fin du tour')+(keep?`<small>${hud.carry(keep)}</small>`:'');
  $('end').disabled=!me||G.busy;
- const lava=G.s.lava?.next.length&&me?(G.s.lava.trap?`◆ Pièges : les dalles dorées se déclenchent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV, −1 PM). `:G.s.lava.toxic?'☣ Zones toxiques : les cases vertes empoisonnent au prochain tour (4 PV × 2 tours). ':G.s.lava.cold?'❄ Fissures de givre : les cases bleues blessent (6 % des PV) et ralentissent au prochain tour. ':`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `):'';
+ const hazard=me?battleHazard(hud,G.s.lava,Math.round(LAVA_DMG*100)):'';
  const text=announcements();
  const bm=booms(G.s).map(b=>text?.explosion(combatName(b.by),b.d)??`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?(text?.beam(beamDmg(G.s.beam.by))??`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `):''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?(text?.crystal??'💎 Cristal : +30 %. '):'';
- $('hint').textContent=!me?(text?.turn(combatName(u))??`${u.n} joue.`):lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
+ $('hint').textContent=!me?(text?.turn(combatName(u))??`${u.n} joue.`):(hazard?hazard+' ':'')+beam+amp+(sel?hudSpell(hud,sel.sp):F&&F.guide&&(canMove(u)||castable(u).length)?coach(u,hud):idle(u,hud));
  aimCard(u);
 }
-function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.';
- if(u.k==='archer')return t&&u.pa>=3?'🎯 Une Gelée est à portée : touche « Tir », la Gelée, puis retouche-la.':u.pm?go+' Le 🎯 compte les ennemis visables de là.':'Bien joué ! Touche « Fin du tour ».';
- if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
- return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
+function coach(u,hud){
+ const target=targetsFrom(G.s,u,u).foes.length;
+ const move=tr('Touche une case bleue pour voir l’aperçu, retouche-la pour y aller.');
+ const done=tr('Bien joué ! Touche « Fin du tour ».');
+ if(u.k==='archer')return target&&u.pa>=3?hud.tutorialShot:u.pm?move+' '+hud.tutorialTargets:done;
+ if(u.k==='warrior')return target?hud.tutorialPush:u.pm?hud.tutorialKael+' '+move:hud.tutorialGuard;
+ return target&&u.pa>=3?hud.tutorialCombo:u.pm?hud.tutorialAelis+' '+move:tr('Touche « Fin du tour ».');
+}
 const info=o=>eliteInfo(o,info0(o));
 // V5.10 : capacité des élites Cauchemar (fiche du monstre), état en direct
 function eliteInfo(o,t){
@@ -204,9 +221,11 @@ function bossDetails(o,text){
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
 const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=costOf(u,sp)&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
 const canMove=u=>u.pm>0&&!!G.reachC&&G.reachC.dist.size>1;
-function idle(u){const c=castable(u).map(sp=>sp.n).join(', ');
- if(canMove(u))return c?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».';
- return c?`Plus de déplacement. Encore possible : ${c}. Sinon « Fin du tour ».`:'Plus aucune action : touche « Fin du tour ».'}
+function idle(u,hud){
+ const spells=castable(u).map(sp=>tr(sp.n)).join(', ');
+ if(canMove(u))return tr(spells?'Case à pastille : aperçu, retouche pour y aller. Ou choisis un sort.':'Aucune cible d’ici : déplace-toi (cases à pastille) ou touche « Fin du tour ».');
+ return spells?hud.idle(spells):tr('Plus aucune action : touche « Fin du tour ».');
+}
 function autoEnd(){const u=G.cur;if(!u||u.team!=='h'||!G.endTurnResolve||u.pm>0||castable(u).length)return;
  $('hint').textContent='Plus rien à faire : tour suivant…';goalBanner(announcements()?.exhausted(combatName(u))??`${u.n} n’a plus d’action : tour suivant`);setTimeout(()=>{if(G.cur===u&&G.endTurnResolve&&!G.busy){G.sel=null;G.reachC=null;G.endTurnResolve()}},1500)}
 

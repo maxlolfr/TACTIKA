@@ -2,7 +2,7 @@
 // Page, code et styles : réseau d'abord (4 s) puis cache, donc une mise à jour est vue dès qu'on est en ligne.
 // Images et sons : cache d'abord, remplis au fil du jeu (les sons sont servis par morceaux, comme le demande <audio>).
 // Pour invalider tout le cache après une version : changer VERSION ci-dessous.
-const VERSION='5.28',CORE='tactika-core-'+VERSION+'-l10n-17',MEDIA='tactika-media-'+VERSION;
+const VERSION='5.28',CORE='tactika-core-'+VERSION+'-l10n-18',MEDIA='tactika-media-'+VERSION;
 const SHELL=['./','index.html','style.css','home.css','manifest.webmanifest','assets/icon-192.png','assets/icon-512.png','assets/icon-180.png',
  'assets/fonts/nunito-latin-700-normal.woff2','assets/fonts/nunito-latin-800-normal.woff2','assets/fonts/nunito-latin-900-normal.woff2','assets/fonts/lilita-one-latin-400-normal.woff2',
  'src/main.js','src/util.js','src/data.js','src/game.js','src/render.js','src/ambiance.js','src/elites.js','src/gfx.js','src/audio.js','src/save.js','src/savecore.js','src/rules.js','src/turns.js','src/talents.js','src/mastery.js','src/story.js','src/chronicle.js','src/cmrewards.js','src/quests.js','src/locales/nightmare-rewards.js','src/ui.js','src/home.js',
