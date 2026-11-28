@@ -14,7 +14,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.12';
+export const VERSION='5.12.1';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
@@ -105,9 +105,9 @@ function scene(k){
  // Cristal de l'Éther → Expéditions
  {const st=crystalState(save),[w,h]=(CM_DEV?CRY_CM:CRY)[st-1].map(v=>v*Q.ck[st===5?1:0]);
   const c=el('button','v-cry',`<img src="assets/${CM_DEV?'cm':'cry'}/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
-  const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.onclick=()=>show('expe');stage.append(c);
+  const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.onclick=()=>{if(CM_DEV)sfx('nm_crystal_touch',.9);show('expe')};stage.append(c);
   // V5.09 : le cartouche n'est plus dans le cristal : un héros qui marche devant (z-index 2, comme le cristal) le recouvrait
-  const pb=el('button','v-cryp');pb.style.cssText=pc(Q.cry[0],Q.cry[1],0,0);pb.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');pb.append(p);pb.onclick=()=>show('expe');stage.append(pb)}
+  const pb=el('button','v-cryp');pb.style.cssText=pc(Q.cry[0],Q.cry[1],0,0);pb.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');pb.append(p);pb.onclick=()=>{if(CM_DEV)sfx('nm_crystal_touch',.9);show('expe')};stage.append(pb)}
  // héros : leur poste est autour du feu, ils vont faire un tour puis reviennent (V4.8b)
  // V4.33 : les 3 places du feu reviennent à l'équipe de combat (W.i = héros, W.p = place)
  const walkers=Q.camp.map(([x,y,p,flip])=>{const i=teamOf(save)[p],[hw,hh]=Q.hero,b=el('button','v-hero');b.setAttribute('aria-label',`${HER[i].n} : voir la fiche`);
