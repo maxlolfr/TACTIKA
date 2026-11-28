@@ -226,7 +226,7 @@ export async function startFight(zi,i,F){closeMenu();
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;
  G.turn=-1;G.cur=null;G.sel=null;G.plan=null;G.phase='fight';G.fid++;
  $('panel').classList.toggle('deux',S.units.some(h=>h.team==='h'&&h.sp.length>=5)); // V4.37 : hauteur des 2 rangées réservée avant de placer le plateau
- layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember',sables:'sands',marais:'swamp',citadelle:'skycitadel',givre:'frost',eter:'sanctuary'};music(G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2',sables:'boss_map2',marais:'boss_map2',citadelle:'boss_map2',givre:'boss_map2',eter:'final_boss'}[zid]||'boss'):S.goal&&zid!=='cristal'?(ZONES[zi].map===2?'elite2':'elite_battle'):ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const vf=G.fid;setTimeout(()=>{if(G.fid===vf)say1(G.s.units.filter(u=>u.team==='h'),'start')},G.F.boss?2600:1500);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
+ layout();renderTL();render();const zid=ZONES[zi].id;const ZM={prairie:'forest',bois:'darkwood',plage:'coast',mont:'mountain',chateau:'castle',cristal:'cave',braise:'ember',sables:'sands',marais:'swamp',citadelle:'skycitadel',givre:'frost',eter:'sanctuary'};music(G.F.cm?(G.F.boss?'nm_boss':G.F.cm.champ?'nm_champion':ZONES[zi].map===2?'nm_battle2':'nm_battle1'):G.F.boss?({cristal:'titan_boss',mont:'boss_v2',chateau:'boss_v2',braise:'boss_map2',sables:'boss_map2',marais:'boss_map2',citadelle:'boss_map2',givre:'boss_map2',eter:'final_boss'}[zid]||'boss'):S.goal&&zid!=='cristal'?(ZONES[zi].map===2?'elite2':'elite_battle'):ZM[zid]||'battle');setTimeout(()=>sfx(G.F.boss?'boss_intro':'enemy_warning',.8),400);const vf=G.fid;setTimeout(()=>{if(G.fid===vf)say1(G.s.units.filter(u=>u.team==='h'),'start')},G.F.boss?2600:1500);const tip=G.F.tip&&prog(ZONES[zi].id)<=i?()=>tuto(runFight,0,TIPS[G.F.tip]):runFight,fid=G.fid;
  bossCard(G.F);const go=S.goal?()=>tuto(()=>G.fid===fid&&tip(),0,[goalTxt(S)],'Objectif du combat'):tip;if(save.tuto)go();else tuto(go);
 }
 // ---------- tutoriel (V3.0a) : 5 cartes au premier combat, rejouable depuis le camp ----------
@@ -320,7 +320,7 @@ function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classLis
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{S.classList.remove('on');camp()};S.append(back)}
 // ---------- taverne (V2.6b) ----------
 const ctTxt=t=>t.k==='win'?`Gagne ${t.n} combats`:t.k==='kill'?`Vaincs ${t.n} ${MON[t.m].n.toLowerCase()}${t.n>1?'s':''}`:t.k==='star'?`Gagne ${t.n>1?t.n+' combats':'un combat'} avec 3 ★`:'Bats un boss (même déjà vaincu)';
-function tav(){music('village');$('camp').classList.remove('on');const T=$('tav');T.classList.add('on');T.innerHTML='';const d=today(),l=contracts(save,d);store();
+function tav(){music(CM_DEV?'nm_village':'village');$('camp').classList.remove('on');const T=$('tav');T.classList.add('on');T.innerHTML='';const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend',`<h1>La Taverne</h1><div class="sub">Trois contrats par jour, et un défi difficile une fois par jour.</div>`);
  const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);T.append(top);
  quests(T,tav);
@@ -351,7 +351,7 @@ const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),today,SP,SPI,HOW,forge:
  // partir à l'aventure : la carte, ouverte sur le chapitre en cours
  adventure:zi=>{worldMap();if(zi>=0)zoneSheet(zi)}};
 export function camp(){
- G.phase='camp';document.body.classList.add('camp');music('main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
+ G.phase='camp';document.body.classList.add('camp');music(CM_DEV?'nm_village':'main_theme');for(const i of ['map','result','forge','armes','shop','tav'])$(i).classList.remove('on');renderHome(HOME);
  const ev=campEvents(save);if(ev.length)playStory(save,ev,store); // V4.80 : prologue, recrutements, épilogue
 }
 // V4.25 : sélecteur Carte I / Carte II ; la carte II reste verrouillée jusqu'au Titan
@@ -373,7 +373,7 @@ function secondMap(L,land){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.ma
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
  const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
- if(!map2Open(save))mapNo=1;music(mapNo===2?'map2':'camp');
+ if(!map2Open(save))mapNo=1;music(CM_DEV?'nm_map':mapNo===2?'map2':'camp');
  /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2109), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
  const cm2=!!CM_DEV&&mapNo===2,wi=$('worldimg'),ws=cm2?'assets/cm/world2-l.webp':'assets/world1-l.webp';if(wi&&!wi.src.endsWith(ws))wi.src=ws;M.classList.toggle('cm',!!CM_DEV);M.classList.toggle('cm2',cm2);
  $('mapbox').classList.toggle('m2',mapNo===2&&!cm2);$('mapbox').classList.toggle('m1',mapNo===1||cm2);M.classList.toggle('m1',mapNo===1||cm2);mapTabs();
