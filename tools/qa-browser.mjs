@@ -103,5 +103,16 @@ try{
   const persisted=await p.evaluate(()=>JSON.parse(localStorage.getItem('landeTactique1')));
   assert.equal(persisted.gold,after.gold);assert.equal(persisted.z.prairie||0,after.z.prairie||0);
  },{v:2,lvl:9,xp:0,gold:123,items:[],z:{prairie:0},st:{},up:{},tuto:1,storySeen:{prologue:1}});
+ await scenario('legacy-save-migration-reload',async p=>{
+  const read=()=>p.evaluate(async()=>{const {save,store,prog}=await import('/src/save.js');const result={v:save.v,lvl:save.lvl,gold:save.gold,items:save.items,progress:prog('prairie')};if(!store())throw Error('store failed');return result});
+  const first=await read();assert.equal(first.v,2);assert.equal(first.lvl,3);assert.equal(first.gold,20);assert.equal(first.progress,3);
+  await p.reload();await p.locator('.v-go').waitFor();assert.deepEqual(await read(),first);
+ },{fight:4,lvl:3,xp:0,gold:20,items:[]});
+ await scenario('interrupted-combat-reload',async p=>{
+  const read=()=>p.evaluate(()=>{const s=JSON.parse(localStorage.getItem('landeTactique1'));return {gold:s.gold,lvl:s.lvl,xp:s.xp,z:s.z,items:s.items}});
+  const before=await read();
+  await p.evaluate(()=>{import('/src/ui.js').then(u=>u.startFight(0,0))});await dismiss(p);await waitHero(p);
+  await p.reload();await p.locator('.v-go').waitFor();assert.deepEqual(await read(),before);
+ },{v:2,lvl:9,xp:0,gold:123,items:[],z:{prairie:0},st:{},up:{},tuto:1,storySeen:{prologue:1}});
 }finally{await browser?.close();await new Promise(r=>server.close(r))}
 process.exitCode=fail?1:0;
