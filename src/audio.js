@@ -14,7 +14,7 @@ let VLANG='fr';const vname=(h,l)=>'v_'+h+'_'+l+(VLANG==='en'?'_en':'');
 export function setVoiceLang(l){l=l==='en'?'en':'fr';if(l===VLANG)return;VLANG=l;for(const h of Object.values(VOICES))for(const x of VLINES)load(vname(h,x)).catch(()=>{})}
 // V5.06 (lot 4 audio, mesures EBU R128 de tous les fichiers) : musiques ramenées vers -13,5 LUFS (marais -18,8, sanctuaire -15,4, défaite -19,6, givre -12,1 étaient hors plage) ;
 // STRIM : bruitages d'impact trop faibles (coup -24 dB crête, soin -19, fracas et esquive -9) remontés, fin de boss à crête > 0 dB légèrement baissée ; le limiteur de sortie évite toute saturation
-const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75,swamp:1.7,sanctuary:1.2,frost:.9},STRIM={defeat:1.6,hit:3.2,heal:2,aelis_heal:2,smash:1.6,dodge:1.6,boss_death:.85};
+const AMB=4,GAIN={m:.9,s:1,v:1.2},TRIM={nm_battle2:.82,nm_boss:.9,main_theme:1.5,camp:1.4,map2:.85,ember:.7,boss_map2:.75,swamp:1.7,sanctuary:1.2,frost:.9},STRIM={defeat:1.6,hit:3.2,heal:2,aelis_heal:2,smash:1.6,dodge:1.6,boss_death:.85};
 export const VOLMAX=150;
 export const AU={c:null,buf:{},m:null,s:null,cur:null,src:null,on:{m:1,s:1,v:1},vEnd:0,vLast:{}};
 try{Object.assign(AU.on,JSON.parse(localStorage.getItem('landeSon')||'{}'))}catch(e){}
