@@ -634,3 +634,4 @@ html.lowfx .tro-toast{animation:none!important}
    (nom sur le portrait, PV coupés, PA / PM cachés sur l'Honor plié en paysage) */
 @media (orientation:landscape){.hud2 #who>canvas.pt{width:var(--ptw)!important;height:var(--ptw)!important}.hud2 #who{flex:none}}
 @media (orientation:landscape) and (max-height:450px){.hud2{--ptw:46px}.hud2 #who .nm{font-size:14px}}
+.hud2 #who .nm .lv{font:800 .72em system-ui,sans-serif;color:#cfe3ff;background:#0d1a2e;border:1px solid #5aa8ff;border-radius:8px;padding:1px 6px;margin-left:4px;vertical-align:2px;text-shadow:none} /* V5.10b : niveau du héros actif */
