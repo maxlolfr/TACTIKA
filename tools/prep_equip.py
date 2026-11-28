@@ -23,7 +23,7 @@ for f,ks in [('armes',(2,3,4,6,7,9)),('armures-boucliers-casques',(2,3,6,7,8,9))
  ('bottes-gants-ceintures',(2,3,5,6,7,8,9)),('reliques-livres-cristaux-v2',(1,2,3,4,6,7,8,9))]:CASES+=[(f,k) for k in ks]
 ERASE={('armes',4):[(0,0),(360,0),(360,268),(102,545),(0,545)],
  ('armes',7):[(0,0),(476,0),(476,118),(394,196),(350,260),(268,362),(186,436),(130,516),(40,598),(0,598)]}
-S=160;COLS=9;rows=(len(CASES)+COLS-1)//COLS;sheet=Image.new('RGBA',((S+2)*COLS,(S+2)*rows));fr=[];cache={}
+S=int(__import__("os").environ.get("S",256));COLS=9;rows=(len(CASES)+COLS-1)//COLS;sheet=Image.new('RGBA',((S+2)*COLS,(S+2)*rows));fr=[];cache={}
 for n,(f,k) in enumerate(CASES):
     if f not in cache:cache[f]=keyed(art+f+'.png',True)
     rgb,al=cache[f];H,W=al.shape;cw,ch=W//3,H//3;r,c=divmod(k-1,3)

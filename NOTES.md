@@ -1,3 +1,22 @@
+## V5.32 — polissage graphique final, lot 1 (29/11/2026, chantier HD clos)
+- Décision de Max : chantier HD clos, images actuelles conservées, aucune nouvelle image ; polissage sans refonte ni nouveauté. Liste des manques archivée dans le studio (`HD-CLOTURE-ET-MANQUANTS.md`).
+- Audit `tools/ergo.mjs` (9 formats) : 0 débordement, 0 erreur ; 3 défauts visibles corrigés (CSS seul) : titre de combat tronqué en paysage (« … ni… »), niveau du héros actif tronqué dans le panneau (passe à la ligne), bouton « Partir à l'aventure » rogné sur 2 lignes en paysage bas (Honor plié). Cibles hors de portée du ciblage plus lisibles (opacité .38 → .55). Aucune règle ni asset touchés. 283 tests.
+
+## V5.31 — nouvelles icônes de sorts (29/11/2026, planche sans cadre 1541 de Max)
+- Nouvelle planche `sp16` (16 icônes, 256 px, `tools/prep_icons_hd.py sp16 … 4 4`) : 0 épées, 1 bouclier, 2 course, 3 force, 4 flèches, 5 cible, 6 course feuille, 7 loup, 8 soin, 9 fleur, 10 soin de groupe, 11 dôme, 12 explosion, 13 glace, 14 tourbillon, 15 sablier. `SPI` de `src/ui.js` : 23 sorts rebranchés (slash, smash, guard, volley, boots, heal, aura, arcane, frost, mheal, bless, dagger, shadow, mark, evade, hammer, protect, light, intercept, aegis, rescue, oath), surtout ceux qui réutilisaient des icônes provisoires. Non utilisées : loup (7), sablier (15), cadres 1529 et icônes de classes 1543 (aucun emplacement). Aucune règle touchée. 283 tests.
+
+## V5.30 — accessoires du village et cristal (étape 4) en HD (29/11/2026, planches de Max 1693 et 1687)
+- Nouvel outil `tools/prep_village_hd.py`. Accessoires (`assets/vie/` : étal, enclume, mannequin, lanterne, bannière, charrette, banc, fontaine, trophée) remis à 520 px de côté max au lieu de 300 (même découpe que `prep_vie.py`, depuis `village/accessoires/` du studio : la planche 1693 est celle déjà utilisée). `VIE` de `src/home.js` ne sert qu'au rapport l/h : inchangé (rapports vérifiés).
+- `assets/cry/crystal4.webp` : planche 1687 (2048 px, étoile Gemini effacée par `cut_village.py cristal-seul`) à 1400 px de large (avant 700), calée dans la boîte 700×896 de `CRY[3]` (vide ajouté en haut, bas aligné). Les cristaux 1, 2, 3 et 5 viennent déjà de la planche 1692 à pleine taille : rien à refaire. Cristal Cauchemar (`cm/`) inchangé.
+- **Sols non remplacés** : les planches 1654–1665, 1822, 1854, 1860 font ≈ 600–640 px par dalle contre ≈ 518 dans le jeu (gain ×1,2) : pas de changement, risque de recalage inutile. `tiles4` (eau, roche) reste le vrai manque, sans image.
+- 283 tests + smoke navigateur OK.
+
+## V5.29 — icônes, effets, badges, forge et équipement en HD (29/11/2026, planches de Max 1518/1520/1522/1547 + originaux d'équipement)
+- Nouvel outil `tools/prep_icons_hd.py <planche du jeu> <png> <colonnes> <lignes> [S]` (réutilise `key()` de `prep_r9.py`, cases lues dans l'ordre de lecture, taille à l'écran inchangée car `icon()`/`dic()` ne lisent que le rapport l/h). Rapports l/h vérifiés case par case contre l'ancien atlas : ordre identique.
+- `ico` (statuts, 1518), `ficon` (forge, 1522), `fxi` (effets, 1520), `badge` (rangs, 1547) : cases ≈ 256 px au lieu de ≈ 120. `equip` (53 objets) refaite à 256 px au lieu de 160 (`tools/prep_equip.py`, variable `S`, depuis les 7 planches d'origine déjà dans le studio). Poids : +≈ 1,4 Mo.
+- **HUD V2 (1886 à 1896)** : fichiers identiques à ceux déjà intégrés en V4.51 (`prep_hud2.py`), rien à refaire. **Non placées (nouveaux dessins, pas d'emplacement dans le jeu)** : icônes de sorts 1529/1541, icônes de classes 1543, statuts bonus, symboles de soigneuse, 4 pièces rares : rangées dans le studio.
+- 283 tests + smoke navigateur OK.
+
 ## V5.27 — bâtiments du village en HD (28/11/2026, planche Gemini de Max `batiments-village-4-1254.png`)
 - `bld.webp` (forge, marchand, arène, taverne ; 0 à 3) refaite depuis la planche 2×2 de 1254 px (nouvel outil `tools/prep_bld_hd.py`, réutilise `key/cells/pack` de `prep_r9.py`) : ≈ 520 px de haut par bâtiment au lieu de ≈ 285. Fond magenta et étoile Gemini effacés. Ils ne servent qu'en icône (`icon('bld',i,h)` : forge, boutique, taverne, quêtes) : taille à l'écran inchangée. 289 Ko (avant ≈ 110 Ko). Aucune règle touchée.
 - **Reste en basse définition** : voir la liste « RESTE À FAIRE » plus bas (variantes de héros, décor `deco`…`deco5`, `deco7`…`deco9`, interface). Fonds en pause (décision de Max).

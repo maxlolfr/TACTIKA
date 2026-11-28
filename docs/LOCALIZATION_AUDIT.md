@@ -125,3 +125,9 @@ Le parcours Chromium à 390 × 844 passe avec `--online-only`. Il vérifie le ch
 ### Parcours hors ligne exécuté
 
 Le parcours Chromium complet à 390 × 844 passe. Une mission de survie du Cauchemar a été jouée hors ligne jusqu’au bilan en chinois simplifié et en allemand. Le test attend un tour allié réel avant de cliquer sur le bouton de fin de tour et laisse les ennemis jouer. Le fichier de terrain `sol_bois.webp` sert de contrôle pour le Bois sombre jamais chargé : le sprite du loup peut déjà être présent dans le cache. Sans le fichier de terrain, le jeu affiche le message de chargement localisé et revient à un état où le combat n’a pas démarré. L’ouverture d’une région sans ses ressources demeure indisponible hors ligne.
+
+### Synchronisation V5.32
+
+La branche intègre les quatre versions V5.29 à V5.32 de `main` (jusqu’à `d07a5cf`). Les nouvelles icônes et le polissage CSS sont intégrés avec les libellés accessibles traduits de la frise et le précache des modules linguistiques. Le delta de `main` ne contient pas de nouveau texte joueur à traduire.
+
+305 tests Node passent. L’audit Chromium vérifie à nouveau 13 écrans dans chacune des langues FR et EN sans texte suspect. Le parcours Chromium en ligne à 390 × 844 passe dans les quatre langues. Le parcours hors ligne jusqu’au bilan a été exécuté sur V5.28, et reste à rejouer sur cette base. Le contrôle sur Honor mentionné dans la fiche commune correspond à la V5.32 de `main`.
