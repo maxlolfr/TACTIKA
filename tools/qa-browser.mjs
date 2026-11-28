@@ -123,5 +123,11 @@ try{
   const result=await p.evaluate(async()=>{const {save}=await import('/src/save.js');const {CM_DEV}=await import('/src/data.js');return {active:!!CM_DEV,normal:JSON.stringify(save.z),cm:save.cm.z.prairie}});
   assert.deepEqual(result,{active:false,normal,cm:2});
  },{v:2,lvl:50,xp:0,gold:123,items:[],z:{prairie:10},st:{},up:{},tuto:1,storySeen:{prologue:1,epilogue:1}});
+ await scenario('advanced-campaign-map-shortcut',async p=>{
+  await p.locator('.v-go').click();await p.locator('#map.on').waitFor();
+  const observed=await p.evaluate(()=>({sheet:document.querySelector('#zsheet.on h3')?.textContent,tab:document.querySelector('#maptabs [aria-pressed="true"]')?.textContent}));
+  console.log('QA_MAP_SHORTCUT '+JSON.stringify(observed));
+  assert.match(observed.sheet||'',/Sanctuaire/);assert.equal(observed.tab,'Carte II');
+ },{v:2,lvl:50,xp:0,gold:123,items:[],z:{prairie:10,bois:10,plage:10,mont:10,chateau:10,cristal:10,braise:10,sables:10,marais:10,citadelle:10,givre:10,eter:9},st:{},up:{},tuto:1,storySeen:{prologue:1}});
 }finally{await browser?.close();await new Promise(r=>server.close(r))}
 process.exitCode=fail?1:0;
