@@ -24,6 +24,13 @@ const AFFIXES = {
 export const eliteAffix=(locale,id)=>AFFIXES[locale]?.[id];
 
 export const ELITE_UI = {
+ en:{
+  command:n=>`Commands ${n} ${n===1?'ally':'allies'}`,
+  champion:'CHAMPION (2 abilities)', title:'Champion', rage:'ENRAGED: damage ×1.35',
+  regen:(used,max)=>`Regenerated ${used}/${max}`,
+  drain:(used,max)=>`Drained ${used}/${max}`,
+  primed:'PRIMED: explodes on its next turn', cooldown:n=>`Recharging (${n} ${n===1?'turn':'turns'})`,
+ },
  'zh-Hans': {
   command:n=>`指挥 ${n} 名友军`,
   champion:'冠军（2项能力）', title:'冠军', rage:'狂怒：伤害 ×1.35',
@@ -48,6 +55,7 @@ export function eliteName(locale,unit,translate){
  if(!unit.mods?.length)return translate(name)+tag;
  const index=name.lastIndexOf(' (');
  if(index<0)return translate(name)+tag;
+ if(locale==='en')return translate(name.slice(0,index))+name.slice(index)+tag;
  const affixes=unit.mods.map(id=>eliteAffix(locale,id)?.[0]??id).join(', ');
  return translate(name.slice(0,index))+' ('+(unit.champ?ui.title+': ':'')+affixes+')'+tag;
 }

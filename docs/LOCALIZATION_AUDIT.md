@@ -105,3 +105,9 @@ Le titre du plateau, les points d’action et de mouvement, les points reportés
 301 tests Node passent. Le contrôle strict reste à 1 241 / 1 241 pour chacun des deux aperçus. Ces contrôles couvrent les catalogues et les formats testés. La validation visuelle de ces nouveaux textes et le parcours Chromium hors ligne restent ouverts, le binaire Chromium étant indisponible dans l’environnement.
 
 La relecture anglaise a remplacé les fragments encore assemblés en français dans les aperçus de déplacement, de visée et de statut par des formats anglais complets (AP, MP et HP). Le test vérifie le coût et le nombre de cibles dans les trois langues traduites. 302 tests Node passent.
+
+### Fermeture des écarts FR/EN en combat
+
+La revue statique a relevé des fragments français en anglais dans les textes dessinés sur le plateau, les états des élites, les fiches des ennemis, les annonces de vagues et le bilan de combat. Les formats anglais préservent désormais les valeurs de bouclier, de poison et de points d’action reportés, les compteurs d’ennemis et de renforts, et les délais des capacités. Le texte source français est conservé pour les événements canvas. L’audit navigateur inclut désormais le titre, le portrait actif, l’aide et le bilan de retraite.
+
+303 tests Node passent. La couverture stricte des catalogues chinois et allemand reste à 1 241 / 1 241. Le scénario navigateur élargi reste à exécuter. Le binaire Chromium attendu est absent de l’environnement, donc la couverture visuelle FR/EN à 100 % n’est pas établie.

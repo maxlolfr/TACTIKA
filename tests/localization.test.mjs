@@ -10,7 +10,7 @@ import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
 import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
 import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
-import {AIM_UI, BATTLE_HUD, battleHazard} from '../src/locales/combat-ui.js';
+import {AIM_UI, BATTLE_HUD, battleHazard, battleCallout, ENEMY_DETAILS, RESULT_UI} from '../src/locales/combat-ui.js';
 import {battleGoal} from '../src/locales/battle-tips.js';
 import {regHtml, setLang, tr, trh, EN, TEXT_CATALOGS} from '../src/i18n.js';
 
@@ -241,4 +241,18 @@ test('les aperçus localisés affichent le coût et le nombre de cibles', () => 
     assert.ok(summary.includes('2'));
     assert.doesNotMatch(summary,/Retouche|aucune cible/);
   }
+});
+
+
+test('les alertes, portraits ennemis et bilans anglais conservent les valeurs', () => {
+  setLang('en');
+  assert.equal(battleCallout('en','Venin −4 / tour',tr),'Venom −4 per turn');
+  assert.equal(battleCallout('en','Bouclier −12',tr),'Shield −12');
+  assert.equal(battleCallout('en','+2 PA reporté',tr),'+2 AP carried over');
+  assert.equal(battleCallout('en','Drain bloqué',tr),'Life drain blocked');
+  assert.equal(ENEMY_DETAILS.en.base(8,20,32,3),'Lvl 8 · 20/32 HP · 3 MP');
+  assert.equal(RESULT_UI.en.remaining(1),'1 enemy still standing');
+  assert.equal(RESULT_UI.en.remaining(3),'3 enemies still standing');
+  setLang('fr');
+  assert.equal(battleCallout('fr','Bouclier −12',tr),'Bouclier −12');
 });

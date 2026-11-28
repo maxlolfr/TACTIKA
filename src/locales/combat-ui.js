@@ -177,6 +177,15 @@ Object.assign(COMBAT_TEXTS,{
 });
 
 export const ENEMY_DETAILS = {
+ en:{
+  base:(level,hp,max,move)=>`${level?`Lvl ${level} · `:''}${hp}/${max} HP · ${move} MP`,
+  curse:(hp,max,turns)=>`${hp}/${max} HP · Cursed: −50% healing received (${turns} turns)`,
+  attack:damage=>`Attack ${damage}`,
+  target:(name,amp)=>`Targeting ${name}${amp?' (crystal +30%)':''}`,
+  phase:n=>`Phase ${n}`,
+  next:(name,n)=>n===1?`${name} next turn`:`${name} in ${n} turns`,
+  threshold:(name,active)=>active?`${name} active`:`${name} below 50% HP`,
+ },
  'zh-Hans': {
   base:(level,hp,max,move)=>`${level?`${level}级 · `:''}${hp}/${max} 生命值 · ${move} 移动点`,
   curse:(hp,max,turns)=>`${hp}/${max} 生命值 · 诅咒：受到的治疗 −50%（${turns}回合）`,
@@ -198,6 +207,17 @@ export const ENEMY_DETAILS = {
 };
 
 export const RESULT_UI = {
+ en:{
+  team:(level,enemy)=>`Your team is level ${level}. This battle is level ${enemy}.`,
+  potions:(n,max,cost)=>`Potions: ${n}/${max} (${cost} gold each at the merchant).`,
+  survived:(n,fled)=>`Survived ${n} rounds${fled?', surviving enemies retreated':''}`,
+  round:n=>`Round ${n}`, down:n=>`${n} ${n===1?'hero':'heroes'} knocked out`,
+  remaining:n=>`${n} ${n===1?'enemy':'enemies'} still standing`,
+  reinforcements:n=>`${n} ${n===1?'reinforcement':'reinforcements'} expected`,
+  won:(i,total)=>`Stage ${i}/${total} cleared`, boss:name=>`${name} defeated!`,
+  quest:(title,first)=>`Quest “${title}” ${first?'completed':'replayed'}`,
+  level:n=>`Level ${n} reached!`,
+ },
  'zh-Hans': {
   team:(level,enemy)=>`你的队伍为${level}级，本场战斗为${enemy}级。`,
   potions:(n,max,cost)=>`药水：${n}/${max}（商人售价${cost}金币）。`,
@@ -223,6 +243,15 @@ export const RESULT_UI = {
 };
 
 export const BATTLE_ANNOUNCEMENTS = {
+ en:{
+  survive:(n,short)=>n>1?`${short?'':'Objective: '}Hold out for ${n} more rounds`:(short?'Final round!':'Hold out for one more round!'),
+  wave:n=>`⚠ ${n} ${n===1?'reinforcement arrives':'reinforcements arrive'}!`,
+  next:n=>`${n} more next round`, last:'Final wave',
+  explosion:(name,damage)=>`✹ ${name} will explode on its next turn (${damage} damage). Leave the marked tiles or defeat it first. `,
+  beam:n=>`⚠ The Titan fires its beam next turn (${n} damage). Leave the striped tiles. `,
+  crystal:'💎 Crystal: +30%. ', turn:name=>`${name}’s turn.`,
+  exhausted:name=>`${name} has no actions left. Next turn.`,
+ },
  'zh-Hans': {
   survive:(n,short)=>n>1?`${short?'':'目标：'}再坚守${n}回合`:(short?'最后一回合！':'还需坚守最后一回合！'),
   wave:n=>`⚠ ${n}名增援抵达！`,
@@ -420,4 +449,41 @@ export function battleHazard(text,lava,damage){
  if(lava.toxic)return text.toxic;
  if(lava.cold)return text.cold;
  return text.lava(damage);
+}
+
+
+const EN_BATTLE_CALLOUTS = new Map([
+ ['Contre-attaque prête','Counterattack ready'],
+ ['Prisme !','Prism!'],
+ ['EN FURIE !','ENRAGED!'],
+ ['⛨ protégé','⛨ Protected'],
+ ['Régénération bloquée','Regeneration blocked'],
+ ['Amorçage !','Primed!'],
+ ['Drain bloqué','Life drain blocked'],
+ ['Mur brisé !','Wall shattered!'],
+ ['Personne à portée','No one in range'],
+ ['Appel de la meute !','Call of the pack!'],
+]);
+
+const EN_BATTLE_VALUES = [
+ [/^Bouclier −(\d+)$/,'Shield −$1'],
+ [/^Bouclier (\d+)$/,'Shield $1'],
+ [/^Mur -(\d+)$/,'Wall −$1'],
+ [/^Marqué \+(\d+) %$/,'Marked +$1%'],
+ [/^Armure brisée \+(\d+) %$/,'Armor broken +$1%'],
+ [/^Affaibli −(\d+) %$/,'Weakened −$1%'],
+ [/^Provocation \((\d+)\)$/,'Taunt ($1)'],
+ [/^Esquive (\d+) %$/,'Dodge $1%'],
+ [/^Venin −(\d+) \/ tour$/,'Venom −$1 per turn'],
+ [/^\+(\d+) PA reporté$/,'+$1 AP carried over'],
+];
+
+export function battleCallout(locale,source,translate){
+ if(locale!=='en')return translate(source);
+ const exact=EN_BATTLE_CALLOUTS.get(source);
+ if(exact)return exact;
+ for(const [pattern,value] of EN_BATTLE_VALUES){
+  if(pattern.test(source))return source.replace(pattern,value);
+ }
+ return translate(source);
 }

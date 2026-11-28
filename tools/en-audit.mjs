@@ -58,6 +58,11 @@ try {
   await grab('région','#zsheet.on');
   await click('#zsheet .btn');
   await grab('sorts de combat','#spells');
+  await grab('titre du combat','#title');
+  await grab('unités et points d’action','#who');
+  await grab('aide du combat','#hint');
+  await pg.locator('#flee').evaluate(button=>{button.click();button.click()});
+  await grab('bilan de retraite','#result.on');
   if(errors.length)throw new Error(errors.join('\n'));
   await ctx.close();
  }
