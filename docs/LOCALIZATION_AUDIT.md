@@ -93,3 +93,7 @@ Il reste à contrôler cet écran dans Chromium à 390 × 844 (le binaire local 
 Le scénario Chromium du Cauchemar utilise désormais le bouton de fin de tour jusqu’au bilan. Il laisse les ennemis jouer et accepte une victoire ou une défaite produite par les règles du combat. Après le bilan, le parcours recharge la carte hors ligne et tente d’ouvrir le Bois sombre en vérifiant que le sprite `wolfN.webp` est absent des caches.
 
 Un essai isolé du gestionnaire du service worker, avec le réseau coupé et les deux caches vides pour le média demandé, renvoie HTTP 504. Le sprite `wolfN.webp` ne figure pas dans la liste de précache. `zoneAssets` attend les images avant l’initialisation du plateau. Une première visite hors ligne reste donc bloquée si le fichier n’a jamais été mis en cache. Le parcours vérifie le message de chargement de ce cas. Le changement est limité au scénario et à cet audit. Le parcours Chromium reste à exécuter, l’environnement d’exécution étant indisponible lors de cette reprise.
+
+### Déplacement et terrain
+
+L’aperçu d’un déplacement affiche en chinois simplifié et en allemand le coût en points de mouvement, les sorts disponibles depuis la case, le nombre de cibles et l’instruction de confirmation. Le plateau localise aussi les cases infranchissables, dont le mur de glace avec ses points de vie et sa durée restante. Ce lot reprend les traductions du plateau pendant que le contrôle Chromium hors ligne attend un environnement utilisable.

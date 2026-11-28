@@ -232,6 +232,11 @@ export const BATTLE_ANNOUNCEMENTS = {
 export const AIM_UI = {
  'zh-Hans': {
   target:'目标格', prism:'棱晶',
+  moveTarget:(spell,n)=>`${spell} → ${n}个目标`,
+  movePreview:(cost,targets)=>`消耗${cost}移动点。可从该格攻击：${targets||'无目标'}。再点一次移动。`,
+  terrain:{water:'水域',crystal:'水晶',obstacle:'障碍物'},
+  ice:(hp,max,turns)=>`冰墙（${hp}/${max}生命值，剩余${turns}回合）`,
+  impassable:terrain=>`${terrain} · 无法通行`,
   targetLabel:(name,hp,max,valid,afterMove)=>`${name}，${hp}/${max}生命值${valid?'，可选目标':afterMove?'，移动后可选':''}`,
   charge:name=>`✓ ${name}冲向白色格（不消耗移动点）`,
   advance:(name,cost)=>`↷ ${name}移动（${cost}移动点）后施放`,
@@ -255,6 +260,11 @@ export const AIM_UI = {
  },
  de: {
   target:'Zielfeld', prism:'Prisma',
+  moveTarget:(spell,n)=>`${spell} → ${n} ${n===1?'Ziel':'Ziele'}`,
+  movePreview:(cost,targets)=>`${cost} BP. Von dort: ${targets||'kein Ziel'}. Tippe erneut auf das Feld, um dich zu bewegen.`,
+  terrain:{water:'Wasser',crystal:'Kristall',obstacle:'Hindernis'},
+  ice:(hp,max,turns)=>`Eiswand (${hp}/${max} LP, noch ${turns} ${turns===1?'Zug':'Züge'})`,
+  impassable:terrain=>`${terrain} · nicht passierbar`,
   targetLabel:(name,hp,max,valid,afterMove)=>`${name}, ${hp}/${max} LP${valid?', gültiges Ziel':afterMove?', nach Bewegung erreichbar':''}`,
   charge:name=>`✓ ${name} stürmt zum weißen Feld (keine BP)`,
   advance:(name,cost)=>`↷ ${name} bewegt sich für ${cost} BP und wirkt den Zauber`,

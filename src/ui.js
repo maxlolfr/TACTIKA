@@ -252,12 +252,21 @@ async function act(c){const u=G.cur,o=occ(G.s,c.x,c.y);
   if(sp.t==='self'&&!sp.nova){if(same(c,u))return strike(u,sp,c);$('hint').textContent='Touche ton héros pour confirmer, ou retouche le sort pour l’annuler.';return}
   if(E&&!E.bad&&(same(c,E.tap)||E.ap&&same(c,E.ap)&&!o))return E.ap?advance(u,sp,E):strike(u,sp,{x:E.x,y:E.y});
   return aim(u,c)}
- const k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
+ const text=AIM_UI[save.lang],k=K(c.x,c.y);if(G.reachC&&G.reachC.dist.get(k)>0){
   if(!G.plan||G.plan.x!==c.x||G.plan.y!==c.y){const t=targetsFrom(G.s,u,c),cost=G.reachC.dist.get(k);G.plan={x:c.x,y:c.y,cost,foes:t.foes,path:pathTo(u,k,G.reachC.prev)};sfx('click',.5);
-   $('hint').textContent=`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
+   $('hint').textContent=text?text.movePreview(cost,t.list.map(l=>text.moveTarget(tr(l.sp.n),l.n)).join(', ')):`${cost} PM. De là : ${t.list.length?t.list.map(l=>`${l.sp.n} → ${l.n} cible${l.n>1?'s':''}`).join(', '):'aucune cible'}. Retouche la case pour y aller.`;return}
   G.plan=null;await moveTo(u,k,G.reachC.prev);G.reachC=reach(G.s,u,u.pm);render();autoEnd();return}
  if(G.plan){G.plan=null;render()}if(o){$('hint').textContent=info(o);return}
- const cl=cell(G.s,c.x,c.y);if(cl&&(cl.water||cl.block)){const t=(cl.ice?`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${cl.ice.until-G.s.round} tour(s))`:cl.water?'Eau':cl.cry?'Cristal':'Obstacle')+' · infranchissable';$('hint').textContent=t+'.';say({gx:c.x,gy:c.y},t,cl.water?'#9fd8ff':'#e8dcc0')}}
+ const cl=cell(G.s,c.x,c.y);
+ if(cl&&(cl.water||cl.block)){
+  const terrain=cl.water?'water':cl.cry?'crystal':'obstacle',turns=cl.ice?cl.ice.until-G.s.round:0;
+  const label=cl.ice?(text?.ice(cl.ice.hp,cl.ice.max,turns)??`Mur de glace (${cl.ice.hp}/${cl.ice.max} PV, ${turns} tour(s))`)
+   :(text?.terrain[terrain]??(cl.water?'Eau':cl.cry?'Cristal':'Obstacle'));
+  const message=text?.impassable(label)??label+' · infranchissable';
+  $('hint').textContent=message+'.';
+  say({gx:c.x,gy:c.y},message,cl.water?'#9fd8ff':'#e8dcc0');
+ }
+}
 // ---------- carte de visée : qui, validité, effet réel ----------
 const rg=a=>a[0]===a[1]?`${a[0]}`:`${a[0]}–${a[1]}`;
 const KO={sure:'KO garanti',maybe:'KO possible',crit:'KO si critique'};
