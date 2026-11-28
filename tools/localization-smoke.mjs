@@ -64,6 +64,19 @@ try {
     await dialogue.waitFor({state:'detached'});
     console.log('OK',id,labels[id],'· prologue');
     if(id==='zh-Hans'||id==='de'){
+      await page.locator('.v-bld[data-b="talents"]').evaluate(element=>element.click());
+      const spell=page.locator('#armes .mrow[data-sp="slash"]');
+      await spell.waitFor();
+      const zh=id==='zh-Hans';
+      assert.match(await spell.textContent(),zh?/当前：基础效果/:/Aktuell: Grundwirkung/);
+      await spell.locator('button').click();
+      assert.match(await spell.textContent(),zh?/当前：伤害 \+5%/:/Aktuell: \+5 % Schaden/);
+      const reset=page.getByRole('button',{name:zh?'免费重置精通':'Beherrschung kostenlos zurücksetzen'});
+      await reset.click();
+      await page.getByRole('button',{name:zh?'再次点击以返还点数':'Erneut tippen, um die Punkte zurückzuerhalten'}).click();
+      assert.match(await spell.textContent(),zh?/当前：基础效果/:/Aktuell: Grundwirkung/);
+      await page.locator('#armes .ov-back').click();
+      console.log('OK',id,'· maîtrise : rang II et réinitialisation');
       await page.locator('.v-cry').evaluate(element=>element.click());
       const nightmare=page.locator('.cm-gate');
       await nightmare.waitFor();

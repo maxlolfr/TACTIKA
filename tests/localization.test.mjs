@@ -123,3 +123,19 @@ test('les objectifs traduits conservent le nombre de tours et le bonus de vague'
     assert.ok(battleGoal(id,'chief'));
   }
 });
+
+import {MASTERY,mastTxt} from '../src/mastery.js';
+test('les effets de maîtrise traduits conservent les valeurs des 3 rangs', () => {
+  const numbers = text => (text.match(/\d+/g)??[]).sort();
+  for (const id of Object.keys(MASTERY)) {
+    for (const rank of [1,2,3]) {
+      const source=mastTxt(id,rank);
+      for (const lang of ['zh-Hans','de']) {
+        const translated=mastTxt(id,rank,lang);
+        assert.notEqual(translated,source);
+        assert.doesNotMatch(translated,/undefined/);
+        assert.deepEqual(numbers(translated),numbers(source),id);
+      }
+    }
+  }
+});

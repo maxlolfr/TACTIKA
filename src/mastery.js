@@ -1,6 +1,7 @@
 // V4.39 : maîtrise des sorts (spec : docs/studio/tactika/mecaniques/V4.39-maitrise.md du studio).
 // Table par identifiant de sort : [type, bonus rang II, bonus rang III, libellé]. Les bonus sont comptés par rapport au rang I
 // et ne se cumulent pas entre rangs. Ajouter un héros = ajouter ses sorts ici. Orion depuis la V4.39 ; Kael, Fenn, Aelis (sorts de dégâts, soins, bouclier) depuis la V4.45.
+import {MASTERY_UI} from './locales/mastery.js';
 import {SP,HER} from './data.js';
 import {knownSpells} from './rules.js';
 export const MASTERY={
@@ -43,5 +44,15 @@ export function mastered(sp,id,r){const m=MASTERY[id];if(!m||(r!==2&&r!==3))retu
  return sp}
 export const masteredFor=(save,i,id,sp)=>mastered(sp,id,rankOf(save,i,id));
 // texte du bonus d'un rang (par rapport au rang I)
-export function mastTxt(id,r){const m=MASTERY[id];if(!m||r<2)return'effet de base';const v=m[r-1];
- return m[0]==='range'?`+${v} case${v>1?'s':''} de portée`:m[0]==='weak'?`réduction ${Math.round((SP[id].weaken[0]+v)*100)} % au lieu de ${Math.round(SP[id].weaken[0]*100)} %`:`+${Math.round(v*100)} % ${m[3]||{wall:'PV du mur',heal:'soins',ward:'bouclier'}[m[0]]||'dégâts'}`}
+export function mastTxt(id,r,lang){
+ const text=MASTERY_UI[lang],m=MASTERY[id];
+ if(!m||r<2)return text?.base??'effet de base';
+ const [type,,,label]=m,v=m[r-1];
+ if(type==='range')return text?.range(v)??`+${v} case${v>1?'s':''} de portée`;
+ if(type==='weak'){
+  const base=Math.round(SP[id].weaken[0]*100),value=Math.round((SP[id].weaken[0]+v)*100);
+  return text?.weak(value,base)??`réduction ${value} % au lieu de ${base} %`;
+ }
+ const stat=label||{wall:'PV du mur',heal:'soins',ward:'bouclier'}[type]||'dégâts',value=Math.round(v*100);
+ return text?.bonus(value,text.stats[stat])??`+${value} % ${stat}`;
+}
