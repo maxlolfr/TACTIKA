@@ -4,6 +4,8 @@
 // Ajouter une traduction : une ligne "français":"anglais" ; aucune autre modification nécessaire.
 import {normalizeLanguage} from './locales/languages.js';
 import {ZH_GLOSSARY} from './locales/zh-glossary.js';
+import {nightmareTexts} from './locales/nightmare.js';
+import {BATTLE_TIPS,BOSS_LINES} from './locales/battle-tips.js';
 import {TUTORIALS} from './locales/tutorials.js';
 import {QUEST_TRANSLATIONS} from './locales/quests.js';
 import {QUESTS} from './quests.js';
@@ -154,11 +156,21 @@ for(const k in TIPS_T)EN[TIPS_T[k]]=TIPS_T_EN[k];
 const HTML=new Map();
 const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
 zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
-export const regHtml=(fr,en)=>{HTML.set(fr,en)};
+export function regHtml(fr,en,translations={}){
+ HTML.set(fr,en);
+ for(const [id,text] of Object.entries(translations)){
+  if(text!=null)localizedHtml[id]?.set(fr,text);
+ }
+}
 // V5.10a : PA reportés / gardés (bouton Fin du tour et texte flottant) restaient à moitié en français
 Object.assign(EN,{'Langue':'Language','⚔ Combat':'⚔ Battle','voir les héros':'view heroes','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
 const localizedHtml=Object.fromEntries(Object.entries(TUTORIALS).map(
- ([id,lines])=>[id,new Map(TUTO.map((source,i)=>[source,lines[i]]))]
+ ([id,lines])=>[id,new Map([
+  ...TUTO.map((source,i)=>[source,lines[i]]),
+  ...Object.entries(TIPS).flatMap(([key,sources])=>sources.map(
+   (source,i)=>[source,BATTLE_TIPS[id][key]?.[i]]
+  )),
+ ])]
 ));
 export const trh=s=>language==='en'?(HTML.get(s)??s):(localizedHtml[language]?.get(s)??s);
 // ---------- moteur ----------
@@ -168,9 +180,13 @@ const questTexts=id=>Object.fromEntries(QUESTS.flatMap(q=>{
  return line?[[q.t,line[0]],[q.d,line[1]],[q.c,line[2]]]:[];
 }));
 const translatedLabels=(catalog,i)=>Object.fromEntries(Object.entries(catalog).map(([name,labels])=>[name,labels[i]]));
+const bossTexts=id=>Object.fromEntries([
+ ...Object.entries(TIPS_T).map(([key,source])=>[source,BOSS_LINES[id][key]]),
+ ['Un gardien redoutable',BOSS_LINES[id].default],
+]);
 export const TEXT_CATALOGS=Object.freeze({
- en:EN, de:Object.freeze({...DE,...translatedLabels(EQUIPMENT,1),...translatedLabels(SPELLS,1),...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...translatedLabels(EQUIPMENT,0),...translatedLabels(SPELLS,0),...questTexts('zh-Hans'),
-  'Langue':'语言','⚔ Combat':'⚔ 战斗','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
+ en:EN, de:Object.freeze({...DE,...nightmareTexts(2),...bossTexts('de'),...translatedLabels(EQUIPMENT,1),...translatedLabels(SPELLS,1),...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...nightmareTexts(1),...bossTexts('zh-Hans'),...translatedLabels(EQUIPMENT,0),...translatedLabels(SPELLS,0),...questTexts('zh-Hans'),
+  'Langue':'语言','⚔ Combat':'⚔ 战斗','Objectif du combat':'战斗目标','Boss de région':'区域首领','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
   '♪ Musique':'♪ 音乐','🔊 Sons':'🔊 声音','Volume musique':'音乐音量',
   'Volume bruitages':'音效音量','Volume voix':'语音音量','Revoir le tutoriel':'重看教程',
   'Recommencer à zéro':'重新开始','Compris !':'明白了！',

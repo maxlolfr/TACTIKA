@@ -1,5 +1,7 @@
 export const DE = Object.freeze({
   "Langue": "Sprache",
+  "Objectif du combat": "Kampfziel",
+  "Boss de région": "Regionsboss",
   "⚔ Combat": "⚔ Kampf",
   "Prairie de Lande": "Heidewiese",
   "Bois sombre": "Dunkelwald",

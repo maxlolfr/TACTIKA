@@ -5,10 +5,11 @@ import {ITEMS,SP} from '../src/data.js';
 import {EQUIPMENT} from '../src/locales/equipment.js';
 import {SC,OUTRO} from '../src/story.js';
 import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
-import {TUTO} from '../src/tips.js';
+import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
 import {QUEST_TRANSLATIONS} from '../src/locales/quests.js';
-import {setLang, tr, trh, TEXT_CATALOGS} from '../src/i18n.js';
+import {battleGoal} from '../src/locales/battle-tips.js';
+import {regHtml, setLang, tr, trh, TEXT_CATALOGS} from '../src/i18n.js';
 
 test('les identifiants de langue sont stables et les anciennes sauvegardes restent lisibles', () => {
   assert.deepEqual(LANGUAGES.map(({id}) => normalizeLanguage(id)), ['fr', 'en', 'zh-Hans', 'de']);
@@ -90,5 +91,35 @@ test('les sorts ont tous un nom et une description de base dans les deux aperçu
       for (const source of [spell.n,spell.d]) assert.ok(Object.hasOwn(TEXT_CATALOGS[id],source),source);
       assert.notEqual(tr(spell.d),spell.d);
     }
+  }
+});
+
+test('les astuces de combat et les intros de boss sont traduites avec leurs balises', () => {
+  const tags = text => text.match(/<[^>]+>/g);
+  for (const id of ['zh-Hans','de']) {
+    setLang(id);
+    for (const source of Object.values(TIPS).flat()) {
+      assert.notEqual(trh(source),source);
+      assert.deepEqual(tags(trh(source)),tags(source));
+    }
+    for (const source of [...Object.values(TIPS_T),'Un gardien redoutable']) {
+      assert.ok(tr(source).trim());
+      assert.notEqual(tr(source),source);
+    }
+  }
+});
+
+test('les objectifs traduits conservent le nombre de tours et le bonus de vague', () => {
+  const fr='<b>Exemple</b><br>Tenir 7 tours<br>+25 %';
+  for (const id of ['zh-Hans','de']) {
+    setLang(id);
+    const goal=battleGoal(id,'waves',7);
+    regHtml(fr,undefined,{[id]:goal});
+    assert.equal(trh(fr),goal);
+    assert.match(goal,/7/);
+    assert.match(goal,/25 ?%/);
+    assert.deepEqual(goal.match(/<[^>]+>/g),fr.match(/<[^>]+>/g));
+    assert.match(battleGoal(id,'survive',9),/9/);
+    assert.ok(battleGoal(id,'chief'));
   }
 });

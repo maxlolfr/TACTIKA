@@ -16,7 +16,8 @@ import {modText,booms,MODS,cmSpec} from './elites.js'; // V5.10 : élites Cauche
 import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
-import {regHtml,trh} from './i18n.js';
+import {battleGoal} from './locales/battle-tips.js';
+import {regHtml,tr,trh} from './i18n.js';
 import {HOW_EN} from './tips-en.js';
 
 // ---------- panneau de combat ----------
@@ -77,7 +78,14 @@ GOALS.waves=n=>`<b>⏳ Objectif : tenir ${n} tours</b><br>Des renforts arrivent 
 const GOALS_EN={survive:`<b>⏳ Objective: survive ${SURVIVE} turns</b><br>Keep at least one hero standing until the end of turn ${SURVIVE}. You do not need to defeat every monster (doing so also wins).`,
  chief:'<b>♛ Objective: take down the chief</b><br>Victory is immediate once the crowned monster falls, even if enemies remain.',
  waves:n=>`<b>⏳ Objective: hold out ${n} turns</b><br>Reinforcements arrive in waves: tiles marked ⚠ show the ones coming next turn. Keep at least one hero standing until the end of turn ${n}.<br>★ Eliminate every wave: 3rd star and +25% gold.`};
-const goalTxt=S=>{const fr=S.wave?GOALS.waves(S.surv):GOALS[S.goal];regHtml(fr,S.wave?GOALS_EN.waves(S.surv):GOALS_EN[S.goal]);return fr};
+function goalTxt(S){
+ const key=S.wave?'waves':S.goal;
+ const fr=S.wave?GOALS.waves(S.surv):GOALS[key];
+ const en=S.wave?GOALS_EN.waves(S.surv):GOALS_EN[key];
+ const turns=S.wave?S.surv:SURVIVE;
+ regHtml(fr,en,{'zh-Hans':battleGoal('zh-Hans',key,turns),de:battleGoal('de',key,turns)});
+ return fr;
+}
 let goalT=0;function goalBanner(t){const g=$('goal');g.textContent=t;g.classList.add('on');clearTimeout(goalT);goalT=setTimeout(()=>g.classList.remove('on'),2600)}
 function newRound(sp=[]){const w=G.s.wave;if(sp.length){addRefs(sp);for(const m of sp){addFx(m.x,m.y,6,1.1,600,'fxi');say(m,m.elite?'Élite !':'Renfort','#ffa040',!!m.elite)}sfx('enemy_warning',.8);renderTL()}
  if(G.s.goal==='survive')goalBanner((sp.length?`⚠ ${sp.length} renfort${sp.length>1?'s':''} ! `:'')+(w&&w.next.length?`Encore ${w.next.length} au prochain tour · `:w&&!w.q.length&&G.s.units.some(u=>u.team==='m'&&!u.dead)?'Dernière vague · ':'')+'⏳ '+survTxt())}
@@ -384,7 +392,7 @@ function worldMap(){
 }
 // V4.88 : carte d'introduction du boss (passable d'un toucher, 2,4 s au plus, aucune pause du combat : le joueur n'a pas encore la main)
 function bossCard(F){if(!F.boss||F.daily)return;const z=ZONES[F.zi],B=MON[F.boss.k],d=document.createElement('div');d.id='bosscard';d.setAttribute('role','status');
- d.innerHTML=`<div><small>${z.n} · Boss de région</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
+ d.innerHTML=`<div><small>${tr(z.n)} · ${tr('Boss de région')}</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
  const off=()=>{d.classList.add('out');setTimeout(()=>d.remove(),260)};d.onclick=off;document.body.append(d);setTimeout(off,save.fast?1400:2400)}
 function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
