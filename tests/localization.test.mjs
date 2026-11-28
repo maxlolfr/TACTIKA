@@ -163,3 +163,13 @@ test('chaque entrée du bestiaire et des trophées est présente dans les deux a
     for(const key of keys)assert.ok(TEXT_CATALOGS[id][key]?.trim(),key);
   }
 });
+
+import {VILLAGE_UI,contractLabel} from '../src/locales/village.js';
+test('les contrats et récompenses localisés affichent les valeurs du contrat', () => {
+ for(const lang of ['zh-Hans','de']){
+  for(const k of ['win','kill','star'])assert.match(contractLabel(lang,{k,n:7},'Test'),/7/);
+  assert.match(contractLabel(lang,{k:'kill',n:7},'Test'),/Test/);
+  assert.match(VILLAGE_UI[lang].reward(125,42),/125.*42/);
+  assert.match(VILLAGE_UI[lang].potion(2,5),/40.*2\/5/);
+ }
+});

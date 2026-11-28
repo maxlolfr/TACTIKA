@@ -10,6 +10,9 @@ import {AT,cv,icon,uiURL,drawF,layout,tapCell,addRefs,addFx,resetFx,heroFrame,zo
 import {cast,moveTo,end,runFight} from './turns.js';
 import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster,AU,VOLMAX} from './audio.js';
 import {SPECS,tiersFor,specOf} from './talents.js';
+import {MAP_UI} from './locales/map.js';
+import {COMBAT_HELP,VILLAGE_UI,contractLabel} from './locales/village.js';
+import {INVENTORY_UI} from './locales/equipment.js';
 import {ACADEMY_UI} from './locales/talents.js';
 import {MASTERY_UI} from './locales/mastery.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
@@ -262,15 +265,18 @@ function saveDlg(){const D=$('sv');D.innerHTML=`<b>Sauvegarde</b><p style="font-
  mk('Fermer',()=>D.close());D.showModal()}
 // ---------- forge (V2.4b) ----------
 const STAT={dmg:'dégâts',hp:'PV',heal:'soin'};
+const villageText=()=>VILLAGE_UI[save.lang];
+const villageWord=s=>villageText()?tr(s):s;
+const villageGold=()=>villageText()?.gold(save.gold)??save.gold+' or';
 function forge(){$('camp').classList.remove('on');const F=$('forge');F.classList.add('on');F.innerHTML='';
  F.insertAdjacentHTML('beforeend',`<h1>La Forge</h1><div class="sub">Chaque niveau renforce le bonus de l’objet (+50 %). 3 niveaux au maximum.</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);F.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',0,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);F.append(top);
  const owner=j=>{const h=holder(save,j);return h>=0?h:whoOf(ITEMS[j])[0]}; // objet partagé : rangé chez son porteur
  roster(save).forEach(i=>{const h=HER[i],own=save.items.filter(j=>owner(j)===i),all=ITEMS.filter(o=>whoOf(o).includes(i)).length;
-  F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${own.length}/${all} objets</small></h3>`);
+  F.insertAdjacentHTML('beforeend',`<h3 class="fh">${h.n} <small>${villageText()?.items(own.length,all)??`${own.length}/${all} objets`}</small></h3>`);
   if(!own.length)F.insertAdjacentHTML('beforeend','<div class="sub">Aucun objet pour l’instant : gagne des combats pour en trouver.</div>');
   for(const j of own){const o=ITEMS[j],l=upLvl(save,j),c=upCost(save,j),k=Object.keys(STAT).find(k=>o[k]),r=document.createElement('div');r.className='loot frow';r.append(icon(...icOf(o),44));
-   const rr=rarOf(save,j);r.insertAdjacentHTML('beforeend',`<div><b style="color:${RARE[rr].c}">${o.n}</b> <span class="pips"></span><br><small>${isOn(save,j)?'':'<b>En réserve (sans effet)</b> · '}${rr?RARE[rr].n+' · ':''}+${itemVal(o,k,l,rr)} ${STAT[k]}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1,rr)}</b>`:' · maximum'}</small></div>`);
+   const rr=rarOf(save,j);r.insertAdjacentHTML('beforeend',`<div><b style="color:${RARE[rr].c}">${o.n}</b> <span class="pips"></span><br><small>${isOn(save,j)?'':'<b>En réserve (sans effet)</b> · '}${rr?villageWord(RARE[rr].n)+' · ':''}+${itemVal(o,k,l,rr)} ${villageWord(STAT[k])}${c!=null?` → <b style="color:#7dff8a">+${itemVal(o,k,l+1,rr)}</b>`:' · '+villageWord('maximum')}</small></div>`);
    r.querySelector('.pips').append(icon('badge',l?l-1:3,30)); // badge du niveau d'amélioration (cadenas = jamais amélioré)
    const b=document.createElement('button');b.className='btn'+(c!=null&&save.gold>=c?'':' dark');b.disabled=c==null||save.gold<c;b.innerHTML=c==null?'Max':`${c} <img src="${uiURL(14)}">`;
    b.onclick=()=>{F.querySelectorAll('.frow .btn').forEach(x=>x.disabled=true);if(!upgrade(save,j))return forge();store();
@@ -321,48 +327,48 @@ function mastBlock(A,i){const h=HER[i],known=knownSpells(save,i),left=mastLeft(s
  A.append(L);
  if(mastSpent(save,i)){const z=document.createElement('button');z.className='btn dark';z.textContent=text?.reset??'Réinitialiser la maîtrise (gratuit)';z.onclick=()=>{if(z.dataset.arm){resetMast(save,i);store();armes()}else{z.dataset.arm=1;z.textContent=text?.confirm??'Touche encore pour rendre les points'}};A.append(z)}}
 // ---------- marchand (V2.6a) ----------
-const effet=(o,r=0)=>{const k=o.dmg?'dmg':o.hp?'hp':'heal';return(r?RARE[r].n+' · ':'')+`+${itemVal(o,k,0,r)} ${STAT[k]}`};
+const effet=(o,r=0)=>{const k=o.dmg?'dmg':o.hp?'hp':'heal';return(r?villageWord(RARE[r].n)+' · ':'')+`+${itemVal(o,k,0,r)} ${villageWord(STAT[k])}`};
 function shop(tab){$('camp').classList.remove('on');const S=$('shop');S.classList.add('on');S.innerHTML='';const sellTab=tab==='v';
  S.insertAdjacentHTML('beforeend',`<h1>Le Marchand</h1><div class="sub">${sellTab?'Revente : la moitié du prix et de l’or mis dans la forge.':'Nouveaux objets chaque jour. Les potions se boivent en combat (4 PA, 1 par héros et par combat).'}</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',1,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);S.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',1,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);S.append(top);
  const tabs=document.createElement('div');tabs.style.cssText='display:flex;gap:8px;margin:6px 0';
  for(const[k,n]of[['a','Acheter'],['v','Vendre']]){const b=document.createElement('button');b.className='btn'+((k==='v')===sellTab?'':' dark');b.textContent=n;b.onclick=()=>shop(k);tabs.append(b)}S.append(tabs);
  const row=(ic,html,label,ok,act)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...ic,44));r.insertAdjacentHTML('beforeend',`<div>${html}</div>`);
   const b=document.createElement('button');b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.innerHTML=label;b.onclick=()=>{if(!act())return shop(tab);store();sfx('coin',.8);addPop(r,'');setTimeout(()=>shop(tab),350)};r.append(b);S.append(r)};
  const price=n=>`${n} <img src="${uiURL(14)}">`;
  if(sellTab){if(!save.items.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu n’as aucun objet à vendre.</div>');
-  for(const j of save.items){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?` · forge ${upLvl(save,j)}`:''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
- else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>Soigne 40 % des PV · tu en as ${p}/${POTION.max}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
+  for(const j of save.items){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${effet(o,rarOf(save,j))}${upLvl(save,j)?' · '+(INVENTORY_UI[save.lang]?.forge(upLvl(save,j))??`forge ${upLvl(save,j)}`):''}</small>`,'+'+price(sellPrice(save,j)),true,()=>sell(save,j))}}
+ else{const p=save.pot||0;row(['items',10],`<b>Potion de soin</b><br><small>${villageText()?.potion(p,POTION.max)??`Soigne 40 % des PV · tu en as ${p}/${POTION.max}`}</small>`,price(POTION.cost),p<POTION.max&&save.gold>=POTION.cost,()=>buyPot(save));
   const st=shopStock(save,today());if(!st.length)S.insertAdjacentHTML('beforeend','<div class="sub">Tu as déjà tous les objets !</div>');
-  for(const j of st){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${SLOTS[o.sl]} · ${effet(o,rarOf(save,j))}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
+  for(const j of st){const o=ITEMS[j];row(icOf(o),`<b style="color:${RARE[rarOf(save,j)].c}">${o.n}</b><br><small>${whoName(o)} · ${villageWord(SLOTS[o.sl])} · ${effet(o,rarOf(save,j))}</small>`,price(o.pr),save.gold>=o.pr,()=>buy(save,j))}}
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{S.classList.remove('on');camp()};S.append(back)}
 // ---------- taverne (V2.6b) ----------
 const ctTxt=t=>t.k==='win'?`Gagne ${t.n} combats`:t.k==='kill'?`Vaincs ${t.n} ${MON[t.m].n.toLowerCase()}${t.n>1?'s':''}`:t.k==='star'?`Gagne ${t.n>1?t.n+' combats':'un combat'} avec 3 ★`:'Bats un boss (même déjà vaincu)';
 function tav(){music(CM_DEV?'nm_village':'village');$('camp').classList.remove('on');const T=$('tav');T.classList.add('on');T.innerHTML='';const d=today(),l=contracts(save,d);store();
  T.insertAdjacentHTML('beforeend',`<h1>La Taverne</h1><div class="sub">Trois contrats par jour, et un défi difficile une fois par jour.</div>`);
- const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${save.gold} or`);top.append(g);T.append(top);
+ const top=document.createElement('div');top.className='forgetop';top.append(icon('bld',3,110));const g=document.createElement('div');g.className='stat';g.append(icon('ui',14,22),` ${villageGold()}`);top.append(g);T.append(top);
  quests(T,tav);
  const back=document.createElement('button');back.className='btn dark ov-back';back.textContent='Retour';back.onclick=()=>{T.classList.remove('on');camp()};T.append(back)}
 // contrats du jour et défi (taverne et onglet Quêtes) ; `again` redessine l'écran après une récompense
 function quests(T,again){const d=today(),l=contracts(save,d);store();
  const ql=QUESTS.filter(q=>questOpen(save,q));
- if(ql.length){T.insertAdjacentHTML('beforeend',`<h3 class="fh">Quêtes · ${QUESTS.filter(q=>questDone(save,q)).length}/${QUESTS.length}</h3>`);
+ if(ql.length){T.insertAdjacentHTML('beforeend',`<h3 class="fh">${villageText()?.quests(QUESTS.filter(q=>questDone(save,q)).length,QUESTS.length)??`Quêtes · ${QUESTS.filter(q=>questDone(save,q)).length}/${QUESTS.length}`}</h3>`);
   ql.forEach(q=>{const dn=questDone(save,q),r=document.createElement('div');r.className='loot frow';r.append(icon('items',17,44));qban(r,q.e||q.g==='chief'?'boss':'win');
    r.insertAdjacentHTML('beforeend',`<div><b>${q.t}</b> <small>· ${ZONES[q.z].n}</small><br><small>${dn?q.c:q.d}</small></div>`);
    const b=document.createElement('button');b.className='btn'+(dn?' dark':'');b.textContent=dn?'Rejouer':'Partir';b.onclick=()=>{$('tav').classList.remove('on');startFight(q.z,-1,questFight(q,save))};r.append(b);T.append(r)})}
  T.insertAdjacentHTML('beforeend','<h3 class="fh">Contrats du jour</h3>');
  l.forEach((t,i)=>{const r=document.createElement('div');r.className='loot frow';r.append(icon(...(t.k==='kill'?[MON[t.m].s,0]:t.k==='boss'?['spells',6]:['items',17]),44));
-  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${t.g} or, ${t.x} XP</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
+  qban(r,t.k);r.insertAdjacentHTML('beforeend',`<div><b>${contractLabel(save.lang,t,t.k==='kill'?villageWord(MON[t.m].n):'')??ctTxt(t)}</b><br><small>${t.p}/${t.n} · ${villageText()?.reward(t.g,t.x)??`${t.g} or, ${t.x} XP`}</small><div class="bar"><i style="width:${100*t.p/t.n}%"></i></div></div>`);
   const b=document.createElement('button');const ok=t.p>=t.n&&!t.c;b.className='btn'+(ok?'':' dark');b.disabled=!ok;b.textContent=t.c?'✓ Reçu':ok?'Réclamer':'En cours';
   b.onclick=()=>{const up=claim(save,d,i);if(!up)return again();store();sfx('quest_complete',1.6);if(up>1)setTimeout(()=>sfx('levelup'),250);addPop(r,'');setTimeout(again,400)};r.append(b);T.append(r)});
  const F=dailyFight(save,d),Z=ZONES[F.zi],done=save.dd===d;
- T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${Z.n} · niveau ${F.lvl}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
+ T.insertAdjacentHTML('beforeend','<h3 class="fh">Défi du jour</h3>');const dd=document.createElement('div');dd.className='loot frow';qban(dd,'daily');dd.insertAdjacentHTML('beforeend',`<div><b>${villageText()?.challenge(villageWord(Z.n),F.lvl)??`${Z.n} · niveau ${F.lvl}`}</b><br><small>${done?'Réussi aujourd’hui. Reviens demain !':'Plus d’ennemis et plus forts. Récompense : double or, une potion et un objet garanti s’il en reste.'}</small></div>`);
  const b=document.createElement('button');b.className='btn'+(done?' dark':'');b.disabled=done;b.textContent=done?'✓':'Combattre';b.onclick=()=>{$('tav').classList.remove('on');startFight(F.zi,-1,F)};dd.append(b);T.append(dd)}
 // bandeaux illustrés des contrats (Gemini, 26/11) : image à droite, texte sur le quart gauche assombri
 function qban(r,k){r.classList.add('qrow');r.style.backgroundImage=`linear-gradient(90deg,#000d 0,#000b 42%,#0000 78%),url(assets/q/${k}.webp)`}
 function addPop(el,t){const s=document.createElement('span');s.className='fpop';s.append(icon('ficon',14,26),t);el.append(s)}
 const HOW=`Chaque héros a 6 <span class="pa">PA</span> (sorts) et 3 <span class="pm">PM</span> (cases).<br>• PA non dépensés : +1 au tour suivant par tranche de 2 (au plus +2).<br>• Cible trop loin : l’aperçu montre le héros avancer avant de lancer.<br>• Volée : la zone rouge montre les cases touchées ; la portée limite son centre.<br>• Les flèches de Fenn passent par-dessus les décors bas (buissons, cailloux, souches, caisses…), pas par-dessus les arbres, rochers et murs.<br>• Touche une case <b style="color:#6ab0ff">bleue</b> pour voir l’aperçu, retouche-la pour te déplacer.<br>• Choisis un sort, touche une cible pour voir les dégâts, retouche-la pour lancer. Les cases grises sont hors de vue (un obstacle ou un personnage bloque).<br>• « Fin du tour » passe au suivant.<br>• Écarte deux doigts pour agrandir le plateau, glisse pour le déplacer (molette à la souris). « Vue entière » revient en arrière.<br>• La bulle rouge au-dessus d'un monstre montre qui il frappera et combien.<br>• Fracas de Kael repousse de 2 cases : contre un obstacle ou un autre monstre, 5 dégâts par case bloquée.<br>• Combo : frappe le même ennemi avec 2 ou 3 héros avant qu'il joue (+15 % puis +30 %).<br>• ★ victoire, ★ aucun héros KO, ★ en 5 tours (boss : 7). Premier 3 ★ : +50 % d'or.<br>• Au camp, la forge améliore tes objets avec l'or gagné (3 niveaux).<br>• Sur la carte, chaque zone a 3 combats puis un boss qui ouvre la zone suivante. Les combats gagnés se rejouent pour gagner de l'XP.`;
-regHtml(HOW,HOW_EN);
+regHtml(HOW,HOW_EN,COMBAT_HELP);
 // V4.6 : dernier combat (données factuelles pour le panneau de commandement et l'écran de défaite)
 let LAST=null;
 const HOME={last:()=>LAST,fight:(zi,i)=>startFight(zi,i),pilot:zi=>{const i=zlen(ZONES[zi])-1;return startFight(zi,i,{...fightSpec(zi,i,zi*1000+i*97+save.gold),pilot:1})}, /* V5.14 : boss pilote du Cauchemar */today,SP,SPI,HOW,forge:()=>forge(),shop:()=>shop(),armes:()=>armes(),tav:()=>tav(),quests,saveDlg,tuto:()=>tuto(),reload:()=>camp(),
@@ -375,7 +381,7 @@ export function camp(){
 // V4.25 : sélecteur Carte I / Carte II ; la carte II reste verrouillée jusqu'au Titan
 let mapNo=1;
 function mapTabs(){const T=$('maptabs');T.innerHTML='';[1,2].forEach(n=>{const b=document.createElement('button'),lock=n===2&&!map2Open(save);
- b.className='btn'+(n===mapNo?'':' dark');b.textContent=(n===1?'Carte I':'Carte II')+(lock?' 🔒':'');b.setAttribute('aria-pressed',n===mapNo);
+ b.className='btn'+(n===mapNo?'':' dark');b.textContent=villageWord(n===1?'Carte I':'Carte II')+(lock?' 🔒':'');b.setAttribute('aria-pressed',n===mapNo);
  b.onclick=()=>{if(lock)return mapNote('Carte II','Bats le Titan prismatique, dans les Cavernes de cristal, pour ouvrir la carte II.');mapNo=n;worldMap()};T.append(b)})}
 function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${txt}</small>`;
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
@@ -384,13 +390,13 @@ const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="no
 function zoneBtn(L,zi,pos,num){const z=ZONES[zi],ok=zi>=0&&!z.soon&&unlocked(zi),p=zi>=0?prog(z.id):0,b=document.createElement('button');
  b.className='zone'+(ok?'':' lock')+((pos.x<12||pos.x>88)?' edge':'');for(const[k,v]of[['x',pos.x],['y',pos.y],['lx',pos.lx??pos.x],['ly',pos.ly??pos.y]])b.style.setProperty('--'+k,v+'%');
  const B=z?.boss&&MON[z.boss.k];if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,52));else b.insertAdjacentHTML('beforeend',`<span class="q">${num}</span>`);
- const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',`Région ${num} : ${z?z.n:pos.n}`);
- b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
+ const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',MAP_UI[save.lang]?.region(num,tr(z?z.n:pos.n))??`Région ${num} : ${z?z.n:pos.n}`);
+ b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${villageWord(!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`)}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
  b.onclick=()=>zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
 function secondMap(L,land){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),land?{...z,x:z.lx,y:z.ly}:z,i+7))} /* V5.11 : land = carte paysage seule (Cauchemar) */
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
- const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=`Niv ${save.lvl} · ${save.gold} or`;
+ const L=$('mapz');L.innerHTML='';$('zsheet').classList.remove('on');$('mapinfo').innerHTML=MAP_UI[save.lang]?.info(save.lvl,save.gold)??`Niv ${save.lvl} · ${save.gold} or`;
  if(!map2Open(save))mapNo=1;music(CM_DEV?(mapNo===2?'nm_map2':'nm_map'):mapNo===2?'map2':'camp');
  /* V5.11 · Cauchemar : carte II = peinture paysage de Max (2109), affichée comme la carte I (pleine hauteur, défilement en portrait) ; carte I teintée en attendant sa peinture */
  const cm2=!!CM_DEV&&mapNo===2,wi=$('worldimg'),ws=cm2?'assets/cm/world2-l.webp':'assets/world1-l.webp';if(wi&&!wi.src.endsWith(ws))wi.src=ws;M.classList.toggle('cm',!!CM_DEV);M.classList.toggle('cm2',cm2);
@@ -404,9 +410,11 @@ function worldMap(){
 function bossCard(F){if(!F.boss||F.daily)return;const z=ZONES[F.zi],B=MON[F.boss.k],d=document.createElement('div');d.id='bosscard';d.setAttribute('role','status');
  d.innerHTML=`<div><small>${tr(z.n)} · ${tr('Boss de région')}</small><b>${F.boss.n}</b><i>${TIPS_T[F.boss.bs]||'Un gardien redoutable'}</i></div>`;d.prepend(icon(F.boss.s||B.s,F.boss.s?0:B.row*3,96));
  const off=()=>{d.classList.add('out');setTimeout(()=>d.remove(),260)};d.onclick=off;document.body.append(d);setTimeout(off,save.fast?1400:2400)}
-function zoneSheet(zi){const z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}</small>`;
+function zoneSheet(zi){const text=MAP_UI[save.lang],z=ZONES[zi],p=prog(z.id),S=$('zsheet'),L=zlen(z),lv=i=>CM_DEV&&zi<CM_ZONES?CM_LVL:fightSpec(zi,i,0).lvl;S.innerHTML=`<h3>${z.n}</h3><small>${text?.summary(L,lv(0),lv(L-1))??`${L} étapes, la dernière est le boss · niveaux ${lv(0)}–${lv(L-1)}`}</small>`;
  for(let i=0;i<L;i++){const b=document.createElement('button'),done=i<p,next=i===p;b.className='btn'+(next?'':' dark');b.disabled=i>p;
-  b.textContent=(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`+({survive:' · ⏳ Survie',chief:' · ♛ Chef'}[fightSpec(zi,i,0).goal]||'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
+  const goal={survive:'⏳ Survie',chief:'♛ Chef'}[fightSpec(zi,i,0).goal];
+  const mission=text?.mission(i+1,lv(i),i===L-1?tr(z.boss.n):'')??(i===L-1?`Étape ${L} · Boss ${z.boss.n}`:`Étape ${i+1}`)+` · niv ${lv(i)}`;
+  b.textContent=mission+(goal?' · '+villageWord(goal):'')+(done?' '+'★'.repeat(starsOf(z.id)[i]||0)+'☆'.repeat(3-(starsOf(z.id)[i]||0)):'');b.onclick=()=>startFight(zi,i);S.appendChild(b)}
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 // V4.36 : un héros au hasard parmi ceux qui ont une voix
 const say1=(list,line)=>{setVoiceLang(save.lang);const l=list.filter(u=>!u.dead&&VOICES[u.k]);if(l.length)voice(pick(Math.random,l).k,line,{force:true})};
@@ -445,7 +453,7 @@ function result(win,fled){closeMenu();const F=G.F,H=G.s.units.filter(u=>u.team==
   if(qIt!==null)loot.push([icon(...icOf(ITEMS[qIt]),48),`<b style="color:${RARE[rarOf(save,qIt)].c}">${ITEMS[qIt].n}</b><br>${whoName(ITEMS[qIt])} : ${effet(ITEMS[qIt],rarOf(save,qIt))}`]);
   if(pot)loot.push([icon('items',10,48),'<b>+1 potion de soin</b>']);
   for(const id of CH.tr)loot.push(trophyRow(id));
-  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${ctTxt(t)} : récompense à la taverne`]);
+  for(const t of ctDone)loot.push([icon('bld',3,48),`<b>Contrat terminé</b><br>${contractLabel(save.lang,t,t.k==='kill'?villageWord(MON[t.m].n):'')??ctTxt(t)}<br>Récompense à la taverne`]);
   // coffre : tremble, s'ouvre au toucher (ou seul après 3 s), puis le butin sort ligne par ligne
   const ch=document.createElement('div');ch.className='chest';ch.innerHTML='<u></u><img src="assets/chest_closed.png" alt=""><img class="o" src="assets/chest_open.png" alt=""><small>Touche le coffre</small>';Rs.appendChild(ch);
   const box=document.createElement('div');box.className='lootbox';Rs.appendChild(box);

@@ -96,6 +96,18 @@ try {
       await discovered.waitFor();
       assert.match(await discovered.textContent(),zh?/史莱姆.*击败次数：3/s:/Schleim.*Besiegt: 3/s);
       await page.locator('#vpanel .v-x').click();
+      for(const [building,selector,expected] of [
+        ['forge','#forge',zh?/每次强化使装备加成提高50%.*713金币/s:/Jede Aufwertung.*713 Gold/s],
+        ['marchand','#shop',zh?/恢复40%生命值 · 持有/:/Heilt 40 % der LP · Vorrat/],
+        ['taverne','#tav',zh?/每日委托.*金币，.*经验/s:/Tagesaufträge.*Gold, .*EP/s],
+      ]){
+        await page.locator(`.v-bld[data-b="${building}"]`).evaluate(element=>element.click());
+        const panel=page.locator(selector+'.on');
+        await panel.waitFor();
+        assert.match(await panel.textContent(),expected);
+        await panel.locator('.ov-back').click();
+      }
+      console.log('OK',id,'· forge, marchand et taverne');
       await page.locator('.v-cry').evaluate(element=>element.click());
       const nightmare=page.locator('.cm-gate');
       await nightmare.waitFor();
@@ -103,6 +115,9 @@ try {
       await page.locator('#vpanel .v-x').click();
       await page.locator('.v-go').click();
       await page.locator('.zone').first().evaluate(element=>element.click());
+      const recap=page.locator('#zsheet.on > small');
+      await recap.waitFor();
+      assert.match(await recap.textContent(),zh?/共10关，最后一关是首领战/:/10 Etappen, die letzte ist der Bosskampf/);
       await page.locator('#zsheet .btn').nth(7).click();
       const objective=page.locator('#tuto.on p');
       await objective.waitFor();

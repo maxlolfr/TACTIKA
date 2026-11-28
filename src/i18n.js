@@ -11,6 +11,8 @@ import {QUEST_TRANSLATIONS} from './locales/quests.js';
 import {QUESTS} from './quests.js';
 import {EQUIPMENT,INVENTORY_TEXTS} from './locales/equipment.js';
 import {CHRONICLE_TEXTS} from './locales/chronicle.js';
+import {MAP_TEXTS} from './locales/map.js';
+import {VILLAGE_TEXTS} from './locales/village.js';
 import {TALENT_TEXTS} from './locales/talents.js';
 import {SPELLS} from './locales/spells.js';
 import {DE} from './locales/de.js';
@@ -187,7 +189,7 @@ const bossTexts=id=>Object.fromEntries([
  ['Un gardien redoutable',BOSS_LINES[id].default],
 ]);
 export const TEXT_CATALOGS=Object.freeze({
- en:EN, de:Object.freeze({...DE,...nightmareTexts(2),...bossTexts('de'),...translatedLabels(EQUIPMENT,1),...translatedLabels(INVENTORY_TEXTS,1),...translatedLabels(SPELLS,1),...translatedLabels(TALENT_TEXTS,1),...translatedLabels(CHRONICLE_TEXTS,1),...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...nightmareTexts(1),...bossTexts('zh-Hans'),...translatedLabels(EQUIPMENT,0),...translatedLabels(INVENTORY_TEXTS,0),...translatedLabels(SPELLS,0),...translatedLabels(TALENT_TEXTS,0),...translatedLabels(CHRONICLE_TEXTS,0),...questTexts('zh-Hans'),
+ en:EN, de:Object.freeze({...DE,...nightmareTexts(2),...bossTexts('de'),...translatedLabels(EQUIPMENT,1),...translatedLabels(INVENTORY_TEXTS,1),...translatedLabels(VILLAGE_TEXTS,1),...translatedLabels(MAP_TEXTS,1),...translatedLabels(SPELLS,1),...translatedLabels(TALENT_TEXTS,1),...translatedLabels(CHRONICLE_TEXTS,1),...questTexts('de')}), 'zh-Hans':Object.freeze({...ZH_GLOSSARY,...nightmareTexts(1),...bossTexts('zh-Hans'),...translatedLabels(EQUIPMENT,0),...translatedLabels(INVENTORY_TEXTS,0),...translatedLabels(VILLAGE_TEXTS,0),...translatedLabels(MAP_TEXTS,0),...translatedLabels(SPELLS,0),...translatedLabels(TALENT_TEXTS,0),...translatedLabels(CHRONICLE_TEXTS,0),...questTexts('zh-Hans'),
   'Langue':'语言','⚔ Combat':'⚔ 战斗','Objectif du combat':'战斗目标','Boss de région':'区域首领','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
   '♪ Musique':'♪ 音乐','🔊 Sons':'🔊 声音','Volume musique':'音乐音量',
   'Volume bruitages':'音效音量','Volume voix':'语音音量','Revoir le tutoriel':'重看教程',
