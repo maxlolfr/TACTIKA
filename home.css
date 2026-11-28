@@ -350,3 +350,12 @@ html.gfxhi .v-glow{scale:1.2}
 html.gfxhi .v-cry img{filter:drop-shadow(0 0 14px #9fdcff)}
 html.gfxhi .v-stage[data-sky=cm] .v-cry img{filter:drop-shadow(0 0 26px #d050ff)}
 .cm-won{border:1px solid #b44cff;background:linear-gradient(90deg,#3a0f4a,#1b0a24)}.cm-won b{color:#e3b8ff}
+/* V5.24 : récompenses du Cauchemar (sceaux, titres) */
+.cm-seals{display:grid;grid-template-columns:repeat(6,24px);gap:4px 6px;margin:6px 0 2px} /* 2 rangées de 6 : carte I puis carte II */
+.cm-seal{--sc:#d9a6ff;display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font:700 13px/1 system-ui;color:#1b0a24;background:radial-gradient(circle at 35% 30%,#fff8,var(--sc) 55%,#0006);border:1.5px solid var(--sc);box-shadow:0 0 6px var(--sc)}
+.cm-seal.off{background:#1b0a2480;color:#fff6;box-shadow:none;border-style:dashed;opacity:.6}
+.tro-ic.cm-seal{width:44px;height:44px;font-size:24px;filter:none}
+.tro-ic.cm-seal.t{color:#3a0f4a}
+.cm-title{color:#e3b8ff;font-weight:700;letter-spacing:.2px}
+.cm-rew{border:1px solid #6d2a8a;background:linear-gradient(90deg,#2a0b36,#14071c)}
+.cm-rew>div{flex:1;min-width:0}
