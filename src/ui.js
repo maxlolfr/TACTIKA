@@ -218,9 +218,9 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
- if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe']}}; // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
+ if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe'],n:2,extra:2,hp:1.25,dmg:1.2}}; // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?'☠ Nightmare · prototype: one elite':'☠ Cauchemar · prototype : une élite'),900);
+ $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?'☠ Nightmare · two elites, enemies empowered':'☠ Cauchemar · deux élites, ennemis renforcés'),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;

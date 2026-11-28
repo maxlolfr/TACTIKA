@@ -77,11 +77,15 @@ export const eligible=u=>u.team==='m'&&!u.dead&&!u.boss&&!u.minion&&!u.chief&&!u
 // Tirage reproductible, sur sa propre graine (ne consomme jamais le hasard du combat).
 // cm = {seed, mods:[ids] | pool:[ids], n:nombre d'élites (1 au lot 1)}. Renvoie les monstres modifiés.
 export function elitize(s,cm,lang){if(!cm)return[];const rng=mulberry((cm.seed|0)+7177),out=[];
- for(let k=0;k<(cm.n||1);k++){const c=s.units.filter(eligible);if(!c.length)break;
+ const used=new Set();for(let k=0;k<(cm.n||1);k++){const c=s.units.filter(eligible);if(!c.length)break;
   c.sort((a,b)=>b.max-a.max||(a.id<b.id?-1:1)); // le plus robuste d'abord, puis tirage parmi les 2 premiers : l'élite compte
-  const u=c[Math.floor(rng()*Math.min(2,c.length))],ids=cm.mods||(cm.pool?.length?[cm.pool[Math.floor(rng()*cm.pool.length)]]:null);if(!ids)break;if(applyMods(u,ids,lang))out.push(u)}
+  const u=c[Math.floor(rng()*Math.min(2,c.length))],fr=cm.pool?.filter(id=>!used.has(id)),ids=cm.mods||(fr?.length?[fr[Math.floor(rng()*fr.length)]]:null);if(!ids)break;ids.forEach(id=>used.add(id));/* V5.10.2 : élites toutes différentes */if(applyMods(u,ids,lang))out.push(u)}
  return out}
 
+// V5.10.2 : renforcement Cauchemar de tous les monstres de la rencontre (boss compris), avant le tirage des élites.
+// cm.hp / cm.dmg : facteurs globaux (1 = aucun). Distinct des plafonds CAP, qui ne concernent que la part « élite ».
+export function nightmare(s,cm){const h=cm.hp||1,d=cm.dmg||1;if(h===1&&d===1)return;
+ for(const u of s.units)if(u.team==='m'){u.hp=u.max=Math.round(u.max*h);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*d))}}}
 // ---------- accroches (appelées par rules.js ; sans u.mods, valeurs neutres) ----------
 export function modOut(u,t){if(!u.mods)return 1;let k=1;for(const id of u.mods)if(MODS[id].out)k*=MODS[id].out(u,t);return k}
 // Gardien : la meilleure protection seulement (deux gardiens ne s'additionnent pas)

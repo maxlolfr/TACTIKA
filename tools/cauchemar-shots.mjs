@@ -18,7 +18,7 @@ for(const[id,zi,i]of CASES)for(const[fn,vp]of FMT)for(const low of fn==='portrai
  const ctx=await b.newContext({viewport:vp,deviceScaleFactor:2,hasTouch:false});
  await ctx.addInitScript(l=>{try{localStorage.setItem('landeTactique1',JSON.stringify({v:2,fight:1,lvl:3,xp:0,gold:7,items:[],z:{prairie:2},st:{},up:{},storySeen:['prologue','intro']}));if(l)document.documentElement.classList.add('lowfx')}catch(e){}},low);
  const pg=await ctx.newPage(),errs=[];pg.on('pageerror',e=>errs.push(e.message));pg.on('response',r=>{if(r.status()>=400)errs.push(r.status()+' '+r.url())});
- await pg.goto(BASE+'?cauchemar='+id);await pg.waitForTimeout(1800);
+ await pg.goto(BASE+'?cauchemar='+id);if(process.env.NONF)await pg.evaluate(()=>globalThis.__noNF=1);await pg.waitForTimeout(1800);
  const before=await pg.evaluate(()=>localStorage.getItem('landeTactique1'));
  await pg.evaluate(async([zi,i])=>{document.querySelectorAll('.story,#story,.scene').forEach(e=>e.remove());const ui=await import('/src/ui.js');ui.startFight(zi,i)},[zi,i]);
  await pg.waitForTimeout(3500);
