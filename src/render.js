@@ -155,7 +155,7 @@ function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||p
 // case marquée : hachures diagonales dans le losange (rayon du Titan, cases touchées par un prisme)
 // V5.10 · élites Cauchemar : aura au sol (couleur du modificateur + motif propre, lisible sans couleur) et quelques étincelles.
 // « Effets réduits » : aura fixe, sans pulsation ni étincelles.
-const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3],vamp:[9,3,2,3],venin:[1,6]}; // V5.15 : Vampirique (tirets longs-courts), Venimeux (pointillé espacé)
+const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3],vamp:[9,3,2,3],venin:[1,6],spectre:[4,8],cmdt:[12,4,2,4,2,4]}; // V5.22 : Spectral (tirets courts espacés), Commandant (long + deux points) // V5.15 : Vampirique (tirets longs-courts), Venimeux (pointillé espacé)
 // V5.11 · niveau Haut : halo lumineux additif (sprite 64 px pré-rendu par couleur, aplati en ellipse au sol)
 const HALO=new Map();function haloAt(c,x,y,r,col,a){let s=HALO.get(col);if(!s){s=document.createElement('canvas');s.width=s.height=64;const q=s.getContext('2d'),g=q.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,col);g.addColorStop(.35,col+'99');g.addColorStop(1,col+'00');q.fillStyle=g;q.fillRect(0,0,64,64);HALO.set(col,s)}
  c.save();c.globalCompositeOperation='lighter';c.globalAlpha=Math.max(0,Math.min(1,a));c.drawImage(s,x-r,y-r*ISO*.9,r*2,r*2*ISO*.9);c.restore()}
@@ -180,7 +180,7 @@ function bossAura(c,u,sx,sy,now){const lf=lowFx(),p=lf?0:Math.sin(now/340),cy=sy
  for(const[k,w,col,d]of[[1,6,'#ff3355',1],[1.14,3.5,'#ffb04a',-1],[1.28,2.5,'#c04bff',1]]){c.globalAlpha=.9;c.strokeStyle=col;c.lineWidth=w;c.setLineDash(k===1?[]:[10,7]);c.lineDashOffset=lf?0:d*-now/70;c.beginPath();c.ellipse(sx,cy,TW*.4*K*k,TH*.32*K*k,0,0,7);c.stroke()}
  c.setLineDash([]);if(!lf){c.globalCompositeOperation='lighter';for(let k=0;k<10;k++){const a=now/1100+k*.628,r=TW*.42*K*1.1;c.fillStyle=k&1?'#ff7a3a':'#ff3355';c.globalAlpha=.6+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.34*K,2.8,0,7);c.fill()}}
  c.restore()}
-// badge de 6 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif), goutte pleine (Vampirique), bulle creuse + point (Venimeux)
+// badge de 8 formes (V5.22 : + petit fantôme Spectral, fanion Commandant) : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif), goutte pleine (Vampirique), bulle creuse + point (Venimeux)
 // V5.10b : pastille de niveau des héros (dorée et plus grande pour le héros actif)
 function lvChip(c,lv,x,y,r,on){if(on)r*=1.15;c.save();c.fillStyle=on?'#ffd65a':'#16233a';c.strokeStyle=on?'#fff3c0':'#5aa8ff';c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.font=`900 ${Math.round(r*(lv>9?1.15:1.4))}px system-ui`;c.textAlign='center';c.textBaseline='middle';c.fillStyle=on?'#2a1a00':'#fff';c.fillText(lv,x,y+1);c.restore()}
 function modBadge(c,id,x,y,r){const m=MODS[id];c.save();c.fillStyle='#0d0d14';c.strokeStyle=m.col;c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=Math.max(1.5,r*.28);c.lineCap='round';c.beginPath();
@@ -188,6 +188,8 @@ function modBadge(c,id,x,y,r){const m=MODS[id];c.save();c.fillStyle='#0d0d14';c.
  else if(m.ico==='garde'){c.moveTo(x-r*.6,y-r*.6);c.lineTo(x+r*.6,y-r*.6);c.lineTo(x+r*.55,y+r*.05);c.quadraticCurveTo(x+r*.35,y+r*.55,x,y+r*.75);c.quadraticCurveTo(x-r*.35,y+r*.55,x-r*.55,y+r*.05);c.closePath();c.fill()}
  else if(m.ico==='regen'){c.moveTo(x,y-r*.65);c.lineTo(x,y+r*.65);c.moveTo(x-r*.65,y);c.lineTo(x+r*.65,y);c.stroke()}
  else if(m.ico==='vamp'){c.moveTo(x,y-r*.8);c.quadraticCurveTo(x+r*.7,y+r*.05,x+r*.5,y+r*.4);c.arc(x,y+r*.3,r*.5,0,Math.PI);c.quadraticCurveTo(x-r*.7,y+r*.05,x,y-r*.8);c.fill()}
+ else if(m.ico==='spectre'){c.arc(x,y-r*.1,r*.5,Math.PI,0);c.lineTo(x+r*.5,y+r*.65);for(let k=0;k<3;k++){const q=x+r*.5-(k+.5)*r/3;c.lineTo(q,y+r*(k&1?.65:.35))}c.lineTo(x-r*.5,y+r*.65);c.closePath();c.fill();c.fillStyle='#0d0d14';c.beginPath();c.arc(x-r*.18,y-r*.12,r*.1,0,7);c.arc(x+r*.18,y-r*.12,r*.1,0,7);c.fill()} // petit fantôme
+ else if(m.ico==='cmdt'){c.moveTo(x-r*.45,y+r*.75);c.lineTo(x-r*.45,y-r*.75);c.stroke();c.beginPath();c.moveTo(x-r*.4,y-r*.72);c.lineTo(x+r*.65,y-r*.45);c.lineTo(x-r*.4,y-r*.1);c.closePath();c.fill()} // fanion
  else if(m.ico==='venin'){c.arc(x,y,r*.55,0,7);c.stroke();c.beginPath();c.arc(x+r*.12,y-r*.1,r*.18,0,7);c.fill();c.beginPath();c.arc(x-r*.55,y+r*.6,r*.14,0,7);c.fill()}
  else{for(let k=0;k<8;k++){const a=k*Math.PI/4,q=k&1?.4:.8;c.lineTo(x+Math.cos(a)*r*q,y+Math.sin(a)*r*q)}c.closePath();c.fill()}
  c.restore()}
@@ -370,7 +372,7 @@ export function draw(now){
   /* V5.12 : héros sans planche de marche (vétérans niv. 25+, Orion, Nyra, Lyria) = marche procédurale : rebond, balancement, écrasement à chaque case */
   const sw=stillWalk(u),ph=now*Math.PI/220,fy=sy+TH*.12-up+bob-(u.hop||0)-(sw?Math.abs(Math.sin(ph))*TH*.1:0);
   if(sw){ctx.save();ctx.translate(sx+jit,fy);ctx.rotate(Math.sin(ph)*.08*(flip?-1:1));ctx.scale(1-.035*Math.cos(2*ph),1+.045*Math.cos(2*ph));ctx.translate(-(sx+jit),-fy)}
-  drawF(ctx,s,i,sx+jit,fy,sc,flip,hides(u)?.4*al:al);if(sw)ctx.restore();if(glow)ctx.restore();
+  drawF(ctx,s,i,sx+jit,fy,sc,flip,(hides(u)?.4*al:al)*(u.mods&&u.mods.includes('spectre')?.7+.08*Math.sin(now/300):1));if(sw)ctx.restore();if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  for(const u of ghost){const[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u);drawF(ctx,s,i,sx,sy+TH*.12-lift(u)-(u.hop||0),hgt(u)/rf,flip,u===cur||tg.includes(u)?.6:.35)} // silhouette derrière un décor
  // barres de vie (leurs rectangles servent à écarter les bulles d'attaque)

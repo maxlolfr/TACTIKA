@@ -1,5 +1,5 @@
 # REPRISE CLAUDE · Tactika (mot de passe d'une fenêtre à l'autre)
-Dernière mise à jour : 28/11/2026, fin de la session V5.16.1. Version en ligne : **5.16.1**. Jouable : https://maxlolfr.github.io/TACTIKA/
+Dernière mise à jour : 28/11/2026, V5.22 (Cauchemar R7–R9 + Spectral / Commandant). Version en ligne : **5.22** (voir le haut de NOTES.md, source de vérité). Prochain lot Cauchemar : R10–R12 (Opus, nouvelle fenêtre).
 
 ## Qui / comment
 Max (Maxlolgames), français, **pas d'ordinateur, tout depuis l'appli mobile Claude** (Thaïlande). Répondre en français. Autorisation totale sur Tactika : merges, déploiements, « carte blanche », ne pas s'arrêter pour demander « je continue ? ».

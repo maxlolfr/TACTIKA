@@ -20,6 +20,7 @@ export function play(events){if(G.s?.T)tally(G.s.T,events,G.cur); // V4.86 : dé
    else if(!e.saved&&e.src!=='poison'&&(e.crit||e.amt>=t.max*.25))voice(t.k,'hurt',{chance:.7})}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
   if(e.prot)say(t,'⛨ protégé','#9fd8ff'); // V5.10 : Gardien
+  if(e.spec)say(t,'👻 −50 %','#9fe8ff');if(e.cmd&&t.team==='h')say(t,'⚑ +20 %','#ffd23a'); // V5.22 : Spectral, Commandant
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
   if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
  case 'heal':say(e.t,(e.src==='regen'?'✚ +':e.src==='vamp'?'🩸 +':'+')+e.amt,e.src==='vamp'?'#ff5a7a':'#7dff8a');impact(e.t,'heal');if(e.src==='regen')sfx('nm_elite_regen',.7);else if(e.src==='vamp')sfx('nm_elite_drain',.8);break;
