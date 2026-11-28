@@ -38,6 +38,6 @@ test('cm.n = 0 : aucune élite (le défaut reste 1 si n est absent)',()=>{
 
 test('accès : épilogue requis ; campagne normale : progression et régions inchangées hors Cauchemar',()=>{
  assert.equal(D.cmEligible({storySeen:{epilogue:1}}),true);assert.equal(D.cmEligible({storySeen:{}}),false);assert.equal(D.cmEligible(null),false);
- assert.equal(D.CM_DEV,null,'pas de mode Cauchemar sans drapeau');assert.deepEqual(Object.keys(SV.save.cm).sort(),['b','st','z']);
+ assert.equal(D.CM_DEV,null,'pas de mode Cauchemar sans drapeau');assert.deepEqual(Object.keys(SV.save.cm).sort(),['b','k','st','tr','z']);
  SV.save.z.prairie=10;SV.save.z.bois=10;SV.save.z.plage=10;assert.equal(SV.prog('prairie'),10);assert.equal(SV.unlocked(3),true,'région 4 ouverte en normal');
  SV.setProg('mont',2);assert.equal(SV.save.z.mont,2);assert.equal(SV.save.cm.z.mont,undefined);assert.equal(SV.cmBossOpen(0),false,'boss pilotes fermés hors Cauchemar')});

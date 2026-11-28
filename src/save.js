@@ -4,6 +4,7 @@ import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
 import {cleanChron} from './chronicle.js';
+import {cleanCmRewards} from './cmrewards.js';
 import {pickSave,parseSave} from './savecore.js';
 import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateChateau} from './rules.js';
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
@@ -27,7 +28,7 @@ migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migr
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
 if(CM_DEV?.dev){save.lvl=50;save.xp=0;save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)save.z[z.id]=zlen(z)} // V5.10 : équipe de fin de campagne, toutes les régions ouvertes
 // V5.14 : progression Cauchemar (champ additif cm : z = étapes par région, st = étoiles, b = boss pilotes vaincus), jamais mêlée à save.z
-{const c=save.cm&&typeof save.cm==='object'?save.cm:{},n=o=>o&&typeof o==='object'&&!Array.isArray(o)?o:{};save.cm={z:n(c.z),st:n(c.st),b:n(c.b)};
+{const c=save.cm&&typeof save.cm==='object'?save.cm:{},n=o=>o&&typeof o==='object'&&!Array.isArray(o)?o:{};save.cm={z:n(c.z),st:n(c.st),b:n(c.b),k:c.k,tr:c.tr,t:c.t};cleanCmRewards(save); // V5.24 : + k (compteurs), tr (trophées Cauchemar), t (titre porté)
  for(const k of Object.keys(save.cm.z))if(!Number.isFinite(save.cm.z[k])||save.cm.z[k]<0)delete save.cm.z[k];
  if(CM_DEV?.dev)for(let i=0;i<CM_ZONES;i++)save.cm.z[ZONES[i].id]=zlen(ZONES[i])} // bac à sable : régions 1 à 3 et boss pilotes ouverts
 save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
