@@ -1,0 +1,31 @@
+name: QA endurance
+on:
+  push:
+    branches: [quality/chatgpt]
+    paths: ['.github/workflows/qa-endurance.yml']
+permissions:
+  contents: read
+jobs:
+  perf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        cpu: [1, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --package-lock=false playwright@1.51.1
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          export PW="$PWD/node_modules/playwright/index.mjs"
+          export CHROME="$(node --input-type=module -e "import {chromium} from 'playwright'; console.log(chromium.executablePath())")"
+          CPU=${{ matrix.cpu }} node tools/qa-endurance.mjs qa-endurance
+          cat qa-endurance/mesures.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-endurance-${{ matrix.cpu }}
+          path: qa-endurance
