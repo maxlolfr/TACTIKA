@@ -5,6 +5,7 @@ import {$,HUD2} from './util.js';
 import {DEC,DECO_W,CMAX,R,ZONES,MON,THEMES,VET_LVL,VET_FORCE} from './data.js';
 import {save} from './save.js';
 import {drawAmb,resetAmb} from './ambiance.js';
+import {MODS,booms} from './elites.js'; // V5.10 : élites Cauchemar
 import {K,mulberry,pick,cell,occ,pushPlan,prismOn,prismHits,prismDmg,man,zoneCells,hitCells,forecast,soak} from './rules.js';
 
 export const cv=$('cv'),ctx=cv.getContext('2d');
@@ -149,6 +150,22 @@ function crystal(c,m,now){const[x,y0]=scr(m.x,m.y),y=y0+TH*.12,on=m.cry==='a'||p
   if(!on){c.shadowBlur=0;c.font=`900 ${Math.round(TW*.26)}px system-ui`;c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';const t='⏸'+(m.off-G.s.round);c.strokeText(t,x,cy+TW*.1);c.fillStyle='#ddd';c.fillText(t,x,cy+TW*.1)}}
  c.restore()}
 // case marquée : hachures diagonales dans le losange (rayon du Titan, cases touchées par un prisme)
+// V5.10 · élites Cauchemar : aura au sol (couleur du modificateur + motif propre, lisible sans couleur) et quelques étincelles.
+// « Effets réduits » : aura fixe, sans pulsation ni étincelles.
+const PAT={berserk:[2,3],garde:[],regen:[1,4],bombe:[7,3]};
+function eliteAura(c,u,sx,sy,now){const m=MODS[u.mods[0]],lf=lowFx(),p=lf?0:Math.sin(now/260+u.id.charCodeAt(1)),cy=sy+TH*.1;
+ c.save();c.globalAlpha=.16+.06*p;c.fillStyle=m.col;c.beginPath();c.ellipse(sx,cy,TW*.42,TH*.34,0,0,7);c.fill();
+ c.globalAlpha=.75;c.strokeStyle=m.col;c.lineWidth=2.5;c.setLineDash(PAT[m.ico]||[]);c.lineDashOffset=lf?0:-now/60;c.beginPath();c.ellipse(sx,cy,TW*.4,TH*.32,0,0,7);c.stroke();c.setLineDash([]);
+ if(u.prime){c.globalAlpha=.5+.4*Math.abs(Math.sin(now/120));c.lineWidth=3;c.strokeStyle='#ffe0a0';c.beginPath();c.ellipse(sx,cy,TW*.46,TH*.37,0,0,7);c.stroke()}
+ if(!lf){c.globalCompositeOperation='lighter';c.fillStyle=m.col;for(let k=0;k<3;k++){const a=now/900+k*2.09+u.id.charCodeAt(1),r=TW*.36;c.globalAlpha=.55+.3*Math.sin(now/200+k);c.beginPath();c.arc(sx+Math.cos(a)*r,cy+Math.sin(a)*TH*.28-(m.ico==='regen'?((now/12+k*40)%30)*.6:0),2.2,0,7);c.fill()}}
+ c.restore()}
+// badge de 4 formes : crocs (Berserker), bouclier (Gardien), croix (Régénérateur), étoile éclatée (Explosif)
+function modBadge(c,id,x,y,r){const m=MODS[id];c.save();c.fillStyle='#0d0d14';c.strokeStyle=m.col;c.lineWidth=2;c.beginPath();c.arc(x,y,r+2,0,7);c.fill();c.stroke();c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=Math.max(1.5,r*.28);c.lineCap='round';c.beginPath();
+ if(m.ico==='berserk'){for(const d of[-1,1]){c.moveTo(x+d*r*.7,y-r*.55);c.lineTo(x+d*r*.1,y-r*.55);c.lineTo(x+d*r*.32,y+r*.7);c.closePath()}c.fill()} // deux crocs
+ else if(m.ico==='garde'){c.moveTo(x-r*.6,y-r*.6);c.lineTo(x+r*.6,y-r*.6);c.lineTo(x+r*.55,y+r*.05);c.quadraticCurveTo(x+r*.35,y+r*.55,x,y+r*.75);c.quadraticCurveTo(x-r*.35,y+r*.55,x-r*.55,y+r*.05);c.closePath();c.fill()}
+ else if(m.ico==='regen'){c.moveTo(x,y-r*.65);c.lineTo(x,y+r*.65);c.moveTo(x-r*.65,y);c.lineTo(x+r*.65,y);c.stroke()}
+ else{for(let k=0;k<8;k++){const a=k*Math.PI/4,q=k&1?.4:.8;c.lineTo(x+Math.cos(a)*r*q,y+Math.sin(a)*r*q)}c.closePath();c.fill()}
+ c.restore()}
 function hatch(c,x,y,col,a){c.save();diamond(c,x,y,.9);c.globalAlpha=a;c.fillStyle=col;c.fill();c.clip();c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=2;c.beginPath();for(let k=-3;k<=3;k++){c.moveTo(x+k*TW*.14-TW*.3,y+TH*.5);c.lineTo(x+k*TW*.14+TW*.3,y-TH*.5)}c.stroke();c.restore();
  diamond(c,x,y,.9);c.strokeStyle=col;c.lineWidth=2.5;c.stroke()}
 // Convertit un toucher (px,py) en case ; si une unité est touchée, renvoie sa case.
@@ -266,6 +283,7 @@ export function draw(now){
  if(S.wave)for(const p of S.wave.next){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,p.q.elite?'#ffd65a':'#ff8a3a',.3+.2*Math.sin(now/200));ctx.save();ctx.font=`900 ${Math.round(TW*.3)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText('⚠',sx,sy+TW*.1);ctx.fillStyle=p.q.elite?'#ffd65a':'#ffa040';ctx.fillText('⚠',sx,sy+TW*.1);ctx.restore()}
  // V4.29 : cases qui s'embrasent au prochain tour (hachures rouges et ▲, distinctes des renforts ⚠)
  if(S.lava)for(const p of S.lava.next){const[sx,sy]=scr(p.x,p.y),tr=S.lava.trap;hatch(ctx,sx,sy,tr?'#e0b020':S.lava.toxic?'#4fcf2a':S.lava.cold?'#5ec8ff':'#ff3a12',.38+.2*Math.sin(now/220));ctx.save();ctx.font=`900 ${Math.round(TW*.26)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const gl=tr?'◆':S.lava.toxic?'☣':S.lava.cold?'❄':'▲';ctx.strokeText(gl,sx,sy+TW*.09);ctx.fillStyle=tr?'#fff0a0':S.lava.toxic?'#d8ff9a':S.lava.cold?'#e8f8ff':'#ffd23a';ctx.fillText(gl,sx,sy+TW*.09);ctx.restore()}
+ for(const b of booms(S))for(const p of b.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#ff8a1a',.34+.22*Math.sin(now/170));ctx.save();ctx.font=`900 ${Math.round(TW*.28)}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText('✹',sx,sy+TW*.1);ctx.fillStyle='#ffe0a0';ctx.fillText('✹',sx,sy+TW*.1);ctx.restore()} // V5.10 : explosion annoncée (Explosif)
  // Titan : cases du rayon chargé (hachures violettes)
  if(S.beam&&!S.beam.by.dead)for(const p of S.beam.cells){const[sx,sy]=scr(p.x,p.y);hatch(ctx,sx,sy,'#b04bff',.35+.2*Math.sin(now/180))}
  // aperçu du prisme : cases voisines touchées et dégâts, tant que le sort est choisi
@@ -285,6 +303,7 @@ export function draw(now){
   drawF(ctx,ds,di,sx,sy+TH*.2,DECO_W[o.m.d]*(o.m.block?DK[o.m.d]??.84:1)*TW/f[2]);continue}
   const u=o.u,[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u),sc=hgt(u)/rf,al=u.dead&&u.team!=='h'?1-(now-u.deadT)/600:1;
   ctx.save();ctx.globalAlpha=.5*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.26,TH*.2,0,0,7);ctx.fill();ctx.globalAlpha=.8*al;ctx.strokeStyle=u.team==='h'?'#5aa8ff':u.elite?'#ffd65a':'#ff5a48';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.3,TH*.26,0,0,7);ctx.stroke();ctx.restore(); // ombre + anneau d'équipe
+  if(u.mods&&!u.dead)eliteAura(ctx,u,sx,sy,now);
   const bob=u.fly?Math.sin(now/300+u.id.charCodeAt(1)*2)*TH*.12:0,up=lift(u),jit=u.pose==='h'&&u.poseT>now?Math.sin(now/25)*3:0+(u.dgT>now?Math.sin((u.dgT-now)/320*Math.PI)*TW*.22*(u.team==='h'?-1:1):0);
   if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
    if(ch){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5+.3*Math.sin(now/70);const g=ctx.createRadialGradient(sx,sy-hgt(u)*.55,0,sx,sy-hgt(u)*.55,TW*.9);g.addColorStop(0,'rgba(230,190,255,.9)');g.addColorStop(1,'rgba(160,80,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy-hgt(u)*.55,TW*.9,0,7);ctx.fill()}ctx.restore()}
@@ -296,11 +315,12 @@ export function draw(now){
  const taken=[],LB=[],ovl=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1];
  // V5.03 : barres placées de l'avant vers l'arrière ; une barre (avec ses icônes d'état) qui en chevauche une autre remonte d'un cran (4 au plus)
  for(const u of units.filter(u=>!u.dead).sort((a,b)=>depth(b.gx,b.gy)-depth(a.gx,a.gy))){const[sx,sy]=scr(u.gx,u.gy),w=TW*.6,z=TW*.24,ni=[u.shield>0,u.buff,u.poison||u.k==='toxslime',u.burn].filter(Boolean).length;let y=sy-hgt(u)-lift(u)-4;
-  const box=()=>[sx-Math.max(w/2+1,ni*z/2+z/2),y-(ni?z+3:0)-(u.chief?18:1),sx+Math.max(w/2+(u.tag?16:1),ni*z/2),y+6];for(let k=0;k<4&&LB.some(o=>ovl(o,box()));k++)y-=Math.round(TW*.13);LB.push(box());u._by=y}
+  const box=()=>[sx-Math.max(w/2+1+(u.mods?TW*.22*u.mods.length:0),ni*z/2+z/2),y-(ni?z+3:0)-(u.chief?18:1),sx+Math.max(w/2+(u.tag?16:1),ni*z/2),y+6];for(let k=0;k<4&&LB.some(o=>ovl(o,box()));k++)y-=Math.round(TW*.13);LB.push(box());u._by=y}
  taken.push(...LB);
  for(const u of units){if(u.dead)continue;const[sx,sy]=scr(u.gx,u.gy),y=u._by-(u.hop||0),w=TW*.6;
   ctx.fillStyle='#000c';ctx.fillRect(sx-w/2-1,y-1,w+2,7);ctx.fillStyle=u.team==='h'?'#5fd35a':u.chief?'#ffd65a':'#e0493a';if(u.tag){ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';ctx.strokeText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#fff';ctx.fillText(u.tag,sx+w/2+8,y+6);ctx.fillStyle='#e0493a'}if(u.chief){ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('♛',sx,y-4);ctx.fillStyle='#ffd65a'}ctx.fillRect(sx-w/2,y,w*Math.max(0,u.hp)/u.max,5);
-  {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8,u.burn&&15].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}}
+  {const ss=[u.shield>0&&1,u.buff&&12,(u.poison||u.k==='toxslime')&&8,u.burn&&15].filter(Boolean),z=TW*.24;ss.forEach((i,n)=>dic(ctx,'ico',i,sx+(n-ss.length/2)*z,y-z-3,z))}
+  if(u.mods)u.mods.forEach((id,n)=>modBadge(ctx,id,sx-w/2-TW*.11-n*TW*.21,y+2,TW*.095))}
  for(const[o,d]of pv){const[sx,sy]=scr(o.gx,o.gy),y=sy-hgt(o)-lift(o)-TW*(G.ex?.42:.12);ctx.save();ctx.font=`900 ${Math.round(TW*(HUD2?.17:.22))}px system-ui`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#000';const t='◆ -'+d;ctx.strokeText(t,sx,y);ctx.fillStyle=o.team==='h'?'#ff9a8a':'#e2c8ff';ctx.fillText(t,sx,y);ctx.restore()}
  // aperçu : fantôme du héros sur la case d'arrivée, viseur sur les ennemis visables de là, coût en PM
  if(plan){const{x,y}=plan,[ex,ey]=scr(x,y),[s,i,flip,rf]=frameOf(cur);drawF(ctx,s,i,ex,ey+TH*.12,hgt(cur)/rf,flip,.5);

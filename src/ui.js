@@ -1,7 +1,7 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
-import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,icOf,whoOf,whoName} from './data.js';
+import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,CM_DEV,CM_LVL,CM_ZONES,icOf,whoOf,whoName} from './data.js';
 import {QUESTS} from './quests.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,grantQuest,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,store,resetSave,storeState,hasBackup,restoreBackup,importSave} from './save.js';
@@ -12,6 +12,7 @@ import {sfx,voice,setVoiceLang,VOICES,music,duck,setSon,sonBtns,setVol,setMaster
 import {SPECS,tiersFor,specOf} from './talents.js';
 import {MASTERY,MAST_COST,hasMastery,rankOf,mastLeft,mastPts,mastSpent,nextPtLvl,canRaise,raise,resetMast,mastTxt} from './mastery.js';
 import {renderHome} from './home.js';
+import {modText,booms,MODS} from './elites.js'; // V5.10 : élites Cauchemar
 import {recordFight,newTally,TROPHIES,TIER,REC,checkTrophies} from './chronicle.js';
 import {bossWinEvents,bossPreEvents,campEvents,playStory} from './story.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
@@ -107,7 +108,7 @@ function render(){renderTL();
  const keep=u.team==='h'&&me?carryPA(u):0;$('end').innerHTML='Fin du tour'+(keep?`<small>+${keep} PA gardé${keep>1?'s':''}</small>`:'');
  $('end').disabled=!me||G.busy;
  const lava=G.s.lava?.next.length&&me?(G.s.lava.trap?`◆ Pièges : les dalles dorées se déclenchent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV, −1 PM). `:G.s.lava.toxic?'☣ Zones toxiques : les cases vertes empoisonnent au prochain tour (4 PV × 2 tours). ':G.s.lava.cold?'❄ Fissures de givre : les cases bleues blessent (6 % des PV) et ralentissent au prochain tour. ':`▲ Braises : les cases rouges s’embrasent au prochain tour (${Math.round(LAVA_DMG*100)} % des PV). `):'';
- const beam=G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:'',amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
+ const bm=booms(G.s).map(b=>`✹ ${b.by.n} explose à son prochain tour (${b.d} dégâts) : quitte les cases marquées ou abats-le. `).join(''),beam=bm+(G.s.beam&&!G.s.beam.by.dead?`⚠ Rayon au prochain tour du Titan (${beamDmg(G.s.beam.by)} dégâts) : quitte les cases rayées. `:''),amp=me&&sel&&(sel.sp.dmg||sel.sp.heal)&&ampAt(G.s,u)>1?'💎 Cristal : +30 %. ':'';
  $('hint').textContent=!me?`${u.n} joue.`:lava+beam+amp+(sel?`${sel.sp.n} : ${sel.sp.dmg?sel.sp.dmg.join('–')+' de base, ':''}${sel.sp.heal?sel.sp.heal.join('–')+' soins de base, ':''}${sel.sp.r[1]?`portée ${sel.sp.zone?'du centre ':''}${sel.sp.r.join('–')}. Touche une cible pour voir l’effet réel`:'sur soi : touche ton héros'}. ${sel.sp.d}.`:F&&F.guide&&(canMove(u)||castable(u).length)?coach(u):idle(u));
  aimCard(u);
 }
@@ -115,7 +116,10 @@ function coach(u){const t=targetsFrom(G.s,u,u).foes.length,go='Touche une case b
  if(u.k==='archer')return t&&u.pa>=3?'🎯 Une Gelée est à portée : touche « Tir », la Gelée, puis retouche-la.':u.pm?go+' Le 🎯 compte les ennemis visables de là.':'Bien joué ! Touche « Fin du tour ».';
  if(u.k==='warrior')return t?'⚔ Un ennemi est au contact : « Fracas » le repousse. Contre un obstacle : dégâts bonus.':u.pm?'Kael frappe au contact. '+go:'Garde Kael à l’abri avec « Rempart », ou touche « Fin du tour ».';
  return t&&u.pa>=3?'🌿 « Épine » empoisonne. Frapper la même Gelée à deux héros = Combo.':u.pm?'Aelis soigne et protège : reste près des alliés. '+go:'Touche « Fin du tour ».'}
-const info=o=>{if(o.curse&&o.team==='h')return`${o.n} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
+const info=o=>eliteInfo(o,info0(o));
+// V5.10 : capacité des élites Cauchemar (fiche du monstre), état en direct
+const eliteInfo=(o,t)=>!o.mods?t:t+o.mods.map(id=>id==='berserk'&&o.hp<=o.max*MODS.berserk.thr?' · EN FURIE (dégâts ×1,35)':id==='regen'?` · régénéré ${o.regen||0}/${Math.round(o.max*MODS.regen.cap)}`:id==='bombe'?(o.prime?' · AMORCÉ : explose à son prochain tour':o.bcd>0?` · se recharge (${o.bcd} t.)`:''):'').join('')+' · '+modText(o,save.lang).join(' · ');
+const info0=o=>{if(o.curse&&o.team==='h')return`${o.n} · ${o.hp}/${o.max} PV · maudit : soins −50 % (${o.curse} t.)`;const it=G.intents&&G.intents.find(i=>i.m===o);return`${o.n} · ${o.hp}/${o.max} PV · ${o.maxPM} PM`+(o.atk?` · frappe ${o.atk.dmg.join('–')}`:'')+(it?` · vise ${it.target.n}${it.amp?' (cristal +30 %)':''}`:'')+(o.bs==='beam'?` · phase ${o.ph||1}`+(G.s.beam?' · rayon au prochain tour':''):'')+(o.bs==='beam'&&G.s.beam?'':o.bs==='forge'?(o.raged?' · SURCHAUFFE':' · surchauffe sous 50 % PV'):o.bs==='tomb'?(o.raged?' · MALÉDICTION':' · malédiction sous 50 % PV'):o.bs==='rage'?(o.raged?' · EN FUREUR':' · fureur sous 50 % PV'):o.bs?(BOSS_P[o.bs]?` · ${BOSS_P[o.bs][2]} ${bossNext(o)===1?'au prochain tour':`dans ${bossNext(o)} tours`}`:'')+(PHASE50[o.bs]?(o.raged?` · ${PHASE50[o.bs].toUpperCase()}`:` · ${PHASE50[o.bs]} sous 50 % PV`):''):'')};
 const PHASE50={swamp:'spores et zones toxiques',astral:'jugement céleste',frost:'gel et fissures',breaker:'fracas primordial'}; // V4.76 : phases à 50 % PV (avant, le survol d'un boss sans cycle plantait)
 // sorts réellement utilisables maintenant (PA, recharge, au moins une cible ; potion seulement si blessé)
 const castable=u=>u.sp.map(id=>u.S[id]).filter(sp=>u.pa>=costOf(u,sp)&&!(u.cd[sp.n]>0)&&!(sp.potion&&(!(G.s.pot>0)||u.hp>=u.max))&&selCells(G.s,u,sp).some(c=>c.ok));
@@ -214,8 +218,9 @@ let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-f
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5); // jour local
 export async function startFight(zi,i,F){closeMenu();
  F=F||fightSpec(zi,i,zi*1000+i*97+save.gold);G.phase='camp';
+ if(CM_DEV&&zi<CM_ZONES&&!F.cm&&!F.boss)F={...F,lvl:CM_LVL,lang:save.lang,cm:{seed:F.seed+save.gold,mods:CM_DEV.mods,pool:['berserk','garde','regen','bombe']}}; // V5.10 : accès Cauchemar isolé (une élite, un modificateur ; boss exclus au lot 1)
  if(F.boss&&!F.daily&&!F.quest){const pre=bossPreEvents(save,ZONES[zi].id);if(pre.length)await playStory(save,pre,store)} // V4.80 : scène avant le boss de la région 12, passable en un geste // l'ancien plateau n'est plus dessiné pendant le chargement (« Combat suivant »)
- $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;
+ $('mapinfo').textContent='Chargement…';try{await zoneAssets(F)}catch(e){$('mapinfo').textContent='Images introuvables : '+e;return}G.F=F;if(F.cm)setTimeout(()=>goalBanner(save.lang==='en'?'☠ Nightmare · prototype: one elite':'☠ Cauchemar · prototype : une élite'),900);
  document.body.classList.remove('camp');$('camp').classList.remove('on');$('tav').classList.remove('on');$('result').classList.remove('on');$('map').classList.remove('on');
  resetFx();const S=G.s=newBattle();S.pot=save.pot||0;S.T=newTally();G.t0=Date.now();const{hs,es}=genMap(S,G.F.seed,G.F.th,G.F.cry);if(zi===0&&i===0&&!prog('prairie'))G.F={...G.F,pool:['slime'],guide:1};
  mkUnits(S,G.F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(G.F.guide)guideSetup(S);if(G.F.tip==='prism')prismCover(S);addRefs(S.units);S.rng=Math.random;

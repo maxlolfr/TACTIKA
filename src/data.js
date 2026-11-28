@@ -186,6 +186,11 @@ export const R7={id:'braise',map:2,n:'Forteresse de braise',x:20,y:64,th:[7],lvl
 export const CURSE_K=.5; // V4.42 : soins reçus par un héros maudit
 export const LAVA_DMG=.12; // part des PV max perdue sur une case qui s'embrase
 export const PREVIEW=!!globalThis.location?.search.includes('apercu=braise');
+// V5.10 · Cauchemar lot 1 : accès de développement ISOLÉ (?cauchemar, ou ?cauchemar=berserk|garde|regen|bombe).
+// Sauvegarde à part (copiée de la vraie à la première ouverture, la vraie n'est jamais écrite), équipe niveau 50,
+// missions des régions 1 à 3 seulement, monstres au niveau CM_LVL, une élite à un modificateur par rencontre.
+export const CM_DEV=(()=>{try{const q=new URLSearchParams(globalThis.location?.search||'');if(!q.has('cauchemar'))return null;const v=q.get('cauchemar');return{mods:['berserk','garde','regen','bombe'].includes(v)?[v]:null}}catch(e){return null}})();
+export const CM_LVL=50,CM_ZONES=3; // prototype : à régler au lot V5.11 (accès après épilogue, progression distincte)
 ZONES.push(R7);
 // V4.42 : Temple des sables, 10 missions (région 8, carte II), après Ignaros. lava.trap = dalles piégées : 12 % des PV et −1 PM, les monstres du temple ne les déclenchent pas
 const MU='mummy',SC='scorp',AN='anubis',T=n=>({n,trap:1});

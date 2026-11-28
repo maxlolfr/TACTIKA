@@ -1,5 +1,5 @@
 // Sauvegarde locale (localStorage). `save` est un objet unique, modifié sur place.
-import {ZONES,zlen,PREVIEW} from './data.js';
+import {ZONES,zlen,PREVIEW,CM_DEV} from './data.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
@@ -9,7 +9,7 @@ import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateCha
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
 // V5.01 : lecture sûre. Principal -> copie de secours (_bak) ; un texte abîmé est mis de côté (_corrupt), jamais écrasé en silence.
 // V4.29 : l'aperçu de la région 7 a sa propre sauvegarde, copiée de la vraie à la première ouverture : la vraie n'est jamais écrite
-export const KEY=PREVIEW?'landeTactique1_braise':'landeTactique1';
+export const KEY=CM_DEV?'landeTactique1_cauchemar':PREVIEW?'landeTactique1_braise':'landeTactique1'; // V5.10 : l'accès Cauchemar a sa propre sauvegarde
 export const KB=KEY+'_bak',KC=KEY+'_corrupt';
 export const storeState={ok:true,err:null,loadFrom:'new'}; // loadFrom : new | main | backup | corrupt
 const rd=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
@@ -25,6 +25,7 @@ save.attr=cleanAttr(save.attr,save.lvl); // caractéristiques (V4.7c) : absentes
 if(!save.z)save.z={prairie:Math.min(4,save.fight-1)}; // reprise des anciennes sauvegardes
 migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migrateChateau(save);
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
+if(CM_DEV){save.lvl=50;save.xp=0;save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)save.z[z.id]=zlen(z)} // V5.10 : équipe de fin de campagne, toutes les régions ouvertes
 save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
 cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids validés, anciennes sauvegardes : rien à rejouer)
 cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
