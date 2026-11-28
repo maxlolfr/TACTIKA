@@ -1650,7 +1650,8 @@ test('V4.81 audio V5 : chaque son et musique déclaré existe, chaque snd de sor
  const grab=k=>[...A.match(new RegExp(k+"=\\[([^\\]]*)\\]"))[1].matchAll(/'(\w+)'/g)].map(m=>m[1]);
  const S=grab('SNDS'),M=grab('MUSICS');
  for(const n of S.filter(x=>x!=='victory'&&x!=='defeat'))assert.ok(fs.existsSync(new URL('../assets/audio/bruitages/'+n+'.mp3',import.meta.url)),'bruitage manquant '+n);
- for(const n of M)assert.ok(fs.existsSync(new URL('../assets/audio/musique/'+n+'.mp3',import.meta.url)),'musique manquante '+n);
+ const wait=fs.existsSync(new URL('../tools/audio-urls.txt',import.meta.url))?fs.readFileSync(new URL('../tools/audio-urls.txt',import.meta.url),'utf8').split('\n').map(l=>l.split(' ')[0]):[]; // V5.12 : sons en cours de récupération par le workflow audio
+ for(const n of M)assert.ok(wait.includes(n)||fs.existsSync(new URL('../assets/audio/musique/'+n+'.mp3',import.meta.url)),'musique manquante '+n);
  for(const n of ['sands','swamp','skycitadel','frost','sanctuary','elite2','final_boss','ending','boss_v2','ember'])assert.ok(M.includes(n),n);
  const D=fs.readFileSync(new URL('../src/data.js',import.meta.url),'utf8');
  for(const m of D.matchAll(/snd:'(\w+)'/g))assert.ok(S.includes(m[1])||['slash'].includes(m[1]),'snd inconnu '+m[1]);
@@ -1748,4 +1749,11 @@ test('V4.90 anglais des descriptions de sorts et de talents : tout est couvert',
  const all=[...Object.values(SP).map(x=>x.d),...T.SPECS.flat().flatMap(s=>[s.n,s.d,...s.t.flatMap(x=>[x[0],x[1],...Object.values(x[2]?.sp||{}).map(v=>v.d)])])].filter(Boolean);
  for(const s of all)assert.ok(I.EN[s],'sans anglais : '+s);for(const v of Object.values(I.EN))assert.equal(I.tr(v),v,v);
  assert.equal(I.tr('Niv 12 · 340 or'),'Lvl 12 · 340 gold');I.L.on=false;
+});
+
+test('V5.12 musiques Cauchemar : 6 pistes déclarées, avec repli, jamais en campagne normale', async()=>{
+ const fs=await import('node:fs'),A=fs.readFileSync(new URL('../src/audio.js',import.meta.url),'utf8'),U=fs.readFileSync(new URL('../src/ui.js',import.meta.url),'utf8');
+ for(const n of ['nm_village','nm_map','nm_battle1','nm_battle2','nm_champion','nm_boss']){assert.ok(A.includes("'"+n+"'"),n);assert.ok(new RegExp('FALL=\\{[^}]*'+n+':').test(A),'repli '+n)}
+ assert.ok(/music\(CM_DEV\?'nm_map'/.test(U)&&/music\(CM_DEV\?'nm_village'/.test(U),'carte et village : Cauchemar seulement');
+ assert.ok(/music\(G\.F\.cm\?\(/.test(U),'combat : Cauchemar seulement');
 });
