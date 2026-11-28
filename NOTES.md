@@ -1,3 +1,7 @@
+## V5.27 — bâtiments du village en HD (28/11/2026, planche Gemini de Max `batiments-village-4-1254.png`)
+- `bld.webp` (forge, marchand, arène, taverne ; 0 à 3) refaite depuis la planche 2×2 de 1254 px (nouvel outil `tools/prep_bld_hd.py`, réutilise `key/cells/pack` de `prep_r9.py`) : ≈ 520 px de haut par bâtiment au lieu de ≈ 285. Fond magenta et étoile Gemini effacés. Ils ne servent qu'en icône (`icon('bld',i,h)` : forge, boutique, taverne, quêtes) : taille à l'écran inchangée. 289 Ko (avant ≈ 110 Ko). Aucune règle touchée.
+- **Reste en basse définition** : voir la liste « RESTE À FAIRE » plus bas (fenn9, variantes de héros, décor `deco`…`deco5`, `deco7`…`deco9`, interface). Fonds en pause (décision de Max).
+
 ## V5.26 — obstacles du Marais des âmes en HD (28/11/2026, planche Gemini de Max `obstacles-foret-ruines-8-2752x1536.png`)
 - `deco6.webp` recoupée (nouvel outil `tools/prep_deco6_hd.py`, qui réutilise `key/cells/pack` de `prep_r9.py`) à **75 %** de la taille native au lieu de 32 % : statue 194×498 px au lieu de 83×212. La planche reçue est le même dessin que `art/r9/r9-obstacles-gemini.webp` (même ordre : souche, tronc, éboulis, rocher, muret, racines, statue, arche). Étoile Gemini effacée, pixels magenta de bord repeints. Taille à l'écran inchangée (`DECO_W`), aucune règle touchée. 168 Ko (avant : 55 Ko).
 - **Reste à intégrer** : `batiments-village-4` (forge, marchand, arène, taverne ; remplace `bld`). Les autres planches `deco`…`deco9` ne sont pas en HD (pas d'originaux plus grands reçus).
