@@ -3,7 +3,7 @@
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
-import {MON} from './data.js';
+import {MON,CM_DEV} from './data.js';
 import {save,prog,unlocked,store,resetSave} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
 import {setLang,trh} from './i18n.js';
@@ -12,8 +12,11 @@ import {setSon,sonBtns,sfx,voice,setVol,setVoiceLang,AU,VOLMAX} from './audio.js
 import {specOf} from './talents.js';
 setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargement
 import {masteredFor,rankOf} from './mastery.js';
+import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.10.2';
+export const VERSION='5.11';
+// V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
+function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
 // Deux peintures du village (V4.6.1 : six bâtiments). Positions en pixels « logiques » de la scène (l'image réelle est plus grande).
 // bâtiments : zone tactile z [x,y,largeur,hauteur], plaque l [x,y] au pied
@@ -54,6 +57,9 @@ const PNJ={caserne:['garrick',300,365],taverne:['mira',402,369],forge:['borin',3
 // pieds [x,y,miroir] dans chaque peinture ; npc = hauteur d'une case de 370 px en pixels logiques
 // Cristal de l'Éther : [largeur, hauteur] des 5 images
 const CRY=[[370,544],[374,639],[403,768],[700,896],[889,1301]];
+// V5.11 · village Cauchemar (accès ?cauchemar) : peintures de Max (2105 portrait, 2107 paysage) calées sur les mêmes positions,
+// cristal Cauchemar en 5 états (planche 2111, découpée à la hauteur des états d'origine)
+const CRY_CM=[[381,544],[359,639],[381,768],[637,896],[842,1301]];
 // V4.10 : village vivant (décor seulement). Images `tools/prep_vie.py` : [largeur, hauteur d'une case, nombre de poses]
 const VIE={chat:[149,152,3],chien:[146,153,3],poule:[125,142,3],mesange:[126,142,4],fermier:[194,302,1],villageoise:[170,292,1],
  banc:[300,263,1],banniere:[158,300,1],charrette:[300,294,1],fontaine:[285,300,1],lanterne:[197,300,1],trophee:[197,300,1]};
@@ -87,18 +93,18 @@ function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen
 // ---------- scène peinte ----------
 let kind='p';
 function scene(k){
- const Q=SCENES[k],pc=(x,y,w,h)=>`left:${x/Q.w*100}%;top:${y/Q.h*100}%`+(w?`;width:${w/Q.w*100}%;height:${h/Q.h*100}%`:'');
+ const Q=CM_DEV?{...SCENES[k],src:SCENES[k].src.replace('assets/','assets/cm/')}:SCENES[k],pc=(x,y,w,h)=>`left:${x/Q.w*100}%;top:${y/Q.h*100}%`+(w?`;width:${w/Q.w*100}%;height:${h/Q.h*100}%`:'');
  const stage=el('div','v-stage');stage.id='vstage';stage.dataset.k=k;
  const img=el('img','v-img');img.src=Q.src;img.alt='';img.decoding='async';stage.append(img);
  for(const[x,y,w,h]of Q.leaves){const s=el('i','v-leaf');s.style.backgroundImage=`url(${Q.src})`;s.style.cssText=pc(x,y,w,h);s.dataset.crop=[x,y].join();s.style.animationDelay=-(x+y)%7+'s';stage.append(s)}
  for(const[x,y,r,k]of Q.glow){const g=el('i','v-glow '+k);g.style.cssText=pc(x-r,y-r,r*2,r*2);g.style.animationDelay=-((x*7+y)%31)/10+'s';stage.append(g)}
  for(const[x,y,k]of Q.smoke)for(let i=0;i<4;i++){const s=el('i','v-smoke');s.style.cssText=pc(x-26*k,y-26*k,52*k,52*k);s.style.animationDelay=-i*1.1+'s';stage.append(s)}
  {const w=el('i','v-water');w.style.cssText=pc(...Q.water);stage.append(w)}
- stage.dataset.sky=skyOf(save.sky,new Date().getHours());
+ stage.dataset.sky=CM_DEV?'cm':skyOf(save.sky,new Date().getHours());
  life(stage,Q,k,pc);
  // Cristal de l'Éther → Expéditions
- {const st=crystalState(save),[w,h]=CRY[st-1].map(v=>v*Q.ck[st===5?1:0]);
-  const c=el('button','v-cry',`<img src="assets/cry/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
+ {const st=crystalState(save),[w,h]=(CM_DEV?CRY_CM:CRY)[st-1].map(v=>v*Q.ck[st===5?1:0]);
+  const c=el('button','v-cry',`<img src="assets/${CM_DEV?'cm':'cry'}/crystal${st}.webp" alt=""><i class="v-cry-glow"></i>`);c.style.cssText=pc(Q.cry[0]-w/2,Q.cry[1]-h,w,h);c.dataset.state=st;c.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');
   const p=el('span','v-plate',`<span><b>Cristal</b><small>Expéditions</small></span>`);p.prepend(icon('ico',0,28));c.onclick=()=>show('expe');stage.append(c);
   // V5.09 : le cartouche n'est plus dans le cristal : un héros qui marche devant (z-index 2, comme le cristal) le recouvrait
   const pb=el('button','v-cryp');pb.style.cssText=pc(Q.cry[0],Q.cry[1],0,0);pb.setAttribute('aria-label','Cristal de l’Éther : expéditions, revanches');pb.append(p);pb.onclick=()=>show('expe');stage.append(pb)}
@@ -215,7 +221,7 @@ export function fitHome(){let S=$('vstage');if(!S||!root.classList.contains('on'
  // menu en colonne et zone libre au moins presque carrée : peinture horizontale (V4.30 : écrans pliants ouverts) ; sinon la verticale
  const k=land&&x1>(y1-y0)*.8?'l':'p';
  if(S.dataset.k!==k){kind=k;const N=scene(k);S.replaceWith(N);S=N}
- root.querySelector('.v-back').style.backgroundImage=`url(${SCENES[k].src})`;
+ root.querySelector('.v-back').style.backgroundImage=`url(${CM_DEV?SCENES[k].src.replace('assets/','assets/cm/'):SCENES[k].src})`;
  const Q=SCENES[k],[bw,bh,cx,cy]=Q.box;
  const s=Math.max(Math.min(x1/bw,(y1-y0)/bh),Math.min(W/Q.w,H/Q.h)*.6),left=x1/2-cx*s; // jamais nul ni négatif
  let t=(y0+y1)/2-cy*s;if(Q.h*s>=H)t=Math.min(0,Math.max(H-Q.h*s,t));else t=Math.max(0,Math.min(H-Q.h*s,t));
@@ -362,13 +368,13 @@ function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
  for(const[k,n]of[['m','Volume musique'],['s','Volume bruitages'],['v','Volume voix']]){const l=el('label','v-vol',`<span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" value="${AU.vol[k]}"><b>${AU.vol[k]} %</b>`),i=l.querySelector('input');
   i.oninput=()=>{setVol(k,i.value);l.querySelector('b').textContent=i.value+' %'};if(k==='s')i.onchange=()=>sfx('coin');if(k==='v')i.onchange=()=>voice('warrior','start',{force:true});P.append(l)}
- const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(save.lowfx?'✨ Effets réduits : oui':'✨ Effets réduits : non',()=>{save.lowfx=save.lowfx?0:1;document.documentElement.classList.toggle('lowfx',!!save.lowfx);store();show('reglages')},'dk'),wood(save.lang==='en'?'🌐 Langue : English':'🌐 Langue : Français',()=>{save.lang=save.lang==='en'?'fr':'en';store();setVoiceLang(save.lang);if(save.lang==='en'){setLang('en');show('reglages')}else location.reload()},'dk') /* V4.89 : retour au français = rechargement (textes d'origine) */,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(`🎨 Graphismes : ${GQ_N[gqOf(save)]}`,()=>{const n=(gqOf(save)+1)%3;save.gq=n;save.lowfx=n===0?1:0;setGq(n);store();show('reglages')},'dk') /* V5.11 : Faible (ex-« Effets réduits ») / Moyen / Haut */,wood(save.lang==='en'?'🌐 Langue : English':'🌐 Langue : Français',()=>{save.lang=save.lang==='en'?'fr':'en';store();setVoiceLang(save.lang);if(save.lang==='en'){setLang('en');show('reglages')}else location.reload()},'dk') /* V4.89 : retour au français = rechargement (textes d'origine) */,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();if(!CM_DEV)root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
  P.append(el('div','v-card v-how',trh(A.HOW)));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));
 }
 
-export function renderHome(actions){A=actions;document.documentElement.classList.toggle('lowfx',!!save.lowfx);SPEED.k=save.fast?.5:1;const nt=checkTrophies(save);build();if(nt.length)trophyToast(nt);root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
+export function renderHome(actions){A=actions;setGq(gqOf(save));vTag();SPEED.k=save.fast?.5:1;const nt=checkTrophies(save);build();if(nt.length)trophyToast(nt);root.classList.add('on');fitHome();const r=resume;resume=null;show(r||'camp');sonBtns();store()}
 // V4.86 : notification discrète d'un trophée obtenu hors combat (niveau, recrutement, quête...)
 function trophyToast(ids){const t=TROPHIES.find(x=>x.id===ids[ids.length-1]),d=el('div','tro-toast',`<span style="color:${TIER[t.t].c}">🏆</span> <b>${t.n}</b>${ids.length>1?` <small>+${ids.length-1}</small>`:''}`);root.append(d);setTimeout(()=>d.remove(),4200)}
 addEventListener('resize',()=>{fitHome();setTimeout(fitHome,350)});
