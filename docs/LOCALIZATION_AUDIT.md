@@ -121,3 +121,7 @@ Chromium a parcouru 13 écrans en français puis les mêmes 13 en anglais. Le pr
 ### Parcours mobile en ligne
 
 Le parcours Chromium à 390 × 844 passe avec `--online-only`. Il vérifie le changement de langue et sa persistance sur les quatre langues. En chinois simplifié et en allemand, il vérifie également le camp, la maîtrise, la visée, les libellés accessibles, le bilan de retraite, les phases de boss et les textes du Cauchemar. Le test clique sur le sort avec un événement de pointeur pour fermer l’infobulle avant de sélectionner la cible. Le parcours complet garde les contrôles hors ligne.
+
+### Parcours hors ligne exécuté
+
+Le parcours Chromium complet à 390 × 844 passe. Une mission de survie du Cauchemar a été jouée hors ligne jusqu’au bilan en chinois simplifié et en allemand. Le test attend un tour allié réel avant de cliquer sur le bouton de fin de tour et laisse les ennemis jouer. Le fichier de terrain `sol_bois.webp` sert de contrôle pour le Bois sombre jamais chargé : le sprite du loup peut déjà être présent dans le cache. Sans le fichier de terrain, le jeu affiche le message de chargement localisé et revient à un état où le combat n’a pas démarré. L’ouverture d’une région sans ses ressources demeure indisponible hors ligne.

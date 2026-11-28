@@ -221,16 +221,16 @@ try {
         await page.locator('#tuto.on .btn').first().click();
         await elite.first().waitFor();
         const resultTitle=page.locator('#result.on h1');
+        const game=await page.evaluateHandle(async()=> (await import('/src/game.js')).G);
         let lastTurn=null;
         let turnsPlayed=0;
         for(let observed=0;observed<48;observed++){
-          const nextTurn=await page.waitForFunction(async previous=>{
-            const {G}=await import('/src/game.js');
+          const nextTurn=await page.waitForFunction(({G,previous})=>{
             if(document.querySelector('#result.on h1'))return 'finished';
             if(G.phase!=='fight'||G.cur?.team!=='h'||!G.endTurnResolve||G.busy)return false;
             const turn=G.s.round+':'+G.turn;
             return turn!==previous?turn:false;
-          },lastTurn);
+          },{G:game,previous:lastTurn});
           lastTurn=await nextTurn.jsonValue();
           await nextTurn.dispose();
           if(lastTurn==='finished')break;
@@ -244,6 +244,7 @@ try {
           },lastTurn);
           if(played)turnsPlayed++;
         }
+        await game.dispose();
         assert.ok(turnsPlayed>=2,'le combat doit avancer sur plusieurs tours');
         await resultTitle.waitFor();
         assert.match(await resultTitle.textContent(),zh?/胜利|失败|战败/:/Sieg|Niederlage/);
@@ -256,13 +257,13 @@ try {
           const {G}=await import('/src/game.js');
           const {startFight}=await import('/src/ui.js');
           const {tr}=await import('/src/i18n.js');
-          const sprite=new URL('/assets/wolfN.webp',location.href);
+          const sprite=new URL('/assets/sol_bois.webp',location.href);
           const cached=!!await caches.match(sprite.href);
           await startFight(1,0);
           return {cached,phase:G.phase,feedback:document.getElementById('mapinfo').textContent,
             expected:tr('Images introuvables')+' : '};
         });
-        assert.equal(coldRegion.cached,false,'le sprite du Bois sombre doit être absent du cache');
+        assert.equal(coldRegion.cached,false,'le sol du Bois sombre doit être absent du cache');
         assert.equal(coldRegion.phase,'camp');
         assert.ok(coldRegion.feedback.startsWith(coldRegion.expected),coldRegion.feedback);
         console.log('OK',id,'· refus de chargement pour une région jamais chargée hors ligne');
