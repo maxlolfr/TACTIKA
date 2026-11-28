@@ -131,3 +131,7 @@ Le parcours Chromium complet à 390 × 844 passe. Une mission de survie du Cauch
 La branche intègre les quatre versions V5.29 à V5.32 de `main` (jusqu’à `d07a5cf`). Les nouvelles icônes et le polissage CSS sont intégrés avec les libellés accessibles traduits de la frise et le précache des modules linguistiques. Le delta de `main` ne contient pas de nouveau texte joueur à traduire.
 
 305 tests Node passent. L’audit Chromium vérifie à nouveau 13 écrans dans chacune des langues FR et EN sans texte suspect. Le parcours Chromium en ligne à 390 × 844 passe dans les quatre langues. Le parcours Chromium complet à 390 × 844 passe aussi sur V5.32. La mission de survie du Cauchemar est jouée hors ligne jusqu’au bilan dans les deux langues, suivie du contrôle du message du Bois sombre lorsque le terrain est absent du cache. Le contrôle sur Honor mentionné dans la fiche commune correspond à la V5.32 de `main`.
+
+### Contrôle FR/EN étendu
+
+20 écrans par langue ont été parcourus dans Chromium. Le parcours ajoute la forge, le marchand, la taverne, l’Académie, la sauvegarde, le bilan de victoire et son butin. Le bilan de victoire est déclenché avec une fixture de test. Aucun texte suspect n’a été relevé dans le parcours anglais. Un contrôle automatisé vérifie également la présence des deux versions pour les 53 répliques des 23 scènes et les textes de l’épilogue. 306 tests Node passent. Le rendu sur téléphone réel reste à vérifier.

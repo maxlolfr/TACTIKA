@@ -15,10 +15,11 @@ try {
   await ctx.addInitScript(lang=>{
    if(!localStorage.getItem('landeTactique1'))localStorage.setItem('landeTactique1',JSON.stringify({
     v:2,fight:9,lvl:30,xp:0,gold:5000,items:[],z:{prairie:10,bois:10,cote:10,monts:10,chateau:3},
-    st:{},up:{},lang,tuto:1,storySeen:{prologue:1},
+    st:{},up:{},lang,tuto:1,storySeen:{prologue:1,join_orion:1,join_nyra:1,join_lyria:1},
    }));
   },lang);
   const pg=await ctx.newPage();
+  pg.setDefaultTimeout(8000);
   const errors=[];
   pg.on('pageerror',error=>errors.push(error.message));
   await pg.goto(`http://localhost:${srv.address().port}/index.html`);
@@ -52,6 +53,16 @@ try {
    await grab(id,'#vpanel.on');
    await click('#vpanel .v-x');
   }
+  for(const [building,selector] of [['forge','#forge'],['marchand','#shop'],['taverne','#tav'],['talents','#armes']]){
+   await click(`.v-bld[data-b="${building}"]`);
+   await grab(building,selector+'.on');
+   await click(selector+' .ov-back');
+  }
+  await click('.v-gear');
+  await pg.getByRole('button',{name:/💾/}).click();
+  await grab('sauvegarde','#sv[open]');
+  await pg.locator('#sv').evaluate(dialog=>dialog.close());
+  await click('#vpanel .v-x');
   await click('.v-go');
   await grab('carte','#map.on');
   await click('.zone');
@@ -63,6 +74,17 @@ try {
   await grab('aide du combat','#hint');
   await pg.locator('#flee').evaluate(button=>{button.click();button.click()});
   await grab('bilan de retraite','#result.on');
+  await click('#result .ractions button');
+  await pg.locator('#spells button:enabled').first().waitFor();
+  await pg.evaluate(async()=>{
+   const {G,hooks}=await import('/src/game.js');
+   G.s.units.filter(unit=>unit.team==='m').forEach(unit=>{unit.dead=true;});
+   hooks.result(true,false);
+  });
+  await grab('bilan de victoire','#result.on');
+  await click('#result .chest');
+  await pg.locator('#result .lootbox .loot').nth(1).waitFor();
+  await grab('butin de victoire','#result .lootbox');
   if(errors.length)throw new Error(errors.join('\n'));
   await ctx.close();
  }

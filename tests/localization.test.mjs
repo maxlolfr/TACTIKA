@@ -5,7 +5,7 @@ import {TROPHIES,BEASTS,beastInfo} from '../src/chronicle.js';
 import {SPECS} from '../src/talents.js';
 import {ITEMS,SP} from '../src/data.js';
 import {EQUIPMENT} from '../src/locales/equipment.js';
-import {SC,OUTRO} from '../src/story.js';
+import {SC,OUTRO,OUTRO_END} from '../src/story.js';
 import {STORY_LOCALES,storyLine} from '../src/locales/story.js';
 import {TUTO,TIPS,TIPS_T} from '../src/tips.js';
 import {QUESTS} from '../src/quests.js';
@@ -65,6 +65,16 @@ test('les quarante quêtes sont traduites des titres aux répliques dans les deu
       }
     }
   }
+});
+
+test('chaque réplique et chaque texte de fin disposent de leurs versions française et anglaise', () => {
+  for (const [id,lines] of Object.entries(SC)) {
+    for (const [speaker,fr,en] of lines) {
+      assert.ok(fr?.trim()&&en?.trim(),`${id} / ${speaker}`);
+    }
+  }
+  for (const [speaker,fr,en] of OUTRO)assert.ok(fr?.trim()&&en?.trim(),speaker);
+  assert.ok(OUTRO_END.every(text=>text.trim()));
 });
 
 test('les deux aperçus couvrent toutes les scènes et les six personnages de l’épilogue', () => {
