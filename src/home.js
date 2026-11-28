@@ -14,7 +14,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.22';
+export const VERSION='5.23';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
@@ -201,10 +201,11 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
 // ---------- V4.6 : Cristal de l'Éther → expéditions (missions gagnées à rejouer, revanches des boss) ----------
 // V5.14 : passage entre la campagne et le Cauchemar (drapeau + rechargement), section Cauchemar du Cristal
 function cmGate(P){const en=save.lang==='en';
- if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 9 (level 50 monsters, champions and elites, bosses included; Vampiric and Venomous elites from region 4, Spectral and Commander from region 7). Then the last pilot boss awakens here.':'Régions 1 à 9 (monstres niveau 50, champions et élites, boss compris ; élites Vampiriques et Venimeuses dès la région 4, Spectrales et Commandants dès la région 7). Ensuite, le dernier boss pilote s’éveille ici.'));
+ if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 12 (level 50 monsters, champions and elites, bosses included; Vampiric and Venomous elites from region 4, Spectral and Commander from region 7). The Primordial Breaker waits at the end of region 12.':'Régions 1 à 12 (monstres niveau 50, champions et élites, boss compris ; élites Vampiriques et Venimeuses dès la région 4, Spectrales et Commandants dès la région 7). Le Briseur primordial attend au bout de la région 12.'));
   const g=el('div','v-actions v-wrap');CM_PILOTS.forEach((b,k)=>{const z=ZONES[b.zi],ok=cmBossOpen(k),won=save.cm.b[b.id],r=el('div','v-row'+(ok?'':' off'));
-   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish Nightmare regions 1 to 9':'Termine les régions 1 à 9 du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_PILOTS[k-1].zi].boss.n}</small>`));
+   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish all Nightmare regions':'Termine toutes les régions du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_PILOTS[k-1].zi].boss.n}</small>`));
    if(ok)r.append(wood(won?(en?'Fight again':'Réaffronter'):(en?'Fight':'Affronter'),()=>A.pilot(b.zi),'sm'));c.append(r)});
+  if(cmDone()&&!CM_DEV.dev){const st=ZONES.slice(0,CM_ZONES).reduce((a,z)=>a+(save.cm.st[z.id]||[]).reduce((x,y)=>x+(y||0),0),0),mx=ZONES.slice(0,CM_ZONES).reduce((a,z)=>a+3*zlen(z),0);c.append(el('div','v-row cm-won',`<div><b>☠ ${en?'Nightmare vanquished':'Cauchemar vaincu'}</b><small>${en?'12 regions and 12 bosses':'12 régions et 12 boss'} · ${st} / ${mx} ★</small></div>`))} // V5.23 : fin du Cauchemar
   if(CM_DEV.real)g.append(wood(en?'🌅 Back to the world of Lande':'🌅 Revenir au monde de Lande',()=>{setNightmare(0);location.reload()},'dk'));else g.append(el('small',null,en?'Sandbox (?cauchemar): separate save, everything open.':'Bac à sable (?cauchemar) : sauvegarde à part, tout est ouvert.'));
   c.append(g);P.append(c);return}
  const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ The Nightmare':'☠ Le Cauchemar'));

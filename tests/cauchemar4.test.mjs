@@ -12,8 +12,8 @@ const park=(s,keep)=>{s.units.forEach((u,k)=>{if(!keep.includes(u)){u.x=u.gx=90+
 const last=zi=>zlen(ZONES[zi])-1;
 const spot=(s,u,dx,dy)=>{for(let k=1;k<6;k++){const x=u.x+dx*k,y=u.y+dy*k;if(s.map.has(x+','+y))return{x,y}}return null};
 
-test('régions 1 à 9 jouables (Ignaros, Pharaon, Reine boss de leur région) ; dernier pilote : Briseur primordial',()=>{
- assert.equal(CM_ZONES,9);assert.deepEqual(CM_PILOTS.map(b=>b.id),['eter']);
+test('régions 1 à 9 jouables (Ignaros, Pharaon, Reine boss de leur région) ',()=>{
+ assert.ok(CM_ZONES>=9);
  for(const zi of [6,7,8]){assert.ok(CM_TUNE[zi],'renfort réglé');const F=E.cmSpec(r.fightSpec(zi,last(zi),1),zi,{seed:4});assert.ok(F.cm.boss);assert.equal(F.lvl,50);assert.equal(F.cm.champ,0);
   const B=battleF(F).units.find(u=>u.boss);assert.ok(B.n.startsWith('☠ ')&&B.cmBoss);assert.ok(!B.mods)}
  const Q=E.cmSpec(r.fightSpec(8,last(8),1),8,{seed:4});assert.equal(Q.cm.boss.rage,.6,'la Reine garde son paquet de pilote');

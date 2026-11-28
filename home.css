@@ -349,3 +349,4 @@ button.v-eq.sel{box-shadow:0 0 0 3px #ffe19a,0 0 12px #ffd26a}
 html.gfxhi .v-glow{scale:1.2}
 html.gfxhi .v-cry img{filter:drop-shadow(0 0 14px #9fdcff)}
 html.gfxhi .v-stage[data-sky=cm] .v-cry img{filter:drop-shadow(0 0 26px #d050ff)}
+.cm-won{border:1px solid #b44cff;background:linear-gradient(90deg,#3a0f4a,#1b0a24)}.cm-won b{color:#e3b8ff}
