@@ -293,6 +293,9 @@ function nightFx(now,dt){if(globalThis.__noNF)return;const lf=lowFx();nightCache
   if(!lf&&S&&S.map)for(const m of S.map.values()){if(m.block||m.water)continue;const h=((m.x*73856093)^(m.y*19349663))>>>0;if(h%7)continue;const[sx,sy]=scr(m.x,m.y),a=.5+.5*Math.sin(now/1100+h%628/100);
    diamond(ctx,sx,sy,.8);ctx.fillStyle=`rgba(200,25,60,${.05+.12*a})`;ctx.fill();ctx.strokeStyle=`rgba(255,80,110,${.12+.3*a})`;ctx.lineWidth=1.5;ctx.stroke()}
   ctx.restore()}
+ /* V5.14.4 : lumières sur les côtés (halos cramoisis et violet qui respirent, bords gauche / droit), sans assombrir */
+ if(!lf){ctx.globalCompositeOperation='lighter';const q=Math.sin(now/1300),q2=Math.sin(now/1700+2);
+  for(const[x,y,r,c,a]of[[W*.02,H*.42,W*.55,'#ff2a4a',.2+.07*q],[W*.98,H*.58,W*.55,'#ff2a4a',.2+.07*q2],[W*.05,H*.82,W*.4,'#b04bff',.16+.06*q2],[W*.95,H*.2,W*.4,'#b04bff',.16+.06*q]])haloAt(ctx,x,y,r,c,a);ctx.globalCompositeOperation='source-over'}
  if(!lf){const nE=hiFx()?44:28;if(NE.length>nE)NE.length=nE;while(NE.length<nE)NE.push({x:Math.random()*W,y:Math.random()*H,r:3+Math.random()*5,v:.03+.04*Math.random(),ph:Math.random()*6.28});
   ctx.globalCompositeOperation='lighter';for(const p of NE){p.y-=p.v*dt;p.x+=Math.sin(now/900+p.ph)*.35;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}ctx.globalAlpha=(.55+.3*Math.sin(now/260+p.ph))*Math.min(1,p.y/(H*.2))*Math.min(1,(H-p.y)/(H*.1));ctx.drawImage(nSpr[2],p.x-p.r,p.y-p.r,p.r*2,p.r*2)}ctx.globalAlpha=1}
  if(!lf){const nN=hiFx()?36:22;if(NW.length>nN)NW.length=nN;while(NW.length<nN)NW.push({x:Math.random()*W,y:H+Math.random()*H*.6,r:6+Math.random()*16,v:.012+Math.random()*.02,ph:Math.random()*6.28,k:Math.random()<.7?0:1});
