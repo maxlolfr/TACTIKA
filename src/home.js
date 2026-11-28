@@ -3,8 +3,8 @@
 import {$,SPEED} from './util.js';
 import {HER,ITEMS,SLOTS,ZONES,POTION,RARE,ATTR,zlen,icOf,whoOf,whoName,SLOT_D,TEAM_SIZE,SLOTS_SP} from './data.js';
 import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn,equip,compare,fightSpec,zoneDone,crystalState,skyOf,SKIES,attrOf,ptsLeft,spendAttr,resetAttr,holder,fits,lvOf,teamOf,swapTeam,recruited,roster,knownSpells,loadoutOf,slotsOf,swapSpell} from './rules.js';
-import {MON,CM_DEV} from './data.js';
-import {save,prog,unlocked,store,resetSave} from './save.js';
+import {MON,CM_DEV,CM_BOSSES,CM_ZONES} from './data.js';
+import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
 import {setLang,trh} from './i18n.js';
 import {TROPHIES,TIER,REC,BEASTS,beastInfo,beastTraits,completion,checkTrophies,stars3,questsDone} from './chronicle.js';
@@ -14,7 +14,7 @@ setVoiceLang(save.lang); // V4.83 : voix dans la langue choisie dès le chargeme
 import {masteredFor,rankOf} from './mastery.js';
 import {GQ_N,gqOf,setGq} from './gfx.js'; // V5.11 : réglage graphique
 
-export const VERSION='5.13.0';
+export const VERSION='5.14.0';
 // V5.11 : numéro de version discret mais toujours visible au camp et sur la carte (demande de Max : savoir quelle version tourne)
 function vTag(){if(document.getElementById('vtag'))return;const t=document.createElement('div');t.id='vtag';t.textContent='v'+VERSION+(CM_DEV?' ☠':'');t.setAttribute('aria-hidden','true');document.body.append(t)}
 const el=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e};
@@ -87,7 +87,8 @@ const claimable=()=>contracts(save,today()).filter(t=>t.p>=t.n&&!t.c).length;
 const NEWS={forge:()=>forgeNews()?'↑':0,talents:()=>talentNews()?'!':0,taverne:()=>claimable()||(save.dd!==today()?'!':0),
  marchand:()=>0,caserne:()=>0,entrainement:()=>trainNews()?'+':0};
 // chapitre en cours : première zone ouverte non terminée
-function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`Chapitre ${i+1} · ${z.n}`,s:`Étape ${prog(z.id)+1} sur ${L}`+(prog(z.id)===L-1?` · Boss : ${z.boss.n}`:'')}}
+function chapter(){for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const L=zlen(z);if(unlocked(i)&&prog(z.id)<L)return{i,z,t:`${CM_DEV?'☠ ':''}Chapitre ${i+1} · ${z.n}`,s:`Étape ${prog(z.id)+1} sur ${L}`+(prog(z.id)===L-1?` · Boss : ${z.boss.n}`:'')}}
+ if(CM_DEV)return{i:-1,t:'☠ Boss pilotes du Cauchemar',s:'Ils t’attendent au Cristal de l’Éther'}; // V5.14
  return{i:-1,t:'Aventure terminée',s:'Rejoue les combats pour 3 ★'}}
 
 // ---------- scène peinte ----------
@@ -186,7 +187,7 @@ let cmdOff=(()=>{try{return localStorage.getItem('tkCmdOff')==='1'}catch(e){retu
 function cmdFold(v){cmdOff=v;try{localStorage.setItem('tkCmdOff',v?'1':'0')}catch(e){}root.classList.toggle('cmd-off',v);fitHome();requestAnimationFrame(fitHome)}
 // ---------- V4.6 : panneau de commandement (colonne sur grand écran, tiroir en portrait) ----------
 const GOAL={survive:'⏳ Survie',chief:'♛ Chef'};
-function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F=fightSpec(ch.i,i,0),names=F.en?[...new Set(F.en.map(k=>MON[k].n))]:F.pool.map(k=>MON[k].n);
+function nextFight(ch){if(ch.i<0)return null;const z=ch.z,i=prog(z.id),F0=fightSpec(ch.i,i,0),F=CM_DEV&&ch.i<CM_ZONES?{...F0,lvl:50}:F0,names=F.en?[...new Set(F.en.map(k=>MON[k].n))]:F.pool.map(k=>MON[k].n);
  return{F,type:F.boss?'💀 Boss : '+F.boss.n:GOAL[F.goal]?GOAL[F.goal]+(F.wave?` ${F.wave.turns} tours, renforts`:''):'⚔ Combat',foes:[...new Set([...(F.boss?[F.boss.n]:[]),...names,...(F.elite&&!F.wave?[MON[F.elite].n]:[])])]}}
 function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.last(),row=(h,fn)=>{const r=el(fn?'button':'div','v-cl',`<span>${h}</span>`);if(fn)r.onclick=fn;return r};
  {const h=el('h3',null,'Commandement'),cv=el('button','v-cmdx','<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9.4 5.6 7.6 7.4l4.6 4.6-4.6 4.6 1.8 1.8L15.8 12z"/></svg>');cv.setAttribute('aria-label','Replier le commandement');cv.onclick=()=>cmdFold(true);h.append(cv);P.append(h)}
@@ -198,7 +199,23 @@ function cmdPanel(ch){const P=el('section','v-cmd'),n=nextFight(ch),L=A.last&&A.
  P.append(row('💎 <b>Cristal de l’Éther</b> : expéditions et revanches',()=>show('expe')));
  return P}
 // ---------- V4.6 : Cristal de l'Éther → expéditions (missions gagnées à rejouer, revanches des boss) ----------
-function expe(P){
+// V5.14 : passage entre la campagne et le Cauchemar (drapeau + rechargement), section Cauchemar du Cristal
+function cmGate(P){const en=save.lang==='en';
+ if(CM_DEV){const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ Nightmare campaign':'☠ Campagne du Cauchemar'),el('p','v-empty',en?'Regions 1 to 3 (level 50 monsters, champions and elites, bosses included). Then the pilot bosses awaken here, one after another.':'Régions 1 à 3 (monstres niveau 50, champions et élites, boss compris). Ensuite, les boss pilotes s’éveillent ici, l’un après l’autre.'));
+  const g=el('div','v-actions v-wrap');CM_BOSSES.forEach((b,k)=>{const z=ZONES[b.zi],ok=cmBossOpen(k),won=save.cm.b[b.id],r=el('div','v-row'+(ok?'':' off'));
+   r.append(el('div',null,`<b>${ok?'☠ ':'🔒 '}${z.boss.n}</b><small>${won?(en?'defeated · ':'vaincu · '):''}${ok?z.n+(en?' · level 50':' · niveau 50'):k===0?(en?'Finish Nightmare regions 1 to 3':'Termine les régions 1 à 3 du Cauchemar'):(en?'Defeat ':'Vaincs ')+ZONES[CM_BOSSES[k-1].zi].boss.n}</small>`));
+   if(ok)r.append(wood(won?(en?'Fight again':'Réaffronter'):(en?'Fight':'Affronter'),()=>A.pilot(b.zi),'sm'));c.append(r)});
+  if(CM_DEV.real)g.append(wood(en?'🌅 Back to the world of Lande':'🌅 Revenir au monde de Lande',()=>{setNightmare(0);location.reload()},'dk'));else g.append(el('small',null,en?'Sandbox (?cauchemar): separate save, everything open.':'Bac à sable (?cauchemar) : sauvegarde à part, tout est ouvert.'));
+  c.append(g);P.append(c);return}
+ const c=el('div','v-card cm-gate');c.append(el('b',null,en?'☠ The Nightmare':'☠ Le Cauchemar'));
+ if(canNightmare()){c.append(el('p','v-empty',en?'The Crystal shows the other side of Lande: the same lands, darker and far more dangerous. Your team, gold and gear come with you; Nightmare progress is kept apart.':'Le Cristal montre l’autre face de Lande : les mêmes terres, plus sombres et bien plus dangereuses. Ton équipe, ton or et ton équipement te suivent ; la progression du Cauchemar est gardée à part.'),wood(en?'☠ Enter the Nightmare':'☠ Entrer dans le Cauchemar',()=>{setNightmare(1);location.reload()}))}
+ else c.append(el('p','v-empty',en?'🔒 Something stirs inside the Crystal… Finish the story (epilogue) to awaken it.':'🔒 Quelque chose remue dans le Cristal… Termine l’histoire (épilogue) pour l’éveiller.'));
+ P.append(c)}
+function expe(P){cmGate(P);
+ if(CM_DEV){P.append(el('h4',null,save.lang==='en'?'Nightmare missions':'Missions du Cauchemar'));let any=0;
+  ZONES.slice(0,CM_ZONES).forEach((z,zi)=>{const L=zlen(z),done=Math.min(prog(z.id),L);if(!done)return;any=1;const r=el('div','v-card');r.append(el('b',null,'☠ '+z.n));const g=el('div','v-actions v-mgrid');
+   for(let i=0;i<done;i++){const b=wood(`${i===L-1?'♛':i+1} ${'★'.repeat((save.cm.st[z.id]||[])[i]||0)}`,()=>A.fight(zi,i),'sm dk');b.setAttribute('aria-label',`${z.n}, mission ${i+1}`);g.append(b)}r.append(g);P.append(r)});
+  if(!any)P.append(el('p','v-empty',save.lang==='en'?'Win a Nightmare fight on the map to replay it here.':'Gagne un combat du Cauchemar sur la carte pour le rejouer ici.'));return}
  P.append(el('p','v-empty','Rejoue une mission déjà gagnée : XP des monstres, moitié de l’or, 15 % de chance d’objet. Sans limite, sans obligation.'));
  const boss=ZONES.map((z,zi)=>({z,zi})).filter(o=>zoneDone(save,o.zi));
  if(boss.length){P.append(el('h4',null,'Revanches'));for(const{z,zi}of boss){const L=zlen(z),r=el('div','v-row');r.append(el('div',null,`<b>${z.boss.n}</b><small>${z.n} · ${'★'.repeat((save.st[z.id]||[])[L-1]||0)||'aucune étoile'}</small>`),wood('Affronter',()=>A.fight(zi,L-1),'sm'));P.append(r)}}

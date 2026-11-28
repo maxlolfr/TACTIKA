@@ -296,7 +296,7 @@ export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,am
  t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else{t.wasKO=1;if(t.trap?.glyph)delete t.trap}}
  const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};if(prot)e.prot=prot;
  if(killed&&t.poison&&t.poison.spread){e.spread=[];for(const[dx,dy]of DIRS){const o=occ(s,t.x+dx,t.y+dy); // Contagion : ne se propage pas plus loin
-  if(o&&o.team===t.team&&!(o.poison&&o.poison.d*o.poison.turns>=12)){o.poison={d:6,turns:2};e.spread.push(o)}}}if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
+  if(o&&o.team===t.team&&!(o.poison&&o.poison.d*o.poison.turns>=12)){o.poison={d:6,turns:2};e.spread.push(o)}}}if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max*(t.rageAt||.5)){t.summoned=1;e.spawn=summon(s,t)}
  return e}
 // Invocation unique d'un boss (Roi Gelée) : sur les cases libres les plus proches, sans XP, jouent en fin de tour de jeu.
 export function summon(s,b){const{k,n,hp,pm,dmg,sn}=b.summon,m=MON[k],d=reach(s,b,4).dist,out=[];
@@ -477,16 +477,18 @@ export function aiStep(s,u){
 // howl : +30 % de dégâts aux monstres (2 tours), tous les 3 tours · shell : Rempart un tour sur deux · quake : dégâts aux héros à 3 cases ou moins, tous les 3 tours · rage : sous 50 % PV, +1 PM et dégâts ×1,3
 export const BOSS_P={howl:[3,2,'Hurlement'],shell:[2,1,'Carapace'],quake:[3,0,'Séisme'],beam:[3,1,'Rayon prismatique'],astral:[3,0,'Téléportation'],frost:[3,0,'Bouclier de glace'],breaker:[4,0,'Défense brisée']}; // V4.76 : astral (Aetherion) et frost (Roi du Givre) ont aussi une phase sous 50 % PV
 // V4.5e : après l'appel de la meute (sous 50 % PV), le Loup alpha hurle tous les 2 tours
-const bossP=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:u.bs==='astral'&&u.raged?[2,0,BOSS_P.astral[2]]:BOSS_P[u.bs]; // V4.76 : Aetherion se téléporte tous les 2 tours après sa phase
+const bossP0=u=>u.bs==='howl'&&u.summoned?[2,0,BOSS_P.howl[2]]:u.bs==='astral'&&u.raged?[2,0,BOSS_P.astral[2]]:BOSS_P[u.bs];
+// V5.14 : boss du Cauchemar (cmFast) : signature un tour plus tôt dans son cycle (jamais moins de 2 tours)
+const bossP=u=>{const p=bossP0(u);if(!p||!u.cmFast||p[0]<=2)return p;const P=p[0]-1;return[P,Math.min(p[1],P-1),p[2]]}; // V4.76 : Aetherion se téléporte tous les 2 tours après sa phase
 export function bossNext(u){const p=bossP(u);if(!p)return 0;const b=u.bt||0;for(let k=1;;k++)if((b+k)%p[0]===p[1])return k}
 export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
- if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'boss_phase'},{type:'shake',ms:300})}return ev}
- if(u.bs==='tomb'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Malédiction du tombeau !',color:'#d6b14a',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.curse=2;ev.push({type:'status',t:h,text:'Maudit',color:'#d6b14a'})}}return ev}
- if(u.bs==='swamp'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Spores toxiques !',color:'#9be15d',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.poison={d:4,turns:2};ev.push({type:'status',t:h,text:'Empoisonné',color:'#9be15d'})}if(!s.lava){s.lava={toxic:1,n:3,hot:1,next:[]};lavaMark(s)}}return ev}
- if(u.bs==='astral'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;u.maxPM++;u.pm++;ev.push({type:'status',t:u,text:'Jugement céleste !',color:'#ffd65a',snd:'boss_phase'},{type:'shake',ms:350})}}
- if(u.bs==='frost'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Gel éternel !',color:'#8fd8ff',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.slow=Math.max(h.slow||0,1);ev.push({type:'status',t:h,text:'−1 PM',color:'#8fd8ff'})}if(!s.lava){s.lava={cold:1,n:3,hot:1,next:[]};lavaMark(s)}}}
- if(u.bs==='breaker'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.25;ev.push({type:'status',t:u,text:'Fracas primordial !',color:'#ffb347',snd:'boss_phase'},{type:'shake',ms:450});for(const h of s.units)if(h.team==='h'&&!h.dead){h.sunder={pct:.15,turns:2};ev.push({type:'status',t:h,text:'Armure brisée +15 %',color:'#ff9a5a'})}}}
- if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max/2){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
+ if(u.bs==='rage'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.maxPM++;u.pm++;u.dmgMul=1.3;ev.push({type:'status',t:u,text:'Fureur !',color:'#ff5a5a',snd:'boss_phase'},{type:'shake',ms:300})}return ev}
+ if(u.bs==='tomb'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Malédiction du tombeau !',color:'#d6b14a',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.curse=2;ev.push({type:'status',t:h,text:'Maudit',color:'#d6b14a'})}}return ev}
+ if(u.bs==='swamp'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Spores toxiques !',color:'#9be15d',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.poison={d:4,turns:2};ev.push({type:'status',t:h,text:'Empoisonné',color:'#9be15d'})}if(!s.lava){s.lava={toxic:1,n:3,hot:1,next:[]};lavaMark(s)}}return ev}
+ if(u.bs==='astral'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.2;u.maxPM++;u.pm++;ev.push({type:'status',t:u,text:'Jugement céleste !',color:'#ffd65a',snd:'boss_phase'},{type:'shake',ms:350})}}
+ if(u.bs==='frost'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.2;ev.push({type:'status',t:u,text:'Gel éternel !',color:'#8fd8ff',snd:'boss_phase'},{type:'shake',ms:350});for(const h of s.units)if(h.team==='h'&&!h.dead){h.slow=Math.max(h.slow||0,1);ev.push({type:'status',t:h,text:'−1 PM',color:'#8fd8ff'})}if(!s.lava){s.lava={cold:1,n:3,hot:1,next:[]};lavaMark(s)}}}
+ if(u.bs==='breaker'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.25;ev.push({type:'status',t:u,text:'Fracas primordial !',color:'#ffb347',snd:'boss_phase'},{type:'shake',ms:450});for(const h of s.units)if(h.team==='h'&&!h.dead){h.sunder={pct:.15,turns:2};ev.push({type:'status',t:h,text:'Armure brisée +15 %',color:'#ff9a5a'})}}}
+ if(u.bs==='forge'){if(!u.raged&&u.hp<=u.max*(u.rageAt||.5)){u.raged=1;u.dmgMul=1.2;if(s.lava){s.lava.hot=1;s.lava.n+=2}ev.push({type:'status',t:u,text:'Surchauffe !',color:'#ff7a2a',snd:'boss_phase'},{type:'shake',ms:350})}return ev}
  if(u.bs==='beam')return beamTurn(s,u,ev);
  u.bt=(u.bt||0)+1;const[P,ph,n]=bossP(u);if(u.bt%P!==ph)return ev;
  if(u.bs==='howl')for(const m of s.units)if(m.team===u.team&&!m.dead){m.buff={pct:.3,turns:2};ev.push({type:'status',t:m,text:m===u?'Hurlement ! +30 %':'+30 %',color:'#ffd65a',snd:m===u?'bite':undefined})}

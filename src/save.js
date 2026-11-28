@@ -1,5 +1,5 @@
 // Sauvegarde locale (localStorage). `save` est un objet unique, modifié sur place.
-import {ZONES,zlen,PREVIEW,CM_DEV} from './data.js';
+import {ZONES,zlen,PREVIEW,CM_DEV,CM_ZONES,CM_BOSSES,CM_FLAG,cmEligible} from './data.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
@@ -9,7 +9,7 @@ import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateCha
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
 // V5.01 : lecture sûre. Principal -> copie de secours (_bak) ; un texte abîmé est mis de côté (_corrupt), jamais écrasé en silence.
 // V4.29 : l'aperçu de la région 7 a sa propre sauvegarde, copiée de la vraie à la première ouverture : la vraie n'est jamais écrite
-export const KEY=CM_DEV?'landeTactique1_cauchemar':PREVIEW?'landeTactique1_braise':'landeTactique1'; // V5.10 : l'accès Cauchemar a sa propre sauvegarde
+export const KEY=CM_DEV?.dev?'landeTactique1_cauchemar':PREVIEW?'landeTactique1_braise':'landeTactique1'; // V5.10 : l'accès Cauchemar a sa propre sauvegarde
 export const KB=KEY+'_bak',KC=KEY+'_corrupt';
 export const storeState={ok:true,err:null,loadFrom:'new'}; // loadFrom : new | main | backup | corrupt
 const rd=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
@@ -25,12 +25,24 @@ save.attr=cleanAttr(save.attr,save.lvl); // caractéristiques (V4.7c) : absentes
 if(!save.z)save.z={prairie:Math.min(4,save.fight-1)}; // reprise des anciennes sauvegardes
 migratePrairie(save);migrateBois(save);migrateCote(save);migrateMonts(save);migrateChateau(save);
 if(PREVIEW){save.lvl=Math.max(save.lvl,21);save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)if(!z.map)save.z[z.id]=zlen(z)} // carte I terminée, équipe niveau 21 au moins
-if(CM_DEV){save.lvl=50;save.xp=0;save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)save.z[z.id]=zlen(z)} // V5.10 : équipe de fin de campagne, toutes les régions ouvertes
+if(CM_DEV?.dev){save.lvl=50;save.xp=0;save.attr=cleanAttr(save.attr,save.lvl);for(const z of ZONES)save.z[z.id]=zlen(z)} // V5.10 : équipe de fin de campagne, toutes les régions ouvertes
+// V5.14 : progression Cauchemar (champ additif cm : z = étapes par région, st = étoiles, b = boss pilotes vaincus), jamais mêlée à save.z
+{const c=save.cm&&typeof save.cm==='object'?save.cm:{},n=o=>o&&typeof o==='object'&&!Array.isArray(o)?o:{};save.cm={z:n(c.z),st:n(c.st),b:n(c.b)};
+ for(const k of Object.keys(save.cm.z))if(!Number.isFinite(save.cm.z[k])||save.cm.z[k]<0)delete save.cm.z[k];
+ if(CM_DEV?.dev)for(let i=0;i<CM_ZONES;i++)save.cm.z[ZONES[i].id]=zlen(ZONES[i])} // bac à sable : régions 1 à 3 et boss pilotes ouverts
 save.lang=save.lang==='en'?'en':'fr'; // V4.83 : langue des récits et des voix (valeur inconnue = français)
 cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids validés, anciennes sauvegardes : rien à rejouer)
 cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu
-export const prog=id=>save.z[id]||0,unlocked=zi=>!ZONES[zi].soon&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
+export const zmap=()=>CM_DEV?save.cm.z:save.z; // V5.14 : en Cauchemar, la carte lit la progression Cauchemar
+export const prog=id=>zmap()[id]||0,unlocked=zi=>!ZONES[zi].soon&&!(CM_DEV&&zi>=CM_ZONES)&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
+export const setProg=(id,v)=>{zmap()[id]=v};
+// boss pilotes : le premier quand les 3 régions du Cauchemar sont finies, puis chacun après le précédent (tous ouverts en bac à sable)
+export const cmDone=()=>ZONES.slice(0,CM_ZONES).every(z=>(save.cm.z[z.id]||0)>=zlen(z));
+export const cmBossOpen=k=>!!CM_DEV&&(CM_DEV.dev||cmDone()&&CM_BOSSES.slice(0,k).every(b=>save.cm.b[b.id]));
+export const canNightmare=()=>!PREVIEW&&cmEligible(save);
+// passage d'un monde à l'autre : drapeau puis rechargement (le mode est fixé au démarrage)
+export function setNightmare(on){try{if(on)localStorage.setItem(CM_FLAG,'cm');else localStorage.removeItem(CM_FLAG)}catch(e){}}
 // avertissement non bloquant quand l'écriture échoue (stockage plein ou bloqué) : au plus une fois par minute
 let warnAt=0;
 function warn(){if(typeof document==='undefined'||Date.now()-warnAt<60000)return;warnAt=Date.now();
