@@ -206,6 +206,7 @@ function aimCard(u){const X=$('exc'),sel=G.sel,E=G.ex;if(!sel||!E||G.busy){X.cla
  X.style.top=matchMedia('(orientation:landscape)').matches?'':$('top').getBoundingClientRect().bottom+2+'px';
  $('hint').textContent=E.bad?'Choisis une autre cible, ou retouche le sort pour l’annuler.':'Retouche pour lancer · retouche le sort pour annuler.'}
 $('end').onclick=()=>{if(G.endTurnResolve&&!G.busy){G.plan=null;G.ex=null;G.sel=null;G.reachC=null;G.endTurnResolve()}};
+$('tmenu').onclick=()=>document.body.classList.toggle('tmenu'); // V5.07 : en paysage, son / réglages / Fuir sont repliés derrière ☰ pour laisser toute la place à la frise des tours
 let fleeArm=0;$('flee').onclick=()=>{if(G.phase!=='fight')return;if(Date.now()-fleeArm<2500){G.phase='lose';G.fid++;if(G.endTurnResolve)G.endTurnResolve();result(false,true)}else{fleeArm=Date.now();$('flee').textContent='Sûr ?';setTimeout(()=>$('flee').textContent='Fuir',2500)}};
 
 // ---------- écrans ----------
