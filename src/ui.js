@@ -1,7 +1,7 @@
 // Interface : panneau de combat, frise des tours, écrans (camp, carte, résultat), saisie tactile.
 import {G,hooks} from './game.js';
 import {$,HUD2} from './util.js';
-import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,CM_DEV,CM_LVL,CM_ZONES,CM_PILOTS,icOf,whoOf,whoName} from './data.js';
+import {SP,HER,MON,ZONES,MAP2,ITEMS,POTION,RARE,zlen,SLOTS,SP5_LVL,LAVA_DMG,PREVIEW,DEMO,DEMO_ZONES,CM_DEV,CM_LVL,CM_ZONES,CM_PILOTS,icOf,whoOf,whoName} from './data.js';
 import {QUESTS} from './quests.js';
 import {K,pick,ri,occ,reach,selCells,newBattle,genMap,mkUnits,heroStats,gainXp,xpNeed,intent,stars,starList,bossNext,BOSS_P,whyNot,forecast,zoneCells,hitCells,slowFor,knownSpells,roster,zoneCenter,targetsFrom,guideSetup,pathTo,upgrade,upCost,upLvl,itemVal,rarOf,rollRare,SURVIVE,shopStock,buy,sell,sellPrice,buyPot,contracts,ctUpdate,claim,dailyFight,questOpen,questDone,questFight,grantQuest,fightSpec,map2Open,prismCover,cell,prismHits,prismDmg,soak,ampAt,prismOn,beamDmg,approach,okTarget,carryPA,costOf,star3,STAR3_TXT,teamOf,fireproof,isOn,chargeDest,lootPool,lootRare,holder} from './rules.js';
 import {save,prog,unlocked,setProg,cmBossOpen,store,resetSave,storeState,hasBackup,restoreBackup,importSave} from './save.js';
@@ -364,12 +364,12 @@ function mapNote(t,txt){const S=$('zsheet');S.innerHTML=`<h3>${t}</h3><small>${t
  const c=document.createElement('button');c.className='btn dark';c.textContent='Fermer';c.onclick=()=>S.classList.remove('on');S.appendChild(c);S.classList.add('on')}
 const road=pts=>`<svg class="road" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.map(z=>z.x+','+z.y).join(' ')}" /></svg>`;
 // V4.87 : un seul marqueur pour les deux cartes (portrait du boss, nom, progression, étoiles) ; pos = {x,y} (et lx,ly : paysage de la carte II)
-function zoneBtn(L,zi,pos,num){const z=ZONES[zi],ok=zi>=0&&!z.soon&&unlocked(zi),p=zi>=0?prog(z.id):0,b=document.createElement('button');
+function zoneBtn(L,zi,pos,num){const z=ZONES[zi],dl=DEMO&&zi>=DEMO_ZONES,ok=zi>=0&&!z.soon&&unlocked(zi),p=zi>=0?prog(z.id):0,b=document.createElement('button');
  b.className='zone'+(ok?'':' lock')+((pos.x<12||pos.x>88)?' edge':'');for(const[k,v]of[['x',pos.x],['y',pos.y],['lx',pos.lx??pos.x],['ly',pos.ly??pos.y]])b.style.setProperty('--'+k,v+'%');
  const B=z?.boss&&MON[z.boss.k];if(B)b.appendChild(icon(z.boss.s||B.s,z.boss.s?0:B.row*3,52));else b.insertAdjacentHTML('beforeend',`<span class="q">${num}</span>`);
  const st=p?starsOf(z.id).reduce((a,c)=>a+c,0):0;b.setAttribute('aria-label',`Région ${num} : ${z?z.n:pos.n}`);
- b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
- b.onclick=()=>zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
+ b.insertAdjacentHTML('beforeend',`<b><i>${num}</i> ${z?z.n:pos.n}</b><small>${dl?'🔒 Version complète':!z||z.soon?'Bientôt':!ok?'🔒 Bats le boss précédent':p>=zlen(z)?'✓ Terminée':`${p}/${zlen(z)}`}${p?` · ${st}/${3*zlen(z)} ★`:''}</small>`);
+ b.onclick=()=>dl?mapNote(z.n,'Cette région fait partie de la version complète de Tactika, bientôt disponible. Merci d’avoir joué à la démo !'):zi<0||z.soon?mapNote(pos.n||z.n,'Région en préparation : elle arrivera dans une prochaine version.'):ok?zoneSheet(zi):mapNote(z.n,'Termine la région précédente (son boss compris) pour ouvrir celle-ci.');L.appendChild(b);return b}
 function secondMap(L,land){MAP2.forEach((z,i)=>zoneBtn(L,ZONES.findIndex(q=>q.map===2&&q.n===z.n),land?{...z,x:z.lx,y:z.ly}:z,i+7))} /* V5.11 : land = carte paysage seule (Cauchemar) */
 function worldMap(){
  G.phase='camp';document.body.classList.add('camp');$('camp').classList.remove('on');const M=$('map');M.classList.add('on');
@@ -421,7 +421,7 @@ function result(win,fled){if(G.s&&G.s._res)return;if(G.s)G.s._res=1; // V5.24 : 
   const kills={};for(const u of G.s.units)if(u.team==='m'&&u.dead)kills[u.k]=(kills[u.k]||0)+1;
   const ctDone=ctUpdate(save,today(),{win:1,st,boss:!!F.boss,kills});let pot=0;if(F.daily){save.dd=today();if((save.pot||0)<POTION.max){save.pot=(save.pot||0)+1;pot=1}}store();const CH=chron(true);const CMR=CM_DEV&&!CM_DEV.dev&&F.cm?cmRecord(save,{win:1,...cmKills(G.s.units),seal:F.boss&&first?F.zi:-1}):null;if(CMR)store(); // V5.24 : sceaux, trophées et titres du Cauchemar (bac à sable exclu)
   Rs.innerHTML=`<h1>Victoire !</h1>${goalWon}<div class="stars">${[0,1,2].map(i=>`<span class="${i<st?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
-   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?'Le Cauchemar est vaincu ! Les 12 régions sont libérées.':'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
+   <div class="sub">${['Victoire','Aucun héros KO',STAR3_TXT[star3(G.s,!!F.boss)[0]]].map((t,i)=>(sl[i]?'✓ ':'✗ ')+t).join(' · ')}<br>${ZONES[F.zi].n} · ${F.quest?`Quête « ${Q.t} » ${qNew?'terminée':'rejouée'}<br><i>${Q.c}</i>`:F.daily?'défi du jour réussi !':F.boss?F.boss.n+' vaincu !':`étape ${F.i+1}/${zlen(ZONES[F.zi])} gagnée`}${CM_DEV&&F.boss&&(first&&F.zi+1>=CM_ZONES||F.pilot)?'<br><b style="color:#d9a6ff">☠ '+(cmNextBoss()?'Boss pilote éveillé au Cristal : '+cmNextBoss():(F.zi+1>=CM_ZONES?'Le Cauchemar est vaincu ! Les 12 régions sont libérées.':'Tous les boss pilotes du Cauchemar sont vaincus !'))+'</b>':F.boss&&first&&DEMO&&F.zi+1>=DEMO_ZONES?'<br><b style="color:#ffd65a">Fin de la démo ! La suite arrive dans la version complète.</b>':F.boss&&first&&ZONES[F.zi+1]?'<br><b style="color:#ffd65a">Nouvelle zone : '+ZONES[F.zi+1].n+(ZONES[F.zi+1].soon?' (bientôt)':'')+'</b>':''}</div>`;
   Rs.insertAdjacentHTML('beforeend',CH.html);
   setTimeout(()=>say1(H,up?'level':'win'),1900);
   [.3,.55,.8].slice(0,st).forEach(d=>setTimeout(()=>sfx('star_earned',1.8),d*1000+200));

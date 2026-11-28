@@ -1,0 +1,11 @@
+{
+  "name": "tactika-packaging",
+  "private": true,
+  "version": "5.33.0",
+  "description": "Emballage Android (Capacitor) de Tactika, construit dans GitHub Actions",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}

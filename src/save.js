@@ -1,5 +1,5 @@
 // Sauvegarde locale (localStorage). `save` est un objet unique, modifié sur place.
-import {ZONES,zlen,PREVIEW,CM_DEV,CM_ZONES,CM_PILOTS,CM_FLAG,cmEligible} from './data.js';
+import {ZONES,zlen,PREVIEW,DEMO,DEMO_ZONES,CM_DEV,CM_ZONES,CM_PILOTS,CM_FLAG,cmEligible} from './data.js';
 import {cleanSp} from './talents.js';
 import {cleanMast} from './mastery.js';
 import {cleanStory} from './story.js';
@@ -10,13 +10,13 @@ import {cleanAttr,migratePrairie,migrateBois,migrateCote,migrateMonts,migrateCha
 export const save={v:2,fight:1,lvl:1,xp:0,gold:0,items:[],z:null,st:{},up:{}};
 // V5.01 : lecture sûre. Principal -> copie de secours (_bak) ; un texte abîmé est mis de côté (_corrupt), jamais écrasé en silence.
 // V4.29 : l'aperçu de la région 7 a sa propre sauvegarde, copiée de la vraie à la première ouverture : la vraie n'est jamais écrite
-export const KEY=CM_DEV?.dev?'landeTactique1_cauchemar':PREVIEW?'landeTactique1_braise':'landeTactique1'; // V5.10 : l'accès Cauchemar a sa propre sauvegarde
+export const KEY=DEMO?'landeTactique1_demo':CM_DEV?.dev?'landeTactique1_cauchemar':PREVIEW?'landeTactique1_braise':'landeTactique1'; // V5.10 : l'accès Cauchemar a sa propre sauvegarde
 export const KB=KEY+'_bak',KC=KEY+'_corrupt';
 export const storeState={ok:true,err:null,loadFrom:'new'}; // loadFrom : new | main | backup | corrupt
 const rd=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const wr=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 let lastGood=null,lastBak=0;
-{const main=rd(KEY)||rd('landeTactique1'),r=pickSave([main,rd(KB)]);
+{const main=rd(KEY)||(DEMO?null:rd('landeTactique1')),r=pickSave([main,rd(KB)]);
  if(r){Object.assign(save,r.s,{v:2});storeState.loadFrom=r.from?'backup':'main';
   if(r.from===0){lastGood=main;wr(KB,main)} // point de retour : l'état au début de cette session
   else{lastGood=rd(KB);if(main)wr(KC,main)}} // le principal était abîmé : on le garde de côté, la copie de secours est restaurée
@@ -36,12 +36,12 @@ cleanStory(save); // V4.80 : scènes du scénario V2 déjà vues (additif, ids v
 cleanChron(save); // V4.86 : Chronique (champ additif cr : statistiques, bestiaire, collection, trophées)
 cleanMast(save); // V4.39 : maîtrise des sorts (champ facultatif ms), après le niveau de l'aperçu
 export const zmap=()=>CM_DEV?save.cm.z:save.z; // V5.14 : en Cauchemar, la carte lit la progression Cauchemar
-export const prog=id=>zmap()[id]||0,unlocked=zi=>!ZONES[zi].soon&&!(CM_DEV&&zi>=CM_ZONES)&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
+export const prog=id=>zmap()[id]||0,unlocked=zi=>!ZONES[zi].soon&&!(DEMO&&zi>=DEMO_ZONES)&&!(CM_DEV&&zi>=CM_ZONES)&&(zi===0||prog(ZONES[zi-1].id)>=zlen(ZONES[zi-1]));
 export const setProg=(id,v)=>{zmap()[id]=v};
 // boss pilotes : le premier quand les 3 régions du Cauchemar sont finies, puis chacun après le précédent (tous ouverts en bac à sable)
 export const cmDone=()=>ZONES.slice(0,CM_ZONES).every(z=>(save.cm.z[z.id]||0)>=zlen(z));
 export const cmBossOpen=k=>!!CM_DEV&&(CM_DEV.dev||cmDone()&&CM_PILOTS.slice(0,k).every(b=>save.cm.b[b.id]));
-export const canNightmare=()=>!PREVIEW&&cmEligible(save);
+export const canNightmare=()=>!PREVIEW&&!DEMO&&cmEligible(save);
 // passage d'un monde à l'autre : drapeau puis rechargement (le mode est fixé au démarrage)
 export function setNightmare(on){try{if(on)localStorage.setItem(CM_FLAG,'cm');else localStorage.removeItem(CM_FLAG)}catch(e){}}
 // avertissement non bloquant quand l'écriture échoue (stockage plein ou bloqué) : au plus une fois par minute

@@ -1,0 +1,7 @@
+{
+  "appId": "com.maxlolgames.tactika",
+  "appName": "Tactika",
+  "webDir": "www",
+  "backgroundColor": "#16220f",
+  "android": { "allowMixedContent": false }
+}
