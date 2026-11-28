@@ -1,3 +1,9 @@
+## V5.30 — accessoires du village et cristal (étape 4) en HD (29/11/2026, planches de Max 1693 et 1687)
+- Nouvel outil `tools/prep_village_hd.py`. Accessoires (`assets/vie/` : étal, enclume, mannequin, lanterne, bannière, charrette, banc, fontaine, trophée) remis à 520 px de côté max au lieu de 300 (même découpe que `prep_vie.py`, depuis `village/accessoires/` du studio : la planche 1693 est celle déjà utilisée). `VIE` de `src/home.js` ne sert qu'au rapport l/h : inchangé (rapports vérifiés).
+- `assets/cry/crystal4.webp` : planche 1687 (2048 px, étoile Gemini effacée par `cut_village.py cristal-seul`) à 1400 px de large (avant 700), calée dans la boîte 700×896 de `CRY[3]` (vide ajouté en haut, bas aligné). Les cristaux 1, 2, 3 et 5 viennent déjà de la planche 1692 à pleine taille : rien à refaire. Cristal Cauchemar (`cm/`) inchangé.
+- **Sols non remplacés** : les planches 1654–1665, 1822, 1854, 1860 font ≈ 600–640 px par dalle contre ≈ 518 dans le jeu (gain ×1,2) : pas de changement, risque de recalage inutile. `tiles4` (eau, roche) reste le vrai manque, sans image.
+- 283 tests + smoke navigateur OK.
+
 ## V5.29 — icônes, effets, badges, forge et équipement en HD (29/11/2026, planches de Max 1518/1520/1522/1547 + originaux d'équipement)
 - Nouvel outil `tools/prep_icons_hd.py <planche du jeu> <png> <colonnes> <lignes> [S]` (réutilise `key()` de `prep_r9.py`, cases lues dans l'ordre de lecture, taille à l'écran inchangée car `icon()`/`dic()` ne lisent que le rapport l/h). Rapports l/h vérifiés case par case contre l'ancien atlas : ordre identique.
 - `ico` (statuts, 1518), `ficon` (forge, 1522), `fxi` (effets, 1520), `badge` (rangs, 1547) : cases ≈ 256 px au lieu de ≈ 120. `equip` (53 objets) refaite à 256 px au lieu de 160 (`tools/prep_equip.py`, variable `S`, depuis les 7 planches d'origine déjà dans le studio). Poids : +≈ 1,4 Mo.
