@@ -571,3 +571,66 @@ html.lowfx .tro-toast{animation:none!important}
 #tmenu{display:none}
 @media (orientation:landscape){#tmenu{display:flex;align-items:center;justify-content:center;flex:none;min-width:34px;padding:5px 8px!important;font-size:17px;line-height:1}
  body:not(.tmenu) #top .son-m,body:not(.tmenu) #top .son-s,body:not(.tmenu) #hson,body:not(.tmenu) #flee{display:none!important}}
+
+/* ===== V5.09 : HUD de combat compact (tous formats) =====
+   un seul ☰ en haut à droite ; musique / bruitages / volumes / Fuir dans un menu escamotable en surimpression (#hvol) ;
+   la frise garde toute sa largeur, portraits numérotés dans l'ordre de passage, lettre A, B, C… des ennemis comme sur le plateau */
+.hud2 #top .son-m,.hud2 #top .son-s,.hud2 #hson{display:none!important}
+.hud2 #tmenu{display:flex!important;align-items:center;justify-content:center;flex:none;width:40px;height:36px;padding:0!important;color:var(--ra-or2)!important}
+.hud2 #tmenu svg{display:block}
+.hud2 #tmenu[aria-expanded=true]{border-color:var(--ra-or2)!important;box-shadow:0 0 0 1px var(--ra-or2),0 0 10px #e9cf9466!important}
+.hud2 #top{padding-bottom:2px;row-gap:0}
+.hud2 #title{white-space:pre;overflow:hidden;text-overflow:ellipsis;line-height:1.2;max-height:calc(2.4em + 6px);padding:2px 9px;font-size:11px}
+/* frise : badges de numéro et de lettre, aimantation portrait par portrait */
+.hud2 #tl{scroll-snap-type:x mandatory;scroll-padding-inline:8px;overscroll-behavior-x:contain}
+.hud2 #tl .rg{scroll-snap-align:start}
+.hud2 .rg .tn,.hud2 .rg .tlt{position:absolute;z-index:3;font-style:normal;text-align:center;pointer-events:none;box-shadow:0 1px 2px #000c}
+.hud2 .rg .tn{left:-3px;top:-4px;min-width:16px;height:16px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#0b1018;border:1px solid var(--ra-or);color:var(--ra-iv);font:800 10px/14px system-ui}
+.hud2 .rg.cur .tn{background:var(--ra-or2);border-color:#fff3c8;color:#1a1205}
+.hud2 .rg .tlt{right:-4px;bottom:-4px;width:17px;height:17px;box-sizing:border-box;border-radius:50%;background:#7a1d16;border:1px solid #ffb4a8;color:#fff;font:900 10px/15px system-ui}
+/* menu escamotable */
+.hud2 #hvol.on{overflow-y:auto;overscroll-behavior:contain;gap:6px;padding:4px 12px 12px}
+.hud2 #hvol .hx{display:none}
+.hud2 #hvol .hh{display:flex;align-items:center;justify-content:space-between;margin:0 -8px 0 2px;color:var(--ra-or2);font:800 12px system-ui;letter-spacing:.06em;text-transform:uppercase}
+.hud2 #hvol .hchev{display:flex;align-items:center;justify-content:center;width:48px;height:40px;padding:0;border:0;border-radius:9px;background:none;color:var(--ra-or2);cursor:pointer}
+.hud2 #hvol .hchev:active{background:#ffffff14}
+.hud2 #hvol .mu{width:36px;height:34px}
+.hud2 #hvol label{grid-template-columns:36px 66px 1fr 40px;min-height:36px}
+.hud2 #hvol .hft{display:flex;padding-top:8px;border-top:1px solid #b99a6044}
+.hud2 #hvol #flee{display:block!important;flex:1;min-height:40px;font:700 13px system-ui!important;border-color:#c0473a99!important;color:#ffd6cf!important}
+/* portrait : ligne 1 = logo, cartouche, ☰ ; ligne 2 = frise sur toute la largeur */
+@media (orientation:portrait){
+ .hud2 #top{padding-top:calc(env(safe-area-inset-top) + 4px)}
+ .hud2 #hlogo{height:24px}
+ .hud2 #tl{padding:9px 8px 5px}
+}
+/* paysage : une seule ligne ; cartouche plus étroit pour laisser la frise respirer */
+@media (orientation:landscape){
+ .hud2 #title{max-width:clamp(120px,19vw,210px);flex:0 1 auto;min-width:96px}
+}
+@media (orientation:landscape) and (max-height:450px){.hud2 #title{font-size:10px}.hud2 #tmenu{width:36px;height:32px}.hud2 #hvol.on{gap:3px}.hud2 #hvol label{min-height:32px}}
+@media (orientation:landscape) and (min-height:600px){.hud2 #title{max-width:210px;font-size:12px}}
+/* V5.09 : panneau du bas en portrait compacté : nom et PV sur une ligne, barre de vie dessous, PA / PM ; moins de marges ;
+   zones tactiles conservées (sorts ≥ 48 px, Fin du tour ≥ 48 px de haut) ; la place gagnée revient au plateau */
+@media (orientation:portrait){
+ .hud2 #panel{row-gap:4px;padding-top:6px;padding-bottom:calc(env(safe-area-inset-bottom) + 9px)}
+ .hud2 #who{column-gap:8px;min-height:0}
+ .hud2 #who>canvas.pt{width:54px!important;height:54px!important;border-radius:12px}
+ .hud2 #who .wi{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm ht" "hb hb" "pp pp";row-gap:4px;column-gap:6px;align-items:center}
+ .hud2 #who .nm{grid-area:nm}.hud2 #hpt{grid-area:ht;font-size:12px}.hud2 #hpb{grid-area:hb}.hud2 #who .pp{grid-area:pp}
+ .hud2 #who .pa,.hud2 #who .pm{padding:2px 8px 2px 3px}
+ .hud2 #end{min-height:48px;padding:5px 10px!important}
+ .hud2 #hint{min-height:3.9em}
+}
+@media (orientation:portrait) and (min-width:600px){
+ .hud2 #panel{padding:8px 16px calc(env(safe-area-inset-bottom) + 8px);row-gap:6px}
+ .hud2 #who>canvas.pt{width:70px!important;height:70px!important}
+ .hud2 #who .nm{font-size:20px}.hud2 #hpt{font-size:15px}
+ .hud2 .sp,.hud2 #spells:has(>:nth-child(5))>.sp{max-width:74px}
+ .hud2 #end{min-width:170px;min-height:56px;font-size:20px}
+ .hud2 #hint{min-height:2.7em;font-size:12.5px}
+}
+/* V5.09 : paysage : le portrait du héros gardait la taille posée par le script (84 px) et la fiche, comprimée, passait sous les sorts
+   (nom sur le portrait, PV coupés, PA / PM cachés sur l'Honor plié en paysage) */
+@media (orientation:landscape){.hud2 #who>canvas.pt{width:var(--ptw)!important;height:var(--ptw)!important}.hud2 #who{flex:none}}
+@media (orientation:landscape) and (max-height:450px){.hud2{--ptw:46px}.hud2 #who .nm{font-size:14px}}
