@@ -1,7 +1,7 @@
 // Boucle de tours : enchaîne les unités, joue les animations et rejoue les événements des règles.
 import {G,hooks} from './game.js';
 import {wait,tween} from './util.js';
-import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick,iceTick} from './rules.js';
+import {chargeDest,pathTo,face,payCost,applySpell,stepOn,beginTurn,bossTurn,eliteTurn,poisonTick,endTurn,outcome,aiStep,reach,waveTick,waveEmpty,lavaTick,iceTick} from './rules.js';
 import {addFx,addProj,say,pose,shake,punch,burst,addRefs,addBeam,addWave,keepInView,TH,impact,hitStop,dodgeMove} from './render.js';
 import {sfx,voice} from './audio.js';
 import {tally} from './chronicle.js';
@@ -18,9 +18,11 @@ export function play(events){if(G.s?.T)tally(G.s.T,events,G.cur); // V4.86 : dé
   if(t.team==='h'){if(e.killed)setTimeout(()=>voice(t.k,'ko',{force:true}),300);
    else if(!e.saved&&e.src!=='poison'&&(e.crit||e.amt>=t.max*.25))voice(t.k,'hurt',{chance:.7})}
   if(e.saved){say(t,'Dernier rempart !','#9fd0ff',true);sfx('guard',.8)}
+  if(e.prot)say(t,'⛨ protégé','#9fd8ff'); // V5.10 : Gardien
   if(e.spread)for(const o of e.spread)say(o,'Contagion','#b9f26a');
   if(e.spawn){addRefs(e.spawn);for(const m of e.spawn){m.dead=true;setTimeout(()=>{m.dead=false;addFx(m.x,m.y,6,1.1,600,'fxi');sfx(t.summon.snd||'slime',.8)},450)}setTimeout(()=>{pose(t,'s',900);say(t,t.summon.sn?'Appel de la meute !':'Invocation !','#7dff8a',true);sfx('enemy_warning',.7)},250)}break}
- case 'heal':say(e.t,'+'+e.amt,'#7dff8a');impact(e.t,'heal');break;
+ case 'heal':say(e.t,(e.src==='regen'?'✚ +':'+')+e.amt,'#7dff8a');impact(e.t,'heal');break;
+ case 'boom':for(const p of e.cells)addFx(p.x,p.y,7,1.1,600,'fx');burst(e.t,4);punch(e.t,.08,300);break; // V5.10 : Explosif
  case 'status':say(e.t,e.text,e.color);if(e.snd==='dodge'&&e.t.gx!=null){dodgeMove(e.t);impact(e.t,'dodge')}else if(/^Bouclier −/.test(e.text||'')&&e.t.gx!=null)impact(e.t,'block');if(e.snd)sfx(e.snd,.8);break;
  case 'snd':sfx(e.n,e.v||.8);break;
  case 'shake':shake(e.ms);break;
@@ -65,7 +67,8 @@ export async function runFight(){const S=G.s,id=G.fid; // id : une ancienne bouc
   if(u.carried)say(u,`+${u.carried} PA reporté`,'#ffd65a');
   if(u.poison||u.burn){play(poisonTick(S,u));await wait(600);if(G.fid!==id||end())return;if(u.dead)continue}
   if(u.team==='h'){sfx('turn',.5);G.reachC=reach(S,u,u.pm);hooks.render();await new Promise(r=>G.endTurnResolve=r);G.endTurnResolve=null}
-  else{const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}
+  else{const me=eliteTurn(S,u);if(me.length){play(me);await wait(me.some(e=>e.type==='boom')?800:550);if(G.fid!==id||end())return;if(u.dead){endTurn(u);continue}hooks.render()} // V5.10 : élites Cauchemar
+   const be=bossTurn(S,u);if(be.length){play(be);await wait(750);if(G.fid!==id||end())return}await wait(300);await ai(u,id)}
   if(G.fid!==id)return;endTurn(u);
   G.sel=null;G.plan=null;G.ex=null;if(end())return}
 }

@@ -4,6 +4,7 @@
 import {DIRS,R,CMAX,THEMES,HER,MON,ITEMS,SP,PUSH_DMG,COMBO,STAR_ROUNDS,PA_RULE,FORGE_COST,FORGE_STEP,POTION,SHOP_N,SELL_K,ZONES,RARE,zlen,AMP,PRISM,PRISM_OFF,LOW,PA_CARRY,SLOTS,ATTR,CRIT_CAP,DODGE_CAP,LAVA_DMG,CURSE_K,SP5_LVL,TEAM_SIZE,DEF_TEAM,SLOTS_SP,ALL_SPELLS,whoOf,DIFF} from './data.js';
 import {mastered} from './mastery.js'; // V4.39
 import {talentFx} from './talents.js';
+import {elitize,modOut,modIn,modTurn,rooted} from './elites.js'; // V5.10 : élites Cauchemar (inactives sans F.cm)
 
 export const K=(x,y)=>x+','+y;
 export const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
@@ -186,7 +187,7 @@ export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
  // repères stables A/B/C pour les monstres identiques
  for(const k of new Set(s.units.filter(u=>u.team==='m').map(u=>u.k))){const g=s.units.filter(u=>u.team==='m'&&u.k===k&&u.n===MON[k].n);if(g.length>1)g.forEach((u,i)=>{u.tag=String.fromCharCode(65+i);u.n+=' '+u.tag})}
  if(F.goal==='chief'){const c=s.units.find(u=>u.team==='m');c.chief=1;c.n='Chef '+MON[c.k].n.toLowerCase()+(c.tag?' '+c.tag:''); // la lettre de repère reste en majuscule
-  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
+  c.hp=c.max=Math.round(c.max*1.8);c.h*=1.2;c.xp*=2}if(F.cm){s.cmOn=1;elitize(s,F.cm,F.lang)}s.goal=F.goal;if(F.wave)waveSetup(s,F,es);
  s.lava=F.lava?{...F.lava,next:[]}:null;lavaMark(s);
  s.order=[...s.units].sort((a,b)=>b.init-a.init);
 }
@@ -263,7 +264,7 @@ export const weakK=u=>u.weak?1-u.weak.pct:1;
 const condK=(s,u,sp,t)=>{let k=1;if(sp.flk&&s.units.some(o=>o!==u&&!o.dead&&o.team===u.team&&man(o,t)===1))k*=sp.flk;if(sp.exe&&t.hp<=t.max*sp.exe[0])k*=sp.exe[1];if(sp.vs&&t[sp.vs[0]])k*=sp.vs[1];return k};
 const dodgeOf=t=>Math.max(t.dodge||0,t.evade||0); // V4.53 : Esquive active (jusqu'au prochain tour de Nyra)
 // Dégâts d'un sort avant bouclier et armure, pour un tirage `roll`
-const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*weakK(u)*(sp.k||1)*cb*(cr?1.5:1); // sp.k : bonus de dégâts d'un talent sur ce sort
+const power=(u,sp,t,roll,amp,cb,cr)=>amp*(roll+(u.dmgB||0))*(u.mult||1)*(u.dmgMul||1)*(u.exec&&t.hp<t.max*.3?1.25:1)*(u.buff?1+u.buff.pct:1)*weakK(u)*(sp.k||1)*cb*(cr?1.5:1)*(u.mods?modOut(u,t):1); // V5.10 : Berserker · sp.k : bonus de dégâts d'un talent sur ce sort
 const healing=(u,roll,amp)=>Math.round((roll+(u.healB||0))*(u.mult||1)*(u.healMul||1)*amp);
 // nombre de héros ayant frappé t, u compris (palier de combo)
 const comboSize=(u,t)=>u.team==='h'&&t.team!==u.team?new Set([...(t.hitBy||[]),u.id]).size:0;
@@ -274,7 +275,7 @@ const sideK=(sp,at,p)=>sp.side&&at&&(at.x!==p.x||at.y!==p.y)?sp.side:1;
 export function forecast(s,u,sp,t,from=u,at=null){const amp=ampAt(s,from),out={amp:amp>1};
  if(sp.heal&&t.team===u.team)out.heal=sp.heal.map(r=>Math.min(Math.round(healing(u,r,amp)*(sp.hk||1)*(t.curse?CURSE_K:1)),t.max-t.hp));
  if(!sp.dmg||t.team===u.team)return out;
- const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),hit=(roll,cr)=>soak(t,power(u,sp,t,roll,amp,cb,cr)*side*condK(s,u,sp,t),sp.pierce||0);
+ const n=comboSize(u,t),cb=COMBO[n]||1,side=sideK(sp,at,t),gk=s.cmOn?modIn(s,t).k:1,hit=(roll,cr)=>{const v=soak(t,power(u,sp,t,roll,amp,cb,cr)*side*condK(s,u,sp,t),sp.pierce||0);return gk<1?Math.max(1,Math.round(v*gk)):v}; // V5.10 : Gardien
  out.dmg=sp.dmg.map(r=>hit(r,false));out.crit=sp.dmg.map(r=>hit(r,true));out.pc=u.crit||.12;out.dodge=dodgeOf(t);out.combo=n>1?n:0;out.push=0;
  if(sp.push){const p=pushPlan(s,{...from,pushDmg:u.pushDmg},t,sp.push);if(p.left)out.push=soak(t,(p.k||PUSH_DMG)*p.left)}
  const kills=d=>d+out.push>=t.hp&&!t.lastStand;
@@ -289,11 +290,11 @@ export function zoneCenter(s,u,sp,t,from=u){let best=null,bs=-1e9;
  for(const c of zoneCells(s,t,sp.zone)){if(!okTarget(s,u,sp,c,from))continue;const n=zoneCells(s,c,sp.zone).filter(p=>{const o=occ(s,p.x,p.y);return o&&o.team!==u.team}).length,sc=n*10-man(c,t);if(sc>bs){bs=sc;best=c}}
  return best&&{x:best.x,y:best.y}}
 // Renvoie un événement, ou null si la cible est déjà morte.
-export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);let ward=0;if(t.ward){ward=Math.min(t.ward.hp,amt);t.ward.hp-=ward;amt-=ward;if(t.ward.hp<=0)delete t.ward;if(!amt){return{type:'status',t,text:`Bouclier −${ward}`,color:'#9fd8ff'}}}
+export function hurt(s,t,amt,src,crit,pen=0){if(t.dead)return null;amt=soak(t,amt,pen);let prot=null;if(s.cmOn){const g=modIn(s,t);if(g.k<1){amt=Math.max(1,Math.round(amt*g.k));prot=g.by}}/* V5.10 : protégé par un Gardien */let ward=0;if(t.ward){ward=Math.min(t.ward.hp,amt);t.ward.hp-=ward;amt-=ward;if(t.ward.hp<=0)delete t.ward;if(!amt){return{type:'status',t,text:`Bouclier −${ward}`,color:'#9fd8ff'}}}
  let saved=false;if(t.lastStand&&amt>=t.hp){amt=t.hp-1;t.lastStand=0;saved=true} // Dernier rempart : une fois par combat
  if(t.team==='h'&&(src==='quake'||src==='beam'))s.sigHit=1; // V4.5f : attaque signature subie
  t.hp-=amt;let killed=false;if(t.hp<=0){t.hp=0;t.dead=true;killed=true;if(t.team==='m')s.killedXp+=t.xp;else{t.wasKO=1;if(t.trap?.glyph)delete t.trap}}
- const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};
+ const e={type:'hurt',t,amt,src,crit:!!crit,killed,saved};if(prot)e.prot=prot;
  if(killed&&t.poison&&t.poison.spread){e.spread=[];for(const[dx,dy]of DIRS){const o=occ(s,t.x+dx,t.y+dy); // Contagion : ne se propage pas plus loin
   if(o&&o.team===t.team&&!(o.poison&&o.poison.d*o.poison.turns>=12)){o.poison={d:6,turns:2};e.spread.push(o)}}}if(!killed&&t.summon&&!t.summoned&&t.hp<=t.max/2){t.summoned=1;e.spawn=summon(s,t)}
  return e}
@@ -497,6 +498,8 @@ export function bossTurn(s,u){if(!u.bs)return[];const ev=[];
   if(u.bs==='quake'){s.sigUsed=1;ev.push({type:'status',t:u,text:'Séisme !',color:'#ffa040',snd:'smash'},{type:'shake',ms:400});const d=Math.round((u.atk.dmg[0]+u.atk.dmg[1])/2*.6*weakK(u));
   for(const h of s.units)if(h.team!==u.team&&!h.dead&&Math.abs(h.x-u.x)+Math.abs(h.y-u.y)<=3){ev.push({type:'fx',x:h.x,y:h.y,i:7,w:1.2});const e=hurt(s,h,d,'quake');if(e)ev.push(e)}}
  return ev}
+// V5.10 : effets de début de tour des élites Cauchemar (Régénérateur, Explosif) ; [] sans modificateur
+export const eliteTurn=(s,u)=>u.mods?modTurn(s,u,{hurt}):[];
 // ---------- V4.0c : Titan prismatique ----------
 // Phase 1 (> 66 % PV) : une ligne de 6 cases vers le héros le plus proche de l'axe · 2 : croix · 3 : croix, et un prisme allumé touché éclate (ses voisines aussi).
 // Cycle de 3 tours du Titan : il marque les cases (Chargement), tire au tour suivant sur ces mêmes cases (même s'il a bougé), puis se repose.
@@ -516,8 +519,8 @@ function beamTurn(s,u,ev){const ph=beamPhase(u);
  else if(u.bt%3===1){s.beam=beamCells(s,u);ev.push({type:'status',t:u,text:'Chargement du rayon…',color:'#c98bff',snd:'beam_charge'})}
  return ev}
 // Intention d'un monstre : ce qu'il ferait s'il jouait maintenant (simulation à blanc, l'état est remis en place).
-export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=slowedPM(u);let r=null;
- for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k*weakK(u))),amp:k>1,from:{x:u.x,y:u.y}};break}
+export function intent(s,u){const keep={x:u.x,y:u.y,pa:u.pa,pm:u.pm,backed:u.backed};u.pa=u.maxPA;u.pm=u.mods&&rooted(u)?0:slowedPM(u);let r=null;
+ for(let g=0;g<6;g++){const a=aiStep(s,u);if(!a)break;if(a.type==='cast'){const k=ampAt(s,u);r={target:a.target,dmg:a.sp.dmg.map(v=>Math.round(v*k*weakK(u)*(u.mods?modOut(u,a.target):1))),amp:k>1,from:{x:u.x,y:u.y}};break}
   const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}
  Object.assign(u,keep);return r}
 

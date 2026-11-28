@@ -12,14 +12,14 @@ if(process.env.BZ)for(const e of process.env.BZ.split(',')){const[z,b]=e.split('
 if(process.env.BH||process.env.BD)for(const z of ZONES)if(z.boss)z.boss={...z.boss,hp:z.boss.hp*(+process.env.BH||1),dmg:z.boss.dmg*(+process.env.BD||1)};
 import {raise} from '../src/mastery.js';
 if(process.env.VAR_A||process.env.NO_B)PA_RULE.recast=0;
-import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,iceTick,hitCells,onLava,fireproof,costOf,lootPool} from '../src/rules.js';
+import {teamOf,newBattle,genMap,mkUnits,heroStats,gainXp,reach,okTarget,occ,man,payCost,applySpell,beginTurn,poisonTick,endTurn,outcome,aiStep,stars,pick,ri,fightSpec,bossTurn,mulberry,waveTick,waveEmpty,lavaTick,iceTick,hitCells,onLava,fireproof,costOf,lootPool,eliteTurn} from '../src/rules.js';
 
 if(process.env.NO_MHEAL)SP.mheal.pa=99;
 // TEAM=0,1,3 : équipe de combat (3 = Orion, V4.33)
 const TEAM=process.env.TEAM?.split(',').map(Number);
 // V4.39 : mesures d'Orion aux niveaux 20 à 50. LVL=30 : équipe ET monstres au niveau 30 (mission de R7 mise à l'échelle, faute de régions 8 à 12).
 // ORSPEC=pyro|cryo|arcaniste : voie d'Orion (profils std et opti ; sous = aucune). MAST=non|deg|ctrl : points de maîtrise d'Orion (std et opti).
-const LV=+process.env.LVL||0,ORSPEC=process.env.ORSPEC||'pyro',MAST=process.env.MAST||'deg';
+const CM=process.env.CM||'',LV=+process.env.LVL||0,ORSPEC=process.env.ORSPEC||'pyro',MAST=process.env.MAST||'deg';
 const MAST_ORDER={non:[],deg:['arcane','fireball','storm','flame','frost','nova','glyph'],ctrl:['frost','icewall','weaken','blink','arcane','fireball']};
 function mastFill(save){if(!TEAM?.includes(3))return;for(const id of MAST_ORDER[MAST]||[])while(raise(save,3,id));} // sort par sort jusqu'au rang III, tant qu'il reste des points
 // région 7 (dans ZONES depuis la V4.40) : « 6.0 » à « 6.9 »
@@ -52,14 +52,14 @@ function heroTurn(s,u){
  if(u.pm>0&&!outcome(s)){const rc=reach(s,u,u.pm),ms=alive(s,'m');let bk=null,bd=1e9; // se rapprocher (l'archer garde 3 cases)
   for(const[k,d]of rc.dist){const[x,y]=k.split(',').map(Number),dd=Math.min(...ms.map(m=>Math.abs(m.x-x)+Math.abs(m.y-y))),sc=Math.abs(dd-(u.hi===1||u.hi===3?3:1))+(onLava(s,{x,y})?20:0);if(sc<bd){bd=sc;bk=[x,y,d]}}
   if(bk){u.x=bk[0];u.y=bk[1];u.pm-=bk[2]}}}
-function monTurn(s,u){tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<6&&!u.dead;g++){const a=aiStep(s,u);if(!a)return;
+function monTurn(s,u){tally(s,eliteTurn(s,u));if(outcome(s)||u.dead)return;tally(s,bossTurn(s,u));if(outcome(s))return;for(let g=0;g<6&&!u.dead;g++){const a=aiStep(s,u);if(!a)return;
  if(a.type==='cast'){payCost(u,a.sp,a.target);tally(s,applySpell(s,u,a.sp,a.target));if(outcome(s))return;continue}
  const[x,y]=a.to.split(',').map(Number);u.pm-=reach(s,u,u.pm).dist.get(a.to);u.x=x;u.y=y}}
 
 // mesures : dégâts infligés (hit) et reçus (taken) par les héros, soins (heal)
-function tally(s,ev){for(const e of ev||[]){if(e.type==='hurt')s.T[e.t.team==='m'?'hit':'taken']+=e.amt;if(e.type==='heal')s.T.heal+=e.amt}}
+function tally(s,ev){for(const e of ev||[]){if(e.type==='hurt'){s.T[e.t.team==='m'?'hit':'taken']+=e.amt;if(e.src==='boom')s.T.boom=(s.T.boom||0)+e.amt;if(e.prot)s.T.prot=(s.T.prot||0)+1;if(e.killed&&e.t.mods)s.T.ek=s.round}if(e.type==='heal')s.T.heal+=e.amt;if(e.type==='heal'&&e.src==='regen')s.T.regen=(s.T.regen||0)+e.amt;if(e.type==='boom')s.T.nb=(s.T.nb||0)+1}}
 // Un combat, comme startFight + runFight de l'interface. rs = graine du hasard du combat (reproductible).
-function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F0=fightSpec(zi,i,seed),F=LV?{...F0,lvl:LV}:F0; // LVL= : monstres au niveau demandé
+function fight(save,zi,i,rs=Math.random()*1e9|0,seed=zi*1000+i*97+save.gold){FIGHTS++;const F0=fightSpec(zi,i,seed),F1=LV?{...F0,lvl:LV}:F0,F=CM?{...F1,cm:{seed:F1.seed+rs,mods:CM==='aucun'?null:[CM]}}:F1; // V5.10 : CM=berserk|garde|regen|bombe|aucun (Cauchemar, essais) // LVL= : monstres au niveau demandé
  const s=newBattle(),{hs,es}=genMap(s,F.seed,F.th,F.cry);if(TEAM)save.team=TEAM;mkUnits(s,F,hs,es,HER.map((_,j)=>heroStats(save,j)),teamOf(save));if(process.env.VAR_A)for(const m of s.units)if(m.team==='m'&&!m.bs&&!m.summon&&!m.chief&&!m.elite){m.maxPA=m.pa=6;m.atk={...m.atk,pa:3}} // variante A (comparaison seulement)
  s.rng=mulberry(rs);s.T={hit:0,taken:0,heal:0};
  let turn=-1;
@@ -94,10 +94,10 @@ const PIL={h5:['Château 5 (chevalier rouge)',4,4],h8:['Château 8 (survie)',4,7
 if(PILOT){const f=x=>x.toFixed(1).replace('.',','),ms=(process.argv[4]||'bois1,bois3,loup').split(',');
  console.log('| Mission | Profil | Niv. | Victoires | Tours | Héros KO | PV restants | Dégâts infligés | Reçus | Soins | XP | Vagues éliminées |\n|---|---|---|---|---|---|---|---|---|---|---|---|');
  for(const m of ms){const q=m.split('.').map(Number),[name,zi,i]=PIL[m]||[ZONES[q[0]].n+' '+(q[1]+1),q[0],q[1]]; // « monde.étape » : monde dès 0, étape dès 0
-  for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=Math.max(1,(LV||(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i))+p.dl),R=[];
+  for(const[k,p]of Object.entries(PROF)){if(process.env.PROF&&k!==process.env.PROF)continue;const lvl=+process.env.TLVL||Math.max(1,(LV||(ZONES[zi].fights?.[i]?.lvl??ZONES[zi].lvl+i))+p.dl),R=[]; // TLVL : niveau de l'équipe imposé (V5.10)
   for(let g=1;g<=N;g++){const save={lvl,attr:p.attr&&HER.map((_,i)=>p.attr(lvl-1,i)),xp:0,gold:0,wpn:[null,null,null],items:p.it(lvl),rr:Object.fromEntries(p.it(lvl).map(j=>[j,p.rr])),up:Object.fromEntries(p.it(lvl).map(j=>[j,p.up])),sp:k==='sous'?[null,null,null,null,null,null]:[...p.sp,ORSPEC,k==='opti'?'ombre':'duelliste',k==='opti'?'justiciere':'sentinelle'],z:{},st:{},load:{4:['dagger','backstab','toxin','twin','execute','dance']}};if(k!=='sous')mastFill(save);const G=g+(+process.env.SEED0||0);R.push(fight(save,zi,i,G*7919,G*97))}
   const W=R.filter(r=>r.win),a=fn=>f(avg(R.map(fn)));
-  console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`)}}
+  console.log(`| ${name} | ${k} | ${lvl} | ${W.length}/${N} | ${f(avg(W.map(r=>r.round))||0)} | ${f(avg(R.map(r=>r.ko)))} | ${Math.round(100*avg(R.map(r=>r.hpLeft)))} % | ${a(r=>r.T.hit)} | ${a(r=>r.T.taken)} | ${a(r=>r.T.heal)} | ${a(r=>r.xp)} | ${R[0].F.wave?R.filter(r=>r.cleared).length+'/'+N:'–'} |`+(CM?` élite abattue tour ${f(avg(R.filter(r=>r.T.ek).map(r=>r.T.ek))||0)} (${R.filter(r=>r.T.ek).length}/${N}) · régén ${a(r=>r.T.regen||0)} · explosions ${a(r=>r.T.nb||0)} (${a(r=>r.T.boom||0)} dégâts) · coups protégés ${a(r=>r.T.prot||0)} |`:''))}}
  console.log('\n| Héros · sort | Lancers | Lancers/combat | PA | Dégâts/PA | Soins/PA |\n|---|---|---|---|---|---|');for(const[k,[n,pa,d,h]]of Object.entries(SPL).sort())console.log(`| ${k} | ${n} | ${f(n/FIGHTS)} | ${pa} | ${f(d/(pa||1))} | ${f(h/(pa||1))} |`);
  console.log(`\nSoins lancés : Soin ${CASTS[SP.heal.n]||0}, Soin collectif ${CASTS[SP.mheal.n]||0}.`);console.log(`\n${FIGHTS} combats simulés (graines 1 à ${N}, identiques d'une version à l'autre).`);process.exit(0)}
 
