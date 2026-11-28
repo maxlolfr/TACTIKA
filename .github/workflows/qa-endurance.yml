@@ -2,7 +2,7 @@ name: QA endurance
 on:
   push:
     branches: [quality/chatgpt]
-    paths: ['.github/workflows/qa-endurance.yml']
+    paths: ['.github/workflows/qa-endurance.yml', 'tools/qa-endurance.mjs']
 permissions:
   contents: read
 jobs:
