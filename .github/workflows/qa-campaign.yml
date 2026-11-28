@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node tools/qa-campaign.mjs | tee qa-campaign.txt
+      - run: set -o pipefail; node tools/qa-campaign.mjs | tee qa-campaign.txt
         shell: bash
       - uses: actions/upload-artifact@v4
         if: always()
