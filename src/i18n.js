@@ -2,6 +2,9 @@
 // (DOM et textes flottants du combat) passent par ce dictionnaire : d'abord le texte entier, sinon chaque expression connue
 // (de la plus longue à la plus courte, en mots entiers). Les récits et les voix ont leur propre anglais (story.js, audio.js).
 // Ajouter une traduction : une ligne "français":"anglais" ; aucune autre modification nécessaire.
+import {normalizeLanguage} from './locales/languages.js';
+import {ZH_GLOSSARY} from './locales/zh-glossary.js';
+import {DE} from './locales/de.js';
 import {EN_DESC} from './i18n-desc.js';
 import {EN_Q} from './i18n-quests.js';
 import {TUTO,TIPS,TIPS_T} from './tips.js';
@@ -148,25 +151,74 @@ const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
 zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
 export const regHtml=(fr,en)=>{HTML.set(fr,en)};
 // V5.10a : PA reportés / gardés (bouton Fin du tour et texte flottant) restaient à moitié en français
-Object.assign(EN,{'PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
-export const trh=s=>L.on&&HTML.has(s)?HTML.get(s):s;
+Object.assign(EN,{'Langue':'Language','PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
+export const trh=s=>language==='en'&&HTML.has(s)?HTML.get(s):s;
 // ---------- moteur ----------
-export const L={on:false};
+let language='fr';
+export const TEXT_CATALOGS=Object.freeze({
+ en:EN, de:DE, 'zh-Hans':Object.freeze({...ZH_GLOSSARY,
+  'Langue':'语言','Partir à l’aventure':'出发冒险','💾 Sauvegarde':'💾 存档',
+  '♪ Musique':'♪ 音乐','🔊 Sons':'🔊 声音','Volume musique':'音乐音量',
+  'Volume bruitages':'音效音量','Volume voix':'语音音量','Revoir le tutoriel':'重看教程',
+  'Recommencer à zéro':'重新开始','Compris !':'明白了！',
+  '⚡ Animations rapides : oui':'⚡ 快速动画：开启','⚡ Animations rapides : non':'⚡ 快速动画：关闭',
+  '🎨 Graphismes : Faible':'🎨 画质：低','🎨 Graphismes : Moyen':'🎨 画质：中','🎨 Graphismes : Haut':'🎨 画质：高',
+  'Copier':'复制','Copié !':'已复制！','Importer':'导入','Exporter (fichier)':'导出文件',
+  'Importer (fichier)':'导入文件','Copie de secours':'备份','Fichier exporté.':'文件已导出。',
+ }),
+});
 const esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 let RX=null;
 const EXACT=new Set(['or','Or']); // « or » = la monnaie : texte entier, ou « 340 or » (règle à part), jamais au milieu d'une phrase
 function rx(){if(RX)return RX;const keys=Object.keys(EN).filter(k=>k.length>=2&&!EXACT.has(k)).sort((a,b)=>b.length-a.length);
  RX=new RegExp('(?<![\\p{L}\\p{N}])('+keys.map(esc).join('|')+')(?![\\p{L}])','gu');return RX}
 // traduit une chaîne (texte entier d'abord, sinon expression par expression) ; renvoie la chaîne telle quelle en français
-export function tr(s){if(!L.on||!s||typeof s!=='string')return s;const t=s.trim();if(!t)return s;
- if(EN[t]!=null)return s.replace(t,EN[t]);if(!/[A-Za-zÀ-ÿ]/.test(t))return s;
+export function tr(s){if(language==='fr'||!s||typeof s!=='string')return s;const t=s.trim();if(!t)return s;
+ const dict=TEXT_CATALOGS[language];
+ if(Object.hasOwn(dict,t))return s.replace(t,()=>dict[t]);
+ if(language!=='en')return s;
+ if(!/[A-Za-zÀ-ÿ]/.test(t))return s;
  return s.replace(rx(),m=>EN[m]??m).replace(/(\d) or\b(?! \d)/g,'$1 gold')}
 const ATTRS=['aria-label','title','placeholder'];
-function walk(n){if(n.nodeType===3){const v=tr(n.data);if(v!==n.data)n.data=v;return}
- if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE'||n.closest?.('#story'))return; // les récits ont déjà leur anglais
- for(const a of ATTRS)if(n.hasAttribute?.(a)){const v=tr(n.getAttribute(a));if(v!==n.getAttribute(a))n.setAttribute(a,v)}
- for(const c of n.childNodes)walk(c)}
+const IGNORE='script,style,#story,[data-no-translate]';
+const translated=new WeakMap();
+function translateNode(n,key,value,write){
+ let last=translated.get(n);
+ if(!last){last=new Map();translated.set(n,last)}
+ const previous=last.get(key);
+ if(previous?.output===value&&previous.language===language)return;
+ const source=previous?.output===value?previous.source:value;
+ const output=tr(source);
+ last.set(key,{source,output,language});
+ if(output!==value)write(output);
+}
+function translateAttribute(n,a){
+ if(n.hasAttribute(a))translateNode(n,a,n.getAttribute(a),v=>n.setAttribute(a,v));
+}
+function walk(n){
+ if(n.nodeType===3){
+  if(!n.parentElement?.closest(IGNORE))translateNode(n,'text',n.data,v=>{n.data=v});
+  return;
+ }
+ if(n.nodeType!==1||n.closest(IGNORE))return;
+ for(const a of ATTRS)translateAttribute(n,a);
+ for(const child of n.childNodes)walk(child);
+}
 let MO=null;
-export function setLang(lang){L.on=lang==='en';if(typeof document==='undefined')return;document.documentElement.lang=L.on?'en':'fr';
- if(L.on){walk(document.body);if(!MO&&typeof MutationObserver!=='undefined'){MO=new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')walk(m.target);else for(const n of m.addedNodes)walk(n)}});MO.observe(document.body,{childList:true,subtree:true,characterData:true})}}
- else if(MO){MO.disconnect();MO=null}}
+export function setLang(lang){
+ language=normalizeLanguage(lang);
+ if(typeof document==='undefined')return;
+ document.documentElement.lang=language;
+ if(MO){MO.disconnect();MO=null}
+ walk(document.body);
+ if(language==='fr'||typeof MutationObserver==='undefined')return;
+ MO=new MutationObserver(records=>{
+  for(const m of records){
+   if(m.type==='characterData')walk(m.target);
+   else if(m.type==='attributes'){
+    if(!m.target.closest(IGNORE))translateAttribute(m.target,m.attributeName);
+   }else for(const n of m.addedNodes)walk(n);
+  }
+ });
+ MO.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTRS});
+}

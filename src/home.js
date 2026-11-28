@@ -6,7 +6,8 @@ import {heroStats,xpNeed,upCost,upLvl,itemVal,rarOf,contracts,weaponOf,gear,isOn
 import {MON,CM_DEV,CM_PILOTS,CM_ZONES} from './data.js';
 import {save,prog,unlocked,store,resetSave,cmBossOpen,cmDone,canNightmare,setNightmare} from './save.js';
 import {AT,icon,uiURL,logoURL,drawF,heroFrame,walkFrames,isVet,sprite} from './render.js';
-import {setLang,trh} from './i18n.js';
+import {trh} from './i18n.js';
+import {LANGUAGES} from './locales/languages.js';
 import {TROPHIES,TIER,REC,BEASTS,beastInfo,beastTraits,completion,checkTrophies,stars3,questsDone} from './chronicle.js';
 import {setSon,sonBtns,sfx,voice,setVol,setVoiceLang,AU,VOLMAX} from './audio.js';
 import {specOf} from './talents.js';
@@ -385,7 +386,24 @@ function reglages(P){
  const r=el('div','v-actions');r.innerHTML=`<button class="v-btn dk son-m" data-act="son-m">♪ Musique</button><button class="v-btn dk son-s" data-act="son-s">🔊 Sons</button>`;P.append(r);sonBtns();
  for(const[k,n]of[['m','Volume musique'],['s','Volume bruitages'],['v','Volume voix']]){const l=el('label','v-vol',`<span>${n}</span><input type="range" min="0" max="${VOLMAX}" step="5" value="${AU.vol[k]}"><b>${AU.vol[k]} %</b>`),i=l.querySelector('input');
   i.oninput=()=>{setVol(k,i.value);l.querySelector('b').textContent=i.value+' %'};if(k==='s')i.onchange=()=>sfx('coin');if(k==='v')i.onchange=()=>voice('warrior','start',{force:true});P.append(l)}
- const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(`🎨 Graphismes : ${GQ_N[gqOf(save)]}`,()=>{const n=(gqOf(save)+1)%3;save.gq=n;save.lowfx=n===0?1:0;setGq(n);store();show('reglages')},'dk') /* V5.11 : Faible (ex-« Effets réduits ») / Moyen / Haut */,wood(save.lang==='en'?'🌐 Langue : English':'🌐 Langue : Français',()=>{save.lang=save.lang==='en'?'fr':'en';store();setVoiceLang(save.lang);if(save.lang==='en'){setLang('en');show('reglages')}else location.reload()},'dk') /* V4.89 : retour au français = rechargement (textes d'origine) */,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();if(!CM_DEV)root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const r2=el('div','v-actions v-wrap'),fa=wood(save.fast?'⚡ Animations rapides : oui':'⚡ Animations rapides : non',()=>{save.fast=save.fast?0:1;SPEED.k=save.fast?.5:1;store();show('reglages')},'dk');r2.append(fa,wood(`🎨 Graphismes : ${GQ_N[gqOf(save)]}`,()=>{const n=(gqOf(save)+1)%3;save.gq=n;save.lowfx=n===0?1:0;setGq(n);store();show('reglages')},'dk') /* V5.11 : Faible (ex-« Effets réduits ») / Moyen / Haut */,wood(`🌗 Village : ${SKY_TXT[save.sky||'auto']}`,()=>{save.sky=SKIES[(SKIES.indexOf(save.sky||'auto')+1)%SKIES.length];store();if(!CM_DEV)root.querySelector('.v-stage').dataset.sky=skyOf(save.sky,new Date().getHours());show('reglages')},'dk'),wood('💾 Sauvegarde',A.saveDlg,'dk'),wood('Revoir le tutoriel',()=>A.tuto(),'dk'));P.append(r2);
+ const languageLabel=el('label','v-actions v-wrap');
+ const languageSelect=el('select','v-btn dk');
+ languageSelect.dataset.noTranslate='';
+ for(const {id,name} of LANGUAGES){
+  const option=new Option(name,id);
+  option.lang=id;
+  languageSelect.add(option);
+ }
+ languageSelect.value=save.lang;
+ languageSelect.onchange=()=>{
+  const previous=save.lang;
+  save.lang=languageSelect.value;
+  if(store())location.reload();
+  else{save.lang=previous;languageSelect.value=previous}
+ };
+ languageLabel.append(el('span',null,'Langue'),languageSelect);
+ P.append(languageLabel);
  P.append(el('div','v-card v-how',trh(A.HOW)));
  const z=wood('Recommencer à zéro',()=>{if(z.dataset.arm){resetSave();A.reload()}else{z.dataset.arm=1;z.textContent='Touche encore pour tout effacer'}},'danger');P.append(z);
  P.append(el('p','v-ver',`Tactika · version ${VERSION} · maxlolfr`));

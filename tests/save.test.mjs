@@ -57,7 +57,7 @@ test('principal abîmé sans secours : partie neuve mais l’original n’est ja
  assert.equal(ls.m.get('landeTactique1_corrupt'),raw);assert.equal(JSON.parse(ls.m.get('landeTactique1')).lvl,1);
 });
 test('sauvegarde incomplète ou aux champs faux : réparée sans planter', async () => {
- const {mod}=await load({landeTactique1:JSON.stringify({lvl:4,items:[],gold:'x',z:{prairie:'?'},sp:'oups',attr:7,lang:'de',cr:12,storySeen:[1]})});
+ const {mod}=await load({landeTactique1:JSON.stringify({lvl:4,items:[],gold:'x',z:{prairie:'?'},sp:'oups',attr:7,lang:'invalid',cr:12,storySeen:[1]})});
  assert.equal(mod.save.lvl,4);assert.equal(mod.save.gold,0);assert.equal(mod.save.lang,'fr');assert.equal(typeof mod.prog('prairie'),'number');
 });
 test('anciennes sauvegardes minimales (V1) : chargées, progression de la prairie reprise', async () => {
