@@ -172,14 +172,14 @@ export function gainXp(save,xp){save.xp+=xp;let up=0;while(save.xp>=xpNeed(save.
 // Un monstre de la mission F (niveau F.lvl) sur la case p ; B = boss de zone ; elite (V4.5a) : PV ×1,5, dégâts ×1,2, anneau doré
 function monUnit(F,t,p,id,rng,B,elite){const n=F.lvl,m=MON[t],boss=!!B,sc=1+.12*(n-1),ek=elite?1.5:1,bk=boss?DIFF.boss[F.zi]??1:1,dh=(DIFF.hp[F.zi]??1)*bk,dd=(DIFF.dmg[F.zi]??1)*bk; // V4.85 : difficulté de la région
  const hp=Math.round(m.hp*sc*(boss?B.hp:1)*ek*dh),dm=m.dmg.map(v=>Math.round(v*(1+.1*(n-1))*(boss?B.dmg:1)*(elite?1.2:1)*dd));
- return{id,team:'m',k:t,boss:boss?1:undefined,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
+ return{id,team:'m',lv:n,k:t,boss:boss?1:undefined,s:boss&&B.s||m.s,row:boss&&B.s?0:m.row,summon:boss?B.summon:undefined,bs:boss?B.bs:undefined,n:boss?B.n:m.n+(elite?' élite':''),elite:elite?1:undefined,x:p.x,y:p.y,gx:p.x,gy:p.y,hp,max:hp,maxPA:4,maxPM:m.pm,pa:4,pm:m.pm,init:m.init+rng(),
   cd:{},armor:m.armor||0,fly:m.fly,dir:1,h:(boss?m.h*B.h:m.h)*(elite?1.15:1),xp:Math.round(m.xp*(1+.2*(n-1))*(boss?4:1)*(elite?2:1)),
   atk:{snd:m.snd,n:'Attaque',pa:4,r:m.r||[1,1],t:'enemy',los:m.los,dmg:dm,poison:m.poison,slow:m.slow,curse:m.curse,fx:m.fx??0,proj:m.r?1:0}}}
 
 // hstats = heroStats de chaque héros (par numéro) ; team = les 3 qui combattent. L'affichage ajoute ensuite `ref` (hauteur du sprite).
 export function mkUnits(s,F,hs,es,hstats,team=DEF_TEAM){const n=F.lvl,rng=s.rng;
  s.units=[];s.killedXp=0;
- team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...(st.spells||[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[])]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
+ team.forEach((i,slot)=>{const h=HER[i],st=hstats[i],tf=st.tal||{sp:{}},pm=tf.maxPM||3,ids=[...(st.spells||[...h.sp,...(st.lvl>=SP5_LVL&&h.sp5?[h.sp5]:[])]),...(tf.add||[]),...(s.pot>0?['potion']:[])];s.units.push({id:'h'+i,team:'h',lv:st.lvl,k:h.k,n:h.n,hi:i,x:hs[slot].x,y:hs[slot].y,gx:hs[slot].x,gy:hs[slot].y,hp:st.hp,max:st.hp,maxPA:6,maxPM:pm,pa:6,pm,init:h.init+rng(),
   sp:ids,S:Object.fromEntries(ids.map(id=>[id,mastered({...SP[id],...tf.sp[id]},id,st.mast?.[id]||1)])),dmgMul:tf.dmgMul||1,crit:st.crit??(tf.crit||.12),guardK:tf.guardK||.5,pushDmg:tf.pushDmg||PUSH_DMG,exec:tf.exec,lastStand:tf.lastStand,dodge:st.dodge??tf.dodge,healMul:tf.healMul||1,cd:{},dmgB:st.dmg,healB:st.heal,mult:st.mult,dir:2,h:1.3})});
  const pool=F.pool,L=F.en&&(F.boss?[F.boss.k,...F.en]:F.en),cnt=F.wave?F.wave.start:L?L.length:Math.min(3+Math.floor((n-1)/2),8);
  const spots=[...es].sort(()=>rng()-.5);

@@ -147,6 +147,8 @@ const HTML=new Map();
 const zip=(a,b)=>a.forEach((s,i)=>HTML.set(s,b[i]));
 zip(TUTO,TUTO_EN);for(const k in TIPS)zip(TIPS[k],TIPS_EN[k]);
 export const regHtml=(fr,en)=>{HTML.set(fr,en)};
+// V5.10a : PA reportés / gardés (bouton Fin du tour et texte flottant) restaient à moitié en français
+Object.assign(EN,{'PA reporté':'AP carried over','PA gardés':'AP kept','PA gardé':'AP kept'});
 export const trh=s=>L.on&&HTML.has(s)?HTML.get(s):s;
 // ---------- moteur ----------
 export const L={on:false};

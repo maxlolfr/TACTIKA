@@ -71,7 +71,7 @@ export const statK=ids=>({hp:Math.min(CAP.hp,ids.reduce((a,id)=>a*MODS[id].hp,1)
 export function applyMods(u,ids,lang='fr'){if(!compatible(ids)||u.team!=='m')return false;const k=statK(ids);
  u.mods=[...ids];u.hp=u.max=Math.round(u.max*k.hp);u.atk={...u.atk,dmg:u.atk.dmg.map(v=>Math.round(v*k.dmg))};
  const base=u.tag&&u.n.endsWith(' '+u.tag)?u.n.slice(0,-u.tag.length-1):u.n; // la lettre de repère reste à la fin
- u.n=base+' ('+ids.map(id=>lang==='en'?MODS[id].en:MODS[id].n).join(', ')+')'+(u.tag?' '+u.tag:''); /* « Gelée (Gardien) » : neutre, sans accord */u.h*=1.1;u.xp=Math.round(u.xp*1.6);return true}
+ u.n=base+' ('+ids.map(id=>lang==='en'?MODS[id].en:MODS[id].n).join(', ')+')'+(u.tag?' '+u.tag:''); /* « Gelée (Gardien) » : neutre, sans accord */u.h*=1.3;u.xp=Math.round(u.xp*1.6);return true}
 // Monstre éligible : ni boss, ni sbire, ni chef, ni élite historique, ni renfort, ni déjà modifié
 export const eligible=u=>u.team==='m'&&!u.dead&&!u.boss&&!u.minion&&!u.chief&&!u.elite&&!u.reinf&&!u.mods;
 // Tirage reproductible, sur sa propre graine (ne consomme jamais le hasard du combat).
