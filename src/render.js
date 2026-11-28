@@ -216,6 +216,7 @@ const HV=Object.fromEntries([['warrior','kaelV'],['archer','fennV'],['healer','a
 export const isVet=()=>VET_FORCE||save.lvl>=VET_LVL;
 const hn=k=>isVet()&&HV[k]||HN[k];
 export const heroFrame=k=>hn(k).i;
+const stillWalk=u=>u.team==='h'&&u.walk&&!u.dead&&!!(hn(u.k).still||hn(u.k).vet); // V5.12
 // images de marche [planche, 4 cases], tournées vers la droite (réutilisées au village, V4.8b)
 export const walkFrames=(k,back)=>hn(k)[back?'B':'F'];
 // renvoie [planche, case, miroir, hauteur de référence]
@@ -346,7 +347,10 @@ export function draw(now){
   if(u.bs==='beam'&&!u.dead){const ch=S.beam&&S.beam.by===u,k=ch?1.25+.2*Math.sin(now/90):1;ctx.save();ctx.globalAlpha=(ch?.55:.35)+.15*Math.sin(now/(ch?90:300));ctx.fillStyle=ch?'#d08bff':'#b04bff';ctx.beginPath();ctx.ellipse(sx,sy+TH*.1,TW*.48*k,TH*.36*k,0,0,7);ctx.fill();
    if(ch){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5+.3*Math.sin(now/70);const g=ctx.createRadialGradient(sx,sy-hgt(u)*.55,0,sx,sy-hgt(u)*.55,TW*.9);g.addColorStop(0,'rgba(230,190,255,.9)');g.addColorStop(1,'rgba(160,80,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy-hgt(u)*.55,TW*.9,0,7);ctx.fill()}ctx.restore()}
   const glow=tg.includes(u)||(u.mods&&!u.dead);if(glow){ctx.save();ctx.shadowColor=tg.includes(u)?'#ffb040':MODS[u.mods[0]].col;ctx.shadowBlur=TW*(tg.includes(u)?.18+.08*Math.sin(now/160):(u.champ?1.45:1)*(lowFx()?.2:.22+.07*Math.sin(now/240)))} // V5.10b : contour lumineux des élites
-  drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,hides(u)?.4*al:al);if(glow)ctx.restore();
+  /* V5.12 : héros sans planche de marche (vétérans niv. 25+, Orion, Nyra, Lyria) = marche procédurale : rebond, balancement, écrasement à chaque case */
+  const sw=stillWalk(u),ph=now*Math.PI/220,fy=sy+TH*.12-up+bob-(u.hop||0)-(sw?Math.abs(Math.sin(ph))*TH*.1:0);
+  if(sw){ctx.save();ctx.translate(sx+jit,fy);ctx.rotate(Math.sin(ph)*.08*(flip?-1:1));ctx.scale(1-.035*Math.cos(2*ph),1+.045*Math.cos(2*ph));ctx.translate(-(sx+jit),-fy)}
+  drawF(ctx,s,i,sx+jit,fy,sc,flip,hides(u)?.4*al:al);if(sw)ctx.restore();if(glow)ctx.restore();
   if(u.flashT>now){ctx.save();ctx.globalCompositeOperation='lighter';drawF(ctx,s,i,sx+jit,sy+TH*.12-up+bob-(u.hop||0),sc,flip,.85*(u.flashT-now)/120);ctx.restore()}}
  for(const u of ghost){const[sx,sy]=scr(u.gx,u.gy),[s,i,flip,rf]=frameOf(u);drawF(ctx,s,i,sx,sy+TH*.12-lift(u)-(u.hop||0),hgt(u)/rf,flip,u===cur||tg.includes(u)?.6:.35)} // silhouette derrière un décor
  // barres de vie (leurs rectangles servent à écarter les bulles d'attaque)
